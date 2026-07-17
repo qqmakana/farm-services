@@ -197,11 +197,11 @@ export async function applyToDrive(input: NewDriverApplicationInput) {
 
   const notes = [
     `Area: ${input.area.trim()}`,
-    "SA mobile · auto-approved",
+    "SA mobile ?- auto-approved",
     input.notes?.trim() || null,
   ]
     .filter(Boolean)
-    .join(" · ");
+    .join(" ?- ");
 
   // SA drivers are auto-approved so they can go online immediately
   const { data, error } = await admin
@@ -263,7 +263,7 @@ export async function rejectDriverHire(driverId: string, reason?: string) {
     .maybeSingle();
 
   const notes = reason?.trim()
-    ? [existing?.notes, `Rejected: ${reason.trim()}`].filter(Boolean).join(" ? ")
+    ? [existing?.notes, `Rejected: ${reason.trim()}`].filter(Boolean).join(" - ")
     : existing?.notes;
 
   const { data, error } = await admin
