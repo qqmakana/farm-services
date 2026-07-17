@@ -17,7 +17,7 @@ export const BRAND = {
 export const BRAND_ADDRESS_LINE = `${BRAND.street}, ${BRAND.suburb}, ${BRAND.city}, ${BRAND.postalCode}`;
 
 export const BRAND_TAGLINE =
-  "Village-to-village rides, bakkie delivery & farm connect — by Sandton Streets";
+  "Uber-like rides, shop & bulky delivery, Farm Connect — by Sandton Streets";
 
 export const BRAND_FULL = `${BRAND.appName} by ${BRAND.company}`;
 

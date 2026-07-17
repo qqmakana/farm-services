@@ -163,6 +163,20 @@ export async function listPendingDriverHires() {
   return (data ?? []) as Driver[];
 }
 
+/** Ops roster: every driver who applied ? pending, auto-approved, or rejected. */
+export async function listAllDriversForOps() {
+  if (!useAdmin()) return mockRepo.listAllDriversForOps();
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("rr_drivers")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Driver[];
+}
+
 export async function applyToDrive(input: NewDriverApplicationInput) {
   if (!input.full_name.trim() || !input.phone.trim()) {
     throw new Error("Name and phone are required.");

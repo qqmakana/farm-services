@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HomeInstallShareCtas } from "@/components/install-share-bar";
 import { SiteNav } from "@/components/site-nav";
 import { BRAND, BRAND_ADDRESS_LINE, BRAND_TEL_HREF, BRAND_WHATSAPP_HREF } from "@/lib/brand";
 
@@ -68,13 +69,17 @@ export default function HomePage() {
               {BRAND.appName}
             </p>
             <h1 className="mt-4 max-w-2xl text-lg text-white/85 sm:text-xl">
-              Request a ride anytime — village to village. Cars, bakkies and
-              farm delivery for small towns across South Africa.
+              Uber-like rides, shop &amp; bulky delivery, and Farm Connect —
+              village to village across South Africa.
             </h1>
             <p className="mt-3 max-w-2xl text-sm text-white/70">
-              Drivers and shops use the same app. SA drivers are auto-approved.
-              Pay → match → track live.
+              Cars for people. Bakkies/trucks for shops and farm goods.
+              Open this link on your phone, tap <strong className="text-white">Install app</strong>{" "}
+              (home screen) — not Play Store / App Store. Use <strong className="text-white">Share app</strong>{" "}
+              to send the link. Drivers and shops apply <strong className="text-white">here</strong>.
+              SA drivers are auto-approved. Pay → match → track live.
             </p>
+            <HomeInstallShareCtas />
             <p className="mt-6 max-w-xl text-sm text-white/65">
               {BRAND_ADDRESS_LINE}
               <br />

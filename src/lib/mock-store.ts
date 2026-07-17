@@ -414,6 +414,13 @@ export const mockRepo = {
       );
   },
 
+  listAllDriversForOps(): Driver[] {
+    return [...store().drivers].sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+  },
+
   applyToDrive(input: NewDriverApplicationInput): Driver {
     const name = input.full_name.trim();
     const phone = input.phone.trim();

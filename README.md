@@ -8,7 +8,28 @@ Village-to-village rides, bakkie delivery and farm connect for South African sma
 
 ## Social advert
 
-Post `village-ride-social-card.png` from this folder.
+Two cards in this folder — same message, different shapes:
+
+| File | Use on |
+|------|--------|
+| `village-ride-social-feed.png` (also `village-ride-social-card.png`) | **Facebook**, **Instagram feed**, **X** — square post |
+| `village-ride-social-story.png` | **TikTok**, **Instagram Reels/Stories**, **Facebook Stories** — vertical 9:16 |
+
+Village Ride is an **installable web app (PWA)**. Open the link → tap **Install app** (home screen). Not on Play Store / App Store. Use **Share app** in the site to send the link.
+
+**Caption (all platforms):**
+> Village Ride by Sandton Streets  
+> One app for villages & small towns:  
+> • Uber-like rides (car)  
+> • Shop & bulky delivery (bakkie/truck)  
+> • Farm Connect (farm goods delivered)  
+>  
+> Open → Install on your phone home screen (browser install, not Play Store):  
+> https://village-ride.vercel.app  
+> Then Share the app with drivers & customers.  
+> Drivers & shops: apply only there.  
+> 📞 063 621 3590 · WhatsApp
+
 
 ## Product surfaces
 

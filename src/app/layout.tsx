@@ -1,5 +1,7 @@
 import { Source_Sans_3, Space_Grotesk } from "next/font/google";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { InstallShareBar } from "@/components/install-share-bar";
+import { PwaRegister } from "@/components/pwa-register";
 import { SiteFooter } from "@/components/site-footer";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 import "./globals.css";
@@ -16,12 +18,52 @@ const display = Space_Grotesk({
   weight: ["500", "600", "700"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://village-ride.vercel.app";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: `${BRAND.appName} — ${BRAND.company}`,
     template: `%s · ${BRAND.appName}`,
   },
   description: BRAND_TAGLINE,
+  applicationName: BRAND.appName,
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: BRAND.appName,
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  openGraph: {
+    title: `${BRAND.appName} by ${BRAND.company}`,
+    description: BRAND_TAGLINE,
+    url: siteUrl,
+    siteName: BRAND.appName,
+    type: "website",
+    images: [{ url: "/village-ride-social-feed.png" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${BRAND.appName} by ${BRAND.company}`,
+    description: BRAND_TAGLINE,
+    images: ["/village-ride-social-feed.png"],
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f3d2e",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({
@@ -32,8 +74,10 @@ export default function RootLayout({
   return (
     <html lang="en-ZA" className={`${sans.variable} ${display.variable} h-full`}>
       <body className="flex min-h-full flex-col bg-[var(--ru-canvas)] font-[family-name:var(--font-sans)] text-[var(--ru-ink)] antialiased">
-        <div className="flex-1">{children}</div>
+        <PwaRegister />
+        <div className="flex-1 pb-28">{children}</div>
         <SiteFooter />
+        <InstallShareBar />
       </body>
     </html>
   );

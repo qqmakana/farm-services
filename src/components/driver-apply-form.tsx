@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { applyToDrive } from "@/lib/actions";
-import { BRAND } from "@/lib/brand";
 import type { VehicleType } from "@/lib/types";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
 
@@ -34,7 +33,7 @@ export function DriverApplyForm() {
           notes: form.notes || undefined,
         });
         setMessage(
-          "Approved. You’re on Village Ride — go online below and start earning.",
+          "Approved in the app. Scroll down, go online, and start taking trips.",
         );
         setForm({
           full_name: "",
@@ -56,9 +55,9 @@ export function DriverApplyForm() {
         Apply to drive
       </h2>
       <p className="mt-1 text-sm text-slate-600">
-        South African drivers only. Use your SA mobile — {BRAND.appName}{" "}
-        <strong>auto-approves</strong> you so you can go online and take trips
-        right away. Shops and bakkie owners must also use this app.
+        Apply <strong>only in this Village Ride app</strong> — not WhatsApp or
+        Facebook. South African mobile → the app <strong>auto-approves</strong>{" "}
+        you. Shops and bakkie owners must also register here.
       </p>
 
       <form onSubmit={onSubmit} className="mt-4 grid gap-3 sm:grid-cols-2">

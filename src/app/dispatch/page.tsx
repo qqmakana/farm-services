@@ -4,26 +4,27 @@ import { DispatchBoard } from "@/components/dispatch-board";
 import { HireQueue } from "@/components/hire-queue";
 import {
   getDataSource,
+  listAllDriversForOps,
   listApplications,
   listDrivers,
   listJobs,
-  listPendingDriverHires,
 } from "@/lib/actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function DispatchPage() {
-  const [jobs, drivers, applications, pendingHires, source] = await Promise.all(
-    [
-      listJobs(),
-      listDrivers(),
-      listApplications(),
-      listPendingDriverHires(),
-      getDataSource(),
-    ],
-  );
+  const [jobs, drivers, applications, allDrivers, source] = await Promise.all([
+    listJobs(),
+    listDrivers(),
+    listApplications(),
+    listAllDriversForOps(),
+    getDataSource(),
+  ]);
 
   const newCount = jobs.filter((j) => j.status === "new").length;
+  const approvedCount = allDrivers.filter(
+    (d) => d.approval_status === "approved",
+  ).length;
 
   return (
     <>
@@ -38,13 +39,18 @@ export default async function DispatchPage() {
               Dispatch
             </h1>
             <p className="mt-1 text-sm text-slate-600">
-              Hire drivers, override trip matching, WhatsApp, watch the ledger.
+              See who applied in the app, who the app approved, jobs, and
+              WhatsApp.
             </p>
           </div>
           <div className="text-right text-sm text-slate-600">
             <p>
+              <span className="font-semibold text-emerald-800">
+                {approvedCount}
+              </span>{" "}
+              approved drivers ·{" "}
               <span className="font-semibold text-rose-700">{newCount}</span>{" "}
-              unassigned jobs
+              open jobs
             </p>
             <p className="text-xs text-slate-400">
               Backend: {source === "supabase" ? "Supabase" : "Local"}
@@ -52,7 +58,7 @@ export default async function DispatchPage() {
           </div>
         </div>
 
-        <HireQueue applicants={pendingHires} />
+        <HireQueue drivers={allDrivers} />
         <ApplicationsPanel applications={applications} />
         <DispatchBoard jobs={jobs} drivers={drivers} />
       </main>
