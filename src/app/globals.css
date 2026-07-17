@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+:root {
+  --ru-ink: #0b1220;
+  --ru-muted: #5b6577;
+  --ru-line: #e2e8f0;
+  --ru-surface: #ffffff;
+  --ru-canvas: #f7f8fa;
+  --ru-brand: #0f3d2e;
+  --ru-brand-2: #1a5c45;
+  --ru-accent: #0ea5e9;
+  --background: var(--ru-canvas);
+  --foreground: var(--ru-ink);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.ru-card {
+  background: var(--ru-surface);
+  border: 1px solid var(--ru-line);
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+}
+
+.ru-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.ru-btn:active {
+  transform: scale(0.98);
+}
+
+.ru-btn-primary {
+  background: var(--ru-brand);
+  color: white;
+}
+
+.ru-btn-primary:hover {
+  background: var(--ru-brand-2);
+}
+
+.ru-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--ru-line);
+  background: white;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.875rem;
+}
+
+.ru-input:focus {
+  outline: 2px solid rgb(14 165 233 / 35%);
+  border-color: #7dd3fc;
+}
