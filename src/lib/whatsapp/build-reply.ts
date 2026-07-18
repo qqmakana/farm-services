@@ -46,5 +46,5 @@ export function buildQuoteReply(quote: ConciergeQuote): string {
 }
 
 export function buildErrorReply(): string {
-  return "Sorry — I couldn't read that booking just now. Please try again in a moment, or book on village-ride.vercel.app.";
+  return "Sorry — I couldn't read that booking just now. Please try again in a moment, or book on https://village-ride.vercel.app";
 }
