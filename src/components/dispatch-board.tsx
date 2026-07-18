@@ -196,6 +196,18 @@ export function DispatchBoard({
                       <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-800">
                         Needs {VEHICLE_LABELS[job.required_vehicle]}
                       </span>
+                      {job.match_score != null ? (
+                        <span
+                          className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-900"
+                          title={
+                            job.match_breakdown
+                              ? JSON.stringify(job.match_breakdown)
+                              : "Smart dispatch score"
+                          }
+                        >
+                          Match {Number(job.match_score).toFixed(0)}
+                        </span>
+                      ) : null}
                     </div>
                     <p className="mt-1 text-sm text-stone-600">
                       {job.customer_name} · {job.customer_phone}

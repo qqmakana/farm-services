@@ -17,12 +17,60 @@ export const BRAND = {
 export const BRAND_ADDRESS_LINE = `${BRAND.street}, ${BRAND.suburb}, ${BRAND.city}, ${BRAND.postalCode}`;
 
 export const BRAND_TAGLINE =
-  "Uber-like rides, shop & bulky delivery, Farm Connect — by Sandton Streets";
+  "Book rides, delivery & Farm Connect via WhatsApp — by Sandton Streets";
 
 export const BRAND_FULL = `${BRAND.appName} by ${BRAND.company}`;
 
 export const BRAND_TEL_HREF = `tel:+${BRAND.phoneWhatsApp}`;
 export const BRAND_WHATSAPP_HREF = `https://wa.me/${BRAND.phoneWhatsApp}`;
+
+export type BookingWhatsAppDraft = {
+  service_type: "ride" | "delivery" | "farm";
+  pickup_landmark: string;
+  dropoff_landmark: string;
+  customer_name: string;
+  customer_phone: string;
+  detailsLine: string;
+  paymentLabel: "Cash" | "Card";
+  estimateZar?: number;
+};
+
+function serviceLabelForWhatsApp(
+  service: BookingWhatsAppDraft["service_type"],
+): string {
+  switch (service) {
+    case "ride":
+      return "Village Ride";
+    case "delivery":
+      return "Village Delivery";
+    case "farm":
+      return "Farm Connect";
+  }
+}
+
+/** Free MVP booking: pre-filled WhatsApp to Sandton Streets dispatch. */
+export function buildBookingWhatsAppMessage(draft: BookingWhatsAppDraft): string {
+  const lines = [
+    `Hi ${BRAND.appName}! I need a booking:`,
+    `- Service: ${serviceLabelForWhatsApp(draft.service_type)}`,
+    `- Pickup: ${draft.pickup_landmark || "—"}`,
+    `- Dropoff: ${draft.dropoff_landmark || "—"}`,
+    `- Details: ${draft.detailsLine || "—"}`,
+    `- Name: ${draft.customer_name || "—"}`,
+    `- Phone: ${draft.customer_phone || "—"}`,
+  ];
+  if (draft.estimateZar != null && Number.isFinite(draft.estimateZar)) {
+    lines.push(`- Estimate: R${Math.round(draft.estimateZar)}`);
+  }
+  lines.push(`- Payment: ${draft.paymentLabel}`);
+  lines.push("Please confirm my booking.");
+  return lines.join("\n");
+}
+
+export function bookingWhatsAppHref(draft: BookingWhatsAppDraft): string {
+  const text = buildBookingWhatsAppMessage(draft);
+  return `https://wa.me/${BRAND.phoneWhatsApp}?text=${encodeURIComponent(text)}`;
+}
 
 /** Share a pre-filled trip message (opens WhatsApp contact picker). */
 export function whatsappTripShareHref(pickup: string, dropoff: string) {

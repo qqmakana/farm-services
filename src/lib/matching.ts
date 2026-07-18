@@ -1,12 +1,7 @@
 import { createAdminClient } from "./supabase/admin";
-import { distanceKm } from "./geo";
-import {
-  driverNicheScore,
-  filterDriversByOptIn,
-  jobNeedsFromJob,
-} from "./job-needs";
-import { vehicleFitsJob } from "./vehicles";
-import type { Job, VehicleType } from "./types";
+import { rankDriversForJob } from "./dispatch-score";
+import { jobNeedsFromJob } from "./job-needs";
+import type { Driver, Job, VehicleType } from "./types";
 
 function refCode() {
   return `RU-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
@@ -22,7 +17,29 @@ export async function getFareRule(vehicle: VehicleType) {
   return data;
 }
 
-/** Broadcast offers to niche-matching online drivers + auto-assign best fit. */
+export async function incrementDriverOfferStat(
+  driverId: string,
+  field: "offers_received" | "offers_accepted" | "offers_declined",
+  by = 1,
+) {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("rr_drivers")
+    .select(field)
+    .eq("id", driverId)
+    .maybeSingle();
+  const current = Number((data as Record<string, number> | null)?.[field]) || 0;
+  await admin
+    .from("rr_drivers")
+    .update({ [field]: current + by })
+    .eq("id", driverId);
+}
+
+/**
+ * Smart dispatch: rank online drivers by composite score
+ * (vehicle · opt-in · rating · acceptance · proximity · verified),
+ * offer to eligible pool, auto-assign highest score.
+ */
 export async function matchJobAfterCreate(jobId: string) {
   const admin = createAdminClient();
   const { data: job, error } = await admin
@@ -32,7 +49,13 @@ export async function matchJobAfterCreate(jobId: string) {
     .single();
   if (error || !job) throw new Error(error?.message ?? "Job not found");
 
-  const needs = jobNeedsFromJob(job as Job);
+  const typedJob = job as Job;
+  const needs = jobNeedsFromJob(typedJob);
+  const required = typedJob.required_vehicle as VehicleType;
+  const pickup =
+    typedJob.pickup_lat != null && typedJob.pickup_lng != null
+      ? { lat: typedJob.pickup_lat, lng: typedJob.pickup_lng }
+      : null;
 
   const { data: drivers } = await admin
     .from("rr_drivers")
@@ -40,67 +63,51 @@ export async function matchJobAfterCreate(jobId: string) {
     .eq("is_active", true)
     .eq("is_online", true);
 
-  const vehicleOk = (drivers ?? []).filter(
+  const approved = ((drivers ?? []) as Driver[]).filter(
     (d) =>
       d.approval_status !== "rejected" &&
-      (d.approval_status == null || d.approval_status === "approved") &&
-      vehicleFitsJob(d.vehicle_type, job.required_vehicle as VehicleType),
+      (d.approval_status == null || d.approval_status === "approved"),
   );
 
-  const candidates = filterDriversByOptIn(vehicleOk, needs);
+  const ranked = rankDriversForJob({
+    drivers: approved,
+    requiredVehicle: required,
+    needs,
+    pickup,
+  });
 
   const now = new Date().toISOString();
   await admin.from("rr_jobs").update({ offered_at: now }).eq("id", jobId);
 
-  for (const d of candidates) {
+  // Offer to top scorers (cap keeps offer noise down as fleet grows)
+  const offerPool = ranked.slice(0, 12);
+
+  for (const { driver } of offerPool) {
     await admin.from("rr_job_applications").upsert(
       {
         job_id: jobId,
-        driver_id: d.id,
+        driver_id: driver.id,
         status: "pending",
       },
       { onConflict: "job_id,driver_id" },
     );
+    await incrementDriverOfferStat(driver.id, "offers_received");
   }
 
-  const withGps = candidates.filter(
-    (d) => d.last_lat != null && d.last_lng != null,
-  );
-  if (withGps.length === 0) return job as Job;
-
-  let best = withGps[0];
-  let bestScore = -Infinity;
-  let bestDist = Infinity;
-
-  for (const d of withGps) {
-    const niche = driverNicheScore(d, needs);
-    let dist = 0;
-    if (job.pickup_lat != null && job.pickup_lng != null) {
-      dist = distanceKm(
-        { lat: d.last_lat, lng: d.last_lng },
-        { lat: job.pickup_lat, lng: job.pickup_lng },
-      );
-    }
-    // Prefer niche fit, then closer driver
-    if (
-      niche > bestScore ||
-      (niche === bestScore && dist < bestDist)
-    ) {
-      bestScore = niche;
-      bestDist = dist;
-      best = d;
-    }
-  }
+  const winner = offerPool[0];
+  if (!winner) return typedJob;
 
   const { data: assigned } = await admin
     .from("rr_jobs")
     .update({
-      driver_id: best.id,
+      driver_id: winner.driver.id,
       status: "assigned",
       assigned_at: now,
-      driver_lat: best.last_lat,
-      driver_lng: best.last_lng,
-      driver_location_at: best.last_location_at ?? now,
+      driver_lat: winner.driver.last_lat,
+      driver_lng: winner.driver.last_lng,
+      driver_location_at: winner.driver.last_location_at ?? now,
+      match_score: winner.score,
+      match_breakdown: winner.breakdown,
     })
     .eq("id", jobId)
     .eq("status", "new")
@@ -108,20 +115,21 @@ export async function matchJobAfterCreate(jobId: string) {
     .maybeSingle();
 
   if (assigned) {
+    await incrementDriverOfferStat(winner.driver.id, "offers_accepted");
     await admin
       .from("rr_job_applications")
       .update({ status: "accepted" })
       .eq("job_id", jobId)
-      .eq("driver_id", best.id);
+      .eq("driver_id", winner.driver.id);
     await admin
       .from("rr_job_applications")
       .update({ status: "rejected" })
       .eq("job_id", jobId)
       .eq("status", "pending")
-      .neq("driver_id", best.id);
+      .neq("driver_id", winner.driver.id);
   }
 
-  return assigned ?? job;
+  return assigned ?? typedJob;
 }
 
 export async function insertPaidJob(row: Record<string, unknown>) {

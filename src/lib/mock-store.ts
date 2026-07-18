@@ -14,12 +14,8 @@ import type {
   ShopOrderInput,
 } from "./types";
 import { isSouthAfricanMobile } from "./brand";
-import { distanceKm } from "./geo";
-import {
-  driverNicheScore,
-  filterDriversByOptIn,
-  jobNeedsFromJob,
-} from "./job-needs";
+import { rankDriversForJob } from "./dispatch-score";
+import { jobNeedsFromJob } from "./job-needs";
 import { suggestVehicle, vehicleFitsJob } from "./vehicles";
 
 function uid() {
@@ -51,6 +47,9 @@ const seedDrivers: Driver[] = [
     prefer_night: true,
     prefer_heavy: true,
     prefer_village_routes: true,
+    offers_received: 20,
+    offers_accepted: 18,
+    offers_declined: 2,
     created_at: new Date().toISOString(),
   },
   {
@@ -71,6 +70,9 @@ const seedDrivers: Driver[] = [
     prefer_night: true,
     prefer_heavy: false,
     prefer_village_routes: true,
+    offers_received: 30,
+    offers_accepted: 27,
+    offers_declined: 3,
     created_at: new Date().toISOString(),
   },
   {
@@ -91,6 +93,9 @@ const seedDrivers: Driver[] = [
     prefer_night: false,
     prefer_heavy: true,
     prefer_village_routes: true,
+    offers_received: 15,
+    offers_accepted: 12,
+    offers_declined: 3,
     created_at: new Date().toISOString(),
   },
 ];
@@ -566,48 +571,41 @@ export const mockRepo = {
     if (job.status !== "new") return withDriver(job);
 
     const needs = jobNeedsFromJob(job);
-
-    const vehicleOk = store().drivers.filter(
+    const online = store().drivers.filter(
       (d) =>
         d.is_active &&
         d.approval_status === "approved" &&
-        d.is_online &&
-        d.last_lat != null &&
-        d.last_lng != null &&
-        vehicleFitsJob(d.vehicle_type, job.required_vehicle),
+        d.is_online,
     );
-    const candidates = filterDriversByOptIn(vehicleOk, needs);
+    const pickup =
+      job.pickup_lat != null && job.pickup_lng != null
+        ? { lat: job.pickup_lat, lng: job.pickup_lng }
+        : null;
+    const ranked = rankDriversForJob({
+      drivers: online,
+      requiredVehicle: job.required_vehicle,
+      needs,
+      pickup,
+    });
 
-    if (candidates.length === 0) {
-      // Leave as new with offers pending
+    if (ranked.length === 0) {
       return withDriver(job);
     }
 
-    let chosen = candidates[0];
-    {
-      const pickup =
-        job.pickup_lat != null && job.pickup_lng != null
-          ? { lat: job.pickup_lat, lng: job.pickup_lng }
-          : null;
-      chosen = candidates.reduce((best, d) => {
-        const bestNiche = driverNicheScore(best, needs);
-        const dNiche = driverNicheScore(d, needs);
-        if (dNiche !== bestNiche) return dNiche > bestNiche ? d : best;
-        if (!pickup) return best;
-        const bestDist = distanceKm(pickup, {
-          lat: best.last_lat!,
-          lng: best.last_lng!,
-        });
-        const dDist = distanceKm(pickup, {
-          lat: d.last_lat!,
-          lng: d.last_lng!,
-        });
-        return dDist < bestDist ? d : best;
-      });
+    for (const { driver } of ranked.slice(0, 12)) {
+      driver.offers_received = (driver.offers_received ?? 0) + 1;
     }
+
+    const chosen = ranked[0].driver;
+    job.match_score = ranked[0].score;
+    job.match_breakdown = ranked[0].breakdown as unknown as Record<
+      string,
+      unknown
+    >;
 
     const nowIso = new Date().toISOString();
     assignJobToDriver(job, chosen, nowIso);
+    chosen.offers_accepted = (chosen.offers_accepted ?? 0) + 1;
 
     let acceptedApp = store().applications.find(
       (a) =>
@@ -770,11 +768,16 @@ export const mockRepo = {
     }
 
     assignJobToDriver(job, driver, nowIso);
+    driver.offers_accepted = (driver.offers_accepted ?? 0) + 1;
     rejectOtherPendingApps(jobId, app.id);
     return withDriver(job);
   },
 
   declineOffer(jobId: string, driverId: string): JobApplication {
+    const driver = store().drivers.find((d) => d.id === driverId);
+    if (driver) {
+      driver.offers_declined = (driver.offers_declined ?? 0) + 1;
+    }
     const app = store().applications.find(
       (a) =>
         a.job_id === jobId &&

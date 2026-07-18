@@ -64,6 +64,8 @@ In Supabase SQL Editor, run these files in order if you have not:
 
 1. `supabase/ADD_CASH_PAYMENT.sql` (cash payments)
 2. `supabase/PERFECT_UPGRADE.sql` (driver Night/Heavy/Village opt-ins + ID/license storage)
+3. `supabase/SMART_DISPATCH.sql` (acceptance-rate counters + match score audit on jobs)
+4. `supabase/KYC_AI.sql` (AI document scan status + OCR audit fields on drivers)
 
 ## D. PayPal live + webhook (required for production money)
 
@@ -77,12 +79,24 @@ In Supabase SQL Editor, run these files in order if you have not:
    `https://village-ride.vercel.app/api/paypal/webhook`
 4. Subscribe to: `PAYMENT.CAPTURE.COMPLETED`, `PAYMENT.CAPTURE.DENIED`, `PAYMENT.CAPTURE.REFUNDED`, `PAYMENT.CAPTURE.REVERSED`
 
-## D2. Driver trust loop
+## D2. Driver trust + AI KYC
 
-1. Driver → `/driver` → toggle Night / Heavy / Village preferences  
-2. Driver uploads ID + license photos  
-3. Ops → `/dispatch` → **Docs to review** → open files → **Mark verified**  
-Customers then see **ID & License Verified** on the trip.
+1. Add `OPENAI_API_KEY` to `.env.local` / Vercel (same key as WhatsApp later).
+2. Run `supabase/KYC_AI.sql` in Supabase.
+3. Driver → `/driver` → upload clear ID + license **photos** (JPEG/PNG, not PDF).
+4. AI runs in the background: reads name + expiry, compares to profile name.
+   - Match + valid expiry → **auto-verified** (`kyc_status = auto_approved`)
+   - Mismatch / expired / unclear → **Docs to review** for ops
+5. Ops → `/dispatch` → **Docs to review** → view issues → **Mark verified** or **Re-run AI KYC**  
+Customers see **ID & License Verified** when `id_verified` is true.
+
+## D3. Free WhatsApp booking (MVP — no Meta API fees)
+
+Ride / Delivery / Farm checkout uses **Send Booking via WhatsApp** → opens
+`wa.me/27636213590` with a pre-filled message (landmarks, details, cash/card).
+You confirm and assign the driver manually in `/dispatch` (Smart Dispatch still
+helps when you create jobs from the office). Paid Meta/OpenAI WhatsApp automation
+is paused for cost control.
 
 ## E. Run / deploy
 
@@ -103,7 +117,7 @@ Or push to GitHub → Vercel → paste same env vars → Deploy.
 | Customers | Home → pick role |
 | You | `/login` → `/dispatch` (hire queue + jobs) |
 
-**Hiring vs trips:** You manually approve who can *work for you*. After that, trip matching is automatic (nearest online driver). Ops can still override a single trip if needed.
+**Hiring vs trips:** You manually approve who can *work for you*. After that, trip matching is automatic (smart-dispatch score). Ops can still override a single trip if needed.
 
 ## Done when
 

@@ -67,6 +67,24 @@ export type Driver = {
   id_doc_url?: string | null;
   license_doc_url?: string | null;
   docs_submitted_at?: string | null;
+  /** Smart dispatch reliability metrics */
+  offers_received?: number;
+  offers_accepted?: number;
+  offers_declined?: number;
+  /** AI KYC (Phase 2) */
+  kyc_status?:
+    | "none"
+    | "pending"
+    | "auto_approved"
+    | "needs_review"
+    | "rejected"
+    | "manual_approved";
+  kyc_checked_at?: string | null;
+  kyc_name_on_docs?: string | null;
+  kyc_id_number?: string | null;
+  kyc_license_expiry?: string | null;
+  kyc_issues?: string[] | null;
+  kyc_raw?: Record<string, unknown> | null;
 };
 
 export type NewDriverApplicationInput = {
@@ -164,6 +182,9 @@ export type Job = {
   share_token?: string | null;
   sos_triggered_at?: string | null;
   sos_note?: string | null;
+  /** Smart dispatch score of assigned driver */
+  match_score?: number | null;
+  match_breakdown?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
   drivers?: Driver | null;

@@ -6,6 +6,7 @@ import {
   approveDriverHire,
   getDriverDocSignedUrl,
   rejectDriverHire,
+  rerunDriverKyc,
   setDriverIdVerified,
 } from "@/lib/actions";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
@@ -13,6 +14,46 @@ import type { Driver, DriverApprovalStatus } from "@/lib/types";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
 
 type Filter = "all" | DriverApprovalStatus | "docs";
+
+function needsDocReview(d: Driver): boolean {
+  if (!d.docs_submitted_at) return false;
+  if (d.kyc_status === "needs_review" || d.kyc_status === "pending") {
+    return true;
+  }
+  return !d.id_verified;
+}
+
+function kycBadge(d: Driver): { label: string; className: string } | null {
+  switch (d.kyc_status) {
+    case "auto_approved":
+      return {
+        label: "AI KYC ✓",
+        className: "bg-emerald-100 text-emerald-900",
+      };
+    case "manual_approved":
+      return {
+        label: "Manual KYC ✓",
+        className: "bg-emerald-100 text-emerald-900",
+      };
+    case "needs_review":
+      return {
+        label: "KYC review",
+        className: "bg-amber-100 text-amber-950",
+      };
+    case "pending":
+      return {
+        label: "KYC scanning…",
+        className: "bg-sky-100 text-sky-900",
+      };
+    case "rejected":
+      return {
+        label: "KYC rejected",
+        className: "bg-rose-100 text-rose-900",
+      };
+    default:
+      return null;
+  }
+}
 
 function statusLabel(status: DriverApprovalStatus) {
   switch (status) {
@@ -57,16 +98,14 @@ export function HireQueue({ drivers }: { drivers: Driver[] }) {
       approved: drivers.filter((d) => d.approval_status === "approved").length,
       pending: drivers.filter((d) => d.approval_status === "pending").length,
       rejected: drivers.filter((d) => d.approval_status === "rejected").length,
-      docs: drivers.filter(
-        (d) => d.docs_submitted_at && !d.id_verified,
-      ).length,
+      docs: drivers.filter(needsDocReview).length,
     };
   }, [drivers]);
 
   const visible = useMemo(() => {
     if (filter === "all") return drivers;
     if (filter === "docs") {
-      return drivers.filter((d) => d.docs_submitted_at && !d.id_verified);
+      return drivers.filter(needsDocReview);
     }
     return drivers.filter((d) => d.approval_status === filter);
   }, [drivers, filter]);
@@ -109,8 +148,9 @@ export function HireQueue({ drivers }: { drivers: Driver[] }) {
         Drivers in the app
       </h2>
       <p className="mt-1 text-sm text-slate-600">
-        SA numbers are auto-approved to drive. Review ID/license uploads before
-        marking <strong>ID &amp; License Verified</strong>.
+        SA numbers are auto-approved to drive. AI scans ID/license on upload —
+        auto-verifies when name + expiry check out, otherwise flags{" "}
+        <strong>Docs to review</strong>.
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -156,6 +196,16 @@ export function HireQueue({ drivers }: { drivers: Driver[] }) {
                     {statusLabel(d.approval_status)}
                   </span>
                   <DriverVerifiedBadge verified={d.id_verified} compact />
+                  {(() => {
+                    const badge = kycBadge(d);
+                    return badge ? (
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-semibold ${badge.className}`}
+                      >
+                        {badge.label}
+                      </span>
+                    ) : null;
+                  })()}
                   {d.is_online && (
                     <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-900">
                       Online now
@@ -181,7 +231,20 @@ export function HireQueue({ drivers }: { drivers: Driver[] }) {
                   {d.docs_submitted_at
                     ? ` · Docs ${when(d.docs_submitted_at)}`
                     : " · No docs yet"}
+                  {d.kyc_name_on_docs
+                    ? ` · OCR name: ${d.kyc_name_on_docs}`
+                    : ""}
+                  {d.kyc_license_expiry
+                    ? ` · Expiry ${d.kyc_license_expiry}`
+                    : ""}
                 </p>
+                {Array.isArray(d.kyc_issues) && d.kyc_issues.length > 0 ? (
+                  <ul className="mt-1 list-inside list-disc text-xs text-amber-900">
+                    {d.kyc_issues.slice(0, 4).map((issue) => (
+                      <li key={issue}>{issue}</li>
+                    ))}
+                  </ul>
+                ) : null}
                 <div className="mt-2 flex flex-wrap gap-2">
                   {d.id_doc_url ? (
                     <button
@@ -204,6 +267,16 @@ export function HireQueue({ drivers }: { drivers: Driver[] }) {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
+                {d.docs_submitted_at ? (
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => run(() => rerunDriverKyc(d.id))}
+                    className="rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-900 disabled:opacity-50"
+                  >
+                    Re-run AI KYC
+                  </button>
+                ) : null}
                 {!d.id_verified && (
                   <button
                     type="button"

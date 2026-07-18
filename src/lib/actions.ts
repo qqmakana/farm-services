@@ -1,10 +1,21 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { mockRepo } from "./mock-store";
 import { calculateFare, type FareBreakdown } from "./fares";
 import { isSouthAfricanMobile } from "./brand";
-import { getFareRule, insertPaidJob, matchJobAfterCreate } from "./matching";
+import {
+  decisionToDriverPatch,
+  runDriverKyc,
+  runMockDriverKyc,
+} from "./kyc/run-kyc";
+import {
+  getFareRule,
+  incrementDriverOfferStat,
+  insertPaidJob,
+  matchJobAfterCreate,
+} from "./matching";
 import { createAdminClient, hasServiceRole } from "./supabase/admin";
 import { paypalRefundCapture } from "./paypal-refund";
 import { createClient, isSupabaseConfigured } from "./supabase/server";
@@ -287,6 +298,11 @@ export async function setDriverIdVerified(
     const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
     if (!driver) throw new Error("Driver not found");
     driver.id_verified = verified;
+    driver.kyc_status = verified ? "manual_approved" : "needs_review";
+    driver.kyc_checked_at = new Date().toISOString();
+    if (verified) {
+      driver.kyc_issues = ["Manually approved by ops"];
+    }
     revalidateAll();
     return driver;
   }
@@ -294,13 +310,42 @@ export async function setDriverIdVerified(
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("rr_drivers")
-    .update({ id_verified: verified })
+    .update({
+      id_verified: verified,
+      kyc_status: verified ? "manual_approved" : "needs_review",
+      kyc_checked_at: new Date().toISOString(),
+      ...(verified
+        ? { kyc_issues: ["Manually approved by ops"] }
+        : {}),
+    })
     .eq("id", driverId)
     .select("*")
     .single();
   if (error) throw new Error(error.message);
   revalidateAll();
   return data as Driver;
+}
+
+/** Ops: re-run AI document scan for a driver. */
+export async function rerunDriverKyc(driverId: string) {
+  if (!useAdmin()) {
+    const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
+    if (!driver) throw new Error("Driver not found");
+    const decision = runMockDriverKyc(driver);
+    Object.assign(driver, decisionToDriverPatch(decision));
+    revalidateAll();
+    return driver;
+  }
+
+  const decision = await runDriverKyc(driverId);
+  revalidateAll();
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("rr_drivers")
+    .select("*")
+    .eq("id", driverId)
+    .single();
+  return (data as Driver) ?? { id: driverId, kyc_status: decision.status };
 }
 
 async function uploadDriverDoc(
@@ -345,6 +390,9 @@ export async function submitDriverDocuments(
         : driver.license_doc_url;
     driver.docs_submitted_at = new Date().toISOString();
     driver.id_verified = false;
+    driver.kyc_status = "pending";
+    const decision = runMockDriverKyc(driver);
+    Object.assign(driver, decisionToDriverPatch(decision));
     revalidateAll();
     return driver;
   }
@@ -353,6 +401,8 @@ export async function submitDriverDocuments(
     license_number: licenseNumber,
     docs_submitted_at: new Date().toISOString(),
     id_verified: false,
+    kyc_status: "pending",
+    kyc_issues: [],
   };
 
   if (idFile instanceof File && idFile.size > 0) {
@@ -387,6 +437,18 @@ export async function submitDriverDocuments(
     .select("*")
     .single();
   if (error) throw new Error(error.message);
+
+  // AI KYC in background — does not block upload response
+  after(async () => {
+    try {
+      await runDriverKyc(driverId);
+      revalidatePath("/dispatch");
+      revalidatePath("/driver");
+    } catch (err) {
+      console.error("[kyc] background run failed", err);
+    }
+  });
+
   revalidateAll();
   return data as Driver;
 }
@@ -1162,6 +1224,8 @@ export async function acceptOffer(jobId: string, driverId: string) {
     .eq("status", "pending")
     .neq("driver_id", driverId);
 
+  await incrementDriverOfferStat(driverId, "offers_accepted");
+
   revalidateAll();
   return assigned as JobWithDriver;
 }
@@ -1189,6 +1253,8 @@ export async function declineOffer(jobId: string, driverId: string) {
 
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Offer not found");
+
+  await incrementDriverOfferStat(driverId, "offers_declined");
 
   revalidateAll();
   return data as JobApplication;

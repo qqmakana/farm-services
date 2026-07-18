@@ -47,13 +47,21 @@ export const metadata: Metadata = {
     url: siteUrl,
     siteName: BRAND.appName,
     type: "website",
-    images: [{ url: "/village-ride-social-feed.png" }],
+    images: [
+      {
+        url: "/village-ride-whatsapp-booking.png",
+        width: 1080,
+        height: 1080,
+        alt: "Village Ride — book free on WhatsApp",
+      },
+      { url: "/village-ride-social-feed.png" },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: `${BRAND.appName} by ${BRAND.company}`,
     description: BRAND_TAGLINE,
-    images: ["/village-ride-social-feed.png"],
+    images: ["/village-ride-whatsapp-booking.png"],
   },
   other: {
     "mobile-web-app-capable": "yes",

@@ -51,7 +51,9 @@ export function DriverTrustPanel({ driver }: { driver: Driver }) {
     startTransition(async () => {
       try {
         await submitDriverDocuments(driver.id, fd);
-        setMsg("Documents submitted — ops will verify ID & license.");
+        setMsg(
+          "Documents submitted — AI is checking name & expiry. Ops will only step in if review is needed.",
+        );
         router.refresh();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Upload failed");
@@ -128,8 +130,8 @@ export function DriverTrustPanel({ driver }: { driver: Driver }) {
           ID &amp; license verification
         </p>
         <p className="text-xs text-slate-500">
-          Upload clear photos. Ops marks you verified after review — customers
-          see the green badge.
+          Upload clear photos (JPEG/PNG). AI reads the name and license expiry;
+          if they match your profile you get the green badge automatically.
         </p>
         <label className="block text-sm font-medium text-slate-800">
           License / PDP number
@@ -163,8 +165,23 @@ export function DriverTrustPanel({ driver }: { driver: Driver }) {
           <p className="text-xs text-emerald-800">
             Docs last submitted{" "}
             {new Date(driver.docs_submitted_at).toLocaleString("en-ZA")}
-            {driver.id_verified ? " · Verified" : " · Awaiting ops review"}
+            {driver.id_verified
+              ? " · Verified"
+              : driver.kyc_status === "pending"
+                ? " · AI scanning…"
+                : driver.kyc_status === "needs_review"
+                  ? " · Needs admin review"
+                  : " · Awaiting verification"}
           </p>
+        ) : null}
+        {Array.isArray(driver.kyc_issues) &&
+        driver.kyc_issues.length > 0 &&
+        !driver.id_verified ? (
+          <ul className="list-inside list-disc text-xs text-amber-800">
+            {driver.kyc_issues.slice(0, 3).map((issue) => (
+              <li key={issue}>{issue}</li>
+            ))}
+          </ul>
         ) : null}
         <button
           type="submit"
