@@ -1,8 +1,10 @@
 export type ServiceType = "ride" | "delivery" | "farm";
 export type VehicleType = "sedan" | "bakkie" | "truck";
 export type JobStatus =
-  | "new"
-  | "assigned"
+  | "new" // legacy — treat as searching_driver
+  | "searching_driver"
+  | "assigned" // legacy — treat as confirmed
+  | "confirmed"
   | "in_progress"
   | "completed"
   | "cancelled";
@@ -85,6 +87,9 @@ export type Driver = {
   kyc_license_expiry?: string | null;
   kyc_issues?: string[] | null;
   kyc_raw?: Record<string, unknown> | null;
+  /** Firebase Cloud Messaging device token */
+  fcm_token?: string | null;
+  fcm_updated_at?: string | null;
 };
 
 export type NewDriverApplicationInput = {
@@ -185,6 +190,14 @@ export type Job = {
   /** Smart dispatch score of assigned driver */
   match_score?: number | null;
   match_breakdown?: Record<string, unknown> | null;
+  /** Exclusive timed offer (Uber-style cascade) */
+  offered_driver_id?: string | null;
+  offer_expires_at?: string | null;
+  dispatch_rank?: string[] | null;
+  dispatch_index?: number | null;
+  customer_fcm_token?: string | null;
+  dispatch_attempts?: number | null;
+  dispatch_exhausted?: boolean | null;
   created_at: string;
   updated_at: string;
   drivers?: Driver | null;

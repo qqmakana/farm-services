@@ -12,6 +12,8 @@
     "@paypal/react-paypal-js": "^10.1.2",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.7",
+    "firebase": "^12.16.0",
+    "firebase-admin": "^14.2.0",
     "leaflet": "^1.9.4",
     "next": "16.2.10",
     "openai": "^6.48.0",

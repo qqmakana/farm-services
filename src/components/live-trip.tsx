@@ -3,13 +3,23 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, useCallback } from "react";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
-import { getJobByReference, getRatingForJob, rateTrip, triggerSos } from "@/lib/actions";
+import {
+  getJobByReference,
+  getRatingForJob,
+  rateTrip,
+  saveCustomerFcmToken,
+  triggerSos,
+} from "@/lib/actions";
 import {
   BRAND,
   emergencyMailtoHref,
   emergencySmsHref,
   whatsappTripShareHref,
 } from "@/lib/brand";
+import {
+  isFirebaseClientConfigured,
+  requestFcmToken,
+} from "@/lib/firebase/client";
 import { useJobRealtime } from "@/lib/use-job-realtime";
 import {
   formatMoney,
@@ -18,9 +28,28 @@ import {
   VEHICLE_LABELS,
 } from "@/lib/format";
 import { distanceKm, etaMinutes, osmEmbedUrl } from "@/lib/geo";
+import {
+  isActiveTripStatus,
+  isConfirmedStatus,
+  isSearchingStatus,
+} from "@/lib/job-status";
+import { toWhatsAppNumber } from "@/lib/whatsapp";
 import type { JobStatus, JobWithDriver, Rating } from "@/lib/types";
 
-const STEPS: JobStatus[] = ["new", "assigned", "in_progress", "completed"];
+const STEPS: JobStatus[] = [
+  "searching_driver",
+  "confirmed",
+  "in_progress",
+  "completed",
+];
+
+function stepIndex(status: JobStatus): number {
+  if (isSearchingStatus(status)) return 0;
+  if (isConfirmedStatus(status)) return 1;
+  if (status === "in_progress") return 2;
+  if (status === "completed") return 3;
+  return -1;
+}
 
 export function LiveTrip({
   initialJob,
@@ -49,24 +78,41 @@ export function LiveTrip({
   useJobRealtime(job.id, refresh);
 
   useEffect(() => {
-    const t = setInterval(() => refresh(), 5000);
+    const t = setInterval(() => {
+      void fetch("/api/dispatch/tick", { method: "POST" }).catch(() => null);
+      refresh();
+    }, 4000);
     return () => clearInterval(t);
   }, [refresh]);
 
-  const active = STEPS.indexOf(job.status);
+  useEffect(() => {
+    if (!isSearchingStatus(job.status)) return;
+    if (!isFirebaseClientConfigured()) return;
+    void (async () => {
+      try {
+        const token = await requestFcmToken();
+        if (token) await saveCustomerFcmToken(job.id, token);
+      } catch {
+        /* optional */
+      }
+    })();
+  }, [job.id, job.status]);
+
+  const active = stepIndex(job.status);
   const mapLat = job.driver_lat ?? job.pickup_lat;
   const mapLng = job.driver_lng ?? job.pickup_lng;
-  const isActiveTrip =
-    job.status === "new" ||
-    job.status === "assigned" ||
-    job.status === "in_progress";
+  const isActiveTrip = isActiveTripStatus(job.status);
+  const searching = isSearchingStatus(job.status) && !job.dispatch_exhausted;
+  const noDrivers =
+    Boolean(job.dispatch_exhausted) && isSearchingStatus(job.status);
+  const confirmed = isConfirmedStatus(job.status);
 
   const eta =
     job.driver_lat != null &&
     job.driver_lng != null &&
     job.pickup_lat != null &&
     job.pickup_lng != null &&
-    job.status === "assigned"
+    confirmed
       ? etaMinutes(
           distanceKm(
             { lat: job.driver_lat, lng: job.driver_lng },
@@ -150,10 +196,18 @@ export function LiveTrip({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">
-            {job.status === "new" ? "Booking confirmed" : "Live trip"}
+            {noDrivers
+              ? "Unavailable"
+              : searching
+                ? "Searching"
+                : confirmed
+                  ? "Confirmed"
+                  : "Live trip"}
           </p>
           <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight">
-            {STATUS_LABELS[job.status]}
+            {noDrivers
+              ? "No drivers available"
+              : STATUS_LABELS[job.status]}
           </h1>
           <p className="mt-1 text-sm text-slate-600">
             {SERVICE_LABELS[job.service_type]} · {job.reference_code}
@@ -172,7 +226,68 @@ export function LiveTrip({
         ) : null}
       </div>
 
-      {job.status === "new" || job.status === "assigned" ? (
+      {searching ? (
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-[#1A4D3A]/20 bg-[#E8F5E9] px-4 py-8 text-center">
+          <span className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-[#1A4D3A] border-t-transparent" />
+          <p className="text-base font-bold text-[#1A4D3A]">
+            Finding your driver...
+          </p>
+          <p className="max-w-sm text-sm text-slate-600">
+            Offering to the best-matched online driver
+            {job.dispatch_attempts
+              ? ` (attempt ${job.dispatch_attempts}/3)`
+              : ""}
+            . If they don&apos;t accept in 30 seconds, we try the next one.
+          </p>
+        </div>
+      ) : null}
+
+      {noDrivers ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-6 text-center">
+          <p className="text-base font-bold text-amber-950">
+            No drivers available. Try again later.
+          </p>
+          <p className="mt-2 text-sm text-amber-900/80">
+            Three drivers were offered and none accepted. You can book again
+            from the home screen, or WhatsApp dispatch on {BRAND.phone}.
+          </p>
+          <a
+            href="/"
+            className="mt-4 inline-flex rounded-xl bg-[#1A4D3A] px-4 py-2.5 text-sm font-bold text-white"
+          >
+            Back to home
+          </a>
+        </div>
+      ) : null}
+
+      {confirmed && job.drivers ? (
+        <div className="space-y-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-950">
+          <p className="font-bold">
+            ✅ Driver Confirmed! {job.drivers.full_name} (
+            {VEHICLE_LABELS[job.drivers.vehicle_type]})
+            {eta != null ? ` — about ${eta} mins` : " — on the way"}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={`tel:${job.drivers.phone}`}
+              className="rounded-lg bg-[#1A4D3A] px-3 py-2 text-xs font-bold text-white"
+            >
+              Call driver
+            </a>
+            <a
+              href={`https://wa.me/${toWhatsAppNumber(job.drivers.phone)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-lg bg-[#25D366] px-3 py-2 text-xs font-bold text-white"
+            >
+              WhatsApp driver
+            </a>
+            <DriverVerifiedBadge verified={job.drivers.id_verified} compact />
+          </div>
+        </div>
+      ) : null}
+
+      {searching || confirmed ? (
         <a
           href={whatsappTripShareHref(
             job.pickup_landmark,

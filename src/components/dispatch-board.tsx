@@ -27,11 +27,13 @@ type OpsFilter =
   | "cash";
 
 const STATUSES: JobStatus[] = [
-  "new",
-  "assigned",
+  "searching_driver",
+  "confirmed",
   "in_progress",
   "completed",
   "cancelled",
+  "new",
+  "assigned",
 ];
 
 function detailsSummary(job: JobWithDriver) {
@@ -64,9 +66,17 @@ export function DispatchBoard({
 
   const filtered = jobs.filter((job) => {
     const needs = jobNeedsFromJob(job);
-    if (filter === "new") return job.status === "new";
+    if (filter === "new")
+      return (
+        job.status === "new" ||
+        job.status === "searching_driver"
+      );
     if (filter === "active")
-      return job.status === "assigned" || job.status === "in_progress";
+      return (
+        job.status === "assigned" ||
+        job.status === "confirmed" ||
+        job.status === "in_progress"
+      );
     if (filter === "done")
       return job.status === "completed" || job.status === "cancelled";
     if (filter === "night") return needs.night;
@@ -327,7 +337,8 @@ export function DispatchBoard({
                     </span>
                   )}
 
-                  {job.status === "new" && (
+                  {(job.status === "new" ||
+                    job.status === "searching_driver") && (
                     <button
                       type="button"
                       disabled={pending}

@@ -10,8 +10,10 @@ export const SERVICE_LABELS: Record<ServiceType, string> = {
 export { VEHICLE_LABELS };
 
 export const STATUS_LABELS: Record<JobStatus, string> = {
-  new: "Finding your driver",
-  assigned: "Driver is on the way",
+  new: "Finding your driver…",
+  searching_driver: "Finding your driver…",
+  assigned: "Confirmed — driver on the way",
+  confirmed: "Confirmed — driver on the way",
   in_progress: "Trip in progress",
   completed: "Completed",
   cancelled: "Cancelled",
@@ -50,8 +52,10 @@ export function serviceBadgeClass(type: ServiceType) {
 export function statusBadgeClass(status: JobStatus) {
   switch (status) {
     case "new":
+    case "searching_driver":
       return "bg-rose-100 text-rose-900";
     case "assigned":
+    case "confirmed":
       return "bg-indigo-100 text-indigo-900";
     case "in_progress":
       return "bg-orange-100 text-orange-950";

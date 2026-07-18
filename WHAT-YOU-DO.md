@@ -66,6 +66,7 @@ In Supabase SQL Editor, run these files in order if you have not:
 2. `supabase/PERFECT_UPGRADE.sql` (driver Night/Heavy/Village opt-ins + ID/license storage)
 3. `supabase/SMART_DISPATCH.sql` (acceptance-rate counters + match score audit on jobs)
 4. `supabase/KYC_AI.sql` (AI document scan status + OCR audit fields on drivers)
+5. `supabase/AUTO_DISPATCH.sql` (exclusive timed offers + FCM token columns)
 
 ## D. PayPal live + webhook (required for production money)
 
@@ -90,13 +91,19 @@ In Supabase SQL Editor, run these files in order if you have not:
 5. Ops → `/dispatch` → **Docs to review** → view issues → **Mark verified** or **Re-run AI KYC**  
 Customers see **ID & License Verified** when `id_verified` is true.
 
-## D3. Free WhatsApp booking (MVP — no Meta API fees)
+## D3. Auto-dispatch + free FCM push (Uber-style)
 
-Ride / Delivery / Farm checkout uses **Send Booking via WhatsApp** → opens
-`wa.me/27636213590` with a pre-filled message (landmarks, details, cash/card).
-You confirm and assign the driver manually in `/dispatch` (Smart Dispatch still
-helps when you create jobs from the office). Paid Meta/OpenAI WhatsApp automation
-is paused for cost control.
+Step-by-step Firebase console guide: **`docs/FIREBASE_FCM_SETUP.md`**
+
+1. Run `supabase/AUTO_DISPATCH.sql`.
+2. Free Firebase Spark project → Web app + VAPID + service account JSON.
+3. Fill `.env.local` / Vercel (keys already stubbed — see `.env.example`).
+4. Driver **Go online** (or **Allow notifications**) → saves `rr_drivers.fcm_token`.
+5. Customer **Request [Service]** → `searching_driver` → FCM to best driver.
+6. Driver **Accept** → `confirmed` → customer FCM + Supabase Realtime.
+7. Decline / 30s timeout → next driver (max 3).
+
+Without keys: in-app offers still work; server logs `[fcm:mock]`.
 
 ## E. Run / deploy
 

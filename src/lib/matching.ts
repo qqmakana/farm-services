@@ -1,7 +1,11 @@
-import { createAdminClient } from "./supabase/admin";
+import { offerNextDriver } from "./dispatch/offer-chain";
 import { rankDriversForJob } from "./dispatch-score";
 import { jobNeedsFromJob } from "./job-needs";
+import { incrementDriverOfferStat } from "./matching-stats";
+import { createAdminClient } from "./supabase/admin";
 import type { Driver, Job, VehicleType } from "./types";
+
+export { incrementDriverOfferStat };
 
 function refCode() {
   return `RU-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
@@ -17,28 +21,9 @@ export async function getFareRule(vehicle: VehicleType) {
   return data;
 }
 
-export async function incrementDriverOfferStat(
-  driverId: string,
-  field: "offers_received" | "offers_accepted" | "offers_declined",
-  by = 1,
-) {
-  const admin = createAdminClient();
-  const { data } = await admin
-    .from("rr_drivers")
-    .select(field)
-    .eq("id", driverId)
-    .maybeSingle();
-  const current = Number((data as Record<string, number> | null)?.[field]) || 0;
-  await admin
-    .from("rr_drivers")
-    .update({ [field]: current + by })
-    .eq("id", driverId);
-}
-
 /**
- * Smart dispatch: rank online drivers by composite score
- * (vehicle · opt-in · rating · acceptance · proximity · verified),
- * offer to eligible pool, auto-assign highest score.
+ * Smart dispatch: rank online drivers, store the queue, offer exclusively
+ * to #1 with free FCM push + 30s window. Driver must ACCEPT (no auto-assign).
  */
 export async function matchJobAfterCreate(jobId: string) {
   const admin = createAdminClient();
@@ -76,60 +61,44 @@ export async function matchJobAfterCreate(jobId: string) {
     pickup,
   });
 
-  const now = new Date().toISOString();
-  await admin.from("rr_jobs").update({ offered_at: now }).eq("id", jobId);
+  const rankIds = ranked.map((r) => r.driver.id);
+  const top = ranked[0];
 
-  // Offer to top scorers (cap keeps offer noise down as fleet grows)
-  const offerPool = ranked.slice(0, 12);
-
-  for (const { driver } of offerPool) {
-    await admin.from("rr_job_applications").upsert(
-      {
-        job_id: jobId,
-        driver_id: driver.id,
-        status: "pending",
-      },
-      { onConflict: "job_id,driver_id" },
-    );
-    await incrementDriverOfferStat(driver.id, "offers_received");
-  }
-
-  const winner = offerPool[0];
-  if (!winner) return typedJob;
-
-  const { data: assigned } = await admin
+  await admin
     .from("rr_jobs")
     .update({
-      driver_id: winner.driver.id,
-      status: "assigned",
-      assigned_at: now,
-      driver_lat: winner.driver.last_lat,
-      driver_lng: winner.driver.last_lng,
-      driver_location_at: winner.driver.last_location_at ?? now,
-      match_score: winner.score,
-      match_breakdown: winner.breakdown,
+      status: "searching_driver",
+      dispatch_rank: rankIds,
+      dispatch_index: 0,
+      dispatch_attempts: 0,
+      dispatch_exhausted: false,
+      offered_driver_id: null,
+      offer_expires_at: null,
+      offered_at: new Date().toISOString(),
+      match_score: top?.score ?? null,
+      match_breakdown: top?.breakdown ?? null,
     })
     .eq("id", jobId)
-    .eq("status", "new")
-    .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
-    .maybeSingle();
+    .in("status", ["searching_driver", "new"]);
 
-  if (assigned) {
-    await incrementDriverOfferStat(winner.driver.id, "offers_accepted");
+  if (rankIds.length === 0) {
+    console.log("[dispatch] no online drivers for", jobId);
     await admin
-      .from("rr_job_applications")
-      .update({ status: "accepted" })
-      .eq("job_id", jobId)
-      .eq("driver_id", winner.driver.id);
-    await admin
-      .from("rr_job_applications")
-      .update({ status: "rejected" })
-      .eq("job_id", jobId)
-      .eq("status", "pending")
-      .neq("driver_id", winner.driver.id);
+      .from("rr_jobs")
+      .update({
+        dispatch_exhausted: true,
+        dispatcher_notes: [
+          typedJob.dispatcher_notes,
+          "No online drivers available",
+        ]
+          .filter(Boolean)
+          .join(" · "),
+      })
+      .eq("id", jobId);
+    return { ...typedJob, dispatch_exhausted: true, status: "searching_driver" };
   }
 
-  return assigned ?? typedJob;
+  return (await offerNextDriver(jobId)) ?? typedJob;
 }
 
 export async function insertPaidJob(row: Record<string, unknown>) {

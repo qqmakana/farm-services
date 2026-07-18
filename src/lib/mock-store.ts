@@ -374,7 +374,7 @@ function withDriver(job: Job): JobWithDriver {
 
 function assignJobToDriver(job: Job, driver: Driver, at: string) {
   job.driver_id = driver.id;
-  job.status = "assigned";
+  job.status = "confirmed";
   job.assigned_at = at;
   job.driver_lat = driver.last_lat;
   job.driver_lng = driver.last_lng;
@@ -567,8 +567,14 @@ export const mockRepo = {
     job.updated_at = nowIso;
   },
 
+  /** Rank drivers and offer exclusively to #1 (no auto-assign — driver must accept). */
   autoMatchIfPossible(job: Job): JobWithDriver {
-    if (job.status !== "new") return withDriver(job);
+    if (job.status !== "new" && job.status !== "searching_driver") {
+      return withDriver(job);
+    }
+    job.status = "searching_driver";
+    job.dispatch_attempts = 0;
+    job.dispatch_exhausted = false;
 
     const needs = jobNeedsFromJob(job);
     const online = store().drivers.filter(
@@ -588,46 +594,83 @@ export const mockRepo = {
       pickup,
     });
 
-    if (ranked.length === 0) {
+    job.dispatch_rank = ranked.map((r) => r.driver.id);
+    job.dispatch_index = 0;
+    job.match_score = ranked[0]?.score ?? null;
+    job.match_breakdown = (ranked[0]?.breakdown as unknown as Record<
+      string,
+      unknown
+    >) ?? null;
+
+    return mockRepo.offerNextMock(job);
+  },
+
+  offerNextMock(job: Job): JobWithDriver {
+    if (job.status !== "new" && job.status !== "searching_driver") {
+      return withDriver(job);
+    }
+    job.status = "searching_driver";
+    if (job.dispatch_exhausted) return withDriver(job);
+    if ((Number(job.dispatch_attempts) || 0) >= 3) {
+      job.dispatch_exhausted = true;
+      job.offered_driver_id = null;
+      job.offer_expires_at = null;
       return withDriver(job);
     }
 
-    for (const { driver } of ranked.slice(0, 12)) {
-      driver.offers_received = (driver.offers_received ?? 0) + 1;
-    }
-
-    const chosen = ranked[0].driver;
-    job.match_score = ranked[0].score;
-    job.match_breakdown = ranked[0].breakdown as unknown as Record<
-      string,
-      unknown
-    >;
-
-    const nowIso = new Date().toISOString();
-    assignJobToDriver(job, chosen, nowIso);
-    chosen.offers_accepted = (chosen.offers_accepted ?? 0) + 1;
-
-    let acceptedApp = store().applications.find(
-      (a) =>
-        a.job_id === job.id &&
-        a.driver_id === chosen.id &&
-        a.status === "pending",
+    const rank = job.dispatch_rank ?? [];
+    const declined = new Set(
+      store()
+        .applications.filter(
+          (a) =>
+            a.job_id === job.id &&
+            (a.status === "withdrawn" || a.status === "rejected"),
+        )
+        .map((a) => a.driver_id),
     );
-    if (!acceptedApp) {
-      acceptedApp = {
-        id: uid(),
-        job_id: job.id,
-        driver_id: chosen.id,
-        status: "accepted",
-        note: "Auto-matched",
-        created_at: nowIso,
-      };
-      store().applications.unshift(acceptedApp);
-    } else {
-      acceptedApp.status = "accepted";
-    }
-    rejectOtherPendingApps(job.id, acceptedApp.id);
 
+    let i = Math.max(0, Number(job.dispatch_index) || 0);
+    for (; i < rank.length; i++) {
+      const driverId = rank[i];
+      if (!driverId || declined.has(driverId)) continue;
+      const driver = store().drivers.find(
+        (d) => d.id === driverId && d.is_online && d.is_active,
+      );
+      if (!driver) continue;
+
+      const nowIso = new Date().toISOString();
+      job.offered_driver_id = driver.id;
+      job.offer_expires_at = new Date(
+        Date.now() + 30_000,
+      ).toISOString();
+      job.offered_at = nowIso;
+      job.dispatch_index = i;
+      job.dispatch_attempts = (Number(job.dispatch_attempts) || 0) + 1;
+      job.updated_at = nowIso;
+      driver.offers_received = (driver.offers_received ?? 0) + 1;
+
+      const existing = store().applications.find(
+        (a) => a.job_id === job.id && a.driver_id === driver.id,
+      );
+      if (existing) {
+        existing.status = "pending";
+      } else {
+        store().applications.unshift({
+          id: uid(),
+          job_id: job.id,
+          driver_id: driver.id,
+          status: "pending",
+          note: "Exclusive offer",
+          created_at: nowIso,
+        });
+      }
+      console.log("[fcm:mock] New job offer →", driver.full_name, job.reference_code);
+      return withDriver(job);
+    }
+
+    job.offered_driver_id = null;
+    job.offer_expires_at = null;
+    job.dispatch_exhausted = true;
     return withDriver(job);
   },
 
@@ -646,7 +689,7 @@ export const mockRepo = {
       id: uid(),
       reference_code: refCode(),
       service_type: input.service_type,
-      status: "new",
+      status: "searching_driver",
       required_vehicle: input.required_vehicle,
       customer_name: input.customer_name,
       customer_phone: input.customer_phone,
@@ -737,7 +780,7 @@ export const mockRepo = {
     const job = store().jobs.find((j) => j.id === jobId);
     const driver = store().drivers.find((d) => d.id === driverId);
     if (!job || !driver) throw new Error("Job or driver not found");
-    if (job.status !== "new") {
+    if (job.status !== "new" && job.status !== "searching_driver") {
       throw new Error("Offer already taken");
     }
     if (!vehicleFitsJob(driver.vehicle_type, job.required_vehicle)) {
@@ -768,6 +811,9 @@ export const mockRepo = {
     }
 
     assignJobToDriver(job, driver, nowIso);
+    job.offered_driver_id = null;
+    job.offer_expires_at = null;
+    job.dispatch_exhausted = false;
     driver.offers_accepted = (driver.offers_accepted ?? 0) + 1;
     rejectOtherPendingApps(jobId, app.id);
     return withDriver(job);
@@ -786,6 +832,13 @@ export const mockRepo = {
     );
     if (!app) throw new Error("Offer not found");
     app.status = "withdrawn";
+    const job = store().jobs.find((j) => j.id === jobId);
+    if (job && (job.status === "new" || job.status === "searching_driver")) {
+      job.offered_driver_id = null;
+      job.offer_expires_at = null;
+      job.dispatch_index = (Number(job.dispatch_index) || 0) + 1;
+      mockRepo.offerNextMock(job);
+    }
     return {
       ...app,
       drivers: store().drivers.find((d) => d.id === driverId) ?? null,
@@ -797,8 +850,8 @@ export const mockRepo = {
     const job = store().jobs.find((j) => j.id === jobId);
     if (!job) throw new Error("Job not found");
     if (job.driver_id !== driverId) throw new Error("Not your job");
-    if (job.status !== "assigned") {
-      throw new Error("Job must be assigned before starting");
+    if (job.status !== "confirmed" && job.status !== "assigned") {
+      throw new Error("Job must be confirmed before starting");
     }
     const nowIso = new Date().toISOString();
     job.status = "in_progress";
@@ -864,7 +917,16 @@ export const mockRepo = {
       .applications.filter((a) => {
         if (a.driver_id !== driverId || a.status !== "pending") return false;
         const job = store().jobs.find((j) => j.id === a.job_id);
-        return job?.status === "new";
+        if (
+          !job ||
+          (job.status !== "new" && job.status !== "searching_driver")
+        ) {
+          return false;
+        }
+        if (job.offered_driver_id && job.offered_driver_id !== driverId) {
+          return false;
+        }
+        return true;
       })
       .map((a) => ({
         ...a,
@@ -881,7 +943,9 @@ export const mockRepo = {
     const job = store().jobs.find(
       (j) =>
         j.driver_id === driverId &&
-        (j.status === "assigned" || j.status === "in_progress"),
+        (j.status === "confirmed" ||
+          j.status === "assigned" ||
+          j.status === "in_progress"),
     );
     return job ? withDriver(job) : null;
   },

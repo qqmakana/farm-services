@@ -6,6 +6,13 @@ import { mockRepo } from "./mock-store";
 import { calculateFare, type FareBreakdown } from "./fares";
 import { isSouthAfricanMobile } from "./brand";
 import {
+  buildCustomerConfirmPush,
+  expireStaleOffers,
+  offerNextDriver,
+} from "./dispatch/offer-chain";
+import { sendPushToToken } from "./firebase/admin";
+import { isConfirmedStatus, isSearchingStatus } from "./job-status";
+import {
   decisionToDriverPatch,
   runDriverKyc,
   runMockDriverKyc,
@@ -21,6 +28,7 @@ import { paypalRefundCapture } from "./paypal-refund";
 import { createClient, isSupabaseConfigured } from "./supabase/server";
 import type {
   Driver,
+  Job,
   JobApplication,
   JobStatus,
   JobWithDriver,
@@ -106,6 +114,12 @@ export async function getJobByReference(
 ): Promise<JobWithDriver | null> {
   if (!useAdmin()) {
     return mockRepo.getJobByReference(code);
+  }
+
+  try {
+    await expireStaleOffers(5);
+  } catch {
+    /* non-fatal */
   }
 
   const supabase = useAdmin() ? createAdminClient() : await createClient();
@@ -694,6 +708,7 @@ export async function createJob(input: NewJobInput) {
   const paidAt = isCash ? null : new Date().toISOString();
   const row = {
     reference_code: refCode(),
+    status: "searching_driver",
     service_type: input.service_type,
     required_vehicle: input.required_vehicle,
     customer_name: input.customer_name,
@@ -1024,11 +1039,14 @@ export async function assignDriver(jobId: string, driverId: string) {
     .from("rr_jobs")
     .update({
       driver_id: driverId,
-      status: "assigned",
+      status: "confirmed",
       assigned_at: now,
       driver_lat: driverRow.last_lat,
       driver_lng: driverRow.last_lng,
       driver_location_at: driverRow.last_location_at ?? now,
+      offered_driver_id: null,
+      offer_expires_at: null,
+      dispatch_exhausted: false,
     })
     .eq("id", jobId)
     .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
@@ -1164,15 +1182,54 @@ export async function updateDriverLocation(
   return data as Driver;
 }
 
+export async function saveDriverFcmToken(driverId: string, token: string) {
+  if (!token.trim()) throw new Error("Missing FCM token");
+  if (!useAdmin()) {
+    const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
+    if (!driver) throw new Error("Driver not found");
+    driver.fcm_token = token.trim();
+    driver.fcm_updated_at = new Date().toISOString();
+    revalidatePath("/driver");
+    return driver;
+  }
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("rr_drivers")
+    .update({
+      fcm_token: token.trim(),
+      fcm_updated_at: new Date().toISOString(),
+    })
+    .eq("id", driverId)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  revalidatePath("/driver");
+  return data as Driver;
+}
+
+export async function saveCustomerFcmToken(jobId: string, token: string) {
+  if (!token.trim()) return null;
+  if (!useAdmin()) {
+    const job = mockRepo.listJobs().find((j) => j.id === jobId);
+    if (job) job.customer_fcm_token = token.trim();
+    return job ?? null;
+  }
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("rr_jobs")
+    .update({ customer_fcm_token: token.trim() })
+    .eq("id", jobId)
+    .select("id")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function acceptOffer(jobId: string, driverId: string) {
   if (!useAdmin()) {
     const job = mockRepo.acceptOffer(jobId, driverId);
     revalidateAll();
     return job;
-  }
-
-  if (!useAdmin()) {
-    throw new Error("Service role required to accept offers.");
   }
 
   const admin = createAdminClient();
@@ -1182,7 +1239,7 @@ export async function acceptOffer(jobId: string, driverId: string) {
   ]);
 
   if (!jobRow || !driverRow) throw new Error("Job or driver not found");
-  if (jobRow.status !== "new") throw new Error("Offer already taken");
+  if (!isSearchingStatus(jobRow.status)) throw new Error("Offer already taken");
   if (!vehicleFitsJob(driverRow.vehicle_type, jobRow.required_vehicle)) {
     throw new Error(
       `This job needs a ${jobRow.required_vehicle}. You drive a ${driverRow.vehicle_type}.`,
@@ -1194,14 +1251,17 @@ export async function acceptOffer(jobId: string, driverId: string) {
     .from("rr_jobs")
     .update({
       driver_id: driverId,
-      status: "assigned",
+      status: "confirmed",
       assigned_at: now,
       driver_lat: driverRow.last_lat,
       driver_lng: driverRow.last_lng,
       driver_location_at: driverRow.last_location_at ?? now,
+      offered_driver_id: null,
+      offer_expires_at: null,
+      dispatch_exhausted: false,
     })
     .eq("id", jobId)
-    .eq("status", "new")
+    .in("status", ["searching_driver", "new"])
     .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
     .maybeSingle();
 
@@ -1226,6 +1286,11 @@ export async function acceptOffer(jobId: string, driverId: string) {
 
   await incrementDriverOfferStat(driverId, "offers_accepted");
 
+  await sendPushToToken(
+    (jobRow as Job).customer_fcm_token,
+    buildCustomerConfirmPush(assigned as Job, driverRow as Driver),
+  );
+
   revalidateAll();
   return assigned as JobWithDriver;
 }
@@ -1235,10 +1300,6 @@ export async function declineOffer(jobId: string, driverId: string) {
     const app = mockRepo.declineOffer(jobId, driverId);
     revalidateAll();
     return app;
-  }
-
-  if (!useAdmin()) {
-    throw new Error("Service role required to decline offers.");
   }
 
   const admin = createAdminClient();
@@ -1255,6 +1316,25 @@ export async function declineOffer(jobId: string, driverId: string) {
   if (!data) throw new Error("Offer not found");
 
   await incrementDriverOfferStat(driverId, "offers_declined");
+
+  const { data: job } = await admin
+    .from("rr_jobs")
+    .select("dispatch_index, status")
+    .eq("id", jobId)
+    .single();
+
+  if (job && isSearchingStatus(job.status)) {
+    await admin
+      .from("rr_jobs")
+      .update({
+        offered_driver_id: null,
+        offer_expires_at: null,
+        dispatch_index: (Number(job.dispatch_index) || 0) + 1,
+      })
+      .eq("id", jobId)
+      .in("status", ["searching_driver", "new"]);
+    await offerNextDriver(jobId);
+  }
 
   revalidateAll();
   return data as JobApplication;
@@ -1280,8 +1360,8 @@ export async function startTrip(jobId: string, driverId: string) {
 
   if (fetchErr || !jobRow) throw new Error(fetchErr?.message ?? "Job not found");
   if (jobRow.driver_id !== driverId) throw new Error("Not your job");
-  if (jobRow.status !== "assigned") {
-    throw new Error("Job must be assigned before starting");
+  if (!isConfirmedStatus(jobRow.status)) {
+    throw new Error("Job must be confirmed before starting");
   }
 
   const now = new Date().toISOString();
@@ -1441,6 +1521,12 @@ export async function listIncomingOffers(driverId: string) {
     return mockRepo.listIncomingOffers(driverId);
   }
 
+  try {
+    await expireStaleOffers(10);
+  } catch {
+    /* non-fatal */
+  }
+
   const supabase = useAdmin() ? createAdminClient() : await createClient();
   const { data, error } = await supabase
     .from("rr_job_applications")
@@ -1451,9 +1537,16 @@ export async function listIncomingOffers(driverId: string) {
 
   if (error) throw new Error(error.message);
 
-  return (data ?? []).filter(
-    (a) => a.jobs && (a.jobs as { status?: string }).status === "new",
-  ) as JobApplication[];
+  return (data ?? []).filter((a) => {
+    const j = a.jobs as {
+      status?: string;
+      offered_driver_id?: string | null;
+    } | null;
+    if (!j || !isSearchingStatus(j.status)) return false;
+    // Exclusive offer: only the currently offered driver sees it
+    if (j.offered_driver_id && j.offered_driver_id !== driverId) return false;
+    return true;
+  }) as JobApplication[];
 }
 
 export async function listDriverActiveJob(driverId: string) {
@@ -1466,7 +1559,7 @@ export async function listDriverActiveJob(driverId: string) {
     .from("rr_jobs")
     .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
     .eq("driver_id", driverId)
-    .in("status", ["assigned", "in_progress"])
+    .in("status", ["confirmed", "assigned", "in_progress"])
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();

@@ -21,7 +21,9 @@ export default async function DispatchPage() {
     getDataSource(),
   ]);
 
-  const newCount = jobs.filter((j) => j.status === "new").length;
+  const newCount = jobs.filter(
+    (j) => j.status === "new" || j.status === "searching_driver",
+  ).length;
   const approvedCount = allDrivers.filter(
     (d) => d.approval_status === "approved",
   ).length;

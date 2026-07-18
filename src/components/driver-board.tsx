@@ -1,13 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import {
   acceptOffer,
   completeTrip,
   declineOffer,
   listIncomingOffers,
   listDriverActiveJob,
+  saveDriverFcmToken,
   setDriverOnline,
   startTrip,
   updateDriverLocation,
@@ -19,10 +20,16 @@ import {
   STATUS_LABELS,
   VEHICLE_LABELS,
 } from "@/lib/format";
+import { DriverPushPrompt } from "@/components/driver-push-prompt";
 import { DriverTrustPanel } from "@/components/driver-trust-panel";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
+import {
+  isFirebaseClientConfigured,
+  requestFcmToken,
+} from "@/lib/firebase/client";
 import type { Driver, JobApplication, JobWithDriver } from "@/lib/types";
 import { distanceKm, etaMinutes } from "@/lib/geo";
+import { useDriverOffersRealtime } from "@/lib/use-driver-offers-realtime";
 
 export function DriverBoard({
   drivers,
@@ -40,21 +47,26 @@ export function DriverBoard({
 
   const driver = drivers.find((d) => d.id === driverId);
 
-  async function refreshDriverViews(id: string) {
+  const refreshDriverViews = useCallback(async (id: string) => {
+    void fetch("/api/dispatch/tick", { method: "POST" }).catch(() => null);
     const [incoming, current] = await Promise.all([
       listIncomingOffers(id),
       listDriverActiveJob(id),
     ]);
     setOffers(incoming);
     setActive(current);
-  }
+  }, []);
+
+  useDriverOffersRealtime(driverId || null, () => {
+    if (driverId) void refreshDriverViews(driverId);
+  });
 
   useEffect(() => {
     if (!driverId) return;
     void refreshDriverViews(driverId);
     const t = setInterval(() => void refreshDriverViews(driverId), 4000);
     return () => clearInterval(t);
-  }, [driverId, jobs]);
+  }, [driverId, jobs, refreshDriverViews]);
 
   useEffect(() => {
     if (!driver?.is_online || !driverId) return;
@@ -105,6 +117,16 @@ export function DriverBoard({
         }
       }
       await setDriverOnline(driverId, online, lat, lng);
+
+      // Free FCM: ask permission + save token when going online
+      if (online && isFirebaseClientConfigured()) {
+        try {
+          const token = await requestFcmToken();
+          if (token) await saveDriverFcmToken(driverId, token);
+        } catch {
+          /* driver can still use in-app offers */
+        }
+      }
     });
   }
 
@@ -118,6 +140,7 @@ export function DriverBoard({
 
   return (
     <div className="space-y-4">
+      {driverId ? <DriverPushPrompt driverId={driverId} /> : null}
       <div className="ru-card flex flex-wrap items-center justify-between gap-3 p-4">
         <label className="text-sm font-medium text-slate-700">
           Driver account
@@ -199,7 +222,8 @@ export function DriverBoard({
             <strong>Dropoff:</strong> {active.dropoff_landmark}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            {active.status === "assigned" && (
+            {(active.status === "assigned" ||
+              active.status === "confirmed") && (
               <button
                 type="button"
                 disabled={pending}
@@ -209,8 +233,7 @@ export function DriverBoard({
                 Start trip
               </button>
             )}
-            {(active.status === "assigned" ||
-              active.status === "in_progress") && (
+            {active.status === "in_progress" && (
               <button
                 type="button"
                 disabled={pending}
