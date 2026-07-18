@@ -1,7 +1,10 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
+
+const UBER_PATHS = new Set(["/", "/ride", "/delivery", "/farm"]);
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -214,9 +217,15 @@ export function NavInstallShare() {
 
 /** Bottom banner — always shown until installed (not hidable forever). */
 export function InstallShareBar() {
+  const pathname = usePathname();
   const { standalone, ios, helpOpen, setHelpOpen, note, install, share, deferred } =
     useInstallActions();
   const [minimized, setMinimized] = useState(false);
+
+  // Uber map shell has its own Share/Install in the header — avoid covering the sheet
+  if (UBER_PATHS.has(pathname)) {
+    return null;
+  }
 
   if (standalone) {
     return (

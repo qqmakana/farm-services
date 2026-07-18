@@ -7,7 +7,7 @@ export type JobStatus =
   | "completed"
   | "cancelled";
 export type PaymentStatus = "unpaid" | "cash_collected" | "paid_online";
-export type PaymentMethod = "paypal" | "card" | "wallet";
+export type PaymentMethod = "paypal" | "card" | "wallet" | "cash";
 export type ApplicationStatus =
   | "pending"
   | "accepted"
@@ -27,11 +27,14 @@ export type DeliveryDetails = {
   item_description: string;
   size: "small" | "medium" | "large" | "xl";
   needs_helpers: boolean;
+  /** Who is sending — individual vs local store (ops analytics). */
+  sender_type?: "individual" | "business";
 };
 
 export type FarmDetails = {
   items: Array<{ name: string; qty: number; price: number }>;
   notes?: string;
+  sender_type?: "individual" | "business";
 };
 
 export type JobDetails =
@@ -56,6 +59,14 @@ export type Driver = {
   rating_count: number;
   notes: string | null;
   created_at: string;
+  /** Opt-in niches — default true when missing (older rows). */
+  prefer_night?: boolean;
+  prefer_heavy?: boolean;
+  prefer_village_routes?: boolean;
+  license_number?: string | null;
+  id_doc_url?: string | null;
+  license_doc_url?: string | null;
+  docs_submitted_at?: string | null;
 };
 
 export type NewDriverApplicationInput = {
@@ -180,11 +191,13 @@ export type NewJobInput = {
   dispatcher_notes?: string | null;
   shop_id?: string | null;
   product_summary?: string | null;
-  payment: {
-    method: "paypal";
-    paypalOrderId: string;
-    paypalCaptureId: string;
-  };
+  payment:
+    | {
+        method: "paypal" | "card";
+        paypalOrderId: string;
+        paypalCaptureId: string;
+      }
+    | { method: "cash" };
 };
 
 export type NewShopInput = {

@@ -2,11 +2,17 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { approveDriverHire, rejectDriverHire } from "@/lib/actions";
+import {
+  approveDriverHire,
+  getDriverDocSignedUrl,
+  rejectDriverHire,
+  setDriverIdVerified,
+} from "@/lib/actions";
+import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
 import type { Driver, DriverApprovalStatus } from "@/lib/types";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
 
-type Filter = "all" | DriverApprovalStatus;
+type Filter = "all" | DriverApprovalStatus | "docs";
 
 function statusLabel(status: DriverApprovalStatus) {
   switch (status) {
@@ -51,11 +57,17 @@ export function HireQueue({ drivers }: { drivers: Driver[] }) {
       approved: drivers.filter((d) => d.approval_status === "approved").length,
       pending: drivers.filter((d) => d.approval_status === "pending").length,
       rejected: drivers.filter((d) => d.approval_status === "rejected").length,
+      docs: drivers.filter(
+        (d) => d.docs_submitted_at && !d.id_verified,
+      ).length,
     };
   }, [drivers]);
 
   const visible = useMemo(() => {
     if (filter === "all") return drivers;
+    if (filter === "docs") {
+      return drivers.filter((d) => d.docs_submitted_at && !d.id_verified);
+    }
     return drivers.filter((d) => d.approval_status === filter);
   }, [drivers, filter]);
 
@@ -71,9 +83,22 @@ export function HireQueue({ drivers }: { drivers: Driver[] }) {
     });
   }
 
+  function openDoc(path: string | null | undefined) {
+    if (!path) return;
+    startTransition(async () => {
+      try {
+        const url = await getDriverDocSignedUrl(path);
+        window.open(url, "_blank", "noopener,noreferrer");
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Could not open document");
+      }
+    });
+  }
+
   const filters: { key: Filter; label: string; count: number }[] = [
     { key: "all", label: "Everyone in app", count: counts.all },
     { key: "approved", label: "Approved", count: counts.approved },
+    { key: "docs", label: "Docs to review", count: counts.docs },
     { key: "pending", label: "Pending", count: counts.pending },
     { key: "rejected", label: "Rejected", count: counts.rejected },
   ];
@@ -84,8 +109,8 @@ export function HireQueue({ drivers }: { drivers: Driver[] }) {
         Drivers in the app
       </h2>
       <p className="mt-1 text-sm text-slate-600">
-        See everyone who applied in Village Ride. SA numbers are{" "}
-        <strong>auto-approved by the app</strong> — you can still override.
+        SA numbers are auto-approved to drive. Review ID/license uploads before
+        marking <strong>ID &amp; License Verified</strong>.
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -113,15 +138,14 @@ export function HireQueue({ drivers }: { drivers: Driver[] }) {
 
       {visible.length === 0 ? (
         <p className="mt-4 text-sm text-slate-500">
-          No drivers in this filter yet. They must apply inside the Village Ride
-          app (/driver).
+          No drivers in this filter yet.
         </p>
       ) : (
         <ul className="mt-4 divide-y divide-emerald-100 overflow-hidden rounded-lg border border-emerald-100 bg-white">
           {visible.map((d) => (
             <li
               key={d.id}
-              className="flex flex-wrap items-center justify-between gap-3 px-3 py-3 text-sm"
+              className="flex flex-wrap items-start justify-between gap-3 px-3 py-3 text-sm"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -131,6 +155,7 @@ export function HireQueue({ drivers }: { drivers: Driver[] }) {
                   >
                     {statusLabel(d.approval_status)}
                   </span>
+                  <DriverVerifiedBadge verified={d.id_verified} compact />
                   {d.is_online && (
                     <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-900">
                       Online now
@@ -139,16 +164,66 @@ export function HireQueue({ drivers }: { drivers: Driver[] }) {
                 </div>
                 <p className="mt-0.5 text-slate-600">
                   {d.phone} · {VEHICLE_LABELS[d.vehicle_type]}
-                  {d.notes ? ` · ${d.notes}` : ""}
+                  {d.license_number ? ` · License ${d.license_number}` : ""}
+                </p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Opt-in:{" "}
+                  {[
+                    d.prefer_night !== false && "Night",
+                    d.prefer_heavy !== false && "Heavy",
+                    d.prefer_village_routes !== false && "Village",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "None"}
                 </p>
                 <p className="mt-0.5 text-xs text-slate-400">
                   Applied {when(d.created_at)}
-                  {d.rating_count > 0
-                    ? ` · ${d.rating_avg}★ (${d.rating_count})`
-                    : ""}
+                  {d.docs_submitted_at
+                    ? ` · Docs ${when(d.docs_submitted_at)}`
+                    : " · No docs yet"}
                 </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {d.id_doc_url ? (
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-sky-700 underline"
+                      onClick={() => openDoc(d.id_doc_url)}
+                    >
+                      View ID
+                    </button>
+                  ) : null}
+                  {d.license_doc_url ? (
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-sky-700 underline"
+                      onClick={() => openDoc(d.license_doc_url)}
+                    >
+                      View license
+                    </button>
+                  ) : null}
+                </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                {!d.id_verified && (
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => run(() => setDriverIdVerified(d.id, true))}
+                    className="rounded-md bg-[#1A4D3A] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#163d2e] disabled:opacity-50"
+                  >
+                    Mark verified
+                  </button>
+                )}
+                {d.id_verified && (
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => run(() => setDriverIdVerified(d.id, false))}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 disabled:opacity-50"
+                  >
+                    Unverify
+                  </button>
+                )}
                 {d.approval_status !== "approved" && (
                   <button
                     type="button"

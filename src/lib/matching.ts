@@ -1,5 +1,10 @@
 import { createAdminClient } from "./supabase/admin";
 import { distanceKm } from "./geo";
+import {
+  driverNicheScore,
+  filterDriversByOptIn,
+  jobNeedsFromJob,
+} from "./job-needs";
 import { vehicleFitsJob } from "./vehicles";
 import type { Job, VehicleType } from "./types";
 
@@ -17,7 +22,7 @@ export async function getFareRule(vehicle: VehicleType) {
   return data;
 }
 
-/** Broadcast offers to all online matching drivers + auto-assign nearest. */
+/** Broadcast offers to niche-matching online drivers + auto-assign best fit. */
 export async function matchJobAfterCreate(jobId: string) {
   const admin = createAdminClient();
   const { data: job, error } = await admin
@@ -27,18 +32,22 @@ export async function matchJobAfterCreate(jobId: string) {
     .single();
   if (error || !job) throw new Error(error?.message ?? "Job not found");
 
+  const needs = jobNeedsFromJob(job as Job);
+
   const { data: drivers } = await admin
     .from("rr_drivers")
     .select("*")
     .eq("is_active", true)
     .eq("is_online", true);
 
-  const candidates = (drivers ?? []).filter(
+  const vehicleOk = (drivers ?? []).filter(
     (d) =>
       d.approval_status !== "rejected" &&
       (d.approval_status == null || d.approval_status === "approved") &&
       vehicleFitsJob(d.vehicle_type, job.required_vehicle as VehicleType),
   );
+
+  const candidates = filterDriversByOptIn(vehicleOk, needs);
 
   const now = new Date().toISOString();
   await admin.from("rr_jobs").update({ offered_at: now }).eq("id", jobId);
@@ -60,17 +69,26 @@ export async function matchJobAfterCreate(jobId: string) {
   if (withGps.length === 0) return job as Job;
 
   let best = withGps[0];
+  let bestScore = -Infinity;
   let bestDist = Infinity;
-  if (job.pickup_lat != null && job.pickup_lng != null) {
-    for (const d of withGps) {
-      const dist = distanceKm(
+
+  for (const d of withGps) {
+    const niche = driverNicheScore(d, needs);
+    let dist = 0;
+    if (job.pickup_lat != null && job.pickup_lng != null) {
+      dist = distanceKm(
         { lat: d.last_lat, lng: d.last_lng },
         { lat: job.pickup_lat, lng: job.pickup_lng },
       );
-      if (dist < bestDist) {
-        bestDist = dist;
-        best = d;
-      }
+    }
+    // Prefer niche fit, then closer driver
+    if (
+      niche > bestScore ||
+      (niche === bestScore && dist < bestDist)
+    ) {
+      bestScore = niche;
+      bestDist = dist;
+      best = d;
     }
   }
 
@@ -110,7 +128,6 @@ export async function insertPaidJob(row: Record<string, unknown>) {
   const admin = createAdminClient();
   const code = (row.reference_code as string) || refCode();
 
-  // Idempotency: same PayPal capture/order must not create two jobs
   if (row.paypal_capture_id) {
     const { data: existing } = await admin
       .from("rr_jobs")

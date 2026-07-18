@@ -1,8 +1,9 @@
 import { Source_Sans_3, Space_Grotesk } from "next/font/google";
 import type { Metadata, Viewport } from "next";
+import { ConditionalFooter } from "@/components/conditional-footer";
 import { InstallShareBar } from "@/components/install-share-bar";
 import { PwaRegister } from "@/components/pwa-register";
-import { SiteFooter } from "@/components/site-footer";
+import { WhatsAppFloat } from "@/components/whatsapp-float";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 import "./globals.css";
 
@@ -60,7 +61,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f3d2e",
+  themeColor: "#1A4D3A",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -75,9 +76,10 @@ export default function RootLayout({
     <html lang="en-ZA" className={`${sans.variable} ${display.variable} h-full`}>
       <body className="flex min-h-full flex-col bg-[var(--ru-canvas)] font-[family-name:var(--font-sans)] text-[var(--ru-ink)] antialiased">
         <PwaRegister />
-        <div className="flex-1 pb-28">{children}</div>
-        <SiteFooter />
+        <div className="flex-1">{children}</div>
+        <ConditionalFooter />
         <InstallShareBar />
+        <WhatsAppFloat />
       </body>
     </html>
   );

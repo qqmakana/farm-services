@@ -19,6 +19,8 @@ import {
   STATUS_LABELS,
   VEHICLE_LABELS,
 } from "@/lib/format";
+import { DriverTrustPanel } from "@/components/driver-trust-panel";
+import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
 import type { Driver, JobApplication, JobWithDriver } from "@/lib/types";
 import { distanceKm, etaMinutes } from "@/lib/geo";
 
@@ -128,9 +130,15 @@ export function DriverBoard({
               <option key={d.id} value={d.id}>
                 {d.full_name} · {VEHICLE_LABELS[d.vehicle_type]} · ★
                 {d.rating_avg.toFixed(1)}
+                {d.id_verified ? " · Verified" : " · Pending"}
               </option>
             ))}
           </select>
+          {driver ? (
+            <span className="mt-2 inline-block">
+              <DriverVerifiedBadge verified={driver.id_verified} />
+            </span>
+          ) : null}
         </label>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm text-slate-600">
@@ -158,6 +166,8 @@ export function DriverBoard({
         </p>
       )}
 
+      {driver ? <DriverTrustPanel key={driver.id} driver={driver} /> : null}
+
       {active && (
         <section className="ru-card border-emerald-200 p-5">
           <p className="text-xs font-semibold tracking-wide text-emerald-700 uppercase">
@@ -169,7 +179,19 @@ export function DriverBoard({
           <p className="mt-2 text-sm text-slate-600">
             {SERVICE_LABELS[active.service_type]} ·{" "}
             {formatMoney(Number(active.fee_amount))}
+            {active.payment_method === "cash" ? (
+              <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                Collect cash
+              </span>
+            ) : null}
           </p>
+          {active.payment_method === "cash" &&
+          active.payment_status === "unpaid" ? (
+            <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-950">
+              Customer pays you {formatMoney(Number(active.fee_amount))} in cash
+              when the trip starts.
+            </p>
+          ) : null}
           <p className="mt-2 text-sm">
             <strong>Pickup:</strong> {active.pickup_landmark}
           </p>

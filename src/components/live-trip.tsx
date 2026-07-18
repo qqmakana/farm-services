@@ -2,7 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, useCallback } from "react";
+import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
 import { getJobByReference, getRatingForJob, rateTrip, triggerSos } from "@/lib/actions";
+import {
+  BRAND,
+  emergencyMailtoHref,
+  emergencySmsHref,
+  whatsappTripShareHref,
+} from "@/lib/brand";
 import { useJobRealtime } from "@/lib/use-job-realtime";
 import {
   formatMoney,
@@ -49,6 +56,10 @@ export function LiveTrip({
   const active = STEPS.indexOf(job.status);
   const mapLat = job.driver_lat ?? job.pickup_lat;
   const mapLng = job.driver_lng ?? job.pickup_lng;
+  const isActiveTrip =
+    job.status === "new" ||
+    job.status === "assigned" ||
+    job.status === "in_progress";
 
   const eta =
     job.driver_lat != null &&
@@ -78,20 +89,103 @@ export function LiveTrip({
     });
   }
 
+  function runSos() {
+    setMsg(null);
+    startTransition(async () => {
+      try {
+        let lat = job.driver_lat ?? job.pickup_lat ?? undefined;
+        let lng = job.driver_lng ?? job.pickup_lng ?? undefined;
+        if (navigator.geolocation) {
+          try {
+            const pos = await new Promise<GeolocationPosition>(
+              (resolve, reject) =>
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                  timeout: 5000,
+                }),
+            );
+            lat = pos.coords.latitude;
+            lng = pos.coords.longitude;
+          } catch {
+            /* optional */
+          }
+        }
+        await triggerSos(job.id, "Customer SOS", lat, lng);
+
+        const mapsUrl =
+          lat != null && lng != null
+            ? `https://maps.google.com/?q=${lat},${lng}`
+            : `${window.location.origin}/trip/${job.reference_code}`;
+
+        // Prefer SMS; mailto as secondary (some desktop browsers).
+        window.location.href = emergencySmsHref(mapsUrl);
+        window.setTimeout(() => {
+          // If SMS app didn't take over (desktop), open email too.
+          if (!/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
+            window.open(emergencyMailtoHref(mapsUrl), "_blank");
+          }
+        }, 400);
+
+        setMsg(
+          `SOS sent to ops. Alerting ${BRAND.phone} — stay safe. Call 10111 if in immediate danger.`,
+        );
+      } catch (e) {
+        setMsg(e instanceof Error ? e.message : "SOS failed");
+      }
+    });
+  }
+
+  const paymentLabel =
+    job.payment_method === "cash"
+      ? job.payment_status === "cash_collected"
+        ? "Cash collected"
+        : "Cash — pay driver"
+      : job.payment_status === "paid_online"
+        ? job.payment_method === "card"
+          ? "Paid · Card"
+          : "Paid · PayPal"
+        : "Payment pending";
+
   return (
-    <div className="space-y-4">
-      <div>
-        <p className="text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">
-          Live trip
-        </p>
-        <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight">
-          {STATUS_LABELS[job.status]}
-        </h1>
-        <p className="mt-1 text-sm text-slate-600">
-          {SERVICE_LABELS[job.service_type]} · {job.reference_code}
-          {eta != null ? ` · ETA ${eta} min` : ""}
-        </p>
+    <div className="relative space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">
+            {job.status === "new" ? "Booking confirmed" : "Live trip"}
+          </p>
+          <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight">
+            {STATUS_LABELS[job.status]}
+          </h1>
+          <p className="mt-1 text-sm text-slate-600">
+            {SERVICE_LABELS[job.service_type]} · {job.reference_code}
+            {eta != null ? ` · ETA ${eta} min` : ""}
+          </p>
+        </div>
+        {isActiveTrip ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={runSos}
+            className="shrink-0 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-bold text-white shadow-md hover:bg-rose-500 disabled:opacity-60"
+          >
+            SOS / Emergency
+          </button>
+        ) : null}
       </div>
+
+      {job.status === "new" || job.status === "assigned" ? (
+        <a
+          href={whatsappTripShareHref(
+            job.pickup_landmark,
+            job.dropoff_landmark,
+          )}
+          target="_blank"
+          rel="noreferrer"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3.5 text-sm font-bold text-white shadow-sm hover:bg-[#1ebe57]"
+        >
+          <span aria-hidden>WhatsApp</span>
+          Share trip details via WhatsApp
+        </a>
+      ) : null}
 
       {mapLat != null && mapLng != null && (
         <div className="ru-card overflow-hidden">
@@ -109,42 +203,27 @@ export function LiveTrip({
       )}
 
       <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          className="ru-btn bg-rose-600 text-white hover:bg-rose-500"
-          disabled={pending}
-          onClick={() => {
-            setMsg(null);
-            startTransition(async () => {
-              try {
-                let lat: number | undefined;
-                let lng: number | undefined;
-                if (navigator.geolocation) {
-                  try {
-                    const pos = await new Promise<GeolocationPosition>(
-                      (resolve, reject) =>
-                        navigator.geolocation.getCurrentPosition(
-                          resolve,
-                          reject,
-                          { timeout: 5000 },
-                        ),
-                    );
-                    lat = pos.coords.latitude;
-                    lng = pos.coords.longitude;
-                  } catch {
-                    /* optional */
-                  }
-                }
-                await triggerSos(job.id, "Customer SOS", lat, lng);
-                setMsg("SOS sent to operations. Stay safe — call local emergency if needed.");
-              } catch (e) {
-                setMsg(e instanceof Error ? e.message : "SOS failed");
-              }
-            });
-          }}
+        {isActiveTrip ? (
+          <button
+            type="button"
+            className="ru-btn bg-rose-600 text-white hover:bg-rose-500"
+            disabled={pending}
+            onClick={runSos}
+          >
+            SOS / Emergency
+          </button>
+        ) : null}
+        <a
+          href={whatsappTripShareHref(
+            job.pickup_landmark,
+            job.dropoff_landmark,
+          )}
+          target="_blank"
+          rel="noreferrer"
+          className="ru-btn bg-[#25D366] text-white hover:bg-[#1ebe57]"
         >
-          SOS emergency
-        </button>
+          WhatsApp trip
+        </a>
         <button
           type="button"
           className="ru-btn border border-slate-200 bg-white text-slate-800"
@@ -154,7 +233,7 @@ export function LiveTrip({
             setMsg("Trip link copied — share with family.");
           }}
         >
-          Share trip link
+          Copy trip link
         </button>
       </div>
 
@@ -183,11 +262,17 @@ export function LiveTrip({
                     {STATUS_LABELS[step]}
                   </p>
                   {current && job.drivers && (
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      {job.drivers.full_name} · ★
-                      {job.drivers.rating_avg.toFixed(1)} ·{" "}
-                      {VEHICLE_LABELS[job.drivers.vehicle_type]}
-                    </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <p className="text-xs text-slate-500">
+                        {job.drivers.full_name} · ★
+                        {job.drivers.rating_avg.toFixed(1)} ·{" "}
+                        {VEHICLE_LABELS[job.drivers.vehicle_type]}
+                      </p>
+                      <DriverVerifiedBadge
+                        verified={job.drivers.id_verified}
+                        compact
+                      />
+                    </div>
                   )}
                 </div>
               </li>
@@ -201,13 +286,17 @@ export function LiveTrip({
           <span className="text-slate-500">Fare</span>
           <span className="font-semibold">
             {formatMoney(Number(job.fee_amount))}
-            {job.payment_status === "paid_online" && (
-              <span className="ml-2 text-xs font-medium text-emerald-700">
-                Paid · PayPal
-              </span>
-            )}
+            <span className="ml-2 text-xs font-medium text-emerald-700">
+              {paymentLabel}
+            </span>
           </span>
         </div>
+        {job.payment_method === "cash" && job.payment_status === "unpaid" ? (
+          <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-950">
+            Please pay the driver {formatMoney(Number(job.fee_amount))} in cash
+            when the trip starts.
+          </p>
+        ) : null}
         <div>
           <p className="text-xs font-semibold text-slate-500 uppercase">
             Pickup
@@ -225,13 +314,16 @@ export function LiveTrip({
             <p className="text-xs font-semibold text-slate-500 uppercase">
               Your driver
             </p>
-            <p className="mt-1 font-semibold">
-              {job.drivers.full_name} · ★{job.drivers.rating_avg.toFixed(1)} (
-              {job.drivers.rating_count})
-            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <p className="font-semibold">
+                {job.drivers.full_name} · ★{job.drivers.rating_avg.toFixed(1)} (
+                {job.drivers.rating_count})
+              </p>
+              <DriverVerifiedBadge verified={job.drivers.id_verified} />
+            </div>
             <a
               href={`tel:${job.drivers.phone}`}
-              className="text-sm text-sky-700 underline"
+              className="mt-1 inline-block text-sm text-sky-700 underline"
             >
               Call driver
             </a>

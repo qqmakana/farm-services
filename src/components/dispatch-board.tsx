@@ -11,9 +11,20 @@ import {
   statusBadgeClass,
   STATUS_LABELS,
 } from "@/lib/format";
+import { jobNeedsFromJob, needsBadges } from "@/lib/job-needs";
 import type { Driver, JobStatus, JobWithDriver } from "@/lib/types";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { vehicleFitsJob, VEHICLE_LABELS } from "@/lib/vehicles";
+
+type OpsFilter =
+  | "all"
+  | "new"
+  | "active"
+  | "done"
+  | "night"
+  | "scheduled"
+  | "heavy"
+  | "cash";
 
 const STATUSES: JobStatus[] = [
   "new",
@@ -49,14 +60,19 @@ export function DispatchBoard({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"all" | "new" | "active" | "done">("all");
+  const [filter, setFilter] = useState<OpsFilter>("all");
 
   const filtered = jobs.filter((job) => {
+    const needs = jobNeedsFromJob(job);
     if (filter === "new") return job.status === "new";
     if (filter === "active")
       return job.status === "assigned" || job.status === "in_progress";
     if (filter === "done")
       return job.status === "completed" || job.status === "cancelled";
+    if (filter === "night") return needs.night;
+    if (filter === "scheduled") return needs.scheduled;
+    if (filter === "heavy") return needs.heavy;
+    if (filter === "cash") return job.payment_method === "cash";
     return true;
   });
 
@@ -105,6 +121,10 @@ export function DispatchBoard({
             ["all", "All"],
             ["new", "Unassigned"],
             ["active", "Active"],
+            ["night", "Night"],
+            ["scheduled", "Scheduled"],
+            ["heavy", "Heavy loads"],
+            ["cash", "Cash"],
             ["done", "Done"],
           ] as const
         ).map(([key, label]) => (
@@ -114,7 +134,7 @@ export function DispatchBoard({
             onClick={() => setFilter(key)}
             className={`rounded-md px-3 py-1.5 text-sm ${
               filter === key
-                ? "bg-[#1b4332] text-white"
+                ? "bg-[#1A4D3A] text-white"
                 : "bg-white text-stone-700 ring-1 ring-stone-200 hover:bg-stone-50"
             }`}
           >
@@ -142,6 +162,7 @@ export function DispatchBoard({
             const driver = job.drivers;
             const wa =
               driver != null ? buildWhatsAppLink(job, driver) : null;
+            const badges = needsBadges(jobNeedsFromJob(job));
 
             return (
               <li
@@ -164,6 +185,14 @@ export function DispatchBoard({
                       >
                         {STATUS_LABELS[job.status]}
                       </span>
+                      {badges.map((b) => (
+                        <span
+                          key={b}
+                          className="rounded-full bg-[#1A4D3A] px-2 py-0.5 text-xs font-semibold text-white"
+                        >
+                          {b}
+                        </span>
+                      ))}
                       <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-800">
                         Needs {VEHICLE_LABELS[job.required_vehicle]}
                       </span>
@@ -180,11 +209,15 @@ export function DispatchBoard({
                       {formatMoney(Number(job.fee_amount))}
                     </p>
                     <p className="text-emerald-700">
-                      {job.payment_status === "paid_online"
-                        ? job.payment_method === "paypal"
-                          ? "Paid · PayPal"
-                          : `Paid · card ••${job.card_last4 ?? "****"}`
-                        : "Payment pending"}
+                      {job.payment_method === "cash"
+                        ? job.payment_status === "cash_collected"
+                          ? "Cash collected"
+                          : "Cash — unpaid"
+                        : job.payment_status === "paid_online"
+                          ? job.payment_method === "paypal"
+                            ? "Paid · PayPal"
+                            : `Paid · card ••${job.card_last4 ?? "****"}`
+                          : "Payment pending"}
                     </p>
                     <p className="text-stone-500">{formatWhen(job.scheduled_for)}</p>
                   </div>

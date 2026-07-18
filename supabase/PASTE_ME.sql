@@ -16,7 +16,7 @@ do $$ begin create type public.rr_service_type as enum ('ride', 'delivery', 'far
 do $$ begin create type public.rr_vehicle_type as enum ('sedan', 'bakkie', 'truck'); exception when duplicate_object then null; end $$;
 do $$ begin create type public.rr_job_status as enum ('new', 'assigned', 'in_progress', 'completed', 'cancelled'); exception when duplicate_object then null; end $$;
 do $$ begin create type public.rr_payment_status as enum ('unpaid', 'pending', 'paid_online', 'failed', 'refunded', 'cash_collected'); exception when duplicate_object then null; end $$;
-do $$ begin create type public.rr_payment_method as enum ('paypal', 'card', 'wallet'); exception when duplicate_object then null; end $$;
+do $$ begin create type public.rr_payment_method as enum ('paypal', 'card', 'wallet', 'cash'); exception when duplicate_object then null; end $$;
 do $$ begin create type public.rr_application_status as enum ('pending', 'accepted', 'rejected', 'withdrawn'); exception when duplicate_object then null; end $$;
 do $$ begin create type public.rr_user_role as enum ('customer', 'driver', 'merchant', 'dispatcher', 'admin'); exception when duplicate_object then null; end $$;
 

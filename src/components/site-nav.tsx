@@ -4,7 +4,8 @@ import { BRAND } from "@/lib/brand";
 
 const links = [
   { href: "/", label: "Home", key: "home" },
-  { href: "/book?service=ride", label: "Ride", key: "book" },
+  { href: "/ride", label: "Ride", key: "book" },
+  { href: "/delivery", label: "Deliver", key: "delivery" },
   { href: "/farm", label: "Farm", key: "farm" },
   { href: "/shops", label: "Buy", key: "shops" },
   { href: "/driver", label: "Drive", key: "driver" },

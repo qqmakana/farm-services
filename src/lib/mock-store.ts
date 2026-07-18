@@ -15,6 +15,11 @@ import type {
 } from "./types";
 import { isSouthAfricanMobile } from "./brand";
 import { distanceKm } from "./geo";
+import {
+  driverNicheScore,
+  filterDriversByOptIn,
+  jobNeedsFromJob,
+} from "./job-needs";
 import { suggestVehicle, vehicleFitsJob } from "./vehicles";
 
 function uid() {
@@ -43,6 +48,9 @@ const seedDrivers: Driver[] = [
     rating_avg: 4.9,
     rating_count: 20,
     notes: "Furniture + farm runs",
+    prefer_night: true,
+    prefer_heavy: true,
+    prefer_village_routes: true,
     created_at: new Date().toISOString(),
   },
   {
@@ -60,6 +68,9 @@ const seedDrivers: Driver[] = [
     rating_avg: 4.9,
     rating_count: 20,
     notes: "Morning village ↔ town",
+    prefer_night: true,
+    prefer_heavy: false,
+    prefer_village_routes: true,
     created_at: new Date().toISOString(),
   },
   {
@@ -77,6 +88,9 @@ const seedDrivers: Driver[] = [
     rating_avg: 4.9,
     rating_count: 20,
     notes: "Fridges / TVs / large loads",
+    prefer_night: false,
+    prefer_heavy: true,
+    prefer_village_routes: true,
     created_at: new Date().toISOString(),
   },
 ];
@@ -449,13 +463,16 @@ export const mockRepo = {
       vehicle_type: input.vehicle_type,
       is_active: true,
       approval_status: "approved",
-      id_verified: true,
+      id_verified: false,
       is_online: false,
       last_lat: null,
       last_lng: null,
       last_location_at: null,
       rating_avg: 5,
       rating_count: 0,
+      prefer_night: true,
+      prefer_heavy: true,
+      prefer_village_routes: true,
       notes: [
         `Area: ${input.area.trim()}`,
         "SA mobile · auto-approved",
@@ -475,7 +492,6 @@ export const mockRepo = {
     if (driver.approval_status === "approved") return driver;
     driver.approval_status = "approved";
     driver.is_active = true;
-    driver.id_verified = true;
     return driver;
   },
 
@@ -549,7 +565,9 @@ export const mockRepo = {
   autoMatchIfPossible(job: Job): JobWithDriver {
     if (job.status !== "new") return withDriver(job);
 
-    const candidates = store().drivers.filter(
+    const needs = jobNeedsFromJob(job);
+
+    const vehicleOk = store().drivers.filter(
       (d) =>
         d.is_active &&
         d.approval_status === "approved" &&
@@ -558,6 +576,7 @@ export const mockRepo = {
         d.last_lng != null &&
         vehicleFitsJob(d.vehicle_type, job.required_vehicle),
     );
+    const candidates = filterDriversByOptIn(vehicleOk, needs);
 
     if (candidates.length === 0) {
       // Leave as new with offers pending
@@ -565,9 +584,16 @@ export const mockRepo = {
     }
 
     let chosen = candidates[0];
-    if (job.pickup_lat != null && job.pickup_lng != null) {
-      const pickup = { lat: job.pickup_lat, lng: job.pickup_lng };
+    {
+      const pickup =
+        job.pickup_lat != null && job.pickup_lng != null
+          ? { lat: job.pickup_lat, lng: job.pickup_lng }
+          : null;
       chosen = candidates.reduce((best, d) => {
+        const bestNiche = driverNicheScore(best, needs);
+        const dNiche = driverNicheScore(d, needs);
+        if (dNiche !== bestNiche) return dNiche > bestNiche ? d : best;
+        if (!pickup) return best;
         const bestDist = distanceKm(pickup, {
           lat: best.last_lat!,
           lng: best.last_lng!,
@@ -608,8 +634,13 @@ export const mockRepo = {
   },
 
   createJob(input: NewJobInput): JobWithDriver {
-    if (input.payment.method !== "paypal" || !input.payment.paypalCaptureId) {
-      throw new Error("PayPal payment required.");
+    const isCash = input.payment.method === "cash";
+    const online =
+      input.payment.method === "paypal" || input.payment.method === "card"
+        ? input.payment
+        : null;
+    if (!isCash && (!online?.paypalOrderId || !online.paypalCaptureId)) {
+      throw new Error("Valid payment required.");
     }
 
     const nowIso = new Date().toISOString();
@@ -631,12 +662,16 @@ export const mockRepo = {
       details: input.details,
       fee_amount: input.fee_amount,
       fee_currency: "ZAR",
-      payment_status: "paid_online",
-      payment_method: "paypal",
+      payment_status: isCash ? "unpaid" : "paid_online",
+      payment_method: isCash
+        ? "cash"
+        : online?.method === "card"
+          ? "card"
+          : "paypal",
       card_last4: null,
-      paypal_order_id: input.payment.paypalOrderId,
-      paypal_capture_id: input.payment.paypalCaptureId,
-      paid_at: nowIso,
+      paypal_order_id: online?.paypalOrderId ?? null,
+      paypal_capture_id: online?.paypalCaptureId ?? null,
+      paid_at: isCash ? null : nowIso,
       driver_id: null,
       assigned_at: null,
       dispatcher_notes: input.dispatcher_notes ?? null,

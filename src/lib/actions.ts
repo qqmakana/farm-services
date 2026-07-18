@@ -53,6 +53,8 @@ async function resolveFare(params: {
   pickup_lng?: number | null;
   dropoff_lat?: number | null;
   dropoff_lng?: number | null;
+  /** ISO datetime — night surcharge uses this (or now). */
+  at?: string | null;
 }): Promise<FareBreakdown> {
   let rules = null;
   if (useAdmin()) {
@@ -68,6 +70,7 @@ async function resolveFare(params: {
       params.dropoff_lat != null && params.dropoff_lng != null
         ? { lat: params.dropoff_lat, lng: params.dropoff_lng }
         : null,
+    at: params.at ?? null,
     rules,
   });
 }
@@ -78,6 +81,7 @@ export async function quoteFareAction(params: {
   pickup_lng?: number | null;
   dropoff_lat?: number | null;
   dropoff_lng?: number | null;
+  at?: string | null;
 }): Promise<FareBreakdown> {
   return resolveFare(params);
 }
@@ -226,8 +230,11 @@ export async function applyToDrive(input: NewDriverApplicationInput) {
       vehicle_type: input.vehicle_type,
       is_active: true,
       approval_status: "approved",
-      id_verified: true,
+      id_verified: false,
       is_online: false,
+      prefer_night: true,
+      prefer_heavy: true,
+      prefer_village_routes: true,
       notes,
     })
     .select("*")
@@ -236,6 +243,168 @@ export async function applyToDrive(input: NewDriverApplicationInput) {
   if (error) throw new Error(error.message);
   revalidateAll();
   return data as Driver;
+}
+
+export async function updateDriverPreferences(
+  driverId: string,
+  prefs: {
+    prefer_night: boolean;
+    prefer_heavy: boolean;
+    prefer_village_routes: boolean;
+  },
+) {
+  if (!useAdmin()) {
+    const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
+    if (!driver) throw new Error("Driver not found");
+    driver.prefer_night = prefs.prefer_night;
+    driver.prefer_heavy = prefs.prefer_heavy;
+    driver.prefer_village_routes = prefs.prefer_village_routes;
+    revalidateAll();
+    return driver;
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("rr_drivers")
+    .update({
+      prefer_night: prefs.prefer_night,
+      prefer_heavy: prefs.prefer_heavy,
+      prefer_village_routes: prefs.prefer_village_routes,
+    })
+    .eq("id", driverId)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  revalidateAll();
+  return data as Driver;
+}
+
+export async function setDriverIdVerified(
+  driverId: string,
+  verified: boolean,
+) {
+  if (!useAdmin()) {
+    const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
+    if (!driver) throw new Error("Driver not found");
+    driver.id_verified = verified;
+    revalidateAll();
+    return driver;
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("rr_drivers")
+    .update({ id_verified: verified })
+    .eq("id", driverId)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  revalidateAll();
+  return data as Driver;
+}
+
+async function uploadDriverDoc(
+  driverId: string,
+  kind: "id" | "license",
+  file: File,
+) {
+  const admin = createAdminClient();
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `${driverId}/${kind}-${Date.now()}.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const { error } = await admin.storage
+    .from("rr-driver-docs")
+    .upload(path, buffer, {
+      contentType: file.type || "image/jpeg",
+      upsert: true,
+    });
+  if (error) throw new Error(error.message);
+  return path;
+}
+
+export async function submitDriverDocuments(
+  driverId: string,
+  formData: FormData,
+) {
+  const licenseNumber = String(formData.get("license_number") ?? "").trim();
+  const idFile = formData.get("id_doc");
+  const licenseFile = formData.get("license_doc");
+
+  if (!licenseNumber) {
+    throw new Error("License / PDP number is required.");
+  }
+
+  if (!useAdmin()) {
+    const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
+    if (!driver) throw new Error("Driver not found");
+    driver.license_number = licenseNumber;
+    driver.id_doc_url = idFile instanceof File ? `mock://id/${idFile.name}` : driver.id_doc_url;
+    driver.license_doc_url =
+      licenseFile instanceof File
+        ? `mock://license/${licenseFile.name}`
+        : driver.license_doc_url;
+    driver.docs_submitted_at = new Date().toISOString();
+    driver.id_verified = false;
+    revalidateAll();
+    return driver;
+  }
+
+  const patch: Record<string, unknown> = {
+    license_number: licenseNumber,
+    docs_submitted_at: new Date().toISOString(),
+    id_verified: false,
+  };
+
+  if (idFile instanceof File && idFile.size > 0) {
+    patch.id_doc_url = await uploadDriverDoc(driverId, "id", idFile);
+  }
+  if (licenseFile instanceof File && licenseFile.size > 0) {
+    patch.license_doc_url = await uploadDriverDoc(
+      driverId,
+      "license",
+      licenseFile,
+    );
+  }
+
+  if (!patch.id_doc_url && !patch.license_doc_url) {
+    // Allow license number only first time if files already on record
+    const admin = createAdminClient();
+    const { data: existing } = await admin
+      .from("rr_drivers")
+      .select("id_doc_url, license_doc_url")
+      .eq("id", driverId)
+      .maybeSingle();
+    if (!existing?.id_doc_url && !existing?.license_doc_url) {
+      throw new Error("Upload at least one photo: ID or driver’s license.");
+    }
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("rr_drivers")
+    .update(patch)
+    .eq("id", driverId)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  revalidateAll();
+  return data as Driver;
+}
+
+/** Ops: open a private driver document (signed URL, 1 hour). */
+export async function getDriverDocSignedUrl(storagePath: string) {
+  if (!storagePath || storagePath.startsWith("mock://")) {
+    return storagePath;
+  }
+  if (!useAdmin()) {
+    throw new Error("Service role required to view documents.");
+  }
+  const admin = createAdminClient();
+  const { data, error } = await admin.storage
+    .from("rr-driver-docs")
+    .createSignedUrl(storagePath, 3600);
+  if (error) throw new Error(error.message);
+  return data.signedUrl;
 }
 
 export async function approveDriverHire(driverId: string) {
@@ -251,7 +420,6 @@ export async function approveDriverHire(driverId: string) {
     .update({
       approval_status: "approved",
       is_active: true,
-      id_verified: true,
     })
     .eq("id", driverId)
     .select("*")
@@ -364,6 +532,7 @@ export async function createPayPalOrderAction(params: {
   pickup_lng?: number | null;
   dropoff_lat?: number | null;
   dropoff_lng?: number | null;
+  at?: string | null;
 }) {
   if (!isPayPalConfigured()) {
     throw new Error(
@@ -379,6 +548,7 @@ export async function createPayPalOrderAction(params: {
       pickup_lng: params.pickup_lng,
       dropoff_lat: params.dropoff_lat,
       dropoff_lng: params.dropoff_lng,
+      at: params.at ?? null,
     });
     amountZar = fare.fee_amount;
   }
@@ -407,24 +577,31 @@ export async function createJob(input: NewJobInput) {
     (input.service_type === "delivery" || input.service_type === "farm") &&
     input.required_vehicle === "sedan"
   ) {
-    throw new Error("Goods need a bakkie or truck ? not a car.");
+    throw new Error("Goods need a bakkie or truck — not a car.");
   }
 
-  if (
-    input.payment?.method !== "paypal" ||
-    !input.payment.paypalOrderId ||
-    !input.payment.paypalCaptureId
-  ) {
-    throw new Error("PayPal payment required.");
+  const isCash = input.payment.method === "cash";
+  const onlinePayment =
+    input.payment.method === "paypal" || input.payment.method === "card"
+      ? input.payment
+      : null;
+  const isOnline =
+    onlinePayment != null &&
+    Boolean(onlinePayment.paypalOrderId) &&
+    Boolean(onlinePayment.paypalCaptureId);
+
+  if (!isCash && !isOnline) {
+    throw new Error("Valid payment required (Cash or PayPal / Card).");
   }
 
-  // Never trust client fee_amount for charging.
+  // Never trust client fee_amount for charging (includes night surcharge).
   const fare = await resolveFare({
     vehicle: input.required_vehicle,
     pickup_lat: input.pickup_lat,
     pickup_lng: input.pickup_lng,
     dropoff_lat: input.dropoff_lat,
     dropoff_lng: input.dropoff_lng,
+    at: input.scheduled_for ?? null,
   });
 
   if (!useAdmin()) {
@@ -436,24 +613,23 @@ export async function createJob(input: NewJobInput) {
     return job;
   }
 
-  // Soft idempotency before insert (also enforced inside insertPaidJob)
-  {
+  if (onlinePayment) {
     const admin = createAdminClient();
     const { data: byCapture } = await admin
       .from("rr_jobs")
       .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
-      .eq("paypal_capture_id", input.payment.paypalCaptureId)
+      .eq("paypal_capture_id", onlinePayment.paypalCaptureId)
       .maybeSingle();
     if (byCapture) return byCapture as JobWithDriver;
     const { data: byOrder } = await admin
       .from("rr_jobs")
       .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
-      .eq("paypal_order_id", input.payment.paypalOrderId)
+      .eq("paypal_order_id", onlinePayment.paypalOrderId)
       .maybeSingle();
     if (byOrder) return byOrder as JobWithDriver;
   }
 
-  const paidAt = new Date().toISOString();
+  const paidAt = isCash ? null : new Date().toISOString();
   const row = {
     reference_code: refCode(),
     service_type: input.service_type,
@@ -472,10 +648,14 @@ export async function createJob(input: NewJobInput) {
     platform_commission: fare.platform_commission,
     driver_payout: fare.driver_payout,
     fee_currency: fare.currency,
-    payment_status: "paid_online",
-    payment_method: "paypal",
-    paypal_order_id: input.payment.paypalOrderId,
-    paypal_capture_id: input.payment.paypalCaptureId,
+    payment_status: isCash ? "unpaid" : "paid_online",
+    payment_method: isCash
+      ? "cash"
+      : onlinePayment?.method === "card"
+        ? "card"
+        : "paypal",
+    paypal_order_id: onlinePayment?.paypalOrderId ?? null,
+    paypal_capture_id: onlinePayment?.paypalCaptureId ?? null,
     paid_at: paidAt,
     dispatcher_notes: input.dispatcher_notes ?? null,
     shop_id: input.shop_id ?? null,
@@ -487,14 +667,15 @@ export async function createJob(input: NewJobInput) {
     revalidateAll();
     return data as JobWithDriver;
   } catch (err) {
-    // Capture already succeeded ? attempt refund so the customer is not charged twice.
-    try {
-      await paypalRefundCapture(
-        input.payment.paypalCaptureId,
-        fare.fee_amount,
-      );
-    } catch {
-      // Preserve the original insert error; refund failure is secondary.
+    if (onlinePayment) {
+      try {
+        await paypalRefundCapture(
+          onlinePayment.paypalCaptureId,
+          fare.fee_amount,
+        );
+      } catch {
+        /* preserve insert error */
+      }
     }
     throw err;
   }
@@ -521,23 +702,41 @@ export async function capturePayPalAndCreateJob(
 
   const captured = await paypalCaptureOrder(orderId);
 
-  // Recalculate fare server-side ? do not trust draft.fee_amount.
+  // Recalculate fare server-side — do not trust draft.fee_amount.
   const fare = await resolveFare({
     vehicle: draft.required_vehicle,
     pickup_lat: draft.pickup_lat,
     pickup_lng: draft.pickup_lng,
     dropoff_lat: draft.dropoff_lat,
     dropoff_lng: draft.dropoff_lng,
+    at: draft.scheduled_for ?? null,
   });
 
   return createJob({
     ...draft,
     fee_amount: fare.fee_amount,
     payment: {
-      method: "paypal",
+      method: "card",
       paypalOrderId: orderId,
       paypalCaptureId: captured.captureId,
     },
+  });
+}
+
+/** Book with cash — pay the driver when the trip starts. */
+export async function createCashJob(draft: Omit<NewJobInput, "payment">) {
+  const fare = await resolveFare({
+    vehicle: draft.required_vehicle,
+    pickup_lat: draft.pickup_lat,
+    pickup_lng: draft.pickup_lng,
+    dropoff_lat: draft.dropoff_lat,
+    dropoff_lng: draft.dropoff_lng,
+    at: draft.scheduled_for ?? null,
+  });
+  return createJob({
+    ...draft,
+    fee_amount: fare.fee_amount,
+    payment: { method: "cash" },
   });
 }
 
@@ -1294,13 +1493,13 @@ export async function rematchJob(jobId: string) {
  */
 export async function createLocalPaidJob(draft: Omit<NewJobInput, "payment">) {
   if (isPayPalConfigured()) {
-    throw new Error("PayPal is configured ? use the PayPal button.");
+    throw new Error("PayPal is configured — use the PayPal button.");
   }
   const stamp = Date.now().toString(36).toUpperCase();
   return createJob({
     ...draft,
     payment: {
-      method: "paypal",
+      method: "card",
       paypalOrderId: `LOCAL-ORDER-${stamp}`,
       paypalCaptureId: `LOCAL-CAP-${stamp}`,
     },

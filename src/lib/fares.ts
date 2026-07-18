@@ -1,11 +1,21 @@
 import type { VehicleType } from "./types";
 import { distanceKm } from "./geo";
+import {
+  isNightWindow,
+  NIGHT_SURCHARGE_PCT,
+  parseScheduleAt,
+} from "./night-fare";
 
 export type FareBreakdown = {
   fee_amount: number;
   platform_commission: number;
   driver_payout: number;
   currency: string;
+  /** Base fare before after-hours surcharge */
+  base_fee_amount: number;
+  is_night_ride: boolean;
+  night_surcharge_pct: number;
+  night_surcharge_amount: number;
 };
 
 const FALLBACK: Record<
@@ -22,6 +32,8 @@ export function calculateFare(params: {
   vehicle: VehicleType;
   pickup?: { lat: number; lng: number } | null;
   dropoff?: { lat: number; lng: number } | null;
+  /** ISO datetime or null = now (Ride Now) */
+  at?: string | Date | null;
   rules?: {
     base_fare: number;
     per_km: number;
@@ -46,7 +58,18 @@ export function calculateFare(params: {
     km = distanceKm(params.pickup, params.dropoff);
   }
 
-  const fee = Math.round(rule.base + km * rule.perKm);
+  const baseFee = Math.round(rule.base + km * rule.perKm);
+  const when =
+    params.at instanceof Date
+      ? params.at
+      : parseScheduleAt(
+          typeof params.at === "string" ? params.at : null,
+        );
+  const night = isNightWindow(when);
+  const surcharge = night
+    ? Math.round((baseFee * NIGHT_SURCHARGE_PCT) / 100)
+    : 0;
+  const fee = baseFee + surcharge;
   const commission = Math.round((fee * rule.commissionPct) / 100);
   const payout = Math.max(0, fee - commission);
 
@@ -55,5 +78,9 @@ export function calculateFare(params: {
     platform_commission: commission,
     driver_payout: payout,
     currency: "ZAR",
+    base_fee_amount: baseFee,
+    is_night_ride: night,
+    night_surcharge_pct: night ? NIGHT_SURCHARGE_PCT : 0,
+    night_surcharge_amount: surcharge,
   };
 }

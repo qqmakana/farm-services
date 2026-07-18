@@ -1,28 +1,28 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { FarmSheet } from "@/components/uber/farm-sheet";
+import { DeliverySheet } from "@/components/uber/delivery-sheet";
 import { UberShell } from "@/components/uber/uber-shell";
 
-function FarmInner() {
+function DeliveryInner() {
   const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
   return (
-    <UberShell pin={pin} backHref="/" title="Farm Connect">
-      <FarmSheet onPinChange={setPin} />
+    <UberShell pin={pin} backHref="/" title="Village Delivery">
+      <DeliverySheet onPinChange={setPin} />
     </UberShell>
   );
 }
 
-export default function FarmPage() {
+export default function DeliveryPage() {
   return (
     <Suspense
       fallback={
         <div className="flex min-h-dvh items-center justify-center bg-[#F5F5F5] text-[#1A4D3A]">
-          Loading Farm Connect…
+          Loading delivery…
         </div>
       }
     >
-      <FarmInner />
+      <DeliveryInner />
     </Suspense>
   );
 }

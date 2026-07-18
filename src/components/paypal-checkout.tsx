@@ -24,6 +24,7 @@ export function PayPalCheckout({
   onCreateOrder,
   onApprove,
   onLocalPay,
+  submitLabel,
 }: {
   amount: number;
   description: string;
@@ -32,6 +33,8 @@ export function PayPalCheckout({
   onApprove: (orderId: string) => Promise<void>;
   /** Used when PayPal keys are not set yet — local click-through testing. */
   onLocalPay?: () => Promise<void>;
+  /** Primary CTA label in local-test mode (e.g. Request Ride). */
+  submitLabel?: string;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -65,13 +68,15 @@ export function PayPalCheckout({
               }
             });
           }}
-          className="ru-btn ru-btn-primary mt-4 w-full disabled:opacity-50"
+          className="mt-4 w-full rounded-xl bg-[#1A4D3A] px-4 py-3.5 text-sm font-bold text-white disabled:opacity-50"
         >
           {pending
             ? "Creating trip…"
             : disabled
               ? "Complete the form first"
-              : `Pay ${formatMoney(amount)} (local test)`}
+              : submitLabel
+                ? `${submitLabel} · ${formatMoney(amount)}`
+                : `Pay ${formatMoney(amount)} (local test)`}
         </button>
         <p className="mt-3 text-xs text-amber-900/80">
           When you add PayPal Client ID + Secret, this becomes the real PayPal

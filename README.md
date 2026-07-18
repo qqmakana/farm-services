@@ -35,7 +35,10 @@ Village Ride is an **installable web app (PWA)**. Open the link → tap **Instal
 
 | URL | Who |
 |-----|-----|
-| `/book` | Customer requests + PayPal |
+| `/` | Uber-style map + service picker |
+| `/ride` | Village Ride booking (landmarks) |
+| `/delivery` | Village Delivery booking |
+| `/farm` | Farm Connect booking |
 | `/shops` | Buyer shop delivery |
 | `/trip/[code]` | Live map, ETA, ratings |
 | `/driver` | Apply (SA auto-approve) → Go online |

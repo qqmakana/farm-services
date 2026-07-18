@@ -58,12 +58,31 @@ where id = '<that_user_uuid>';
 
 3. Open `/login` → sign in → `/dispatch` unlocks
 
-## D. PayPal webhook (required for production money)
+## C2. Cash + driver niches + docs (run after PASTE_ME)
 
-1. Deploy to Vercel (or use a public URL)
-2. PayPal Developer → Webhooks → add:
-   `https://YOUR_DOMAIN/api/paypal/webhook`
-3. Subscribe to: `PAYMENT.CAPTURE.COMPLETED`, `PAYMENT.CAPTURE.DENIED`, `PAYMENT.CAPTURE.REFUNDED`
+In Supabase SQL Editor, run these files in order if you have not:
+
+1. `supabase/ADD_CASH_PAYMENT.sql` (cash payments)
+2. `supabase/PERFECT_UPGRADE.sql` (driver Night/Heavy/Village opt-ins + ID/license storage)
+
+## D. PayPal live + webhook (required for production money)
+
+1. Add env on **Vercel** (and `.env.local`):
+   - `NEXT_PUBLIC_PAYPAL_CLIENT_ID`
+   - `PAYPAL_CLIENT_SECRET`
+   - `PAYPAL_MODE=live`
+   - `PAYPAL_CURRENCY=ZAR` / `NEXT_PUBLIC_PAYPAL_CURRENCY=ZAR`
+2. Deploy to Vercel
+3. PayPal Developer → Webhooks → add:
+   `https://village-ride.vercel.app/api/paypal/webhook`
+4. Subscribe to: `PAYMENT.CAPTURE.COMPLETED`, `PAYMENT.CAPTURE.DENIED`, `PAYMENT.CAPTURE.REFUNDED`, `PAYMENT.CAPTURE.REVERSED`
+
+## D2. Driver trust loop
+
+1. Driver → `/driver` → toggle Night / Heavy / Village preferences  
+2. Driver uploads ID + license photos  
+3. Ops → `/dispatch` → **Docs to review** → open files → **Mark verified**  
+Customers then see **ID & License Verified** on the trip.
 
 ## E. Run / deploy
 
