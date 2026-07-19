@@ -23,6 +23,7 @@ import {
 import { DriverPushPrompt } from "@/components/driver-push-prompt";
 import { DriverTrustPanel } from "@/components/driver-trust-panel";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
+import { BRAND } from "@/lib/brand";
 import {
   isFirebaseClientConfigured,
   requestFcmToken,
@@ -30,6 +31,8 @@ import {
 import type { Driver, JobApplication, JobWithDriver } from "@/lib/types";
 import { distanceKm, etaMinutes } from "@/lib/geo";
 import { useDriverOffersRealtime } from "@/lib/use-driver-offers-realtime";
+
+type DriverTab = "jobs" | "wallet";
 
 export function DriverBoard({
   drivers,
@@ -40,10 +43,12 @@ export function DriverBoard({
 }) {
   const router = useRouter();
   const [driverId, setDriverId] = useState(drivers[0]?.id ?? "");
+  const [tab, setTab] = useState<DriverTab>("jobs");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [offers, setOffers] = useState<JobApplication[]>([]);
   const [active, setActive] = useState<JobWithDriver | null>(null);
+  const [showTopUp, setShowTopUp] = useState(false);
 
   const driver = drivers.find((d) => d.id === driverId);
 
@@ -138,6 +143,10 @@ export function DriverBoard({
     [jobs, driverId],
   );
 
+  const walletBalance = Number(driver?.wallet_balance ?? 0);
+  const commissionOwed = Number(driver?.commission_owed ?? 0);
+  const walletBlocked = walletBalance < 0;
+
   return (
     <div className="space-y-4">
       {driverId ? <DriverPushPrompt driverId={driverId} /> : null}
@@ -165,8 +174,7 @@ export function DriverBoard({
         </label>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm text-slate-600">
-            Today&apos;s trips paid:{" "}
-            <strong>{formatMoney(earnings)}</strong>
+            Total earned: <strong>{formatMoney(earnings)}</strong>
           </span>
           <button
             type="button"
@@ -183,13 +191,138 @@ export function DriverBoard({
         </div>
       </div>
 
+      <div className="flex gap-2 border-b border-emerald-100 pb-1">
+        <button
+          type="button"
+          onClick={() => setTab("jobs")}
+          className={`rounded-t-lg px-4 py-2 text-sm font-semibold ${
+            tab === "jobs"
+              ? "bg-[#1A4D3A] text-white"
+              : "bg-emerald-50 text-slate-700 hover:bg-emerald-100"
+          }`}
+        >
+          Jobs
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("wallet")}
+          className={`rounded-t-lg px-4 py-2 text-sm font-semibold ${
+            tab === "wallet"
+              ? "bg-[#1A4D3A] text-white"
+              : "bg-emerald-50 text-slate-700 hover:bg-emerald-100"
+          }`}
+        >
+          Wallet
+          {walletBlocked ? (
+            <span className="ml-1.5 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] text-white">
+              Top up
+            </span>
+          ) : null}
+        </button>
+      </div>
+
       {error && (
         <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
           {error}
         </p>
       )}
 
+      {tab === "wallet" && driver ? (
+        <section className="ru-card space-y-4 p-5">
+          <div>
+            <p className="text-xs font-semibold tracking-wide text-emerald-700 uppercase">
+              Driver wallet
+            </p>
+            <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-bold">
+              Commission wallet
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Customers pay you in cash. Village Ride takes 15% commission from
+              this wallet when you complete a trip.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg bg-emerald-50 px-4 py-3">
+              <p className="text-xs font-semibold text-slate-500 uppercase">
+                Current balance
+              </p>
+              <p
+                className={`mt-1 text-2xl font-bold ${
+                  walletBlocked ? "text-rose-700" : "text-emerald-900"
+                }`}
+              >
+                {formatMoney(walletBalance)}
+              </p>
+            </div>
+            <div className="rounded-lg bg-slate-50 px-4 py-3">
+              <p className="text-xs font-semibold text-slate-500 uppercase">
+                Total earned
+              </p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">
+                {formatMoney(earnings)}
+              </p>
+            </div>
+            <div className="rounded-lg bg-amber-50 px-4 py-3">
+              <p className="text-xs font-semibold text-slate-500 uppercase">
+                Commission owed
+              </p>
+              <p className="mt-1 text-2xl font-bold text-amber-950">
+                {formatMoney(commissionOwed)}
+              </p>
+            </div>
+          </div>
+
+          {walletBlocked ? (
+            <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-900">
+              Your wallet is below R0. You will not receive new automatic job
+              offers until you top up.
+            </p>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={() => setShowTopUp((v) => !v)}
+            className="ru-btn w-full bg-[#1A4D3A] py-3 text-base font-semibold text-white hover:bg-[#163d2e] sm:w-auto"
+          >
+            Top Up Wallet
+          </button>
+
+          {showTopUp ? (
+            <div className="rounded-lg border border-emerald-200 bg-white px-4 py-3 text-sm text-slate-700">
+              <p className="font-semibold text-slate-900">How to top up</p>
+              <ol className="mt-2 list-inside list-decimal space-y-1">
+                <li>
+                  Send EFT or eWallet (FNB / Capitec / Vodacom / MTN) to{" "}
+                  <strong>{BRAND.phone}</strong>
+                </li>
+                <li>
+                  Use your name + phone as the reference so we can credit you
+                </li>
+                <li>
+                  WhatsApp proof of payment to {BRAND.phone} — ops will credit
+                  your wallet
+                </li>
+              </ol>
+              <p className="mt-3 text-xs text-slate-500">
+                Keep a positive balance so automatic dispatch keeps sending you
+                jobs.
+              </p>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      {tab === "jobs" ? (
+        <>
       {driver ? <DriverTrustPanel key={driver.id} driver={driver} /> : null}
+
+      {walletBlocked ? (
+        <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          Wallet below R0 — top up on the Wallet tab to receive new automatic
+          jobs.
+        </p>
+      ) : null}
 
       {active && (
         <section className="ru-card border-emerald-200 p-5">
@@ -337,6 +470,8 @@ export function DriverBoard({
           </ul>
         )}
       </section>
+        </>
+      ) : null}
     </div>
   );
 }

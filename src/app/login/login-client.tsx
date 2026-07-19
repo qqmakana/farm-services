@@ -7,17 +7,32 @@ import { createClient } from "@/lib/supabase/client";
 
 const OPS_EMAIL = "solarcouple@gmail.com";
 
+function initialError(code: string | null) {
+  if (code === "dispatcher_required") {
+    return "Signed in, but this account is not a dispatcher yet. Run FIX_PROFILES_RLS.sql then try again.";
+  }
+  if (code === "driver_required") {
+    return "Signed in, but this account is not a driver. Link role=driver on rr_profiles, or use the driver picker on /driver.";
+  }
+  if (code === "merchant_required") {
+    return "Signed in, but this account is not a merchant. Register from Sell (/shop) or set role=merchant on rr_profiles.";
+  }
+  return null;
+}
+
 export default function LoginClient() {
   const params = useSearchParams();
   const next = params.get("next") || "/dispatch";
-  const [email, setEmail] = useState(OPS_EMAIL);
+  const [email, setEmail] = useState(
+    next.includes("/merchant") ? "" : OPS_EMAIL,
+  );
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(
-    params.get("error") === "dispatcher_required"
-      ? "Signed in, but this account is not a dispatcher yet. Run FIX_PROFILES_RLS.sql then try again."
-      : null,
+    initialError(params.get("error")),
   );
   const [pending, startTransition] = useTransition();
+
+  const isMerchantLogin = next.includes("/merchant");
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,7 +47,6 @@ export default function LoginClient() {
         if (err) throw err;
         if (!data.session) throw new Error("No session returned from Supabase.");
 
-        // Hard navigate so auth cookies are sent to middleware
         window.location.assign(next);
       } catch (err) {
         setError(
@@ -49,17 +63,29 @@ export default function LoginClient() {
       <SiteNav />
       <main className="mx-auto max-w-md px-4 py-12">
         <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">
-          Ops login
+          {isMerchantLogin ? "Merchant login" : "Sign in"}
         </h1>
         <p className="mt-2 text-sm text-slate-600">
-          Owner Dispatch login. Public customer email stays{" "}
-          <a
-            className="font-medium text-[var(--ru-brand)]"
-            href="mailto:ai@sandtonstreets.com"
-          >
-            ai@sandtonstreets.com
-          </a>
-          .
+          {isMerchantLogin ? (
+            <>
+              Business email from Sell registration. Need an account?{" "}
+              <a className="font-medium text-[var(--ru-brand)]" href="/shop">
+                Register your shop
+              </a>
+              .
+            </>
+          ) : (
+            <>
+              Ops, driver, or merchant accounts. Public customer email stays{" "}
+              <a
+                className="font-medium text-[var(--ru-brand)]"
+                href="mailto:ai@sandtonstreets.com"
+              >
+                ai@sandtonstreets.com
+              </a>
+              .
+            </>
+          )}
         </p>
 
         <form onSubmit={onSubmit} className="ru-card mt-6 space-y-4 p-5">
@@ -72,18 +98,21 @@ export default function LoginClient() {
               className="ru-input mt-1 font-mono"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder={
+                isMerchantLogin ? "you@yourshop.co.za" : OPS_EMAIL
+              }
             />
           </label>
           <label className="block text-sm">
-            Password (visible)
+            Password
             <input
-              type="text"
+              type="password"
               autoComplete="current-password"
               required
               className="ru-input mt-1 font-mono"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Paste your ops password"
+              placeholder="Your password"
             />
           </label>
           {error && (
@@ -96,7 +125,11 @@ export default function LoginClient() {
             disabled={pending}
             className="ru-btn ru-btn-primary w-full"
           >
-            {pending ? "Signing in…" : "Sign in to Dispatch"}
+            {pending
+              ? "Signing in…"
+              : isMerchantLogin
+                ? "Sign in to dashboard"
+                : "Sign in"}
           </button>
         </form>
       </main>

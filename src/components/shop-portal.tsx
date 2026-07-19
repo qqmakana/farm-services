@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { createProduct, createShop } from "@/lib/actions";
+import { createProduct, registerMerchantShop } from "@/lib/actions";
 import { formatMoney } from "@/lib/format";
+import { createClient } from "@/lib/supabase/client";
 import type { JobWithDriver, Product, Shop } from "@/lib/types";
 
 export function ShopPortal({
@@ -19,12 +21,15 @@ export function ShopPortal({
   const [shopId, setShopId] = useState(shops[0]?.id ?? "");
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const [newShop, setNewShop] = useState({
     name: "",
     phone: "",
     category: "appliances",
     landmark: "",
+    email: "",
+    password: "",
   });
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -44,15 +49,49 @@ export function ShopPortal({
   function registerShop(e: React.FormEvent) {
     e.preventDefault();
     setMessage(null);
+    setError(null);
     startTransition(async () => {
       try {
-        const shop = await createShop(newShop);
+        const { shop, email } = await registerMerchantShop({
+          name: newShop.name,
+          phone: newShop.phone,
+          category: newShop.category,
+          landmark: newShop.landmark,
+          email: newShop.email,
+          password: newShop.password,
+        });
         setShopId(shop.id);
-        setMessage(`Shop registered: ${shop.name}`);
-        setNewShop({ name: "", phone: "", category: "appliances", landmark: "" });
+
+        // Sign in so middleware lets them into /merchant/dashboard
+        try {
+          const supabase = createClient();
+          const { error: signErr } = await supabase.auth.signInWithPassword({
+            email,
+            password: newShop.password,
+          });
+          if (!signErr) {
+            setMessage(`Welcome, ${shop.name}. Opening merchant dashboard…`);
+            window.location.assign("/merchant/dashboard");
+            return;
+          }
+        } catch {
+          /* fall through to login link */
+        }
+
+        setMessage(
+          `Shop registered: ${shop.name}. Sign in with ${email} to open your dashboard.`,
+        );
+        setNewShop({
+          name: "",
+          phone: "",
+          category: "appliances",
+          landmark: "",
+          email: "",
+          password: "",
+        });
         router.refresh();
       } catch (err) {
-        setMessage(err instanceof Error ? err.message : "Failed");
+        setError(err instanceof Error ? err.message : "Failed");
       }
     });
   }
@@ -61,6 +100,7 @@ export function ShopPortal({
     e.preventDefault();
     if (!shopId) return;
     setMessage(null);
+    setError(null);
     startTransition(async () => {
       try {
         await createProduct({
@@ -73,24 +113,43 @@ export function ShopPortal({
         setNewProduct({ name: "", price: "", size: "medium" });
         router.refresh();
       } catch (err) {
-        setMessage(err instanceof Error ? err.message : "Failed");
+        setError(err instanceof Error ? err.message : "Failed");
       }
     });
   }
 
   return (
     <div className="space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3">
+        <p className="text-sm text-slate-700">
+          Already registered? Open your{" "}
+          <strong>merchant dashboard</strong> to see shop orders.
+        </p>
+        <Link
+          href="/login?next=/merchant/dashboard"
+          className="rounded-lg bg-[#1A4D3A] px-4 py-2 text-sm font-bold text-white transition active:scale-95"
+        >
+          Merchant login
+        </Link>
+      </div>
+
       {message && (
         <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
           {message}
         </p>
       )}
+      {error && (
+        <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
+          {error}
+        </p>
+      )}
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold">Register shop or farm</h2>
+        <h2 className="text-lg font-semibold">Register as a merchant</h2>
         <p className="mt-1 text-sm text-slate-600">
-          Choose <strong>Farm</strong> if you are a farmer, or a shop category if
-          you sell in town. Buyers order → bakkie/truck delivers.
+          Creates a login with <strong>role=merchant</strong>, links your{" "}
+          <code className="rounded bg-slate-100 px-1">rr_shops</code> record, and
+          opens the business dashboard.
         </p>
         <form onSubmit={registerShop} className="mt-4 grid gap-3 sm:grid-cols-2">
           <input
@@ -107,6 +166,27 @@ export function ShopPortal({
             value={newShop.phone}
             onChange={(e) => setNewShop({ ...newShop, phone: e.target.value })}
           />
+          <input
+            required
+            type="email"
+            placeholder="Business email (login)"
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            value={newShop.email}
+            onChange={(e) => setNewShop({ ...newShop, email: e.target.value })}
+            autoComplete="username"
+          />
+          <input
+            required
+            type="password"
+            placeholder="Password (min 8 chars)"
+            minLength={8}
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            value={newShop.password}
+            onChange={(e) =>
+              setNewShop({ ...newShop, password: e.target.value })
+            }
+            autoComplete="new-password"
+          />
           <select
             className="rounded-md border border-slate-300 px-3 py-2 text-sm"
             value={newShop.category}
@@ -118,12 +198,13 @@ export function ShopPortal({
             <option value="appliances">Appliances shop</option>
             <option value="furniture">Furniture shop</option>
             <option value="grocery">Grocery shop</option>
-            <option value="general">General shop</option>
+            <option value="hardware">Hardware shop</option>
+            <option value="general">General</option>
           </select>
           <input
             required
-            placeholder="Landmark (required)"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            placeholder="Landmark / address"
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
             value={newShop.landmark}
             onChange={(e) =>
               setNewShop({ ...newShop, landmark: e.target.value })
@@ -132,125 +213,108 @@ export function ShopPortal({
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white sm:col-span-2"
+            className="ru-btn ru-btn-primary sm:col-span-2"
           >
-            Register shop
+            {pending ? "Creating account…" : "Create merchant account"}
           </button>
         </form>
       </section>
 
-      {shops.length > 0 && (
-        <>
-          <label className="block text-sm font-medium">
-            Manage shop
-            <select
-              className="mt-1 w-full max-w-md rounded-md border border-slate-300 bg-white px-3 py-2"
-              value={shopId}
-              onChange={(e) => setShopId(e.target.value)}
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold">Your shops (catalog)</h2>
+        <select
+          className="ru-input mt-3 max-w-md"
+          value={shopId}
+          onChange={(e) => setShopId(e.target.value)}
+        >
+          {shops.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name} · {s.category}
+            </option>
+          ))}
+        </select>
+
+        <form onSubmit={addProduct} className="mt-4 grid gap-3 sm:grid-cols-3">
+          <input
+            required
+            placeholder="Product name"
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            value={newProduct.name}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, name: e.target.value })
+            }
+          />
+          <input
+            required
+            placeholder="Price (R)"
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            value={newProduct.price}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, price: e.target.value })
+            }
+          />
+          <select
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            value={newProduct.size}
+            onChange={(e) =>
+              setNewProduct({
+                ...newProduct,
+                size: e.target.value as typeof newProduct.size,
+              })
+            }
+          >
+            <option value="small">Small</option>
+            <option value="medium">Medium</option>
+            <option value="large">Large</option>
+            <option value="xl">XL</option>
+          </select>
+          <button
+            type="submit"
+            disabled={pending || !shopId}
+            className="ru-btn ru-btn-primary sm:col-span-3"
+          >
+            Add product
+          </button>
+        </form>
+
+        <ul className="mt-4 divide-y divide-slate-100">
+          {shopProducts.map((p) => (
+            <li
+              key={p.id}
+              className="flex justify-between py-2 text-sm text-slate-700"
             >
-              {shops.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
+              <span>
+                {p.name} · {p.size}
+              </span>
+              <span className="font-semibold">{formatMoney(Number(p.price))}</span>
+            </li>
+          ))}
+          {shopProducts.length === 0 ? (
+            <li className="py-2 text-sm text-slate-500">No products yet.</li>
+          ) : null}
+        </ul>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">Add product</h2>
-            <form
-              onSubmit={addProduct}
-              className="mt-4 grid gap-3 sm:grid-cols-3"
-            >
-              <input
-                required
-                placeholder="Product name"
-                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-                value={newProduct.name}
-                onChange={(e) =>
-                  setNewProduct({ ...newProduct, name: e.target.value })
-                }
-              />
-              <input
-                required
-                type="number"
-                placeholder="Price (R)"
-                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-                value={newProduct.price}
-                onChange={(e) =>
-                  setNewProduct({ ...newProduct, price: e.target.value })
-                }
-              />
-              <select
-                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-                value={newProduct.size}
-                onChange={(e) =>
-                  setNewProduct({
-                    ...newProduct,
-                    size: e.target.value as typeof newProduct.size,
-                  })
-                }
-              >
-                <option value="small">Small</option>
-                <option value="medium">Medium → bakkie</option>
-                <option value="large">Large → truck</option>
-                <option value="xl">XL → truck</option>
-              </select>
-              <button
-                type="submit"
-                disabled={pending || !shopId}
-                className="rounded-md bg-emerald-800 px-4 py-2 text-sm font-semibold text-white sm:col-span-3"
-              >
-                Add product
-              </button>
-            </form>
-
-            <ul className="mt-4 divide-y divide-slate-100">
-              {shopProducts.map((p) => (
-                <li
-                  key={p.id}
-                  className="flex justify-between py-2 text-sm text-slate-800"
-                >
-                  <span>
-                    {p.name}{" "}
-                    <span className="text-slate-500">({p.size})</span>
-                  </span>
-                  <span className="font-medium">
-                    {formatMoney(Number(p.price))}
-                  </span>
-                </li>
-              ))}
-              {shopProducts.length === 0 && (
-                <li className="py-2 text-sm text-slate-500">No products yet.</li>
-              )}
-            </ul>
-          </section>
-
-          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">Outgoing deliveries</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Buyer orders become bakkie/truck jobs on the same ledger.
-            </p>
-            <ul className="mt-4 space-y-2">
-              {shopOrders.map((j) => (
-                <li
-                  key={j.id}
-                  className="rounded-md border border-slate-100 px-3 py-2 text-sm"
-                >
-                  <span className="font-mono font-semibold">
-                    {j.reference_code}
-                  </span>{" "}
-                  · {j.product_summary ?? "Order"} → {j.dropoff_landmark} ·{" "}
-                  {j.status}
-                </li>
-              ))}
-              {shopOrders.length === 0 && (
-                <li className="text-sm text-slate-500">No shop orders yet.</li>
-              )}
-            </ul>
-          </section>
-        </>
-      )}
+        <h3 className="mt-6 text-sm font-semibold text-slate-800">
+          Recent orders for this shop
+        </h3>
+        <ul className="mt-2 space-y-2">
+          {shopOrders.slice(0, 5).map((j) => (
+            <li key={j.id} className="text-sm text-slate-600">
+              {j.reference_code} · {j.customer_name} ·{" "}
+              {formatMoney(Number(j.fee_amount))}
+            </li>
+          ))}
+          {shopOrders.length === 0 ? (
+            <li className="text-sm text-slate-500">No orders yet.</li>
+          ) : null}
+        </ul>
+        <Link
+          href="/merchant/dashboard"
+          className="mt-4 inline-block text-sm font-semibold text-[#1A4D3A] underline"
+        >
+          Open full merchant dashboard →
+        </Link>
+      </section>
     </div>
   );
 }

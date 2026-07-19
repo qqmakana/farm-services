@@ -1,7 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { filterLandmarkSuggestions } from "@/lib/landmarks";
+import { useState } from "react";
+import {
+  PlacesAutocomplete,
+  type PlaceValue,
+} from "@/components/uber/places-autocomplete";
 
 export type Loc = {
   lat: number | null;
@@ -13,70 +16,38 @@ export function emptyLoc(): Loc {
   return { lat: null, lng: null, landmark: "" };
 }
 
+function locToPlace(loc: Loc): PlaceValue {
+  return { label: loc.landmark, lat: loc.lat, lng: loc.lng };
+}
+
+function placeToLoc(v: PlaceValue): Loc {
+  return { landmark: v.label, lat: v.lat, lng: v.lng };
+}
+
 export function LandmarkField({
   label,
   placeholder,
   loc,
   onChange,
   required = true,
+  preferVillages = false,
 }: {
   label: string;
   placeholder: string;
   loc: Loc;
   onChange: (loc: Loc) => void;
   required?: boolean;
+  preferVillages?: boolean;
 }) {
-  const [focused, setFocused] = useState(false);
-  const suggestions = useMemo(
-    () => filterLandmarkSuggestions(loc.landmark),
-    [loc.landmark],
-  );
-  const showList = focused && (loc.landmark.length > 0 || true);
-
   return (
-    <div className="relative">
-      <label className="block text-sm font-semibold text-[#1A4D3A]">
-        {label}
-        {required ? <span className="text-rose-500"> *</span> : null}
-        <input
-          required={required}
-          className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm text-slate-900 outline-none focus:border-[#1A4D3A] focus:ring-2 focus:ring-[#1A4D3A]/20"
-          placeholder={placeholder}
-          value={loc.landmark}
-          onChange={(e) => onChange({ ...loc, landmark: e.target.value })}
-          onFocus={() => setFocused(true)}
-          onBlur={() => {
-            // Delay so suggestion click can register
-            window.setTimeout(() => setFocused(false), 150);
-          }}
-          autoComplete="off"
-        />
-      </label>
-      {showList && focused ? (
-        <ul className="absolute z-20 mt-1 max-h-40 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
-          {suggestions.map((s) => (
-            <li key={s}>
-              <button
-                type="button"
-                className="w-full px-3 py-2.5 text-left text-sm text-slate-800 hover:bg-[#E8F5E9]"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  onChange({ ...loc, landmark: s });
-                  setFocused(false);
-                }}
-              >
-                {s}
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      <p className="mt-1 text-xs text-slate-500">
-        {loc.lat != null && loc.lng != null
-          ? `GPS pin set · ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`
-          : "Landmark only is OK — no street name needed."}
-      </p>
-    </div>
+    <PlacesAutocomplete
+      label={label}
+      placeholder={placeholder}
+      value={locToPlace(loc)}
+      onChange={(v) => onChange(placeToLoc(v))}
+      required={required}
+      preferVillages={preferVillages}
+    />
   );
 }
 
@@ -89,7 +60,7 @@ export function useGpsPin(
   function captureGps() {
     setGpsError(null);
     if (!navigator.geolocation) {
-      setGpsError("GPS not available - landmark is OK");
+      setGpsError("GPS not available — pick a village instead");
       return;
     }
     setLoading(true);
@@ -99,7 +70,7 @@ export function useGpsPin(
         setLoading(false);
       },
       () => {
-        setGpsError("GPS not available - landmark is OK");
+        setGpsError("GPS not available — pick a village instead");
         setLoading(false);
       },
       { enableHighAccuracy: true, timeout: 12000 },
@@ -121,7 +92,7 @@ export function GpsButton({
         type="button"
         onClick={captureGps}
         disabled={loading}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#1A4D3A]/25 bg-[#E8F5E9] px-3 py-3 text-sm font-semibold text-[#1A4D3A] transition hover:bg-[#d7ecd9] disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#1A4D3A]/25 bg-[#E8F5E9] px-3 py-3 text-sm font-semibold text-[#1A4D3A] transition hover:bg-[#d7ecd9] active:scale-95 disabled:opacity-60"
       >
         <span aria-hidden>◎</span>
         {loading ? "Getting location…" : "Use my current location"}
@@ -136,7 +107,7 @@ export function GpsButton({
 export function LandmarkHelperText() {
   return (
     <p className="text-xs text-slate-500">
-      No street names? Use landmarks — we understand!
+      Search towns &amp; landmarks across South Africa — no street name needed.
     </p>
   );
 }

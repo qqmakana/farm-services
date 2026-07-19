@@ -17,6 +17,7 @@ import { isSouthAfricanMobile } from "./brand";
 import { rankDriversForJob } from "./dispatch-score";
 import { jobNeedsFromJob } from "./job-needs";
 import { suggestVehicle, vehicleFitsJob } from "./vehicles";
+import { applyCommissionToWallet, driverEligibleForDispatch } from "./wallet";
 
 function uid() {
   return crypto.randomUUID();
@@ -50,6 +51,8 @@ const seedDrivers: Driver[] = [
     offers_received: 20,
     offers_accepted: 18,
     offers_declined: 2,
+    wallet_balance: 0,
+    commission_owed: 0,
     created_at: new Date().toISOString(),
   },
   {
@@ -73,6 +76,8 @@ const seedDrivers: Driver[] = [
     offers_received: 30,
     offers_accepted: 27,
     offers_declined: 3,
+    wallet_balance: 0,
+    commission_owed: 0,
     created_at: new Date().toISOString(),
   },
   {
@@ -96,6 +101,8 @@ const seedDrivers: Driver[] = [
     offers_received: 15,
     offers_accepted: 12,
     offers_declined: 3,
+    wallet_balance: 0,
+    commission_owed: 0,
     created_at: new Date().toISOString(),
   },
 ];
@@ -395,6 +402,28 @@ function rejectOtherPendingApps(jobId: string, keepAppId?: string) {
 }
 
 export const mockRepo = {
+  listJobsByCustomerPhone(variants: string[]): JobWithDriver[] {
+    const set = new Set(
+      variants.map((v) => v.replace(/\D/g, "")).filter(Boolean),
+    );
+    return store()
+      .jobs.filter((j) => {
+        const d = j.customer_phone.replace(/\D/g, "");
+        if (set.has(d)) return true;
+        const local = d.startsWith("27")
+          ? d.slice(2)
+          : d.startsWith("0")
+            ? d.slice(1)
+            : d;
+        return set.has(local) || set.has(`0${local}`) || set.has(`27${local}`);
+      })
+      .map(withDriver)
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
+  },
+
   listJobs(): JobWithDriver[] {
     return store()
       .jobs.map(withDriver)
@@ -581,7 +610,8 @@ export const mockRepo = {
       (d) =>
         d.is_active &&
         d.approval_status === "approved" &&
-        d.is_online,
+        d.is_online &&
+        driverEligibleForDispatch(d),
     );
     const pickup =
       job.pickup_lat != null && job.pickup_lng != null
@@ -636,7 +666,7 @@ export const mockRepo = {
       const driver = store().drivers.find(
         (d) => d.id === driverId && d.is_online && d.is_active,
       );
-      if (!driver) continue;
+      if (!driver || !driverEligibleForDispatch(driver)) continue;
 
       const nowIso = new Date().toISOString();
       job.offered_driver_id = driver.id;
@@ -865,7 +895,11 @@ export const mockRepo = {
     const driver = store().drivers.find((d) => d.id === driverId);
     if (!job || !driver) throw new Error("Job or driver not found");
     if (job.driver_id !== driverId) throw new Error("Not your job");
-    if (job.status !== "in_progress" && job.status !== "assigned") {
+    if (
+      job.status !== "in_progress" &&
+      job.status !== "assigned" &&
+      job.status !== "confirmed"
+    ) {
       throw new Error("Job cannot be completed from this status");
     }
     const nowIso = new Date().toISOString();
@@ -873,7 +907,32 @@ export const mockRepo = {
     job.completed_at = nowIso;
     job.updated_at = nowIso;
     driver.is_online = true;
+
+    const fee = Number(job.fee_amount) || 0;
+    const commission =
+      Number(job.platform_commission) > 0
+        ? Math.round(Number(job.platform_commission))
+        : Math.round((fee * 15) / 100);
+    const walletUpdate = applyCommissionToWallet({
+      walletBalance: Number(driver.wallet_balance ?? 0),
+      commission,
+    });
+    driver.wallet_balance = walletUpdate.wallet_balance;
+    driver.commission_owed = walletUpdate.commission_owed;
+
     return withDriver(job);
+  },
+
+  creditWallet(driverId: string, amount: number, note?: string): Driver {
+    const driver = store().drivers.find((d) => d.id === driverId);
+    if (!driver) throw new Error("Driver not found");
+    const next = Number(driver.wallet_balance ?? 0) + Math.round(amount);
+    driver.wallet_balance = next;
+    driver.commission_owed = next < 0 ? Math.abs(next) : 0;
+    if (note?.trim()) {
+      driver.notes = [driver.notes, note.trim()].filter(Boolean).join(" · ");
+    }
+    return driver;
   },
 
   rateTrip(jobId: string, stars: number, comment?: string): Rating {

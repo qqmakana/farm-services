@@ -8,7 +8,6 @@ import {
   GpsButton,
   LandmarkField,
   LandmarkHelperText,
-  emptyLoc,
   type Loc,
 } from "@/components/uber/landmark-field";
 import {
@@ -18,6 +17,7 @@ import {
   type WhenMode,
 } from "@/components/uber/schedule-when";
 import { quoteFareAction } from "@/lib/actions";
+import { locsFromSearchParams } from "@/lib/booking-query";
 import type { VehicleType } from "@/lib/types";
 
 export function RideSheet({
@@ -26,11 +26,9 @@ export function RideSheet({
   onPinChange?: (pin: { lat: number; lng: number } | null) => void;
 }) {
   const searchParams = useSearchParams();
-  const [pickup, setPickup] = useState<Loc>(emptyLoc());
-  const [dropoff, setDropoff] = useState<Loc>(() => ({
-    ...emptyLoc(),
-    landmark: searchParams.get("to") ?? "",
-  }));
+  const initial = locsFromSearchParams(searchParams);
+  const [pickup, setPickup] = useState<Loc>(initial.pickup);
+  const [dropoff, setDropoff] = useState<Loc>(initial.dropoff);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [passengers, setPassengers] = useState(1);
@@ -118,18 +116,25 @@ export function RideSheet({
       />
 
       <GpsButton
-        onPin={(coords) => setPickup((p) => ({ ...p, ...coords }))}
+        onPin={(coords) =>
+          setPickup((p) => ({
+            ...p,
+            ...coords,
+            landmark: p.landmark.trim() || "Current location",
+          }))
+        }
       />
 
       <LandmarkField
-        label="Pickup landmark"
-        placeholder="e.g., Next to the clinic, big tree"
+        label="Pickup (village or landmark)"
+        placeholder="e.g., Soweto · Main taxi rank"
         loc={pickup}
         onChange={setPickup}
+        preferVillages
       />
       <LandmarkField
-        label="Dropoff landmark"
-        placeholder="e.g., Village entrance, red house"
+        label="Dropoff (village or landmark)"
+        placeholder="e.g., Mthatha · Clinic"
         loc={dropoff}
         onChange={setDropoff}
       />

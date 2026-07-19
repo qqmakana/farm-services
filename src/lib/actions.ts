@@ -12,6 +12,7 @@ import {
 } from "./dispatch/offer-chain";
 import { sendPushToToken } from "./firebase/admin";
 import { isConfirmedStatus, isSearchingStatus } from "./job-status";
+import { applyCommissionToWallet } from "./wallet";
 import {
   decisionToDriverPatch,
   runDriverKyc,
@@ -32,11 +33,13 @@ import type {
   JobApplication,
   JobStatus,
   JobWithDriver,
+  MerchantRegisterInput,
   NewDriverApplicationInput,
   NewJobInput,
   NewProductInput,
   NewShopInput,
   Rating,
+  Shop,
   ShopOrderInput,
   VehicleType,
 } from "./types";
@@ -52,12 +55,21 @@ function refCode() {
   return `RU-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 }
 
+/** Explicit FK — rr_jobs has driver_id + offered_driver_id → rr_drivers. */
+const JOB_WITH_RELATIONS =
+  "*, drivers:rr_drivers!driver_id(*), shops:rr_shops(*)";
+
 function revalidateAll() {
   revalidatePath("/dispatch");
   revalidatePath("/book");
   revalidatePath("/driver");
+  revalidatePath("/driver/home");
+  revalidatePath("/driver/jobs");
+  revalidatePath("/driver/earnings");
+  revalidatePath("/driver/account");
   revalidatePath("/shop");
   revalidatePath("/shops");
+  revalidatePath("/merchant/dashboard");
   revalidatePath("/trip", "layout");
 }
 
@@ -125,7 +137,7 @@ export async function getJobByReference(
   const supabase = useAdmin() ? createAdminClient() : await createClient();
   const { data, error } = await supabase
     .from("rr_jobs")
-    .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+    .select(JOB_WITH_RELATIONS)
     .ilike("reference_code", code)
     .maybeSingle();
 
@@ -142,7 +154,7 @@ export async function getJobByShareToken(
   const supabase = useAdmin() ? createAdminClient() : await createClient();
   const { data, error } = await supabase
     .from("rr_jobs")
-    .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+    .select(JOB_WITH_RELATIONS)
     .eq("share_token", token.trim())
     .maybeSingle();
 
@@ -156,8 +168,44 @@ export async function listJobs(): Promise<JobWithDriver[]> {
   const supabase = useAdmin() ? createAdminClient() : await createClient();
   const { data, error } = await supabase
     .from("rr_jobs")
-    .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+    .select(JOB_WITH_RELATIONS)
     .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as JobWithDriver[];
+}
+
+/** Customer Activity: trips matching a guest phone (0xx / 27xx variants). */
+export async function listJobsByCustomerPhone(
+  phone: string,
+): Promise<JobWithDriver[]> {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 9) return [];
+
+  const local = digits.startsWith("27")
+    ? digits.slice(2)
+    : digits.startsWith("0")
+      ? digits.slice(1)
+      : digits;
+  const variants = [
+    `0${local}`,
+    `27${local}`,
+    `+27${local}`,
+    local,
+    phone.trim(),
+  ];
+
+  if (!useAdmin()) {
+    return mockRepo.listJobsByCustomerPhone(variants);
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("rr_jobs")
+    .select(JOB_WITH_RELATIONS)
+    .in("customer_phone", variants)
+    .order("created_at", { ascending: false })
+    .limit(50);
 
   if (error) throw new Error(error.message);
   return (data ?? []) as JobWithDriver[];
@@ -176,6 +224,119 @@ export async function listDrivers() {
 
   if (error) throw new Error(error.message);
   return (data ?? []) as Driver[];
+}
+
+export async function getDriver(driverId: string): Promise<Driver | null> {
+  if (!driverId) return null;
+  if (!useAdmin()) {
+    return mockRepo.listDrivers().find((d) => d.id === driverId) ?? null;
+  }
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("rr_drivers")
+    .select("*")
+    .eq("id", driverId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as Driver | null) ?? null;
+}
+
+/** Resolve driver row linked to the signed-in Supabase user (if any). */
+export async function resolveAuthDriver(): Promise<Driver | null> {
+  if (!useAdmin()) return null;
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const admin = createAdminClient();
+    const { data: byUser } = await admin
+      .from("rr_drivers")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (byUser) return byUser as Driver;
+
+    const { data: profile } = await admin
+      .from("rr_profiles")
+      .select("driver_id, role")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profile?.driver_id) {
+      const { data: d } = await admin
+        .from("rr_drivers")
+        .select("*")
+        .eq("id", profile.driver_id)
+        .maybeSingle();
+      if (d) return d as Driver;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+export async function listDriverJobs(
+  driverId: string,
+): Promise<JobWithDriver[]> {
+  if (!driverId) return [];
+  if (!useAdmin()) {
+    return mockRepo
+      .listJobs()
+      .filter((j) => j.driver_id === driverId)
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
+  }
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("rr_jobs")
+    .select(JOB_WITH_RELATIONS)
+    .eq("driver_id", driverId)
+    .order("created_at", { ascending: false })
+    .limit(80);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as JobWithDriver[];
+}
+
+export async function updateDriverVehicle(
+  driverId: string,
+  patch: {
+    vehicle_type?: VehicleType;
+    vehicle_registration?: string | null;
+    vehicle_year?: number | null;
+  },
+) {
+  if (!useAdmin()) {
+    const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
+    if (!driver) throw new Error("Driver not found");
+    if (patch.vehicle_type) driver.vehicle_type = patch.vehicle_type;
+    if (patch.vehicle_registration !== undefined) {
+      driver.vehicle_registration = patch.vehicle_registration;
+    }
+    if (patch.vehicle_year !== undefined) {
+      driver.vehicle_year = patch.vehicle_year;
+    }
+    revalidateAll();
+    return driver;
+  }
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("rr_drivers")
+    .update({
+      ...(patch.vehicle_type ? { vehicle_type: patch.vehicle_type } : {}),
+      vehicle_registration: patch.vehicle_registration ?? null,
+      vehicle_year: patch.vehicle_year ?? null,
+    })
+    .eq("id", driverId)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  revalidateAll();
+  return data as Driver;
 }
 
 export async function listPendingDriverHires() {
@@ -693,13 +854,13 @@ export async function createJob(input: NewJobInput) {
     const admin = createAdminClient();
     const { data: byCapture } = await admin
       .from("rr_jobs")
-      .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+      .select(JOB_WITH_RELATIONS)
       .eq("paypal_capture_id", onlinePayment.paypalCaptureId)
       .maybeSingle();
     if (byCapture) return byCapture as JobWithDriver;
     const { data: byOrder } = await admin
       .from("rr_jobs")
-      .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+      .select(JOB_WITH_RELATIONS)
       .eq("paypal_order_id", onlinePayment.paypalOrderId)
       .maybeSingle();
     if (byOrder) return byOrder as JobWithDriver;
@@ -771,7 +932,7 @@ export async function capturePayPalAndCreateJob(
     const admin = createAdminClient();
     const { data: existing } = await admin
       .from("rr_jobs")
-      .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+      .select(JOB_WITH_RELATIONS)
       .eq("paypal_order_id", orderId)
       .maybeSingle();
     if (existing) return existing as JobWithDriver;
@@ -829,7 +990,7 @@ export async function capturePayPalAndCreateShopOrder(
     const admin = createAdminClient();
     const { data: existing } = await admin
       .from("rr_jobs")
-      .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+      .select(JOB_WITH_RELATIONS)
       .eq("paypal_order_id", orderId)
       .maybeSingle();
     if (existing) return existing as JobWithDriver;
@@ -871,6 +1032,193 @@ export async function createShop(input: NewShopInput) {
   if (error) throw new Error(error.message);
   revalidateAll();
   return data;
+}
+
+/**
+ * Sell door → create Supabase auth user, set role=merchant, link rr_shops.user_id
+ * and rr_profiles.shop_id.
+ */
+export async function registerMerchantShop(input: MerchantRegisterInput): Promise<{
+  shop: Shop;
+  email: string;
+}> {
+  const email = input.email.trim().toLowerCase();
+  const password = input.password;
+  if (!email || !email.includes("@")) {
+    throw new Error("Enter a valid business email.");
+  }
+  if (!password || password.length < 8) {
+    throw new Error("Password must be at least 8 characters.");
+  }
+  if (!input.name.trim() || !input.phone.trim() || !input.landmark.trim()) {
+    throw new Error("Business name, phone, and landmark are required.");
+  }
+
+  if (!useAdmin()) {
+    const shop = mockRepo.createShop({
+      name: input.name.trim(),
+      phone: input.phone.trim(),
+      category: input.category,
+      landmark: input.landmark.trim(),
+      lat: input.lat ?? null,
+      lng: input.lng ?? null,
+      notes: input.notes ?? null,
+    });
+    shop.user_id = `mock-merchant-${shop.id}`;
+    revalidateAll();
+    return { shop, email };
+  }
+
+  const admin = createAdminClient();
+  const { data: created, error: authErr } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: {
+      role: "merchant",
+      full_name: input.name.trim(),
+    },
+  });
+  if (authErr || !created.user) {
+    throw new Error(authErr?.message ?? "Could not create merchant account");
+  }
+  const userId = created.user.id;
+
+  const { data: shop, error: shopErr } = await admin
+    .from("rr_shops")
+    .insert({
+      name: input.name.trim(),
+      phone: input.phone.trim(),
+      category: input.category,
+      landmark: input.landmark.trim(),
+      lat: input.lat ?? null,
+      lng: input.lng ?? null,
+      notes: input.notes ?? null,
+      user_id: userId,
+      delivers: true,
+      is_active: true,
+    })
+    .select("*")
+    .single();
+
+  if (shopErr || !shop) {
+    await admin.auth.admin.deleteUser(userId).catch(() => null);
+    throw new Error(shopErr?.message ?? "Could not create shop");
+  }
+
+  const { error: profileErr } = await admin.from("rr_profiles").upsert(
+    {
+      id: userId,
+      role: "merchant",
+      full_name: input.name.trim(),
+      phone: input.phone.trim(),
+      shop_id: shop.id,
+    },
+    { onConflict: "id" },
+  );
+  if (profileErr) {
+    throw new Error(
+      `Shop created but profile update failed: ${profileErr.message}. Set role=merchant manually.`,
+    );
+  }
+
+  revalidateAll();
+  return { shop: shop as Shop, email };
+}
+
+/** Current signed-in merchant's shop + orders (for /merchant/dashboard). */
+export async function getMerchantDashboardData(): Promise<{
+  shop: Shop | null;
+  jobs: JobWithDriver[];
+  role: string | null;
+  email: string | null;
+} | null> {
+  if (!useAdmin()) {
+    const shops = mockRepo.listShops();
+    const shop = shops[0] ?? null;
+    const jobs = shop
+      ? mockRepo.listJobs().filter((j) => j.shop_id === shop.id)
+      : [];
+    return {
+      shop,
+      jobs,
+      role: "merchant",
+      email: "demo@merchant.local",
+    };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const admin = createAdminClient();
+  const { data: profile } = await admin
+    .from("rr_profiles")
+    .select("role, shop_id, full_name")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const role = profile?.role ?? null;
+  if (
+    role &&
+    role !== "merchant" &&
+    role !== "admin" &&
+    role !== "dispatcher"
+  ) {
+    return { shop: null, jobs: [], role, email: user.email ?? null };
+  }
+
+  let shop: Shop | null = null;
+  if (profile?.shop_id) {
+    const { data } = await admin
+      .from("rr_shops")
+      .select("*")
+      .eq("id", profile.shop_id)
+      .maybeSingle();
+    shop = (data as Shop | null) ?? null;
+  }
+  if (!shop) {
+    const { data } = await admin
+      .from("rr_shops")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    shop = (data as Shop | null) ?? null;
+    if (shop && profile && !profile.shop_id) {
+      await admin
+        .from("rr_profiles")
+        .update({ shop_id: shop.id, role: "merchant" })
+        .eq("id", user.id);
+    }
+  }
+
+  if (!shop) {
+    return {
+      shop: null,
+      jobs: [],
+      role: role ?? "merchant",
+      email: user.email ?? null,
+    };
+  }
+
+  const { data: jobs, error } = await admin
+    .from("rr_jobs")
+    .select(JOB_WITH_RELATIONS)
+    .eq("shop_id", shop.id)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) throw new Error(error.message);
+
+  return {
+    shop,
+    jobs: (jobs ?? []) as JobWithDriver[],
+    role: role ?? "merchant",
+    email: user.email ?? null,
+  };
 }
 
 export async function createProduct(input: NewProductInput) {
@@ -1049,7 +1397,7 @@ export async function assignDriver(jobId: string, driverId: string) {
       dispatch_exhausted: false,
     })
     .eq("id", jobId)
-    .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+    .select(JOB_WITH_RELATIONS)
     .single();
 
   if (error) throw new Error(error.message);
@@ -1069,7 +1417,7 @@ export async function updateJobStatus(jobId: string, status: JobStatus) {
     .from("rr_jobs")
     .update({ status })
     .eq("id", jobId)
-    .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+    .select(JOB_WITH_RELATIONS)
     .single();
 
   if (error) throw new Error(error.message);
@@ -1262,7 +1610,7 @@ export async function acceptOffer(jobId: string, driverId: string) {
     })
     .eq("id", jobId)
     .in("status", ["searching_driver", "new"])
-    .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+    .select(JOB_WITH_RELATIONS)
     .maybeSingle();
 
   if (error) throw new Error(error.message);
@@ -1373,7 +1721,7 @@ export async function startTrip(jobId: string, driverId: string) {
     })
     .eq("id", jobId)
     .eq("driver_id", driverId)
-    .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+    .select(JOB_WITH_RELATIONS)
     .single();
 
   if (error) throw new Error(error.message);
@@ -1388,10 +1736,6 @@ export async function completeTrip(jobId: string, driverId: string) {
     return job;
   }
 
-  if (!useAdmin()) {
-    throw new Error("Service role required to complete trips.");
-  }
-
   const admin = createAdminClient();
   const { data: jobRow, error: fetchErr } = await admin
     .from("rr_jobs")
@@ -1401,7 +1745,11 @@ export async function completeTrip(jobId: string, driverId: string) {
 
   if (fetchErr || !jobRow) throw new Error(fetchErr?.message ?? "Job not found");
   if (jobRow.driver_id !== driverId) throw new Error("Not your job");
-  if (jobRow.status !== "in_progress" && jobRow.status !== "assigned") {
+  if (
+    jobRow.status !== "in_progress" &&
+    jobRow.status !== "assigned" &&
+    jobRow.status !== "confirmed"
+  ) {
     throw new Error("Job cannot be completed from this status");
   }
 
@@ -1414,18 +1762,86 @@ export async function completeTrip(jobId: string, driverId: string) {
     })
     .eq("id", jobId)
     .eq("driver_id", driverId)
-    .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+    .select(JOB_WITH_RELATIONS)
     .single();
 
   if (error) throw new Error(error.message);
 
+  // Customer paid the driver; deduct platform commission from driver wallet
+  const fee = Number(jobRow.fee_amount) || 0;
+  const commission =
+    Number(jobRow.platform_commission) > 0
+      ? Math.round(Number(jobRow.platform_commission))
+      : Math.round((fee * 15) / 100);
+
+  const { data: driverRow } = await admin
+    .from("rr_drivers")
+    .select("wallet_balance")
+    .eq("id", driverId)
+    .maybeSingle();
+
+  const walletUpdate = applyCommissionToWallet({
+    walletBalance: Number(driverRow?.wallet_balance ?? 0),
+    commission,
+  });
+
   await admin
     .from("rr_drivers")
-    .update({ is_online: true })
+    .update({
+      is_online: true,
+      wallet_balance: walletUpdate.wallet_balance,
+      commission_owed: walletUpdate.commission_owed,
+    })
     .eq("id", driverId);
 
   revalidateAll();
   return data as JobWithDriver;
+}
+
+/** Ops: credit a driver's wallet after EFT / eWallet top-up. */
+export async function creditDriverWallet(
+  driverId: string,
+  amountZar: number,
+  note?: string,
+) {
+  const amount = Math.round(Number(amountZar));
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("Enter a positive top-up amount (ZAR).");
+  }
+
+  if (!useAdmin()) {
+    const driver = mockRepo.creditWallet(driverId, amount, note);
+    revalidateAll();
+    return driver;
+  }
+
+  const admin = createAdminClient();
+  const { data: driverRow, error } = await admin
+    .from("rr_drivers")
+    .select("*")
+    .eq("id", driverId)
+    .single();
+  if (error || !driverRow) throw new Error(error?.message ?? "Driver not found");
+
+  const next = Number(driverRow.wallet_balance ?? 0) + amount;
+  const { data, error: upErr } = await admin
+    .from("rr_drivers")
+    .update({
+      wallet_balance: next,
+      commission_owed: next < 0 ? Math.abs(next) : 0,
+      notes: [
+        driverRow.notes,
+        note?.trim() || `Wallet top-up +R${amount}`,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    })
+    .eq("id", driverId)
+    .select("*")
+    .single();
+  if (upErr) throw new Error(upErr.message);
+  revalidateAll();
+  return data as Driver;
 }
 
 export async function rateTrip(jobId: string, stars: number, comment?: string) {
@@ -1557,7 +1973,7 @@ export async function listDriverActiveJob(driverId: string) {
   const supabase = useAdmin() ? createAdminClient() : await createClient();
   const { data, error } = await supabase
     .from("rr_jobs")
-    .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+    .select(JOB_WITH_RELATIONS)
     .eq("driver_id", driverId)
     .in("status", ["confirmed", "assigned", "in_progress"])
     .order("updated_at", { ascending: false })
@@ -1594,12 +2010,12 @@ export async function triggerSos(
   const { data: job, error: jobErr } = looksLikeUuid
     ? await admin
         .from("rr_jobs")
-        .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+        .select(JOB_WITH_RELATIONS)
         .eq("id", key)
         .maybeSingle()
     : await admin
         .from("rr_jobs")
-        .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+        .select(JOB_WITH_RELATIONS)
         .ilike("reference_code", key)
         .maybeSingle();
 

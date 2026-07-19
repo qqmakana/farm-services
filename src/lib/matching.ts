@@ -4,6 +4,7 @@ import { jobNeedsFromJob } from "./job-needs";
 import { incrementDriverOfferStat } from "./matching-stats";
 import { createAdminClient } from "./supabase/admin";
 import type { Driver, Job, VehicleType } from "./types";
+import { driverEligibleForDispatch } from "./wallet";
 
 export { incrementDriverOfferStat };
 
@@ -51,7 +52,8 @@ export async function matchJobAfterCreate(jobId: string) {
   const approved = ((drivers ?? []) as Driver[]).filter(
     (d) =>
       d.approval_status !== "rejected" &&
-      (d.approval_status == null || d.approval_status === "approved"),
+      (d.approval_status == null || d.approval_status === "approved") &&
+      driverEligibleForDispatch(d),
   );
 
   const ranked = rankDriversForJob({
@@ -108,7 +110,7 @@ export async function insertPaidJob(row: Record<string, unknown>) {
   if (row.paypal_capture_id) {
     const { data: existing } = await admin
       .from("rr_jobs")
-      .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+      .select("*, drivers:rr_drivers!driver_id(*), shops:rr_shops(*)")
       .eq("paypal_capture_id", row.paypal_capture_id)
       .maybeSingle();
     if (existing) return existing;
@@ -116,7 +118,7 @@ export async function insertPaidJob(row: Record<string, unknown>) {
   if (row.paypal_order_id) {
     const { data: existing } = await admin
       .from("rr_jobs")
-      .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+      .select("*, drivers:rr_drivers!driver_id(*), shops:rr_shops(*)")
       .eq("paypal_order_id", row.paypal_order_id)
       .maybeSingle();
     if (existing) return existing;
@@ -125,14 +127,14 @@ export async function insertPaidJob(row: Record<string, unknown>) {
   const { data, error } = await admin
     .from("rr_jobs")
     .insert({ ...row, reference_code: code })
-    .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+    .select("*, drivers:rr_drivers!driver_id(*), shops:rr_shops(*)")
     .single();
 
   if (error) throw new Error(error.message);
   await matchJobAfterCreate(data.id);
   const { data: fresh } = await admin
     .from("rr_jobs")
-    .select("*, drivers:rr_drivers(*), shops:rr_shops(*)")
+    .select("*, drivers:rr_drivers!driver_id(*), shops:rr_shops(*)")
     .eq("id", data.id)
     .single();
   return fresh ?? data;

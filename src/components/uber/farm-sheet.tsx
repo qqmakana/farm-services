@@ -7,7 +7,6 @@ import {
   GpsButton,
   LandmarkField,
   LandmarkHelperText,
-  emptyLoc,
   type Loc,
 } from "@/components/uber/landmark-field";
 import {
@@ -22,6 +21,7 @@ import {
   type SenderType,
 } from "@/components/uber/sender-type-field";
 import { quoteFareAction } from "@/lib/actions";
+import { locsFromSearchParams } from "@/lib/booking-query";
 import type { VehicleType } from "@/lib/types";
 
 const TRANSPORT_TYPES = [
@@ -48,13 +48,11 @@ export function FarmSheet({
   onPinChange?: (pin: { lat: number; lng: number } | null) => void;
 }) {
   const searchParams = useSearchParams();
+  const initial = locsFromSearchParams(searchParams);
   const [farmName, setFarmName] = useState("");
   const [senderType, setSenderType] = useState<SenderType>("individual");
-  const [pickup, setPickup] = useState<Loc>(() => ({
-    ...emptyLoc(),
-    landmark: searchParams.get("to") ?? "",
-  }));
-  const [dropoff, setDropoff] = useState<Loc>(emptyLoc());
+  const [pickup, setPickup] = useState<Loc>(initial.pickup);
+  const [dropoff, setDropoff] = useState<Loc>(initial.dropoff);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [transport, setTransport] =

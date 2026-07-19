@@ -90,6 +90,15 @@ export type Driver = {
   /** Firebase Cloud Messaging device token */
   fcm_token?: string | null;
   fcm_updated_at?: string | null;
+  /** Prepaid commission wallet (customer pays driver; driver owes platform). */
+  wallet_balance?: number;
+  /** Debt when wallet is negative (= abs(min(0, wallet_balance))). */
+  commission_owed?: number;
+  /** Vehicle plate / reg (optional). */
+  vehicle_registration?: string | null;
+  vehicle_year?: number | null;
+  /** Linked Supabase auth user (when set). */
+  user_id?: string | null;
 };
 
 export type NewDriverApplicationInput = {
@@ -114,6 +123,8 @@ export type Shop = {
   is_active: boolean;
   notes: string | null;
   created_at: string;
+  /** Linked Supabase auth user (merchant owner). */
+  user_id?: string | null;
 };
 
 export type Product = {
@@ -242,6 +253,12 @@ export type NewShopInput = {
   lat?: number | null;
   lng?: number | null;
   notes?: string | null;
+};
+
+/** Shop door registration → creates auth user + merchant role + linked shop. */
+export type MerchantRegisterInput = NewShopInput & {
+  email: string;
+  password: string;
 };
 
 export type NewProductInput = {

@@ -7,6 +7,7 @@ import {
   type BookingWhatsAppDraft,
 } from "@/lib/brand";
 import { createCashJob } from "@/lib/actions";
+import { setGuestProfile } from "@/lib/guest-profile";
 import { driverOptInNote } from "@/lib/night-fare";
 import type { NewJobInput, ServiceType, VehicleType } from "@/lib/types";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
@@ -84,7 +85,12 @@ export function CheckoutBlock({
     }
     startTransition(async () => {
       try {
-        const job = await createCashJob(draft());
+        const d = draft();
+        setGuestProfile({
+          name: d.customer_name,
+          phone: d.customer_phone,
+        });
+        const job = await createCashJob(d);
         router.push(`/trip/${job.reference_code}`);
         router.refresh();
       } catch (err) {
@@ -100,6 +106,10 @@ export function CheckoutBlock({
       return;
     }
     const d = draft();
+    setGuestProfile({
+      name: d.customer_name,
+      phone: d.customer_phone,
+    });
     const payload: BookingWhatsAppDraft = {
       service_type: d.service_type,
       pickup_landmark: d.pickup_landmark,

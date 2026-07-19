@@ -7,7 +7,6 @@ import {
   GpsButton,
   LandmarkField,
   LandmarkHelperText,
-  emptyLoc,
   type Loc,
 } from "@/components/uber/landmark-field";
 import {
@@ -22,6 +21,7 @@ import {
   type SenderType,
 } from "@/components/uber/sender-type-field";
 import { quoteFareAction } from "@/lib/actions";
+import { locsFromSearchParams } from "@/lib/booking-query";
 import type { VehicleType } from "@/lib/types";
 import { suggestVehicle } from "@/lib/vehicles";
 
@@ -54,11 +54,9 @@ export function DeliverySheet({
   onPinChange?: (pin: { lat: number; lng: number } | null) => void;
 }) {
   const searchParams = useSearchParams();
-  const [pickup, setPickup] = useState<Loc>(emptyLoc());
-  const [dropoff, setDropoff] = useState<Loc>(() => ({
-    ...emptyLoc(),
-    landmark: searchParams.get("to") ?? "",
-  }));
+  const initial = locsFromSearchParams(searchParams);
+  const [pickup, setPickup] = useState<Loc>(initial.pickup);
+  const [dropoff, setDropoff] = useState<Loc>(initial.dropoff);
   const [senderType, setSenderType] = useState<SenderType>("individual");
   const [senderName, setSenderName] = useState("");
   const [senderPhone, setSenderPhone] = useState("");

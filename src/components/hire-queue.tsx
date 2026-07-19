@@ -4,12 +4,15 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   approveDriverHire,
+  creditDriverWallet,
   getDriverDocSignedUrl,
   rejectDriverHire,
   rerunDriverKyc,
   setDriverIdVerified,
 } from "@/lib/actions";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
+import { BRAND } from "@/lib/brand";
+import { formatMoney } from "@/lib/format";
 import type { Driver, DriverApprovalStatus } from "@/lib/types";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
 
@@ -134,6 +137,22 @@ export function HireQueue({ drivers }: { drivers: Driver[] }) {
     });
   }
 
+  function creditWallet(driverId: string, name: string) {
+    const raw = window.prompt(
+      `Credit wallet for ${name} — amount in ZAR (after EFT/eWallet received):`,
+      "100",
+    );
+    if (raw == null) return;
+    const amount = Number(raw.replace(/[^\d.]/g, ""));
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError("Enter a valid top-up amount.");
+      return;
+    }
+    run(() =>
+      creditDriverWallet(driverId, amount, `Ops top-up +R${Math.round(amount)}`),
+    );
+  }
+
   const filters: { key: Filter; label: string; count: number }[] = [
     { key: "all", label: "Everyone in app", count: counts.all },
     { key: "approved", label: "Approved", count: counts.approved },
@@ -148,9 +167,10 @@ export function HireQueue({ drivers }: { drivers: Driver[] }) {
         Drivers in the app
       </h2>
       <p className="mt-1 text-sm text-slate-600">
-        SA numbers are auto-approved to drive. AI scans ID/license on upload —
-        auto-verifies when name + expiry check out, otherwise flags{" "}
-        <strong>Docs to review</strong>.
+        SA numbers are auto-approved to drive. Track each driver&apos;s{" "}
+        <strong>wallet balance</strong> and <strong>amount owed</strong> weekly
+        — credit wallet after EFT/eWallet to {BRAND.phone}. Negative wallet
+        blocks auto-dispatch.
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -216,6 +236,31 @@ export function HireQueue({ drivers }: { drivers: Driver[] }) {
                   {d.phone} · {VEHICLE_LABELS[d.vehicle_type]}
                   {d.license_number ? ` · License ${d.license_number}` : ""}
                 </p>
+                <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold">
+                  <span
+                    className={
+                      Number(d.wallet_balance ?? 0) < 0
+                        ? "text-rose-700"
+                        : "text-emerald-800"
+                    }
+                  >
+                    Wallet: {formatMoney(Number(d.wallet_balance ?? 0))}
+                  </span>
+                  <span
+                    className={
+                      Number(d.commission_owed ?? 0) > 0
+                        ? "text-amber-800"
+                        : "text-slate-500"
+                    }
+                  >
+                    Amount owed: {formatMoney(Number(d.commission_owed ?? 0))}
+                  </span>
+                  {Number(d.wallet_balance ?? 0) < 0 ? (
+                    <span className="rounded-full bg-rose-100 px-2 py-0.5 text-rose-900">
+                      Blocked from auto-dispatch
+                    </span>
+                  ) : null}
+                </p>
                 <p className="mt-0.5 text-xs text-slate-500">
                   Opt-in:{" "}
                   {[
@@ -267,6 +312,14 @@ export function HireQueue({ drivers }: { drivers: Driver[] }) {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => creditWallet(d.id, d.full_name)}
+                  className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-900 disabled:opacity-50"
+                >
+                  Credit wallet
+                </button>
                 {d.docs_submitted_at ? (
                   <button
                     type="button"

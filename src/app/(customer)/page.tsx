@@ -3,7 +3,7 @@ import { ServiceHomeSheet } from "@/components/uber/service-home";
 
 export default function HomePage() {
   return (
-    <UberShell>
+    <UberShell showTabBar>
       <ServiceHomeSheet />
     </UberShell>
   );

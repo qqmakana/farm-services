@@ -23,14 +23,24 @@ export function UberShell({
   pin = null,
   backHref,
   title,
+  showTabBar = false,
 }: {
   children: React.ReactNode;
   pin?: { lat: number; lng: number } | null;
   backHref?: string;
   title?: string;
+  /** Reserve space for the customer bottom tab bar (Home). */
+  showTabBar?: boolean;
 }) {
+  const bottomInset = showTabBar
+    ? "calc(4rem + env(safe-area-inset-bottom, 0px))"
+    : "0px";
+
   return (
-    <div className="fixed inset-0 z-[45] flex flex-col bg-[#F5F5F5] font-[system-ui,Segoe_UI,sans-serif]">
+    <div
+      className="fixed inset-x-0 top-0 z-[45] flex flex-col bg-[#F9FAFB] font-[system-ui,Segoe_UI,sans-serif]"
+      style={{ bottom: bottomInset }}
+    >
       {/* Top ~55%: map */}
       <div className="relative h-[55%] min-h-[240px] w-full shrink-0">
         <VillageMap pin={pin} />
@@ -39,7 +49,7 @@ export function UberShell({
             {backHref ? (
               <Link
                 href={backHref}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#1A4D3A] shadow-md"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#1A4D3A] shadow-md transition active:scale-95"
                 aria-label="Back"
               >
                 ←
@@ -47,7 +57,7 @@ export function UberShell({
             ) : null}
             <Link
               href="/"
-              className="rounded-full bg-white/95 px-3 py-2 shadow-md backdrop-blur"
+              className="rounded-full bg-white/95 px-3 py-2 shadow-md backdrop-blur transition active:scale-95"
             >
               <span className="block text-sm font-bold text-[#1A4D3A]">
                 {title ?? BRAND.appName}
@@ -65,14 +75,16 @@ export function UberShell({
 
       {/* Bottom ~45%: floating sheet */}
       <div
-        className="relative z-[500] -mt-4 flex min-h-0 flex-1 flex-col overflow-hidden bg-white"
-        style={{
-          borderRadius: "20px 20px 0 0",
-          boxShadow: "0 -4px 20px rgba(0,0,0,0.15)",
-        }}
+        className="relative z-[500] -mt-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.12)]"
       >
-        <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-slate-200" />
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-gray-200" />
+        <div
+          className={`min-h-0 flex-1 overflow-y-auto px-4 pt-3 ${
+            showTabBar
+              ? "pb-4"
+              : "pb-[max(1rem,env(safe-area-inset-bottom))]"
+          }`}
+        >
           {children}
         </div>
       </div>

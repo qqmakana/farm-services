@@ -7,6 +7,7 @@ import {
 import { incrementDriverOfferStat } from "@/lib/matching-stats";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Driver, Job, VehicleType } from "@/lib/types";
+import { driverEligibleForDispatch } from "@/lib/wallet";
 
 /** Exclusive offer window before cascading to the next-ranked driver. */
 export const OFFER_TIMEOUT_SEC = 30;
@@ -108,6 +109,7 @@ export async function offerNextDriver(jobId: string): Promise<Job | null> {
       .maybeSingle();
 
     if (!driver || !driver.is_online || !driver.is_active) continue;
+    if (!driverEligibleForDispatch(driver as Driver)) continue;
     if (
       driver.approval_status === "rejected" ||
       (driver.approval_status != null && driver.approval_status !== "approved")

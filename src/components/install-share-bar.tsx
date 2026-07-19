@@ -4,7 +4,19 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 
-const UBER_PATHS = new Set(["/", "/ride", "/delivery", "/farm"]);
+const UBER_PATHS = new Set([
+  "/",
+  "/services",
+  "/activity",
+  "/account",
+  "/ride",
+  "/delivery",
+  "/farm",
+  "/driver/home",
+  "/driver/jobs",
+  "/driver/earnings",
+  "/driver/account",
+]);
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -222,8 +234,11 @@ export function InstallShareBar() {
     useInstallActions();
   const [minimized, setMinimized] = useState(false);
 
-  // Uber map shell has its own Share/Install in the header — avoid covering the sheet
-  if (UBER_PATHS.has(pathname)) {
+  // Customer shell / Uber map — avoid covering the bottom tab bar or sheet
+  if (
+    UBER_PATHS.has(pathname) ||
+    pathname.startsWith("/account/")
+  ) {
     return null;
   }
 

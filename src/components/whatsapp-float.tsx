@@ -1,9 +1,30 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { BRAND_WHATSAPP_HREF } from "@/lib/brand";
 
-/** Fixed WhatsApp support button — bottom right. */
+const HIDE_ON = new Set([
+  "/",
+  "/services",
+  "/activity",
+  "/account",
+  "/ride",
+  "/delivery",
+  "/farm",
+]);
+
+/** Fixed WhatsApp support button — bottom right (hidden on customer shell). */
 export function WhatsAppFloat() {
+  const pathname = usePathname() ?? "";
+  if (
+    HIDE_ON.has(pathname) ||
+    pathname.startsWith("/account/") ||
+    pathname.startsWith("/driver/") ||
+    pathname.startsWith("/trip/")
+  ) {
+    return null;
+  }
+
   return (
     <a
       href={BRAND_WHATSAPP_HREF}
