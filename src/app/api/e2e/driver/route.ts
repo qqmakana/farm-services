@@ -40,21 +40,38 @@ export async function POST(request: Request) {
   const body = (await request.json()) as {
     driverId?: string;
     fcmToken?: string;
+    walletBalance?: number;
+    isOnline?: boolean;
   };
-  if (!body.driverId || !body.fcmToken) {
-    return NextResponse.json(
-      { error: "driverId and fcmToken required" },
-      { status: 400 },
-    );
+  if (!body.driverId) {
+    return NextResponse.json({ error: "driverId required" }, { status: 400 });
   }
   const driver = mockRepo.listDrivers().find((d) => d.id === body.driverId);
   if (!driver) {
     return NextResponse.json({ error: "Driver not found" }, { status: 404 });
   }
-  driver.fcm_token = body.fcmToken;
-  driver.fcm_updated_at = new Date().toISOString();
+  if (body.fcmToken) {
+    driver.fcm_token = body.fcmToken;
+    driver.fcm_updated_at = new Date().toISOString();
+  }
+  if (typeof body.walletBalance === "number") {
+    driver.wallet_balance = body.walletBalance;
+    driver.commission_owed =
+      body.walletBalance < 0 ? Math.abs(body.walletBalance) : 0;
+  }
+  if (typeof body.isOnline === "boolean") {
+    mockRepo.setDriverOnline(
+      driver.id,
+      body.isOnline,
+      driver.last_lat ?? -31.5833,
+      driver.last_lng ?? 28.7833,
+    );
+  }
   return NextResponse.json({
     ok: true,
-    fcm_token: driver.fcm_token,
+    fcm_token: driver.fcm_token ?? null,
+    wallet_balance: driver.wallet_balance ?? 0,
+    commission_owed: driver.commission_owed ?? 0,
+    is_online: driver.is_online,
   });
 }

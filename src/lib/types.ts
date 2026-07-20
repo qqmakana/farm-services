@@ -339,6 +339,8 @@ export type MerchantDeliveryInput = {
   size: "small" | "medium" | "large" | "xl";
   needs_helpers?: boolean;
   country_code?: string;
+  /** ISO datetime — schedule for later; omit/null = ASAP */
+  scheduled_for?: string | null;
 };
 
 export type NewProductInput = {

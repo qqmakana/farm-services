@@ -13,7 +13,9 @@
     "test:prod": "node scripts/test-prod.mjs",
     "test:e2e": "playwright test",
     "test:e2e:uber": "playwright test tests/uber-flow.spec.ts",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:prod": "playwright test -c playwright.prod.config.ts",
+    "test:e2e:ui": "playwright test --ui",
+    "test:all": "npm run test:logic && npm run test:e2e"
   },
   "dependencies": {
     "@paypal/react-paypal-js": "^10.1.2",

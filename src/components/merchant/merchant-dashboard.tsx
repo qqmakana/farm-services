@@ -17,12 +17,21 @@ import {
   statusBadgeClass,
 } from "@/lib/format";
 import { requestFcmToken } from "@/lib/firebase/client";
+import { isSearchingStatus } from "@/lib/job-status";
+import {
+  defaultLaterLocal,
+  localInputToIso,
+  ScheduleWhen,
+  type WhenMode,
+} from "@/components/uber/schedule-when";
 import type {
   JobWithDriver,
   PartnerNotification,
   PartnerWeeklyReport,
   Shop,
 } from "@/lib/types";
+
+const CHECKLIST_KEY = "vr_partner_checklist_dismissed";
 
 export function MerchantDashboard({
   shop,
@@ -44,6 +53,9 @@ export function MerchantDashboard({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [whenMode, setWhenMode] = useState<WhenMode>("now");
+  const [scheduledLocal, setScheduledLocal] = useState(defaultLaterLocal);
+  const [checklistDismissed, setChecklistDismissed] = useState(false);
   const [delivery, setDelivery] = useState({
     customer_name: "",
     customer_phone: "",
@@ -61,6 +73,13 @@ export function MerchantDashboard({
       j.status === "in_progress",
   ).length;
   const done = jobs.filter((j) => j.status === "completed").length;
+  const pendingOrders = jobs.filter(
+    (j) =>
+      isSearchingStatus(j.status) ||
+      j.status === "confirmed" ||
+      j.status === "assigned" ||
+      j.status === "in_progress",
+  ).length;
   const revenue = jobs
     .filter((j) => j.status === "completed")
     .reduce((s, j) => s + Number(j.fee_amount || 0), 0);
@@ -76,6 +95,41 @@ export function MerchantDashboard({
     () => notifications.filter((n) => !n.read_at),
     [notifications],
   );
+
+  const checklist = useMemo(() => {
+    const firstDelivery = jobs.length > 0;
+    const sharedReferral = referralCount > 0;
+    const sawReport = reports.length > 0;
+    return [
+      { id: "account", label: "Business account linked", done: true },
+      {
+        id: "delivery",
+        label: "Create your first delivery",
+        done: firstDelivery,
+      },
+      {
+        id: "referral",
+        label: "Share your referral link",
+        done: sharedReferral,
+      },
+      {
+        id: "report",
+        label: "Check your weekly report",
+        done: sawReport,
+      },
+    ];
+  }, [jobs.length, referralCount, reports.length]);
+
+  const checklistComplete = checklist.every((c) => c.done);
+  const showChecklist = !checklistDismissed && !checklistComplete;
+
+  useEffect(() => {
+    try {
+      setChecklistDismissed(localStorage.getItem(CHECKLIST_KEY) === "1");
+    } catch {
+      setChecklistDismissed(false);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,19 +163,44 @@ export function MerchantDashboard({
     );
   }
 
-  const shareUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/shop?ref=${shop.referral_code ?? ""}`
-      : `/shop?ref=${shop.referral_code ?? ""}`;
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "https://village-ride.vercel.app";
+  const shareUrl = `${origin}/shop?ref=${shop.referral_code ?? ""}`;
+
+  function tripUrl(code: string) {
+    return `${origin}/trip/${code}`;
+  }
+
+  async function copyTripLink(code: string) {
+    try {
+      await navigator.clipboard.writeText(tripUrl(code));
+      setMessage("Trip link copied — share with your customer.");
+    } catch {
+      setError("Could not copy link. Open Track and share from there.");
+    }
+  }
 
   function submitDelivery(e: React.FormEvent) {
     e.preventDefault();
     setMessage(null);
     setError(null);
+    const scheduled_for =
+      whenMode === "later" ? localInputToIso(scheduledLocal) : null;
+    if (whenMode === "later" && !scheduled_for) {
+      setError("Pick a valid date and time for the scheduled delivery.");
+      return;
+    }
     startTransition(async () => {
       try {
-        const job = await createMerchantDelivery(delivery);
-        setMessage(`Order ${job.reference_code} created — drivers notified.`);
+        const job = await createMerchantDelivery({
+          ...delivery,
+          scheduled_for,
+        });
+        setMessage(
+          whenMode === "later"
+            ? `Scheduled ${job.reference_code} — we'll notify drivers nearer the time.`
+            : `Order ${job.reference_code} created — drivers notified.`,
+        );
         setDelivery({
           customer_name: "",
           customer_phone: "",
@@ -129,6 +208,7 @@ export function MerchantDashboard({
           item_description: "",
           size: "medium",
         });
+        setWhenMode("now");
         setShowForm(false);
         router.refresh();
       } catch (err) {
@@ -161,6 +241,15 @@ export function MerchantDashboard({
         setError(err instanceof Error ? err.message : "Failed");
       }
     });
+  }
+
+  function dismissChecklist() {
+    setChecklistDismissed(true);
+    try {
+      localStorage.setItem(CHECKLIST_KEY, "1");
+    } catch {
+      /* ignore */
+    }
   }
 
   return (
@@ -204,6 +293,58 @@ export function MerchantDashboard({
         </p>
       )}
 
+      {showChecklist && (
+        <section className="mt-6 rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">
+                Get started in 4 steps
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Your first delivery is a tap away — no meeting required.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={dismissChecklist}
+              className="text-xs font-semibold text-slate-500 underline"
+            >
+              Dismiss
+            </button>
+          </div>
+          <ul className="mt-4 space-y-2">
+            {checklist.map((step) => (
+              <li
+                key={step.id}
+                className="flex items-center gap-2 text-sm text-slate-800"
+              >
+                <span
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                    step.done
+                      ? "bg-[#1A4D3A] text-white"
+                      : "border border-slate-300 bg-white text-slate-400"
+                  }`}
+                >
+                  {step.done ? "✓" : "·"}
+                </span>
+                <span className={step.done ? "text-slate-500 line-through" : ""}>
+                  {step.label}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {!checklist.find((c) => c.id === "delivery")?.done ? (
+            <button
+              type="button"
+              onClick={() => setShowForm(true)}
+              className="mt-4 w-full rounded-xl bg-[#1A4D3A] px-4 py-3 text-sm font-bold text-white transition active:scale-95"
+            >
+              Create your first delivery
+            </button>
+          ) : null}
+        </section>
+      )}
+
       {showForm && (
         <form
           onSubmit={submitDelivery}
@@ -217,6 +358,13 @@ export function MerchantDashboard({
             push automatically. Commission is deducted from the driver wallet
             when complete.
           </p>
+          <ScheduleWhen
+            mode={whenMode}
+            onModeChange={setWhenMode}
+            scheduledLocal={scheduledLocal}
+            onScheduledLocalChange={setScheduledLocal}
+            nowLabel="Deliver now"
+          />
           <input
             required
             placeholder="Customer name"
@@ -274,20 +422,25 @@ export function MerchantDashboard({
             disabled={pending}
             className="w-full rounded-xl bg-[#1A4D3A] px-4 py-3 text-sm font-bold text-white transition active:scale-95 disabled:opacity-60"
           >
-            {pending ? "Creating…" : "Create & notify drivers"}
+            {pending
+              ? "Creating…"
+              : whenMode === "later"
+                ? "Schedule delivery"
+                : "Create & notify drivers"}
           </button>
         </form>
       )}
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Open" value={String(open)} />
+        <Stat label="Total deliveries" value={String(jobs.length)} />
+        <Stat label="Pending" value={String(pendingOrders)} />
         <Stat label="Completed" value={String(done)} />
-        <Stat label="Fees" value={formatMoney(revenue)} />
-        <Stat label="Commission*" value={formatMoney(commissionShown)} />
+        <Stat label="Fees earned*" value={formatMoney(revenue)} />
       </div>
       <p className="mt-2 text-[11px] text-slate-500">
-        *Platform commission (~15%) is auto-deducted from the driver wallet on
-        completion — not charged to your shop.
+        *Delivery fees on completed orders. Platform commission (~15% /{" "}
+        {formatMoney(commissionShown)}) is auto-deducted from the{" "}
+        <strong>driver</strong> wallet — not charged to your shop. Open: {open}.
       </p>
 
       <section className="mt-8 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
@@ -378,12 +531,11 @@ export function MerchantDashboard({
           </button>
         </div>
         <p className="mt-1 text-sm text-slate-500">
-          Auto-generated summaries (also emailed via free webhook if configured).
-          Open a report to email yourself with mailto.
+          Auto-generated summaries. Open a report to email yourself with mailto.
         </p>
         {reports.length === 0 ? (
           <p className="mt-3 text-sm text-slate-500">
-            No reports yet — tap Generate, or wait for the Sunday cron.
+            No reports yet — tap Generate, or wait for the Monday cron.
           </p>
         ) : (
           <ul className="mt-3 space-y-3">
@@ -427,61 +579,116 @@ export function MerchantDashboard({
         </p>
 
         {jobs.length === 0 ? (
-          <div className="mt-6 rounded-xl border border-gray-100 bg-white p-8 text-center shadow-sm">
-            <p className="font-semibold text-slate-900">No orders yet</p>
-            <p className="mt-1 text-sm text-slate-500">
-              Create a delivery above, or wait for buyers on /shops.
+          <div className="mt-6 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/30 p-8 text-center">
+            <p className="text-lg font-bold text-slate-900">
+              Your first delivery is a tap away
             </p>
+            <p className="mt-2 text-sm text-slate-600">
+              Create a delivery from your shop — online drivers get a push
+              notification instantly.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowForm(true)}
+              className="mt-5 rounded-xl bg-[#1A4D3A] px-5 py-3 text-sm font-bold text-white transition active:scale-95"
+            >
+              Create delivery
+            </button>
           </div>
         ) : (
           <ul className="mt-4 space-y-3">
-            {jobs.map((job) => (
-              <li
-                key={job.id}
-                className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-mono text-sm font-semibold">
-                      {job.reference_code}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {job.customer_name} · {job.customer_phone}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-800">
-                      {job.pickup_landmark} → {job.dropoff_landmark}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {SERVICE_LABELS[job.service_type]} ·{" "}
-                      {formatWhen(job.scheduled_for || job.created_at)}
-                    </p>
-                    {job.product_summary ? (
-                      <p className="mt-1 text-xs text-slate-500">
-                        {job.product_summary}
+            {jobs.map((job) => {
+              const exhausted =
+                Boolean(job.dispatch_exhausted) &&
+                isSearchingStatus(job.status);
+              const driver = job.drivers;
+              return (
+                <li
+                  key={job.id}
+                  className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+                >
+                  {exhausted ? (
+                    <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+                      <p className="font-semibold">No drivers available right now</p>
+                      <p className="mt-0.5">
+                        We&apos;ll keep looking. You can also schedule for later
+                        when more drivers are online.
                       </p>
-                    ) : null}
-                  </div>
-                  <div className="text-right">
-                    <p className="text-base font-bold text-slate-900">
-                      {formatMoney(Number(job.fee_amount))}
-                    </p>
-                    <span
-                      className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass(job.status)}`}
-                    >
-                      {STATUS_LABELS[job.status]}
-                    </span>
-                    <div className="mt-2">
-                      <Link
-                        href={`/trip/${job.reference_code}`}
-                        className="text-xs font-semibold text-[#1A4D3A] underline"
+                      <button
+                        type="button"
+                        className="mt-2 font-semibold text-[#1A4D3A] underline"
+                        onClick={() => {
+                          setWhenMode("later");
+                          setShowForm(true);
+                        }}
                       >
-                        Track
-                      </Link>
+                        Schedule another delivery
+                      </button>
+                    </div>
+                  ) : null}
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-mono text-sm font-semibold">
+                        {job.reference_code}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {job.customer_name} · {job.customer_phone}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-800">
+                        {job.pickup_landmark} → {job.dropoff_landmark}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {SERVICE_LABELS[job.service_type]} ·{" "}
+                        {formatWhen(job.scheduled_for || job.created_at)}
+                        {job.scheduled_for ? " (scheduled)" : ""}
+                      </p>
+                      {job.product_summary ? (
+                        <p className="mt-1 text-xs text-slate-500">
+                          {job.product_summary}
+                        </p>
+                      ) : null}
+                      {driver ? (
+                        <p className="mt-2 text-xs font-medium text-slate-700">
+                          Driver: {driver.full_name}
+                          {Number(driver.rating_avg) > 0
+                            ? ` · ★ ${Number(driver.rating_avg).toFixed(1)} (${driver.rating_count ?? 0})`
+                            : " · New driver"}
+                        </p>
+                      ) : isSearchingStatus(job.status) && !exhausted ? (
+                        <p className="mt-2 text-xs text-slate-500">
+                          Searching for a driver…
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-base font-bold text-slate-900">
+                        {formatMoney(Number(job.fee_amount))}
+                      </p>
+                      <span
+                        className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass(job.status)}`}
+                      >
+                        {STATUS_LABELS[job.status]}
+                      </span>
+                      <div className="mt-2 flex flex-col items-end gap-1">
+                        <Link
+                          href={`/trip/${job.reference_code}`}
+                          className="text-xs font-semibold text-[#1A4D3A] underline"
+                        >
+                          Track
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => void copyTripLink(job.reference_code)}
+                          className="text-xs font-semibold text-slate-600 underline"
+                        >
+                          Share trip link
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

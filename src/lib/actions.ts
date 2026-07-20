@@ -1737,6 +1737,7 @@ export async function createMerchantDelivery(
     dropoff_lat: input.dropoff_lat ?? null,
     dropoff_lng: input.dropoff_lng ?? null,
     dropoff_landmark: input.dropoff_landmark.trim(),
+    scheduled_for: input.scheduled_for ?? null,
     details: {
       item_description: input.item_description.trim(),
       size,

@@ -92,8 +92,14 @@ async function ensureDriverOnline(page: Page) {
 
 async function registerMockFcm(page: Page) {
   // Test: FCM token registration (push channel for exclusive offers)
+  // Also top up wallet so prior suite runs don't block dispatch eligibility.
   const res = await page.request.post("/api/e2e/driver", {
-    data: { driverId: DRIVER_ID, fcmToken: MOCK_FCM },
+    data: {
+      driverId: DRIVER_ID,
+      fcmToken: MOCK_FCM,
+      walletBalance: 500,
+      isOnline: true,
+    },
   });
   expect(res.ok()).toBeTruthy();
   const body = await res.json();
@@ -104,6 +110,7 @@ async function registerMockFcm(page: Page) {
   const state = await check.json();
   expect(state.is_online).toBe(true);
   expect(state.fcm_token).toBe(MOCK_FCM);
+  expect(Number(state.wallet_balance)).toBeGreaterThanOrEqual(0);
 }
 
 async function bookVillageDelivery(page: Page) {
@@ -242,10 +249,10 @@ test.describe.serial("Uber-style Village Ride E2E", () => {
 
     // Test: History segment shows completed trip
     await driverPage.getByRole("button", { name: /^completed$/i }).click();
-    await expect(driverPage.getByText(/Mthatha Taxi Rank/i)).toBeVisible({
+    await expect(driverPage.getByText(/Mthatha Taxi Rank/i).first()).toBeVisible({
       timeout: 15_000,
     });
-    await expect(driverPage.getByText(/Commission deducted/i)).toBeVisible();
+    await expect(driverPage.getByText(/Commission deducted/i).first()).toBeVisible();
 
     // Test: Prepaid commission wallet (Village Ride model — not Uber cash-out balance)
     // Completing a trip deducts ~15% platform commission from wallet_balance.

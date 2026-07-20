@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
 import { ShopPortal } from "@/components/shop-portal";
 import { listJobs, listProducts, listShops } from "@/lib/actions";
@@ -23,7 +24,10 @@ export default async function ShopPage() {
         </h1>
         <p className="mt-1 text-sm text-slate-600">
           Register as a <strong>Farm</strong> (farmer) or a town shop. List
-          products. When buyers order, delivery jobs go to bakkie/truck drivers.
+          products. When buyers order, delivery jobs go to bakkie/truck drivers.{" "}
+          <Link href="/partners" className="font-semibold text-[#1A4D3A] underline">
+            Why partner with Village Ride?
+          </Link>
         </p>
         <div className="mt-6">
           <ShopPortal shops={shops} products={products} jobs={jobs} />

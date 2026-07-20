@@ -7,6 +7,10 @@ import {
   applyCommissionToWallet,
   driverEligibleForDispatch,
 } from "../src/lib/wallet";
+import {
+  generateReferralCode,
+  generateShopWeeklyReport,
+} from "../src/lib/partner";
 
 let passed = 0;
 let failed = 0;
@@ -172,5 +176,30 @@ test("mock: phone job lookup variants", () => {
   assert(rows.length >= 1, "expected wallet-test job by phone");
 });
 
-console.log(`\nLogic summary: ${passed} passed, ${failed} failed`);
-process.exit(failed > 0 ? 1 : 0);
+test("referral: code formula is 4-letter prefix + 3 random", () => {
+  const code = generateReferralCode("Village Mart");
+  assert(code.startsWith("VILL"), `prefix ${code}`);
+  assert(code.length === 7, `length ${code.length}`);
+});
+
+async function runAsync() {
+  try {
+    const shops = mockRepo.listShops();
+    assert(shops.length >= 1, "need shop");
+    const result = await generateShopWeeklyReport(shops[0]);
+    assert(result.report != null, "report created");
+    assert(Boolean(result.report?.week_key), "week_key");
+    assert(
+      result.report!.summary_text.includes(shops[0].name),
+      "summary has shop",
+    );
+    ok("partner: weekly report builds in mock");
+  } catch (e) {
+    fail("partner: weekly report builds in mock", e);
+  }
+
+  console.log(`\nLogic summary: ${passed} passed, ${failed} failed`);
+  process.exit(failed > 0 ? 1 : 0);
+}
+
+void runAsync();
