@@ -7,6 +7,9 @@ import { calculateFare, type FareBreakdown } from "./fares";
 import { isValidMobileForCountry } from "./phone";
 import { DEFAULT_COUNTRY, getCountry } from "./countries";
 import {
+  driverCanGoOnline,
+} from "./trust";
+import {
   buildCustomerConfirmPush,
   expireStaleOffers,
   offerNextDriver,
@@ -517,11 +520,14 @@ export async function setDriverIdVerified(
     const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
     if (!driver) throw new Error("Driver not found");
     driver.id_verified = verified;
+    driver.verification_status = verified ? "verified" : "pending";
+    driver.verified_at = verified ? new Date().toISOString() : null;
     driver.kyc_status = verified ? "manual_approved" : "needs_review";
     driver.kyc_checked_at = new Date().toISOString();
     if (verified) {
       driver.kyc_issues = ["Manually approved by ops"];
     }
+    if (!verified) driver.is_online = false;
     revalidateAll();
     return driver;
   }
@@ -531,11 +537,14 @@ export async function setDriverIdVerified(
     .from("rr_drivers")
     .update({
       id_verified: verified,
+      verification_status: verified ? "verified" : "pending",
+      verified_at: verified ? new Date().toISOString() : null,
+      verified_by: verified ? "ops" : null,
       kyc_status: verified ? "manual_approved" : "needs_review",
       kyc_checked_at: new Date().toISOString(),
       ...(verified
         ? { kyc_issues: ["Manually approved by ops"] }
-        : {}),
+        : { is_online: false }),
     })
     .eq("id", driverId)
     .select("*")
@@ -569,7 +578,7 @@ export async function rerunDriverKyc(driverId: string) {
 
 async function uploadDriverDoc(
   driverId: string,
-  kind: "id" | "license",
+  kind: "id" | "license" | "selfie" | "vehicle_front" | "vehicle_side",
   file: File,
 ) {
   const admin = createAdminClient();
@@ -584,6 +593,274 @@ async function uploadDriverDoc(
     });
   if (error) throw new Error(error.message);
   return path;
+}
+
+function requireImageFile(formData: FormData, key: string, label: string): File {
+  const file = formData.get(key);
+  if (!(file instanceof File) || file.size <= 0) {
+    throw new Error(`${label} is required.`);
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error(`${label} must be under 5MB.`);
+  }
+  return file;
+}
+
+/**
+ * Register as driver with required trust photos + code of conduct.
+ * Starts as verification_status=pending — cannot go online until ops verifies.
+ */
+export async function applyToDriveWithTrust(formData: FormData) {
+  const full_name = String(formData.get("full_name") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
+  const vehicle_type = String(formData.get("vehicle_type") ?? "bakkie").trim() as VehicleType;
+  const area = String(formData.get("area") ?? "").trim();
+  const notes = String(formData.get("notes") ?? "").trim();
+  const country_code = String(formData.get("country_code") ?? DEFAULT_COUNTRY).trim();
+  const conduct = String(formData.get("code_of_conduct") ?? "") === "on" ||
+    String(formData.get("code_of_conduct") ?? "") === "true" ||
+    formData.get("code_of_conduct") === "1";
+
+  if (!full_name || !phone) throw new Error("Name and phone are required.");
+  if (!area) throw new Error("Area / town is required.");
+  if (!conduct) {
+    throw new Error("You must agree to the Driver Code of Conduct.");
+  }
+  if (!isValidMobileForCountry(phone, country_code)) {
+    const c = getCountry(country_code);
+    throw new Error(`Enter a valid ${c.name} mobile (e.g. +${c.phonePrefix}…).`);
+  }
+
+  const idFile = requireImageFile(formData, "id_doc", "ID photo (front)");
+  const selfieFile = requireImageFile(formData, "selfie", "Face / selfie photo");
+  const vehicleFront = requireImageFile(
+    formData,
+    "vehicle_front",
+    "Vehicle front photo (registration visible)",
+  );
+  const vehicleSide = requireImageFile(
+    formData,
+    "vehicle_side",
+    "Vehicle side photo",
+  );
+
+  const now = new Date().toISOString();
+
+  if (!useAdmin()) {
+    const driver = mockRepo.applyToDrive({
+      full_name,
+      phone,
+      vehicle_type,
+      area,
+      notes: notes || undefined,
+      country_code,
+    });
+    driver.id_doc_url = `mock://id/${idFile.name}`;
+    driver.selfie_url = `mock://selfie/${selfieFile.name}`;
+    driver.vehicle_front_url = `mock://vfront/${vehicleFront.name}`;
+    driver.vehicle_side_url = `mock://vside/${vehicleSide.name}`;
+    driver.code_of_conduct_accepted_at = now;
+    driver.verification_status = "pending";
+    driver.id_verified = false;
+    driver.docs_submitted_at = now;
+    driver.approval_status = "approved";
+    revalidateAll();
+    return driver;
+  }
+
+  const admin = createAdminClient();
+  const { data: existing } = await admin
+    .from("rr_drivers")
+    .select("*")
+    .eq("phone", phone)
+    .maybeSingle();
+
+  if (existing?.approval_status === "approved" && existing.verification_status === "verified") {
+    throw new Error("This phone is already a verified driver. Go online.");
+  }
+  if (existing?.verification_status === "pending") {
+    throw new Error("Application already submitted — waiting for ID verification.");
+  }
+
+  const noteLine = [
+    `Area: ${area}`,
+    `${getCountry(country_code).name} — pending photo verification`,
+    notes || null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const { data: created, error: insertErr } = await admin
+    .from("rr_drivers")
+    .insert({
+      full_name,
+      phone,
+      vehicle_type,
+      is_active: true,
+      approval_status: "approved",
+      id_verified: false,
+      verification_status: "pending",
+      is_online: false,
+      prefer_night: true,
+      prefer_heavy: true,
+      prefer_village_routes: true,
+      notes: noteLine,
+      country_code,
+      code_of_conduct_accepted_at: now,
+      docs_submitted_at: now,
+    })
+    .select("*")
+    .single();
+
+  if (insertErr) throw new Error(insertErr.message);
+  const driverId = (created as Driver).id;
+
+  try {
+    const id_doc_url = await uploadDriverDoc(driverId, "id", idFile);
+    const selfie_url = await uploadDriverDoc(driverId, "selfie", selfieFile);
+    const vehicle_front_url = await uploadDriverDoc(
+      driverId,
+      "vehicle_front",
+      vehicleFront,
+    );
+    const vehicle_side_url = await uploadDriverDoc(
+      driverId,
+      "vehicle_side",
+      vehicleSide,
+    );
+
+    const { data, error } = await admin
+      .from("rr_drivers")
+      .update({
+        id_doc_url,
+        selfie_url,
+        vehicle_front_url,
+        vehicle_side_url,
+      })
+      .eq("id", driverId)
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    revalidateAll();
+    return data as Driver;
+  } catch (err) {
+    await admin.from("rr_drivers").delete().eq("id", driverId);
+    throw err;
+  }
+}
+
+export async function setDriverVerification(
+  driverId: string,
+  decision: "verified" | "rejected",
+  note?: string,
+) {
+  const now = new Date().toISOString();
+  const patch: Record<string, unknown> = {
+    verification_status: decision,
+    verification_note: note?.trim() || null,
+    id_verified: decision === "verified",
+    verified_at: decision === "verified" ? now : null,
+    verified_by: decision === "verified" ? "ops" : null,
+    is_online: decision === "verified" ? undefined : false,
+  };
+  if (decision === "rejected") {
+    patch.is_online = false;
+  }
+
+  if (!useAdmin()) {
+    const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
+    if (!driver) throw new Error("Driver not found");
+    driver.verification_status = decision;
+    driver.verification_note = note?.trim() || null;
+    driver.id_verified = decision === "verified";
+    driver.verified_at = decision === "verified" ? now : null;
+    if (decision !== "verified") driver.is_online = false;
+    revalidateAll();
+    return driver;
+  }
+
+  const admin = createAdminClient();
+  const updatePayload: Record<string, unknown> = {
+    verification_status: decision,
+    verification_note: note?.trim() || null,
+    id_verified: decision === "verified",
+    verified_at: decision === "verified" ? now : null,
+    verified_by: decision === "verified" ? "ops" : null,
+  };
+  if (decision !== "verified") updatePayload.is_online = false;
+
+  const { data, error } = await admin
+    .from("rr_drivers")
+    .update(updatePayload)
+    .eq("id", driverId)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  revalidateAll();
+  return data as Driver;
+}
+
+export async function listDriversPendingVerification() {
+  if (!useAdmin()) {
+    return mockRepo
+      .listDrivers()
+      .filter(
+        (d) =>
+          d.verification_status === "pending" ||
+          (!d.verification_status && !d.id_verified),
+      );
+  }
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("rr_drivers")
+    .select("*")
+    .eq("verification_status", "pending")
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Driver[];
+}
+
+export async function rateCustomerByDriver(
+  jobId: string,
+  driverId: string,
+  stars: number,
+  comment?: string,
+) {
+  if (stars < 1 || stars > 5) throw new Error("Stars must be 1–5.");
+  const now = new Date().toISOString();
+
+  if (!useAdmin()) {
+    const job = mockRepo.rateCustomer(jobId, driverId, stars, comment);
+    revalidateAll();
+    return job;
+  }
+
+  const admin = createAdminClient();
+  const { data: job, error: jobErr } = await admin
+    .from("rr_jobs")
+    .select("*")
+    .eq("id", jobId)
+    .single();
+  if (jobErr || !job) throw new Error(jobErr?.message ?? "Job not found");
+  if (job.driver_id !== driverId) throw new Error("Not your trip.");
+  if (job.status !== "completed") throw new Error("Trip must be completed first.");
+  if (job.customer_rating_stars != null) {
+    throw new Error("You already rated this customer.");
+  }
+
+  const { data, error } = await admin
+    .from("rr_jobs")
+    .update({
+      customer_rating_stars: stars,
+      customer_rating_comment: comment?.trim() || null,
+      customer_rated_at: now,
+    })
+    .eq("id", jobId)
+    .select(JOB_WITH_RELATIONS)
+    .single();
+  if (error) throw new Error(error.message);
+  revalidateAll();
+  return data as JobWithDriver;
 }
 
 export async function submitDriverDocuments(
@@ -1092,7 +1369,7 @@ export async function createShop(input: NewShopInput) {
 
 /**
  * Sell door → create Supabase auth user, set role=merchant, link rr_shops.user_id
- * and rr_profiles.shop_id.
+ * and rr_profiles.shop_id. Generates referral code; optional referred_by.
  */
 export async function registerMerchantShop(input: MerchantRegisterInput): Promise<{
   shop: Shop;
@@ -1110,6 +1387,30 @@ export async function registerMerchantShop(input: MerchantRegisterInput): Promis
     throw new Error("Business name, phone, and landmark are required.");
   }
 
+  const { generateReferralCode, notifyPartner } = await import("./partner");
+  const { mockPartnerStore } = await import("./partner-mock");
+
+  let referredBy: string | null = null;
+  const refIn = input.referral_code?.trim();
+  if (refIn) {
+    if (!useAdmin()) {
+      referredBy = mockRepo.findShopByReferralCode(refIn)?.id ?? null;
+    } else {
+      const admin = createAdminClient();
+      const { data } = await admin
+        .from("rr_shops")
+        .select("id")
+        .ilike("referral_code", refIn)
+        .maybeSingle();
+      referredBy = data?.id ?? null;
+    }
+    if (!referredBy) {
+      throw new Error("Referral code not found. Leave blank or check with your partner.");
+    }
+  }
+
+  let referralCode = generateReferralCode(input.name.trim());
+
   if (!useAdmin()) {
     const shop = mockRepo.createShop({
       name: input.name.trim(),
@@ -1119,13 +1420,37 @@ export async function registerMerchantShop(input: MerchantRegisterInput): Promis
       lat: input.lat ?? null,
       lng: input.lng ?? null,
       notes: input.notes ?? null,
+      referral_code: referralCode,
+      referred_by_shop_id: referredBy,
     });
     shop.user_id = `mock-merchant-${shop.id}`;
+    if (referredBy) {
+      mockPartnerStore.trackReferral(referredBy);
+      await notifyPartner({
+        shopId: referredBy,
+        type: "referral",
+        title: "New partner joined with your code",
+        body: `${shop.name} signed up using your referral code.`,
+        emailBody: `${shop.name} registered on Village Ride with your code ${refIn}.`,
+      });
+    }
     revalidateAll();
     return { shop, email };
   }
 
   const admin = createAdminClient();
+
+  // Ensure unique referral code
+  for (let i = 0; i < 8; i++) {
+    const { data: clash } = await admin
+      .from("rr_shops")
+      .select("id")
+      .ilike("referral_code", referralCode)
+      .maybeSingle();
+    if (!clash) break;
+    referralCode = generateReferralCode(input.name.trim());
+  }
+
   const { data: created, error: authErr } = await admin.auth.admin.createUser({
     email,
     password,
@@ -1153,6 +1478,8 @@ export async function registerMerchantShop(input: MerchantRegisterInput): Promis
       user_id: userId,
       delivers: true,
       is_active: true,
+      referral_code: referralCode,
+      referred_by_shop_id: referredBy,
     })
     .select("*")
     .single();
@@ -1178,6 +1505,16 @@ export async function registerMerchantShop(input: MerchantRegisterInput): Promis
     );
   }
 
+  if (referredBy) {
+    await notifyPartner({
+      shopId: referredBy,
+      type: "referral",
+      title: "New partner joined with your code",
+      body: `${shop.name} signed up using your referral code.`,
+      emailBody: `${shop.name} registered on Village Ride with your code ${refIn}.`,
+    });
+  }
+
   revalidateAll();
   return { shop: shop as Shop, email };
 }
@@ -1188,8 +1525,12 @@ export async function getMerchantDashboardData(): Promise<{
   jobs: JobWithDriver[];
   role: string | null;
   email: string | null;
+  notifications: import("./types").PartnerNotification[];
+  reports: import("./types").PartnerWeeklyReport[];
+  referralCount: number;
 } | null> {
   if (!useAdmin()) {
+    const { mockPartnerStore } = await import("./partner-mock");
     const shops = mockRepo.listShops();
     const shop = shops[0] ?? null;
     const jobs = shop
@@ -1200,6 +1541,11 @@ export async function getMerchantDashboardData(): Promise<{
       jobs,
       role: "merchant",
       email: "demo@merchant.local",
+      notifications: shop ? mockPartnerStore.listNotifications(shop.id) : [],
+      reports: shop ? mockPartnerStore.listReports(shop.id) : [],
+      referralCount: shop
+        ? shops.filter((s) => s.referred_by_shop_id === shop.id).length
+        : 0,
     };
   }
 
@@ -1223,7 +1569,15 @@ export async function getMerchantDashboardData(): Promise<{
     role !== "admin" &&
     role !== "dispatcher"
   ) {
-    return { shop: null, jobs: [], role, email: user.email ?? null };
+    return {
+      shop: null,
+      jobs: [],
+      role,
+      email: user.email ?? null,
+      notifications: [],
+      reports: [],
+      referralCount: 0,
+    };
   }
 
   let shop: Shop | null = null;
@@ -1258,7 +1612,34 @@ export async function getMerchantDashboardData(): Promise<{
       jobs: [],
       role: role ?? "merchant",
       email: user.email ?? null,
+      notifications: [],
+      reports: [],
+      referralCount: 0,
     };
+  }
+
+  // Ensure referral code exists (backfill for older shops)
+  if (!shop.referral_code) {
+    try {
+      const { generateReferralCode } = await import("./partner");
+      let code = generateReferralCode(shop.name);
+      for (let i = 0; i < 5; i++) {
+        const { data: clash } = await admin
+          .from("rr_shops")
+          .select("id")
+          .ilike("referral_code", code)
+          .maybeSingle();
+        if (!clash) break;
+        code = generateReferralCode(shop.name);
+      }
+      const { error: codeErr } = await admin
+        .from("rr_shops")
+        .update({ referral_code: code })
+        .eq("id", shop.id);
+      if (!codeErr) shop = { ...shop, referral_code: code };
+    } catch {
+      /* column missing until PARTNER_SYSTEM.sql */
+    }
   }
 
   const { data: jobs, error } = await admin
@@ -1269,12 +1650,163 @@ export async function getMerchantDashboardData(): Promise<{
     .limit(50);
   if (error) throw new Error(error.message);
 
+  let notifications: import("./types").PartnerNotification[] = [];
+  let reports: import("./types").PartnerWeeklyReport[] = [];
+  let referralCount = 0;
+
+  try {
+    const [nRes, rRes, refRes] = await Promise.all([
+      admin
+        .from("rr_partner_notifications")
+        .select("*")
+        .eq("shop_id", shop.id)
+        .order("created_at", { ascending: false })
+        .limit(30),
+      admin
+        .from("rr_partner_weekly_reports")
+        .select("*")
+        .eq("shop_id", shop.id)
+        .order("week_key", { ascending: false })
+        .limit(8),
+      admin
+        .from("rr_shops")
+        .select("id", { count: "exact", head: true })
+        .eq("referred_by_shop_id", shop.id),
+    ]);
+    if (!nRes.error) {
+      notifications = (nRes.data ?? []) as import("./types").PartnerNotification[];
+    }
+    if (!rRes.error) {
+      reports = (rRes.data ?? []) as import("./types").PartnerWeeklyReport[];
+    }
+    if (!refRes.error) {
+      referralCount = refRes.count ?? 0;
+    }
+  } catch {
+    /* PARTNER_SYSTEM.sql not applied yet */
+  }
+
   return {
     shop,
     jobs: (jobs ?? []) as JobWithDriver[],
     role: role ?? "merchant",
     email: user.email ?? null,
+    notifications,
+    reports,
+    referralCount,
   };
+}
+
+/**
+ * Authenticated merchant creates a delivery linked to their shop.
+ * Reuses createJob → insertPaidJob → FCM auto-dispatch.
+ */
+export async function createMerchantDelivery(
+  input: import("./types").MerchantDeliveryInput,
+) {
+  if (!input.customer_name?.trim() || !input.customer_phone?.trim()) {
+    throw new Error("Customer name and phone are required.");
+  }
+  if (!input.dropoff_landmark?.trim()) {
+    throw new Error("Drop-off landmark is required.");
+  }
+  if (!input.item_description?.trim()) {
+    throw new Error("Describe what to deliver.");
+  }
+
+  const dash = await getMerchantDashboardData();
+  if (!dash?.shop) {
+    throw new Error("Sign in as a merchant with a linked shop first.");
+  }
+  const shop = dash.shop;
+
+  const size = input.size || "medium";
+  const required = suggestVehicle({
+    service_type: "delivery",
+    delivery_size: size,
+  });
+
+  const job = await createCashJob({
+    service_type: "delivery",
+    required_vehicle: required,
+    customer_name: input.customer_name.trim(),
+    customer_phone: input.customer_phone.trim(),
+    pickup_lat: shop.lat,
+    pickup_lng: shop.lng,
+    pickup_landmark: `${shop.name} — ${shop.landmark}`,
+    dropoff_lat: input.dropoff_lat ?? null,
+    dropoff_lng: input.dropoff_lng ?? null,
+    dropoff_landmark: input.dropoff_landmark.trim(),
+    details: {
+      item_description: input.item_description.trim(),
+      size,
+      needs_helpers: Boolean(input.needs_helpers) || size === "large" || size === "xl",
+      sender_type: "business",
+    },
+    fee_amount: 0,
+    shop_id: shop.id,
+    product_summary: input.item_description.trim(),
+    dispatcher_notes: `Partner delivery from ${shop.name}`,
+    country_code: input.country_code || DEFAULT_COUNTRY,
+  });
+
+  const { notifyPartnerForJob } = await import("./partner");
+  await notifyPartnerForJob(job, "order_created");
+
+  revalidateAll();
+  return job;
+}
+
+export async function markPartnerNotificationsRead(ids: string[]) {
+  if (!ids.length) return;
+  if (!useAdmin()) {
+    const { mockPartnerStore } = await import("./partner-mock");
+    mockPartnerStore.markRead(ids);
+    revalidatePath("/merchant/dashboard");
+    return;
+  }
+
+  const dash = await getMerchantDashboardData();
+  if (!dash?.shop) throw new Error("Not signed in as merchant");
+
+  const admin = createAdminClient();
+  await admin
+    .from("rr_partner_notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("shop_id", dash.shop.id)
+    .in("id", ids)
+    .is("read_at", null);
+
+  revalidatePath("/merchant/dashboard");
+}
+
+export async function generateMyWeeklyReport() {
+  const dash = await getMerchantDashboardData();
+  if (!dash?.shop) throw new Error("Not signed in as merchant");
+  const { generateShopWeeklyReport } = await import("./partner");
+  const result = await generateShopWeeklyReport(dash.shop);
+  revalidatePath("/merchant/dashboard");
+  return result;
+}
+
+export async function saveMerchantFcmToken(token: string) {
+  if (!token?.trim()) return;
+  if (!useAdmin()) return;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const admin = createAdminClient();
+  await admin
+    .from("rr_profiles")
+    .update({
+      fcm_token: token.trim(),
+      fcm_updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id);
 }
 
 export async function createProduct(input: NewProductInput) {
@@ -1284,8 +1816,30 @@ export async function createProduct(input: NewProductInput) {
     return product;
   }
 
-  const supabase = useAdmin() ? createAdminClient() : await createClient();
-  const { data, error } = await supabase
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Sign in to add products.");
+
+  const admin = createAdminClient();
+  const { data: shop } = await admin
+    .from("rr_shops")
+    .select("id, user_id")
+    .eq("id", input.shop_id)
+    .maybeSingle();
+  if (!shop || shop.user_id !== user.id) {
+    const { data: profile } = await admin
+      .from("rr_profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profile?.role !== "admin" && profile?.role !== "dispatcher") {
+      throw new Error("You can only add products to your own shop.");
+    }
+  }
+
+  const { data, error } = await admin
     .from("rr_products")
     .insert({
       shop_id: input.shop_id,
@@ -1341,7 +1895,7 @@ export async function createShopOrder(input: ShopOrderInput) {
     customer_phone: input.buyer_phone,
     pickup_lat: shop.lat,
     pickup_lng: shop.lng,
-    pickup_landmark: `${shop.name} ? ${shop.landmark}`,
+    pickup_landmark: `${shop.name} — ${shop.landmark}`,
     dropoff_lat: input.dropoff_lat,
     dropoff_lng: input.dropoff_lng,
     dropoff_landmark: input.dropoff_landmark.trim(),
@@ -1355,6 +1909,10 @@ export async function createShopOrder(input: ShopOrderInput) {
     product_summary: `${product.name} (R${product.price})`,
     dispatcher_notes: `Shop order from ${shop.name} - paid with PayPal`,
     payment: input.payment,
+  }).then(async (job) => {
+    const { notifyPartnerForJob } = await import("./partner");
+    await notifyPartnerForJob(job, "order_created");
+    return job;
   });
 }
 
@@ -1495,6 +2053,10 @@ export async function setDriverOnline(
     if (!allowed) {
       throw new Error("Only approved drivers can go online.");
     }
+    if (online) {
+      const gate = driverCanGoOnline(allowed);
+      if (!gate.ok) throw new Error(gate.reason || "Cannot go online.");
+    }
     const driver = mockRepo.setDriverOnline(driverId, online, lat, lng);
     revalidateAll();
     return driver;
@@ -1503,7 +2065,7 @@ export async function setDriverOnline(
   const admin = createAdminClient();
   const { data: existing } = await admin
     .from("rr_drivers")
-    .select("approval_status, is_active, last_lat, last_lng")
+    .select("*")
     .eq("id", driverId)
     .maybeSingle();
 
@@ -1514,6 +2076,12 @@ export async function setDriverOnline(
   ) {
     throw new Error("Only approved drivers can go online.");
   }
+
+  if (online) {
+    const gate = driverCanGoOnline(existing as Driver);
+    if (!gate.ok) throw new Error(gate.reason || "Cannot go online.");
+  }
+
   const now = new Date().toISOString();
   const patch: Record<string, unknown> = { is_online: online };
 
@@ -1632,6 +2200,10 @@ export async function saveCustomerFcmToken(jobId: string, token: string) {
 export async function acceptOffer(jobId: string, driverId: string) {
   if (!useAdmin()) {
     const job = mockRepo.acceptOffer(jobId, driverId);
+    if (job.shop_id) {
+      const { notifyPartnerForJob } = await import("./partner");
+      await notifyPartnerForJob(job, "driver_assigned");
+    }
     revalidateAll();
     return job;
   }
@@ -1694,6 +2266,11 @@ export async function acceptOffer(jobId: string, driverId: string) {
     (jobRow as Job).customer_fcm_token,
     buildCustomerConfirmPush(assigned as Job, driverRow as Driver),
   );
+
+  if ((assigned as Job).shop_id) {
+    const { notifyPartnerForJob } = await import("./partner");
+    await notifyPartnerForJob(assigned as Job, "driver_assigned");
+  }
 
   revalidateAll();
   return assigned as JobWithDriver;
@@ -1788,6 +2365,19 @@ export async function startTrip(jobId: string, driverId: string) {
 export async function completeTrip(jobId: string, driverId: string) {
   if (!useAdmin()) {
     const job = mockRepo.completeTrip(jobId, driverId);
+    if (job.shop_id) {
+      const { notifyPartnerForJob } = await import("./partner");
+      const fee = Number(job.fee_amount) || 0;
+      const commission =
+        Number(job.platform_commission) > 0
+          ? Math.round(Number(job.platform_commission))
+          : Math.round((fee * 15) / 100);
+      await notifyPartnerForJob(
+        job,
+        "order_completed",
+        `Platform commission R${commission} deducted from driver wallet.`,
+      );
+    }
     revalidateAll();
     return job;
   }
@@ -1849,6 +2439,15 @@ export async function completeTrip(jobId: string, driverId: string) {
       commission_owed: walletUpdate.commission_owed,
     })
     .eq("id", driverId);
+
+  if ((data as Job).shop_id) {
+    const { notifyPartnerForJob } = await import("./partner");
+    await notifyPartnerForJob(
+      data as Job,
+      "order_completed",
+      `Platform commission R${commission} deducted from driver wallet.`,
+    );
+  }
 
   revalidateAll();
   return data as JobWithDriver;
@@ -1960,12 +2559,21 @@ export async function rateTrip(jobId: string, stars: number, comment?: string) {
   const newCount = prevCount + 1;
   const newAvg = Math.round(((prevAvg * prevCount + stars) / newCount) * 10) / 10;
 
+  const driverPatch: Record<string, unknown> = {
+    rating_avg: newAvg,
+    rating_count: newCount,
+  };
+  // Auto-suspend after enough low ratings
+  if (newCount >= 3 && newAvg < 3.5) {
+    driverPatch.is_active = false;
+    driverPatch.is_online = false;
+    driverPatch.suspended_at = new Date().toISOString();
+    driverPatch.suspend_reason = `Auto-suspended: rating ${newAvg} after ${newCount} trips (below 3.5)`;
+  }
+
   await admin
     .from("rr_drivers")
-    .update({
-      rating_avg: newAvg,
-      rating_count: newCount,
-    })
+    .update(driverPatch)
     .eq("id", job.driver_id);
 
   revalidateAll();

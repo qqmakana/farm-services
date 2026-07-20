@@ -35,6 +35,8 @@ export function createAdminClient() {
 }
 
 export function hasServiceRole() {
+  // Playwright / local E2E: force in-memory mock store (shared across contexts).
+  if (process.env.VILLAGE_RIDE_USE_MOCK === "1") return false;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ?? "";
   const key = getSecretKey();
   if (looksLikePlaceholder(url) || looksLikePlaceholder(key)) return false;

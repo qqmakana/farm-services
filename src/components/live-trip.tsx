@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, useCallback } from "react";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
+import { isDriverTrustVerified } from "@/lib/trust";
 import {
   getJobByReference,
   getRatingForJob,
@@ -434,7 +435,9 @@ export function LiveTrip({
                 {job.drivers.full_name} · ★{job.drivers.rating_avg.toFixed(1)} (
                 {job.drivers.rating_count})
               </p>
-              <DriverVerifiedBadge verified={job.drivers.id_verified} />
+              <DriverVerifiedBadge
+                verified={isDriverTrustVerified(job.drivers)}
+              />
             </div>
             <a
               href={`tel:${job.drivers.phone}`}
@@ -448,7 +451,10 @@ export function LiveTrip({
 
       {job.status === "completed" && !rating && (
         <div className="ru-card space-y-3 p-5">
-          <h2 className="font-semibold">Rate your trip</h2>
+          <h2 className="font-semibold">Rate your driver</h2>
+          <p className="text-xs text-slate-500">
+            Honest ratings keep Village Ride safe for everyone.
+          </p>
           <div className="flex gap-2">
             {[1, 2, 3, 4, 5].map((n) => (
               <button

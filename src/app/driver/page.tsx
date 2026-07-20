@@ -7,6 +7,7 @@ import { SiteNav } from "@/components/site-nav";
 import { DriverApplyForm } from "@/components/driver-apply-form";
 import { listDrivers } from "@/lib/actions";
 import { setSelectedDriverId } from "@/lib/driver-session";
+import { isDriverTrustVerified } from "@/lib/trust";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
 import type { Driver } from "@/lib/types";
 
@@ -65,7 +66,7 @@ export default function DriverLandingPage() {
               {drivers.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.full_name} · {VEHICLE_LABELS[d.vehicle_type]}
-                  {d.id_verified ? " · Verified" : ""}
+                  {isDriverTrustVerified(d) ? " · ✓ Verified" : " · Pending ID"}
                 </option>
               ))}
             </select>

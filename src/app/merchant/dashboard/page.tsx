@@ -62,6 +62,9 @@ export default async function MerchantDashboardPage() {
         shop={data.shop}
         jobs={data.jobs}
         email={data.email}
+        notifications={data.notifications}
+        reports={data.reports}
+        referralCount={data.referralCount}
       />
     </>
   );

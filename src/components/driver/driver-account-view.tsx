@@ -18,6 +18,7 @@ import { DriverTrustPanel } from "@/components/driver-trust-panel";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
 import { BRAND, BRAND_WHATSAPP_HREF } from "@/lib/brand";
 import { getCountry, type CountryCode } from "@/lib/countries";
+import { isDriverTrustVerified } from "@/lib/trust";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
 import type { VehicleType } from "@/lib/types";
 
@@ -122,7 +123,10 @@ export function DriverAccountView() {
           </p>
           <p className="text-sm text-slate-500">{driver.phone}</p>
           <div className="mt-1">
-            <DriverVerifiedBadge verified={driver.id_verified} compact />
+            <DriverVerifiedBadge
+              verified={isDriverTrustVerified(driver)}
+              compact
+            />
           </div>
         </div>
       </div>
@@ -153,9 +157,9 @@ export function DriverAccountView() {
           <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
             Vehicle
           </p>
-          {driver.id_verified ? (
+          {isDriverTrustVerified(driver) ? (
             <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
-              <ShieldCheck className="h-3.5 w-3.5" /> ID Verified
+              <ShieldCheck className="h-3.5 w-3.5" /> ✓ Verified
             </span>
           ) : (
             <span className="text-xs font-semibold text-amber-700">
@@ -190,7 +194,7 @@ export function DriverAccountView() {
             <ChevronRight className="h-4 w-4 text-gray-400" />
           </button>
         </li>
-        {!driver.id_verified ? (
+        {!isDriverTrustVerified(driver) ? (
           <li>
             <button
               type="button"

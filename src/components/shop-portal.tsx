@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { createProduct, registerMerchantShop } from "@/lib/actions";
 import { formatMoney } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
@@ -30,12 +30,20 @@ export function ShopPortal({
     landmark: "",
     email: "",
     password: "",
+    referral_code: "",
   });
   const [newProduct, setNewProduct] = useState({
     name: "",
     price: "",
     size: "medium" as "small" | "medium" | "large" | "xl",
   });
+
+  useEffect(() => {
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    if (ref) {
+      setNewShop((s) => (s.referral_code ? s : { ...s, referral_code: ref }));
+    }
+  }, []);
 
   const shopProducts = useMemo(
     () => products.filter((p) => p.shop_id === shopId),
@@ -59,6 +67,7 @@ export function ShopPortal({
           landmark: newShop.landmark,
           email: newShop.email,
           password: newShop.password,
+          referral_code: newShop.referral_code.trim() || null,
         });
         setShopId(shop.id);
 
@@ -88,6 +97,7 @@ export function ShopPortal({
           landmark: "",
           email: "",
           password: "",
+          referral_code: "",
         });
         router.refresh();
       } catch (err) {
@@ -208,6 +218,14 @@ export function ShopPortal({
             value={newShop.landmark}
             onChange={(e) =>
               setNewShop({ ...newShop, landmark: e.target.value })
+            }
+          />
+          <input
+            placeholder="Referral code (optional)"
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
+            value={newShop.referral_code}
+            onChange={(e) =>
+              setNewShop({ ...newShop, referral_code: e.target.value })
             }
           />
           <button

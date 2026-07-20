@@ -51,6 +51,10 @@ function isDriverAppPath(path: string) {
   );
 }
 
+function isAdminPath(path: string) {
+  return path.startsWith("/admin");
+}
+
 function isMerchantPath(path: string) {
   return path.startsWith("/merchant");
 }
@@ -93,7 +97,7 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  if (path.startsWith("/dispatch")) {
+  if (path.startsWith("/dispatch") || isAdminPath(path)) {
     if (!user) {
       const login = new URL("/login", request.url);
       login.searchParams.set("next", path);
@@ -169,6 +173,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/dispatch/:path*",
+    "/admin/:path*",
     "/login",
     "/merchant/:path*",
     "/driver/home/:path*",

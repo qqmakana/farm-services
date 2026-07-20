@@ -54,6 +54,12 @@ const seedDrivers: Driver[] = [
     offers_declined: 2,
     wallet_balance: 0,
     commission_owed: 0,
+    verification_status: "verified",
+    id_doc_url: "mock://id/thabo.jpg",
+    selfie_url: "mock://selfie/thabo.jpg",
+    vehicle_front_url: "mock://vfront/thabo.jpg",
+    vehicle_side_url: "mock://vside/thabo.jpg",
+    code_of_conduct_accepted_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
   },
   {
@@ -79,6 +85,12 @@ const seedDrivers: Driver[] = [
     offers_declined: 3,
     wallet_balance: 0,
     commission_owed: 0,
+    verification_status: "verified",
+    id_doc_url: "mock://id/nomsa.jpg",
+    selfie_url: "mock://selfie/nomsa.jpg",
+    vehicle_front_url: "mock://vfront/nomsa.jpg",
+    vehicle_side_url: "mock://vside/nomsa.jpg",
+    code_of_conduct_accepted_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
   },
   {
@@ -104,6 +116,12 @@ const seedDrivers: Driver[] = [
     offers_declined: 3,
     wallet_balance: 0,
     commission_owed: 0,
+    verification_status: "verified",
+    id_doc_url: "mock://id/sipho.jpg",
+    selfie_url: "mock://selfie/sipho.jpg",
+    vehicle_front_url: "mock://vfront/sipho.jpg",
+    vehicle_side_url: "mock://vside/sipho.jpg",
+    code_of_conduct_accepted_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
   },
 ];
@@ -121,6 +139,8 @@ const seedShops: Shop[] = [
     is_active: true,
     notes: "Fridges, TVs, washing machines",
     created_at: new Date().toISOString(),
+    referral_code: "MTHAx7k",
+    referred_by_shop_id: null,
   },
   {
     id: "s2",
@@ -134,6 +154,8 @@ const seedShops: Shop[] = [
     is_active: true,
     notes: "Couches, beds, wardrobes",
     created_at: new Date().toISOString(),
+    referral_code: "ENGCf2m",
+    referred_by_shop_id: "s1",
   },
 ];
 
@@ -965,8 +987,35 @@ export const mockRepo = {
     const total = driver.rating_avg * driver.rating_count + stars;
     driver.rating_count += 1;
     driver.rating_avg = Math.round((total / driver.rating_count) * 10) / 10;
+    if (driver.rating_count >= 3 && driver.rating_avg < 3.5) {
+      driver.is_active = false;
+      driver.is_online = false;
+      driver.suspended_at = new Date().toISOString();
+      driver.suspend_reason = `Auto-suspended: rating ${driver.rating_avg} after ${driver.rating_count} trips`;
+    }
 
     return rating;
+  },
+
+  rateCustomer(
+    jobId: string,
+    driverId: string,
+    stars: number,
+    comment?: string,
+  ): JobWithDriver {
+    const job = store().jobs.find((j) => j.id === jobId);
+    if (!job) throw new Error("Job not found");
+    if (job.driver_id !== driverId) throw new Error("Not your trip.");
+    if (job.status !== "completed") throw new Error("Trip must be completed first.");
+    if (job.customer_rating_stars != null) {
+      throw new Error("You already rated this customer.");
+    }
+    if (stars < 1 || stars > 5) throw new Error("Stars must be 1–5");
+    job.customer_rating_stars = stars;
+    job.customer_rating_comment = comment?.trim() || null;
+    job.customer_rated_at = new Date().toISOString();
+    job.updated_at = job.customer_rated_at;
+    return withDriver(job);
   },
 
   getRatingForJob(jobId: string): Rating | null {
@@ -1041,7 +1090,7 @@ export const mockRepo = {
     return mockRepo.autoMatchIfPossible(job);
   },
 
-  createShop(input: NewShopInput): Shop {
+  createShop(input: NewShopInput & { referral_code?: string | null; referred_by_shop_id?: string | null }): Shop {
     const shop: Shop = {
       id: uid(),
       name: input.name,
@@ -1054,9 +1103,23 @@ export const mockRepo = {
       is_active: true,
       notes: input.notes ?? null,
       created_at: new Date().toISOString(),
+      referral_code:
+        input.referral_code ??
+        `${input.name.slice(0, 4).toUpperCase()}${Math.random().toString(36).slice(2, 5)}`,
+      referred_by_shop_id: input.referred_by_shop_id ?? null,
     };
     store().shops.unshift(shop);
     return shop;
+  },
+
+  findShopByReferralCode(code: string): Shop | null {
+    const needle = code.trim().toUpperCase();
+    if (!needle) return null;
+    return (
+      store().shops.find(
+        (s) => (s.referral_code ?? "").toUpperCase() === needle,
+      ) ?? null
+    );
   },
 
   createProduct(input: NewProductInput): Product {

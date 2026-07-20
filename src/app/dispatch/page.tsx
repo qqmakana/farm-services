@@ -41,6 +41,15 @@ export default async function DispatchPage() {
               Dispatch
             </h1>
             <p className="mt-1 text-sm text-slate-600">
+              Jobs · drivers ·{" "}
+              <a
+                href="/admin/verifications"
+                className="font-semibold text-[#1A4D3A] underline"
+              >
+                ID verifications
+              </a>
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
               See who applied in the app, who the app approved, jobs, and
               WhatsApp.
             </p>

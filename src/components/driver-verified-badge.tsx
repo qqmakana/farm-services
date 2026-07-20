@@ -1,4 +1,4 @@
-/** Trust badge for matched drivers — uses id_verified from rr_drivers. */
+/** Trust badge — only “Verified” after ops manual approval. */
 export function DriverVerifiedBadge({
   verified,
   compact = false,
@@ -12,7 +12,7 @@ export function DriverVerifiedBadge({
         className={`inline-flex items-center gap-1 rounded-full bg-emerald-50 font-medium text-emerald-800 ${
           compact ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-1 text-xs"
         }`}
-        title="ID & License Verified"
+        title="ID, selfie & vehicle photos approved by Village Ride"
       >
         <svg
           viewBox="0 0 20 20"
@@ -26,19 +26,19 @@ export function DriverVerifiedBadge({
             clipRule="evenodd"
           />
         </svg>
-        {compact ? "Verified" : "ID & License Verified"}
+        {compact ? "✓ Verified" : "✓ Verified by Village Ride"}
       </span>
     );
   }
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full bg-slate-100 font-medium text-slate-500 ${
+      className={`inline-flex items-center gap-1 rounded-full bg-amber-50 font-medium text-amber-800 ${
         compact ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-1 text-xs"
       }`}
-      title="Pending Verification"
+      title="Photos submitted — waiting for Village Ride to check ID"
     >
-      Pending Verification
+      {compact ? "Pending" : "Pending verification"}
     </span>
   );
 }

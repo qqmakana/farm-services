@@ -6,6 +6,7 @@ import {
   completeTrip,
   listDriverActiveJob,
   listDriverJobs,
+  rateCustomerByDriver,
   startTrip,
 } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
@@ -27,6 +28,9 @@ export function DriverJobsView() {
   const [jobs, setJobs] = useState<JobWithDriver[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [rateStars, setRateStars] = useState(5);
+  const [rateComment, setRateComment] = useState("");
+  const [ratingJobId, setRatingJobId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!driverId) return;
@@ -199,6 +203,58 @@ export function DriverJobsView() {
                     {job.status === "completed" ? (
                       <p className="mt-1 text-xs text-amber-800">
                         Commission deducted: {formatMoney(commission)}
+                      </p>
+                    ) : null}
+                    {job.status === "completed" &&
+                    !job.customer_rating_stars ? (
+                      <div className="mt-3 space-y-2 rounded-lg bg-slate-50 p-3">
+                        <p className="text-xs font-semibold text-slate-700">
+                          Rate this customer
+                        </p>
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <button
+                              key={n}
+                              type="button"
+                              disabled={pending}
+                              onClick={() => {
+                                setRatingJobId(job.id);
+                                setRateStars(n);
+                              }}
+                              className={`h-8 w-8 rounded-full text-xs font-bold ${
+                                (ratingJobId === job.id ? rateStars : 5) >= n
+                                  ? "bg-amber-400 text-white"
+                                  : "bg-white text-slate-500"
+                              }`}
+                            >
+                              {n}
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          type="button"
+                          disabled={pending}
+                          className="rounded-lg bg-[#1A4D3A] px-3 py-1.5 text-xs font-bold text-white"
+                          onClick={() =>
+                            run(async () => {
+                              await rateCustomerByDriver(
+                                job.id,
+                                driverId!,
+                                ratingJobId === job.id ? rateStars : 5,
+                                rateComment || undefined,
+                              );
+                              setRateComment("");
+                              setRatingJobId(null);
+                            })
+                          }
+                        >
+                          Submit customer rating
+                        </button>
+                      </div>
+                    ) : null}
+                    {job.customer_rating_stars ? (
+                      <p className="mt-1 text-xs text-slate-500">
+                        You rated customer ★{job.customer_rating_stars}
                       </p>
                     ) : null}
                   </div>

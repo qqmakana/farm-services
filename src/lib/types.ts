@@ -101,6 +101,18 @@ export type Driver = {
   user_id?: string | null;
   /** Operating country (ZA default). */
   country_code?: string | null;
+  /** Manual trust gate — pending drivers cannot go online. */
+  verification_status?: "pending" | "verified" | "rejected" | null;
+  verification_note?: string | null;
+  verified_at?: string | null;
+  verified_by?: string | null;
+  /** Face selfie (storage path). */
+  selfie_url?: string | null;
+  vehicle_front_url?: string | null;
+  vehicle_side_url?: string | null;
+  code_of_conduct_accepted_at?: string | null;
+  suspended_at?: string | null;
+  suspend_reason?: string | null;
 };
 
 export type NewDriverApplicationInput = {
@@ -128,6 +140,47 @@ export type Shop = {
   created_at: string;
   /** Linked Supabase auth user (merchant owner). */
   user_id?: string | null;
+  /** businessName.slice(0,4).toUpperCase() + random 3 chars */
+  referral_code?: string | null;
+  /** Shop that referred this partner */
+  referred_by_shop_id?: string | null;
+};
+
+export type PartnerNotification = {
+  id: string;
+  shop_id: string;
+  user_id: string | null;
+  type:
+    | "order_created"
+    | "driver_assigned"
+    | "order_completed"
+    | "weekly_report"
+    | "referral"
+    | "system";
+  title: string;
+  body: string;
+  email_body: string | null;
+  job_id: string | null;
+  report_id: string | null;
+  read_at: string | null;
+  created_at: string;
+};
+
+export type PartnerWeeklyReport = {
+  id: string;
+  shop_id: string;
+  week_start: string;
+  week_end: string;
+  week_key: string;
+  orders_total: number;
+  orders_completed: number;
+  orders_cancelled: number;
+  revenue_total: number;
+  platform_commission_total: number;
+  referral_signups: number;
+  summary_text: string;
+  email_sent_at: string | null;
+  created_at: string;
 };
 
 export type Product = {
@@ -205,6 +258,10 @@ export type Job = {
   share_token?: string | null;
   sos_triggered_at?: string | null;
   sos_note?: string | null;
+  /** Driver rated the customer after the trip */
+  customer_rating_stars?: number | null;
+  customer_rating_comment?: string | null;
+  customer_rated_at?: string | null;
   /** Smart dispatch score of assigned driver */
   match_score?: number | null;
   match_breakdown?: Record<string, unknown> | null;
@@ -267,6 +324,21 @@ export type NewShopInput = {
 export type MerchantRegisterInput = NewShopInput & {
   email: string;
   password: string;
+  /** Optional partner referral code from another business */
+  referral_code?: string | null;
+};
+
+/** Merchant books a delivery from their shop (links shop_id → FCM dispatch). */
+export type MerchantDeliveryInput = {
+  customer_name: string;
+  customer_phone: string;
+  dropoff_landmark: string;
+  dropoff_lat?: number | null;
+  dropoff_lng?: number | null;
+  item_description: string;
+  size: "small" | "medium" | "large" | "xl";
+  needs_helpers?: boolean;
+  country_code?: string;
 };
 
 export type NewProductInput = {
