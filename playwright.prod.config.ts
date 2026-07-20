@@ -24,7 +24,7 @@ export default defineConfig({
     {
       name: "production",
       testMatch:
-        /public-pages\.spec\.ts|performance\.spec\.ts|security\.spec\.ts/,
+        /public-pages\.spec\.ts|performance\.spec\.ts|security\.spec\.ts|ops-ready\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
     },
   ],

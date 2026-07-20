@@ -1,33 +1,26 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { BRAND_WHATSAPP_HREF } from "@/lib/brand";
+import { WhatsAppLinks } from "@/lib/whatsapp-links";
 
-const HIDE_ON = new Set([
-  "/",
-  "/services",
-  "/activity",
-  "/account",
-  "/ride",
-  "/delivery",
-  "/farm",
-]);
-
-/** Fixed WhatsApp support button — bottom right (hidden on customer shell). */
+/** Fixed WhatsApp support on public pages (hidden on dense app shells). */
 export function WhatsAppFloat() {
   const pathname = usePathname() ?? "";
   if (
-    HIDE_ON.has(pathname) ||
-    pathname.startsWith("/account/") ||
-    pathname.startsWith("/driver/") ||
-    pathname.startsWith("/trip/")
+    pathname.startsWith("/account") ||
+    pathname.startsWith("/driver/home") ||
+    pathname.startsWith("/driver/jobs") ||
+    pathname.startsWith("/driver/earnings") ||
+    pathname.startsWith("/driver/account") ||
+    pathname.startsWith("/trip/") ||
+    pathname.startsWith("/admin")
   ) {
     return null;
   }
 
   return (
     <a
-      href={BRAND_WHATSAPP_HREF}
+      href={WhatsAppLinks.support()}
       target="_blank"
       rel="noreferrer"
       aria-label="WhatsApp support"

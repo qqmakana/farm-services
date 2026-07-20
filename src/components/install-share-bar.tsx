@@ -227,12 +227,21 @@ export function NavInstallShare() {
   );
 }
 
-/** Bottom banner — always shown until installed (not hidable forever). */
+/** Bottom banner — shown until installed or dismissed. */
 export function InstallShareBar() {
   const pathname = usePathname();
   const { standalone, ios, helpOpen, setHelpOpen, note, install, share, deferred } =
     useInstallActions();
   const [minimized, setMinimized] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    try {
+      setDismissed(localStorage.getItem("vr_install_banner_dismissed") === "1");
+    } catch {
+      setDismissed(false);
+    }
+  }, []);
 
   // Customer shell / Uber map — avoid covering the bottom tab bar or sheet
   if (
@@ -241,6 +250,8 @@ export function InstallShareBar() {
   ) {
     return null;
   }
+
+  if (dismissed) return null;
 
   if (standalone) {
     return (
@@ -262,16 +273,9 @@ export function InstallShareBar() {
         <button
           type="button"
           onClick={install}
-          className="rounded-full bg-[var(--ru-brand)] px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-2 ring-white"
+          className="rounded-full bg-black px-4 py-2.5 text-sm font-bold text-white shadow-lg"
         >
           Install app
-        </button>
-        <button
-          type="button"
-          onClick={share}
-          className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-[var(--ru-brand)] shadow-lg"
-        >
-          Share
         </button>
         {helpOpen ? <HelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
       </div>
@@ -280,53 +284,56 @@ export function InstallShareBar() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 p-3 sm:p-4">
-      <div className="mx-auto max-w-lg rounded-2xl border-2 border-emerald-300/40 bg-[var(--ru-brand)] p-4 text-white shadow-2xl">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="font-[family-name:var(--font-display)] text-lg font-bold">
-              Install {BRAND.appName} on this phone
-            </p>
-            <p className="mt-1 text-sm text-white/80">
-              Free home-screen app. Then tap Share to send the link to drivers &amp; customers.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setMinimized(true)}
-            className="shrink-0 rounded-lg px-2 py-1 text-xs text-white/70 hover:bg-white/10"
-          >
-            Minimize
-          </button>
-        </div>
-
-        {ios ? (
-          <p className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-sm">
-            iPhone: Safari → <strong>Share</strong> → <strong>Add to Home Screen</strong>
+      <div className="mx-auto flex max-w-lg items-center gap-3 rounded-2xl border border-[var(--ru-line)] bg-white p-3 shadow-[0_4px_24px_rgba(0,0,0,0.12)] dark:bg-[#1e1e1e]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/icons/icon-192.png"
+          alt=""
+          width={48}
+          height={48}
+          className="h-12 w-12 rounded-xl"
+        />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-black dark:text-white">
+            Install {BRAND.appName}
           </p>
-        ) : !deferred ? (
-          <p className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-sm">
-            Android: tap <strong>Install app</strong> below, or Chrome menu → Install app
+          <p className="text-xs text-[var(--ru-muted)]">
+            {ios
+              ? "Add to Home Screen for the app feel"
+              : deferred
+                ? "Add to your home screen"
+                : "Install for faster access"}
           </p>
-        ) : null}
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={install}
-            className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-[var(--ru-brand)]"
-          >
-            Install app
-          </button>
-          <button
-            type="button"
-            onClick={share}
-            className="rounded-xl border border-white/40 bg-white/10 px-5 py-3 text-sm font-semibold"
-          >
-            Share app
-          </button>
         </div>
-        {note ? <p className="mt-2 text-xs text-sky-200">{note}</p> : null}
+        <button
+          type="button"
+          onClick={install}
+          className="ru-btn ru-btn-brand !min-h-10 shrink-0 !px-4 !text-sm"
+        >
+          Install
+        </button>
+        <button
+          type="button"
+          aria-label="Dismiss"
+          onClick={() => {
+            setMinimized(true);
+            try {
+              localStorage.setItem("vr_install_banner_dismissed", "1");
+              setDismissed(true);
+            } catch {
+              /* ignore */
+            }
+          }}
+          className="shrink-0 px-1 text-lg text-[var(--ru-muted)]"
+        >
+          ×
+        </button>
       </div>
+      {note ? (
+        <p className="mx-auto mt-2 max-w-lg text-center text-xs text-[var(--ru-muted)]">
+          {note}
+        </p>
+      ) : null}
       {helpOpen ? <HelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
     </div>
   );

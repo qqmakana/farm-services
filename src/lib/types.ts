@@ -144,6 +144,8 @@ export type Shop = {
   referral_code?: string | null;
   /** Shop that referred this partner */
   referred_by_shop_id?: string | null;
+  rating_avg?: number;
+  rating_count?: number;
 };
 
 export type PartnerNotification = {

@@ -863,6 +863,68 @@ export async function rateCustomerByDriver(
   return data as JobWithDriver;
 }
 
+/** Driver rates the merchant/shop after a shop-linked delivery. */
+export async function rateShopByDriver(
+  jobId: string,
+  driverId: string,
+  stars: number,
+  comment?: string,
+) {
+  if (stars < 1 || stars > 5) throw new Error("Stars must be 1–5.");
+
+  if (!useAdmin()) {
+    revalidateAll();
+    return { ok: true as const, stars };
+  }
+
+  const admin = createAdminClient();
+  const { data: job, error: jobErr } = await admin
+    .from("rr_jobs")
+    .select("*")
+    .eq("id", jobId)
+    .single();
+  if (jobErr || !job) throw new Error(jobErr?.message ?? "Job not found");
+  if (job.driver_id !== driverId) throw new Error("Not your trip.");
+  if (job.status !== "completed") throw new Error("Trip must be completed first.");
+  if (!job.shop_id) throw new Error("This trip is not linked to a shop.");
+
+  const { data: existing } = await admin
+    .from("rr_shop_ratings")
+    .select("id")
+    .eq("job_id", jobId)
+    .maybeSingle();
+  if (existing) throw new Error("You already rated this merchant.");
+
+  const { error: insErr } = await admin.from("rr_shop_ratings").insert({
+    shop_id: job.shop_id,
+    driver_id: driverId,
+    job_id: jobId,
+    stars,
+    comment: comment?.trim() || null,
+  });
+  if (insErr) throw new Error(insErr.message);
+
+  const { data: shop } = await admin
+    .from("rr_shops")
+    .select("rating_avg, rating_count")
+    .eq("id", job.shop_id)
+    .maybeSingle();
+
+  const prevCount = Number(shop?.rating_count) || 0;
+  const prevAvg = Number(shop?.rating_avg) || 5;
+  const newCount = prevCount + 1;
+  const newAvg =
+    Math.round(((prevAvg * prevCount + stars) / newCount) * 10) / 10;
+
+  await admin
+    .from("rr_shops")
+    .update({ rating_avg: newAvg, rating_count: newCount })
+    .eq("id", job.shop_id);
+
+  revalidateAll();
+  return { ok: true as const, stars, rating_avg: newAvg };
+}
+
 export async function submitDriverDocuments(
   driverId: string,
   formData: FormData,
@@ -1513,6 +1575,70 @@ export async function registerMerchantShop(input: MerchantRegisterInput): Promis
       body: `${shop.name} signed up using your referral code.`,
       emailBody: `${shop.name} registered on Village Ride with your code ${refIn}.`,
     });
+    try {
+      const {
+        referralBonusEmail,
+        sendViaPartnerWebhook,
+      } = await import("./email-templates");
+      const { createAdminClient } = await import("./supabase/admin");
+      const admin = createAdminClient();
+      const { data: referrer } = await admin
+        .from("rr_shops")
+        .select("name, user_id, referral_code")
+        .eq("id", referredBy)
+        .maybeSingle();
+      let to: string | null = null;
+      if (referrer?.user_id) {
+        const { data: user } = await admin.auth.admin.getUserById(
+          referrer.user_id,
+        );
+        to = user.user?.email ?? null;
+      }
+      if (to) {
+        const site =
+          process.env.NEXT_PUBLIC_SITE_URL ?? "https://village-ride.vercel.app";
+        const { count } = await admin
+          .from("rr_shops")
+          .select("id", { count: "exact", head: true })
+          .eq("referred_by_shop_id", referredBy);
+        const bonusZar = 50;
+        const tpl = referralBonusEmail({
+          shopName: referrer?.name ?? "Partner",
+          referredName: shop.name,
+          bonusZar,
+          totalBonusZar: (count ?? 1) * bonusZar,
+          shareUrl: `${site}/shop?ref=${referrer?.referral_code ?? ""}`,
+        });
+        await sendViaPartnerWebhook({
+          to,
+          template: tpl,
+          templateKey: "referral_bonus",
+        });
+      }
+    } catch {
+      /* optional */
+    }
+  }
+
+  try {
+    const { welcomeMerchantEmail, sendViaPartnerWebhook } = await import(
+      "./email-templates"
+    );
+    const site =
+      process.env.NEXT_PUBLIC_SITE_URL ?? "https://village-ride.vercel.app";
+    const tpl = welcomeMerchantEmail({
+      shopName: (shop as { name: string }).name,
+      email,
+      referralCode: (shop as { referral_code?: string }).referral_code,
+      dashboardUrl: `${site}/merchant/dashboard`,
+    });
+    await sendViaPartnerWebhook({
+      to: email,
+      template: tpl,
+      templateKey: "welcome_merchant",
+    });
+  } catch {
+    /* optional */
   }
 
   revalidateAll();
@@ -2298,6 +2424,41 @@ export async function declineOffer(jobId: string, driverId: string) {
   if (!data) throw new Error("Offer not found");
 
   await incrementDriverOfferStat(driverId, "offers_declined");
+
+  try {
+    await admin.from("rr_driver_rejections").insert({
+      job_id: jobId,
+      driver_id: driverId,
+      reason: "declined_offer",
+    });
+    const { count } = await admin
+      .from("rr_driver_rejections")
+      .select("id", { count: "exact", head: true })
+      .eq("job_id", jobId);
+    if ((count ?? 0) >= 3) {
+      const { logAppError } = await import("./error-log");
+      await logAppError({
+        message: `Urgent: job ${jobId} rejected ${count} times`,
+        context: "driver_rejection_cascade",
+        severity: "critical",
+        url: `/trip/${(data as { jobs?: { reference_code?: string } }).jobs?.reference_code ?? ""}`,
+      });
+      await admin
+        .from("rr_jobs")
+        .update({
+          dispatcher_notes: [
+            (data as { jobs?: { dispatcher_notes?: string } }).jobs
+              ?.dispatcher_notes,
+            "URGENT: 3+ driver rejections",
+          ]
+            .filter(Boolean)
+            .join(" · "),
+        })
+        .eq("id", jobId);
+    }
+  } catch {
+    /* table may be missing until PRODUCTION_OPS.sql */
+  }
 
   const { data: job } = await admin
     .from("rr_jobs")

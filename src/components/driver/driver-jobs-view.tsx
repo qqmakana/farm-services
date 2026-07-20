@@ -7,6 +7,7 @@ import {
   listDriverActiveJob,
   listDriverJobs,
   rateCustomerByDriver,
+  rateShopByDriver,
   startTrip,
 } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
@@ -72,20 +73,22 @@ export function DriverJobsView() {
   }
 
   return (
-    <main className="mx-auto min-h-dvh max-w-lg px-5 pb-24 pt-8">
-      <h1 className="text-2xl font-bold text-slate-900">Jobs</h1>
-      <p className="mt-1 text-sm text-slate-500">Active trips and history</p>
+    <main className="ru-page-enter mx-auto min-h-dvh max-w-lg px-5 pb-24 pt-8">
+      <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-black">
+        Jobs
+      </h1>
+      <p className="mt-1 text-sm text-[var(--ru-muted)]">Active trips and history</p>
 
-      <div className="mt-5 flex rounded-xl bg-gray-100 p-1">
+      <div className="mt-5 flex gap-4 border-b border-[var(--ru-line)]">
         {(["active", "completed", "cancelled"] as const).map((key) => (
           <button
             key={key}
             type="button"
             onClick={() => setSegment(key)}
-            className={`flex-1 rounded-lg py-2.5 text-xs capitalize transition active:scale-95 sm:text-sm ${
+            className={`-mb-px border-b-2 pb-2 text-sm font-semibold capitalize transition ${
               segment === key
-                ? "bg-white font-bold text-[#1A4D3A] shadow-sm"
-                : "font-normal text-[#6B7280]"
+                ? "border-black text-black"
+                : "border-transparent text-[var(--ru-muted)]"
             }`}
           >
             {key}
@@ -100,48 +103,47 @@ export function DriverJobsView() {
       ) : null}
 
       {segment === "active" && active ? (
-        <section className="mt-5 rounded-xl border border-emerald-100 bg-white p-4 shadow-sm">
-          <p className="text-xs font-semibold tracking-wide text-emerald-700 uppercase">
+        <section className="ru-card mt-5 p-4">
+          <p className="text-xs font-semibold tracking-wide text-[var(--ru-muted)] uppercase">
             Current job
           </p>
-          <h2 className="mt-1 text-lg font-bold">
+          <h2 className="mt-1 text-lg font-bold text-black">
             {active.reference_code} · {STATUS_LABELS[active.status]}
           </h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-[var(--ru-muted)]">
             {SERVICE_LABELS[active.service_type]} ·{" "}
             {formatMoney(Number(active.fee_amount))}
           </p>
-          <p className="mt-2 text-sm">
-            <strong>Pickup:</strong> {active.pickup_landmark}
+          <p className="mt-2 text-sm text-black">
+            {active.pickup_landmark}
+            <span className="mx-1 text-[var(--ru-muted)]">→</span>
+            {active.dropoff_landmark}
           </p>
-          <p className="text-sm">
-            <strong>Dropoff:</strong> {active.dropoff_landmark}
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-col gap-2">
             {(active.status === "assigned" ||
               active.status === "confirmed") && (
               <button
                 type="button"
                 disabled={pending}
-                className="rounded-xl bg-[#1A4D3A] px-4 py-3 text-sm font-bold text-white transition active:scale-95"
+                className="ru-btn ru-btn-brand ru-btn-block"
                 onClick={() => run(() => startTrip(active.id, driverId!))}
               >
-                Start Trip
+                START TRIP
               </button>
             )}
             {active.status === "in_progress" && (
               <button
                 type="button"
                 disabled={pending}
-                className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition active:scale-95"
+                className="ru-btn ru-btn-primary ru-btn-block"
                 onClick={() => run(() => completeTrip(active.id, driverId!))}
               >
-                Complete Trip
+                COMPLETE TRIP
               </button>
             )}
             <Link
               href={`/trip/${active.reference_code}`}
-              className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition active:scale-95"
+              className="ru-btn ru-btn-secondary ru-btn-block text-center"
             >
               Live map
             </Link>
@@ -207,8 +209,8 @@ export function DriverJobsView() {
                     ) : null}
                     {job.status === "completed" &&
                     !job.customer_rating_stars ? (
-                      <div className="mt-3 space-y-2 rounded-lg bg-slate-50 p-3">
-                        <p className="text-xs font-semibold text-slate-700">
+                      <div className="mt-3 space-y-2 rounded-lg bg-slate-50 p-3 dark:bg-[#2a2a2a]">
+                        <p className="text-xs font-semibold text-slate-700 dark:text-white">
                           Rate this customer
                         </p>
                         <div className="flex gap-1">
@@ -234,7 +236,7 @@ export function DriverJobsView() {
                         <button
                           type="button"
                           disabled={pending}
-                          className="rounded-lg bg-[#1A4D3A] px-3 py-1.5 text-xs font-bold text-white"
+                          className="rounded-lg bg-black px-3 py-1.5 text-xs font-bold text-white"
                           onClick={() =>
                             run(async () => {
                               await rateCustomerByDriver(
@@ -256,6 +258,29 @@ export function DriverJobsView() {
                       <p className="mt-1 text-xs text-slate-500">
                         You rated customer ★{job.customer_rating_stars}
                       </p>
+                    ) : null}
+                    {job.status === "completed" && job.shop_id ? (
+                      <button
+                        type="button"
+                        disabled={pending}
+                        className="mt-2 text-xs font-semibold text-black underline dark:text-white"
+                        onClick={() => {
+                          const raw = window.prompt(
+                            "Rate this merchant 1–5 stars",
+                            "5",
+                          );
+                          if (!raw) return;
+                          const stars = Math.min(
+                            5,
+                            Math.max(1, Number(raw) || 5),
+                          );
+                          run(async () => {
+                            await rateShopByDriver(job.id, driverId!, stars);
+                          });
+                        }}
+                      >
+                        Rate merchant
+                      </button>
                     ) : null}
                   </div>
                   <p className="text-base font-bold text-slate-900">

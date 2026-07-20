@@ -6,6 +6,11 @@ import { CountryWelcomeModal } from "@/components/country/country-selector";
 import { InstallShareBar } from "@/components/install-share-bar";
 import { PwaRegister } from "@/components/pwa-register";
 import { WhatsAppFloat } from "@/components/whatsapp-float";
+import { OfflineBanner } from "@/components/offline-banner";
+import { ErrorReporter } from "@/components/error-reporter";
+import { AnalyticsBeacon } from "@/components/analytics-beacon";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ToastProvider } from "@/components/ui/toast";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 import "./globals.css";
 
@@ -86,12 +91,19 @@ export default function RootLayout({
     <html lang="en-ZA" className={`${sans.variable} ${display.variable} h-full`}>
       <body className="flex min-h-full flex-col bg-[var(--ru-canvas)] font-[family-name:var(--font-sans)] text-[var(--ru-ink)] antialiased">
         <CountryProvider>
-          <PwaRegister />
-          <div className="flex-1">{children}</div>
-          <ConditionalFooter />
-          <InstallShareBar />
-          <WhatsAppFloat />
-          <CountryWelcomeModal />
+          <ThemeProvider>
+            <ToastProvider>
+              <PwaRegister />
+              <OfflineBanner />
+              <ErrorReporter />
+              <AnalyticsBeacon />
+              <div className="flex-1">{children}</div>
+              <ConditionalFooter />
+              <InstallShareBar />
+              <WhatsAppFloat />
+              <CountryWelcomeModal />
+            </ToastProvider>
+          </ThemeProvider>
         </CountryProvider>
       </body>
     </html>

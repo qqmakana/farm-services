@@ -111,6 +111,22 @@ export async function middleware(request: NextRequest) {
       login.searchParams.set("error", "dispatcher_required");
       return NextResponse.redirect(login);
     }
+
+    // Optional ADMIN_EMAILS allowlist (ops dashboards)
+    const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+    if (
+      isAdminPath(path) &&
+      adminEmails.length > 0 &&
+      !adminEmails.includes((user.email ?? "").toLowerCase())
+    ) {
+      const login = new URL("/login", request.url);
+      login.searchParams.set("next", path);
+      login.searchParams.set("error", "admin_email_required");
+      return NextResponse.redirect(login);
+    }
   }
 
   if (isMerchantPath(path)) {

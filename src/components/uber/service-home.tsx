@@ -9,31 +9,26 @@ import {
   PlacesAutocomplete,
   type PlaceValue,
 } from "@/components/uber/places-autocomplete";
+import { Button } from "@/components/ui/button";
 
 const services = [
   {
     href: "/ride",
-    title: "Village Ride",
-    subtitle: "Night rides & village-to-village",
-    bg: "#E3F2FD",
+    title: "Ride",
+    subtitle: "Village to town",
     Icon: Car,
-    iconColor: "#1565C0",
   },
   {
     href: "/delivery",
-    title: "Village Delivery",
-    subtitle: "Store-to-home, furniture & materials",
-    bg: "#E8F5E9",
+    title: "Delivery",
+    subtitle: "Store to door",
     Icon: Truck,
-    iconColor: "#2E7D32",
   },
   {
     href: "/farm",
-    title: "Farm Connect",
-    subtitle: "Produce, livestock & equipment",
-    bg: "#FFF3E0",
+    title: "Farm",
+    subtitle: "Produce & livestock",
     Icon: Tractor,
-    iconColor: "#E65100",
   },
 ] as const;
 
@@ -60,8 +55,17 @@ export function ServiceHomeSheet() {
   }
 
   return (
-    <div className="space-y-5 pb-2">
-      <div className="space-y-4">
+    <div className="ru-page-enter space-y-6 pb-2">
+      <div>
+        <h1 className="font-[family-name:var(--font-display)] text-[28px] leading-tight font-bold tracking-tight text-black">
+          Transport for everyone
+        </h1>
+        <p className="mt-1 text-[15px] text-[var(--ru-muted)]">
+          Village rides, delivery &amp; farm logistics — book in seconds.
+        </p>
+      </div>
+
+      <div className="space-y-1 rounded-2xl border border-[var(--ru-line)] bg-[#fafafa] px-3 py-2">
         <PlacesAutocomplete
           label="Pickup"
           placeholder="Village, area, or landmark"
@@ -70,60 +74,70 @@ export function ServiceHomeSheet() {
           showGps
           preferVillages
         />
-
+        <div className="mx-1 border-t border-[var(--ru-line)]" />
         <PlacesAutocomplete
           label="Where to?"
           placeholder="Search town, village or landmark…"
           value={destination}
           onChange={setDestination}
         />
-
-        {destination.label.trim() ? (
-          <button
-            type="button"
-            onClick={goRide}
-            className="w-full rounded-xl bg-[#1A4D3A] py-3.5 text-sm font-bold text-white transition active:scale-95"
-          >
-            Continue with Village Ride
-          </button>
-        ) : null}
       </div>
 
+      {destination.label.trim() ? (
+        <Button block onClick={goRide}>
+          Continue
+        </Button>
+      ) : (
+        <div className="grid grid-cols-2 gap-2">
+          <Link href="/ride" className="ru-btn ru-btn-primary text-center">
+            Ride now
+          </Link>
+          <Link href="/driver/join" className="ru-btn ru-btn-secondary text-center">
+            Drive with us
+          </Link>
+        </div>
+      )}
+
       <div>
-        <h2 className="text-base font-bold text-slate-900">Select a service</h2>
-        <div className="mt-3 space-y-3">
+        <h2 className="text-sm font-bold tracking-wide text-[var(--ru-muted)] uppercase">
+          Services
+        </h2>
+        <div className="mt-3 grid grid-cols-3 gap-2">
           {services.map((s) => {
             const Icon = s.Icon;
             return (
               <Link
                 key={s.href}
                 href={bookingHref(s.href, origin, destination)}
-                className="flex items-center gap-3 rounded-xl border border-gray-100 p-4 shadow-sm transition active:scale-95"
-                style={{ backgroundColor: s.bg }}
+                className="flex flex-col items-center rounded-2xl border border-[var(--ru-line)] bg-white p-3 text-center shadow-[var(--ru-shadow)] transition active:scale-95"
               >
-                <span
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/90 shadow-sm"
-                  aria-hidden
-                >
-                  <Icon className="h-6 w-6" style={{ color: s.iconColor }} />
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black text-white">
+                  <Icon className="h-5 w-5" />
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-base font-bold text-slate-900">
-                    {s.title}
-                  </span>
-                  <span className="mt-0.5 block text-sm text-slate-600">
-                    {s.subtitle}
-                  </span>
+                <span className="mt-2 text-sm font-bold text-black">{s.title}</span>
+                <span className="mt-0.5 text-[11px] text-[var(--ru-muted)]">
+                  {s.subtitle}
                 </span>
-                <ChevronRight
-                  className="h-5 w-5 shrink-0 text-[#1A4D3A]/60"
-                  aria-hidden
-                />
               </Link>
             );
           })}
         </div>
       </div>
+
+      <Link
+        href="/partners"
+        className="flex items-center justify-between rounded-2xl border border-[var(--ru-line)] bg-white px-4 py-3.5 shadow-[var(--ru-shadow)] transition active:scale-[0.99]"
+      >
+        <span>
+          <span className="block text-sm font-bold text-black">
+            For businesses
+          </span>
+          <span className="block text-xs text-[var(--ru-muted)]">
+            Free signup · self-serve deliveries
+          </span>
+        </span>
+        <ChevronRight className="h-5 w-5 text-[var(--ru-muted)]" />
+      </Link>
     </div>
   );
 }

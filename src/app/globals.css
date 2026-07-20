@@ -1,16 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  --ru-ink: #0b1220;
-  --ru-muted: #5b6577;
-  --ru-line: #e2e8f0;
+  /* Uber-inspired neutrals + Village Ride accent */
+  --ru-ink: #000000;
+  --ru-muted: #6e6e6e;
+  --ru-line: #eaeaea;
   --ru-surface: #ffffff;
-  --ru-canvas: #f7f8fa;
+  --ru-canvas: #f6f6f6;
   --ru-brand: #1a4d3a;
-  --ru-brand-2: #0f3d2e;
-  --ru-accent: #0ea5e9;
+  --ru-brand-2: #0f3328;
+  --ru-black: #000000;
+  --ru-success: #0ecb81;
+  --ru-warning: #ff6b00;
+  --ru-error: #e11900;
+  --ru-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+  --ru-radius: 16px;
+  --ru-radius-pill: 9999px;
   --background: var(--ru-canvas);
   --foreground: var(--ru-ink);
+}
+
+html[data-theme="dark"] {
+  --ru-ink: #ffffff;
+  --ru-muted: #b0b0b0;
+  --ru-line: #2a2a2a;
+  --ru-surface: #1e1e1e;
+  --ru-canvas: #121212;
+  --ru-black: #ffffff;
+  --background: var(--ru-canvas);
+  --foreground: var(--ru-ink);
+  --ru-shadow: 0 2px 12px rgb(0 0 0 / 40%);
+  color-scheme: dark;
+}
+
+html {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 @theme inline {
@@ -25,47 +51,205 @@ body {
   color: var(--foreground);
 }
 
+::selection {
+  background: color-mix(in srgb, var(--ru-brand) 25%, white);
+}
+
+/* ——— Uber-style primitives ——— */
+
 .ru-card {
   background: var(--ru-surface);
   border: 1px solid var(--ru-line);
-  border-radius: 1rem;
-  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+  border-radius: var(--ru-radius);
+  box-shadow: var(--ru-shadow);
 }
 
 .ru-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1.25rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  transition: background 0.15s ease, transform 0.15s ease;
+  gap: 0.5rem;
+  min-height: 48px;
+  border-radius: var(--ru-radius-pill);
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .ru-btn:active {
   transform: scale(0.98);
 }
 
+.ru-btn:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 .ru-btn-primary {
-  background: var(--ru-brand);
+  background: var(--ru-black);
   color: white;
 }
 
 .ru-btn-primary:hover {
+  background: #1a1a1a;
+}
+
+.ru-btn-brand {
+  background: var(--ru-brand);
+  color: white;
+}
+
+.ru-btn-brand:hover {
   background: var(--ru-brand-2);
+}
+
+.ru-btn-secondary {
+  background: transparent;
+  color: var(--ru-ink);
+  border: 1.5px solid var(--ru-ink);
+}
+
+.ru-btn-secondary:hover {
+  background: #f0f0f0;
+}
+
+.ru-btn-ghost {
+  background: transparent;
+  color: var(--ru-brand);
+  min-height: 40px;
+  padding: 0.5rem 0.75rem;
+}
+
+.ru-btn-block {
+  width: 100%;
 }
 
 .ru-input {
   width: 100%;
-  border-radius: 0.75rem;
-  border: 1px solid var(--ru-line);
-  background: white;
-  padding: 0.65rem 0.85rem;
-  font-size: 0.875rem;
+  border: none;
+  border-bottom: 1.5px solid var(--ru-line);
+  border-radius: 0;
+  background: transparent;
+  padding: 0.85rem 0.15rem;
+  font-size: 1rem;
+  color: var(--ru-ink);
+  transition: border-color 0.2s ease;
 }
 
 .ru-input:focus {
-  outline: 2px solid rgb(14 165 233 / 35%);
-  border-color: #7dd3fc;
+  outline: none;
+  border-bottom-color: var(--ru-black);
+}
+
+.ru-input::placeholder {
+  color: #9a9a9a;
+}
+
+.ru-field {
+  position: relative;
+  padding-top: 1.1rem;
+}
+
+.ru-field label {
+  position: absolute;
+  left: 0.15rem;
+  top: 1.35rem;
+  font-size: 1rem;
+  color: #9a9a9a;
+  pointer-events: none;
+  transition:
+    top 0.15s ease,
+    font-size 0.15s ease,
+    color 0.15s ease;
+}
+
+.ru-field:focus-within label,
+.ru-field.has-value label {
+  top: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ru-muted);
+}
+
+.ru-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--ru-radius-pill);
+  padding: 0.2rem 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ru-badge-success {
+  background: #e8faf2;
+  color: #067a4c;
+}
+
+.ru-badge-warn {
+  background: #fff4e8;
+  color: #b34a00;
+}
+
+.ru-badge-muted {
+  background: #f0f0f0;
+  color: #5a5a5a;
+}
+
+.ru-badge-danger {
+  background: #fdecea;
+  color: #b01000;
+}
+
+.ru-skeleton {
+  background: linear-gradient(
+    90deg,
+    #ececec 0%,
+    #f5f5f5 50%,
+    #ececec 100%
+  );
+  background-size: 200% 100%;
+  animation: ru-shimmer 1.2s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+html[data-theme="dark"] .ru-skeleton {
+  background: linear-gradient(
+    90deg,
+    #2a2a2a 0%,
+    #3a3a3a 50%,
+    #2a2a2a 100%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes ru-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.ru-page-enter {
+  animation: ru-fade 0.28s ease;
+}
+
+@keyframes ru-fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

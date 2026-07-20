@@ -178,7 +178,7 @@ async function deliverPartnerEmailOptional(params: {
   }
 
   try {
-    await fetch(webhook, {
+    const res = await fetch(webhook, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -189,6 +189,19 @@ async function deliverPartnerEmailOptional(params: {
         source: "village-ride-partner",
       }),
     });
+    if (to) {
+      try {
+        const admin = createAdminClient();
+        await admin.from("rr_email_logs").insert({
+          to_email: to.slice(0, 320),
+          subject: params.subject.slice(0, 500),
+          template: "partner_notify",
+          via: res.ok ? "webhook" : "webhook_failed",
+        });
+      } catch {
+        /* optional audit */
+      }
+    }
   } catch (err) {
     console.error("[partner:email-webhook]", err);
   }
@@ -425,6 +438,34 @@ export async function generateShopWeeklyReport(
       emailBody: summary,
       reportId: report.id,
     });
+
+    try {
+      const { weeklyReportEmail, sendViaPartnerWebhook } = await import(
+        "./email-templates"
+      );
+      let to: string | null = null;
+      if (shop.user_id) {
+        const { data: user } = await admin.auth.admin.getUserById(shop.user_id);
+        to = user.user?.email ?? null;
+      }
+      if (to) {
+        const site =
+          process.env.NEXT_PUBLIC_SITE_URL ?? "https://village-ride.vercel.app";
+        const tpl = weeklyReportEmail({
+          shopName: shop.name,
+          weekKey,
+          summaryText: summary,
+          dashboardUrl: `${site}/merchant/dashboard`,
+        });
+        await sendViaPartnerWebhook({
+          to,
+          template: tpl,
+          templateKey: "weekly_report",
+        });
+      }
+    } catch {
+      /* optional */
+    }
 
     await admin
       .from("rr_partner_weekly_reports")

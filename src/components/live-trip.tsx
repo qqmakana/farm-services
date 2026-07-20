@@ -193,26 +193,31 @@ export function LiveTrip({
         : "Payment pending";
 
   return (
-    <div className="relative space-y-4">
+    <div className="ru-page-enter relative space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">
+          <p className="text-xs font-semibold tracking-[0.16em] text-[var(--ru-muted)] uppercase">
             {noDrivers
               ? "Unavailable"
               : searching
                 ? "Searching"
                 : confirmed
-                  ? "Confirmed"
+                  ? "On the way"
                   : "Live trip"}
           </p>
-          <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight">
-            {noDrivers
-              ? "No drivers available"
-              : STATUS_LABELS[job.status]}
-          </h1>
-          <p className="mt-1 text-sm text-slate-600">
+          {eta != null && confirmed ? (
+            <h1 className="mt-1 font-[family-name:var(--font-display)] text-4xl font-bold tracking-tight text-black">
+              {eta} min away
+            </h1>
+          ) : (
+            <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-black">
+              {noDrivers
+                ? "No drivers available"
+                : STATUS_LABELS[job.status]}
+            </h1>
+          )}
+          <p className="mt-1 text-sm text-[var(--ru-muted)]">
             {SERVICE_LABELS[job.service_type]} · {job.reference_code}
-            {eta != null ? ` · ETA ${eta} min` : ""}
           </p>
         </div>
         {isActiveTrip ? (
@@ -220,11 +225,65 @@ export function LiveTrip({
             type="button"
             disabled={pending}
             onClick={runSos}
-            className="shrink-0 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-bold text-white shadow-md hover:bg-rose-500 disabled:opacity-60"
+            className="ru-btn shrink-0 !min-h-11 bg-[var(--ru-error)] !px-4 text-sm font-bold text-white hover:opacity-90"
           >
-            SOS / Emergency
+            SOS
           </button>
         ) : null}
+      </div>
+
+      {/* Horizontal progress */}
+      <div className="ru-card flex items-center justify-between gap-1 px-3 py-4">
+        {STEPS.map((step, i) => {
+          const done = active > i || job.status === "completed";
+          const current = active === i;
+          return (
+            <div key={step} className="flex flex-1 flex-col items-center gap-1.5">
+              <div className="flex w-full items-center">
+                {i > 0 ? (
+                  <div
+                    className={`h-0.5 flex-1 ${
+                      done || current ? "bg-black" : "bg-[var(--ru-line)]"
+                    }`}
+                  />
+                ) : (
+                  <div className="flex-1" />
+                )}
+                <span
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                    done || current
+                      ? "bg-black text-white"
+                      : "bg-[var(--ru-line)] text-[var(--ru-muted)]"
+                  }`}
+                >
+                  {done && !current ? "✓" : i + 1}
+                </span>
+                {i < STEPS.length - 1 ? (
+                  <div
+                    className={`h-0.5 flex-1 ${
+                      done ? "bg-black" : "bg-[var(--ru-line)]"
+                    }`}
+                  />
+                ) : (
+                  <div className="flex-1" />
+                )}
+              </div>
+              <p
+                className={`max-w-[4.5rem] text-center text-[10px] leading-tight font-medium ${
+                  current ? "text-black" : "text-[var(--ru-muted)]"
+                }`}
+              >
+                {i === 0
+                  ? "Assigned"
+                  : i === 1
+                    ? "On the way"
+                    : i === 2
+                      ? "Arriving"
+                      : "Done"}
+              </p>
+            </div>
+          );
+        })}
       </div>
 
       {searching ? (
@@ -262,28 +321,40 @@ export function LiveTrip({
       ) : null}
 
       {confirmed && job.drivers ? (
-        <div className="space-y-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-950">
-          <p className="font-bold">
-            ✅ Driver Confirmed! {job.drivers.full_name} (
-            {VEHICLE_LABELS[job.drivers.vehicle_type]})
-            {eta != null ? ` — about ${eta} mins` : " — on the way"}
-          </p>
-          <div className="flex flex-wrap gap-2">
+        <div className="ru-card flex items-center gap-3 p-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-black text-lg font-bold text-white">
+            {job.drivers.full_name.charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-bold text-black">
+              {job.drivers.full_name}
+              <span className="ml-1 font-normal text-[var(--ru-muted)]">
+                ★{job.drivers.rating_avg.toFixed(1)}
+              </span>
+            </p>
+            <p className="text-xs text-[var(--ru-muted)]">
+              {VEHICLE_LABELS[job.drivers.vehicle_type]}
+              {eta != null ? ` · ${eta} min away` : " · on the way"}
+            </p>
+            <div className="mt-1">
+              <DriverVerifiedBadge verified={job.drivers.id_verified} compact />
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-col gap-1.5">
             <a
               href={`tel:${job.drivers.phone}`}
-              className="rounded-lg bg-[#1A4D3A] px-3 py-2 text-xs font-bold text-white"
+              className="ru-btn ru-btn-primary !min-h-10 !px-3 !text-xs"
             >
-              Call driver
+              Call
             </a>
             <a
               href={`https://wa.me/${toWhatsAppNumber(job.drivers.phone)}`}
               target="_blank"
               rel="noreferrer"
-              className="rounded-lg bg-[#25D366] px-3 py-2 text-xs font-bold text-white"
+              className="ru-btn ru-btn-secondary !min-h-10 !px-3 !text-xs"
             >
-              WhatsApp driver
+              Chat
             </a>
-            <DriverVerifiedBadge verified={job.drivers.id_verified} compact />
           </div>
         </div>
       ) : null}
@@ -351,50 +422,6 @@ export function LiveTrip({
         >
           Copy trip link
         </button>
-      </div>
-
-      <div className="ru-card p-5">
-        <ol className="space-y-4">
-          {STEPS.map((step, i) => {
-            const done = active > i || job.status === "completed";
-            const current = active === i;
-            return (
-              <li key={step} className="flex gap-3">
-                <span
-                  className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                    done || current
-                      ? "bg-[var(--ru-brand)] text-white"
-                      : "bg-slate-200 text-slate-500"
-                  }`}
-                >
-                  {done && !current ? "✓" : i + 1}
-                </span>
-                <div>
-                  <p
-                    className={`text-sm font-semibold ${
-                      current ? "text-[var(--ru-brand)]" : "text-slate-800"
-                    }`}
-                  >
-                    {STATUS_LABELS[step]}
-                  </p>
-                  {current && job.drivers && (
-                    <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <p className="text-xs text-slate-500">
-                        {job.drivers.full_name} · ★
-                        {job.drivers.rating_avg.toFixed(1)} ·{" "}
-                        {VEHICLE_LABELS[job.drivers.vehicle_type]}
-                      </p>
-                      <DriverVerifiedBadge
-                        verified={job.drivers.id_verified}
-                        compact
-                      />
-                    </div>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ol>
       </div>
 
       <div className="ru-card space-y-3 p-5 text-sm">

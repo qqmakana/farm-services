@@ -107,21 +107,23 @@ export function DriverAccountView() {
   }
 
   return (
-    <main className="mx-auto min-h-dvh max-w-lg px-5 pb-24 pt-8">
-      <h1 className="text-2xl font-bold text-slate-900">Account</h1>
+    <main className="ru-page-enter mx-auto min-h-dvh max-w-lg px-5 pb-24 pt-8">
+      <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-black">
+        Account
+      </h1>
 
-      <div className="mt-6 flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#1A4D3A] text-2xl font-bold text-white">
+      <div className="ru-card mt-6 flex items-center gap-4 p-5">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-black text-2xl font-bold text-white">
           {initial}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-lg font-bold text-slate-900">
+          <p className="text-lg font-bold text-black">
             <span className="mr-1.5" aria-hidden>
               {driverCountry.flag}
             </span>
             {driver.full_name}
           </p>
-          <p className="text-sm text-slate-500">{driver.phone}</p>
+          <p className="text-sm text-[var(--ru-muted)]">{driver.phone}</p>
           <div className="mt-1">
             <DriverVerifiedBadge
               verified={isDriverTrustVerified(driver)}
@@ -129,10 +131,11 @@ export function DriverAccountView() {
             />
           </div>
         </div>
+        <ChevronRight className="h-5 w-5 text-[var(--ru-muted)]" aria-hidden />
       </div>
 
-      <section className="mt-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-        <p className="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+      <section className="ru-card mt-4 p-4">
+        <p className="mb-2 text-xs font-semibold tracking-wide text-[var(--ru-muted)] uppercase">
           Operating country
         </p>
         <CountrySelector
@@ -143,11 +146,11 @@ export function DriverAccountView() {
           type="button"
           disabled={pending}
           onClick={() => saveCountry(countryCode)}
-          className="mt-3 w-full rounded-xl bg-[#1A4D3A] py-2.5 text-sm font-bold text-white disabled:opacity-50"
+          className="ru-btn ru-btn-primary ru-btn-block mt-3"
         >
           Save country for matching
         </button>
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-[var(--ru-muted)]">
           You only receive jobs in {driverCountry.flag} {driverCountry.name}.
         </p>
       </section>

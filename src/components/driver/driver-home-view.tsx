@@ -192,36 +192,61 @@ export function DriverHomeView() {
           type="button"
           disabled={pending}
           onClick={toggleOnline}
-          className={`absolute top-4 left-1/2 z-[500] -translate-x-1/2 rounded-full px-5 py-3 text-sm font-bold text-white shadow-md transition active:scale-95 disabled:opacity-60 ${
+          aria-pressed={Boolean(driver?.is_online)}
+          className={`absolute top-4 left-1/2 z-[500] flex min-h-12 min-w-[200px] -translate-x-1/2 items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-bold shadow-lg transition active:scale-95 disabled:opacity-60 ${
             driver?.is_online
-              ? "bg-emerald-600"
-              : "bg-slate-900"
+              ? "bg-[var(--ru-success)] text-white"
+              : "bg-black text-white"
           }`}
         >
-          {driver?.is_online ? "Go Offline" : "Go Online"}
+          <span
+            className={`h-2.5 w-2.5 rounded-full ${
+              driver?.is_online ? "bg-white" : "bg-[var(--ru-muted)]"
+            }`}
+            aria-hidden
+          />
+          {driver?.is_online ? "ONLINE" : "OFFLINE"}
         </button>
 
         {!driver?.is_online ? (
-          <p className="absolute bottom-28 left-4 right-4 z-[500] rounded-xl bg-white/95 px-3 py-2 text-center text-xs text-slate-600 shadow-sm">
+          <p className="absolute bottom-28 left-4 right-4 z-[500] rounded-2xl bg-white/95 px-3 py-2.5 text-center text-xs text-[var(--ru-muted)] shadow-sm">
             Go online to receive job requests nearby
           </p>
         ) : null}
       </div>
 
-      <div className="z-[500] shrink-0 rounded-t-3xl border-t border-gray-100 bg-white px-4 pb-4 pt-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+      <div className="z-[500] shrink-0 rounded-t-3xl border-t border-[var(--ru-line)] bg-white px-4 pb-4 pt-3 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-gray-200" />
+        {driver ? (
+          <div className="mb-3 flex items-center justify-between gap-3 text-xs text-[var(--ru-muted)]">
+            <span>
+              Today{" "}
+              <strong className="text-black">
+                {formatMoney(Number(driver.wallet_balance ?? 0))}
+              </strong>{" "}
+              wallet
+            </span>
+            <span>
+              ★{" "}
+              <strong className="text-black">
+                {Number(driver.rating_avg || 0).toFixed(1)}
+              </strong>
+            </span>
+          </div>
+        ) : null}
         {error ? (
-          <p className="mb-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800">
+          <p className="mb-2 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-800">
             {error}
           </p>
         ) : null}
 
         {!driver?.is_online ? (
-          <p className="py-4 text-center text-sm text-slate-500">
-            You&apos;re offline. Tap <strong>Go Online</strong> to see requests.
+          <p className="py-4 text-center text-sm text-[var(--ru-muted)]">
+            You&apos;re offline. Tap <strong className="text-black">ONLINE</strong>{" "}
+            to see requests.
           </p>
         ) : !job ? (
-          <p className="py-4 text-center text-sm text-slate-500">
+          <p className="py-4 text-center text-sm text-[var(--ru-muted)]">
             No pending jobs within {RADIUS_KM} km. Stay online — new requests
             appear here.
           </p>
@@ -229,16 +254,18 @@ export function DriverHomeView() {
           <div className="space-y-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold tracking-wide text-[#1A4D3A] uppercase">
+                <p className="text-xs font-semibold tracking-wide text-[var(--ru-muted)] uppercase">
                   {SERVICE_LABELS[job.service_type]} · {job.reference_code}
                 </p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">
+                <p className="mt-1 text-sm font-semibold text-black">
                   {job.pickup_landmark}
-                  <span className="mx-1 font-normal text-slate-400">→</span>
+                  <span className="mx-1 font-normal text-[var(--ru-muted)]">
+                    →
+                  </span>
                   {job.dropoff_landmark}
                 </p>
               </div>
-              <p className="text-lg font-bold text-[#1A4D3A]">
+              <p className="text-lg font-bold text-black">
                 {formatMoney(Number(job.fee_amount))}
               </p>
             </div>
@@ -246,20 +273,16 @@ export function DriverHomeView() {
               <button
                 type="button"
                 disabled={pending}
-                onClick={() =>
-                  run(() => acceptOffer(job.id, driverId!))
-                }
-                className="rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white transition active:scale-95 disabled:opacity-60"
+                onClick={() => run(() => acceptOffer(job.id, driverId!))}
+                className="ru-btn ru-btn-brand !rounded-full py-3.5 text-sm font-bold"
               >
                 ACCEPT
               </button>
               <button
                 type="button"
                 disabled={pending}
-                onClick={() =>
-                  run(() => declineOffer(job.id, driverId!))
-                }
-                className="rounded-xl bg-gray-200 py-3.5 text-sm font-bold text-slate-800 transition active:scale-95 disabled:opacity-60"
+                onClick={() => run(() => declineOffer(job.id, driverId!))}
+                className="ru-btn ru-btn-secondary !rounded-full py-3.5 text-sm font-bold"
               >
                 DECLINE
               </button>

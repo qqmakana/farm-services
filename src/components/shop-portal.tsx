@@ -6,6 +6,9 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { createProduct, registerMerchantShop } from "@/lib/actions";
 import { formatMoney } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { FloatingInput } from "@/components/ui/floating-input";
+import { Card } from "@/components/ui/card";
 import type { JobWithDriver, Product, Shop } from "@/lib/types";
 
 export function ShopPortal({
@@ -22,6 +25,8 @@ export function ShopPortal({
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState(1);
+  const [success, setSuccess] = useState(false);
 
   const [newShop, setNewShop] = useState({
     name: "",
@@ -70,8 +75,8 @@ export function ShopPortal({
           referral_code: newShop.referral_code.trim() || null,
         });
         setShopId(shop.id);
+        setSuccess(true);
 
-        // Sign in so middleware lets them into /merchant/dashboard
         try {
           const supabase = createClient();
           const { error: signErr } = await supabase.auth.signInWithPassword({
@@ -79,26 +84,17 @@ export function ShopPortal({
             password: newShop.password,
           });
           if (!signErr) {
-            setMessage(`Welcome, ${shop.name}. Opening merchant dashboard…`);
-            window.location.assign("/merchant/dashboard");
+            setMessage(`Welcome, ${shop.name}. Opening dashboard…`);
+            setTimeout(() => window.location.assign("/merchant/dashboard"), 900);
             return;
           }
         } catch {
-          /* fall through to login link */
+          /* fall through */
         }
 
         setMessage(
-          `Shop registered: ${shop.name}. Sign in with ${email} to open your dashboard.`,
+          `Account created. Sign in with ${email} to open your dashboard.`,
         );
-        setNewShop({
-          name: "",
-          phone: "",
-          category: "appliances",
-          landmark: "",
-          email: "",
-          password: "",
-          referral_code: "",
-        });
         router.refresh();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed");
@@ -129,117 +125,211 @@ export function ShopPortal({
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3">
-        <p className="text-sm text-slate-700">
-          Already registered? Open your{" "}
-          <strong>merchant dashboard</strong> to see shop orders.
+    <div className="ru-page-enter space-y-10">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--ru-line)] bg-white p-4 shadow-[var(--ru-shadow)]">
+        <p className="text-sm text-[var(--ru-muted)]">
+          Already a partner?{" "}
+          <strong className="text-black">Open your dashboard</strong>
         </p>
-        <Link
-          href="/login?next=/merchant/dashboard"
-          className="rounded-lg bg-[#1A4D3A] px-4 py-2 text-sm font-bold text-white transition active:scale-95"
-        >
-          Merchant login
+        <Link href="/login?next=/merchant/dashboard" className="ru-btn ru-btn-primary !min-h-11 !px-5 !text-sm">
+          Partner login
         </Link>
       </div>
 
       {message && (
-        <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+        <p className="rounded-2xl bg-[#e8faf2] px-4 py-3 text-sm font-medium text-[#067a4c]">
           {message}
         </p>
       )}
       {error && (
-        <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
+        <p className="rounded-2xl bg-[#fdecea] px-4 py-3 text-sm font-medium text-[#b01000]">
           {error}
         </p>
       )}
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold">Register as a merchant</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Creates a login with <strong>role=merchant</strong>, links your{" "}
-          <code className="rounded bg-slate-100 px-1">rr_shops</code> record, and
-          opens the business dashboard.
-        </p>
-        <form onSubmit={registerShop} className="mt-4 grid gap-3 sm:grid-cols-2">
-          <input
-            required
-            placeholder="Business name"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-            value={newShop.name}
-            onChange={(e) => setNewShop({ ...newShop, name: e.target.value })}
-          />
-          <input
-            required
-            placeholder="Phone"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-            value={newShop.phone}
-            onChange={(e) => setNewShop({ ...newShop, phone: e.target.value })}
-          />
-          <input
-            required
-            type="email"
-            placeholder="Business email (login)"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-            value={newShop.email}
-            onChange={(e) => setNewShop({ ...newShop, email: e.target.value })}
-            autoComplete="username"
-          />
-          <input
-            required
-            type="password"
-            placeholder="Password (min 8 chars)"
-            minLength={8}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-            value={newShop.password}
-            onChange={(e) =>
-              setNewShop({ ...newShop, password: e.target.value })
-            }
-            autoComplete="new-password"
-          />
-          <select
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-            value={newShop.category}
-            onChange={(e) =>
-              setNewShop({ ...newShop, category: e.target.value })
-            }
-          >
-            <option value="farm">Farm (farmer)</option>
-            <option value="appliances">Appliances shop</option>
-            <option value="furniture">Furniture shop</option>
-            <option value="grocery">Grocery shop</option>
-            <option value="hardware">Hardware shop</option>
-            <option value="general">General</option>
-          </select>
-          <input
-            required
-            placeholder="Landmark / address"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
-            value={newShop.landmark}
-            onChange={(e) =>
-              setNewShop({ ...newShop, landmark: e.target.value })
-            }
-          />
-          <input
-            placeholder="Referral code (optional)"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
-            value={newShop.referral_code}
-            onChange={(e) =>
-              setNewShop({ ...newShop, referral_code: e.target.value })
-            }
-          />
-          <button
-            type="submit"
-            disabled={pending}
-            className="ru-btn ru-btn-primary sm:col-span-2"
-          >
-            {pending ? "Creating account…" : "Create merchant account"}
-          </button>
-        </form>
-      </section>
+      <Card className="mx-auto max-w-lg !p-6 sm:!p-8">
+        {success ? (
+          <div className="py-6 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-black text-2xl text-white">
+              ✓
+            </div>
+            <h2 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-bold">
+              You&apos;re in
+            </h2>
+            <p className="mt-2 text-sm text-[var(--ru-muted)]">
+              Create deliveries anytime — no meetings required.
+            </p>
+            <Link
+              href="/merchant/dashboard"
+              className="ru-btn ru-btn-primary ru-btn-block mt-6"
+            >
+              Go to dashboard
+            </Link>
+          </div>
+        ) : (
+          <>
+            <p className="text-xs font-bold tracking-wide text-[var(--ru-muted)] uppercase">
+              Partner signup
+            </p>
+            <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight">
+              Start delivering
+            </h2>
+            <div className="mt-4 flex gap-2">
+              {[1, 2, 3].map((n) => (
+                <div
+                  key={n}
+                  className={`h-1.5 flex-1 rounded-full ${
+                    n <= step ? "bg-black" : "bg-[#e8e8e8]"
+                  }`}
+                />
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-[var(--ru-muted)]">
+              Step {step} of 3
+            </p>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold">Your shops (catalog)</h2>
+            <form onSubmit={registerShop} className="mt-6 space-y-1">
+              {step === 1 && (
+                <>
+                  <FloatingInput
+                    required
+                    label="Business name"
+                    value={newShop.name}
+                    onChange={(e) =>
+                      setNewShop({ ...newShop, name: e.target.value })
+                    }
+                  />
+                  <div className="ru-field has-value">
+                    <label htmlFor="cat">Business type</label>
+                    <select
+                      id="cat"
+                      className="ru-input"
+                      value={newShop.category}
+                      onChange={(e) =>
+                        setNewShop({ ...newShop, category: e.target.value })
+                      }
+                    >
+                      <option value="farm">Farm</option>
+                      <option value="appliances">Appliances</option>
+                      <option value="furniture">Furniture</option>
+                      <option value="grocery">Grocery</option>
+                      <option value="hardware">Hardware</option>
+                      <option value="general">General</option>
+                    </select>
+                  </div>
+                  <FloatingInput
+                    required
+                    label="Landmark / address"
+                    value={newShop.landmark}
+                    onChange={(e) =>
+                      setNewShop({ ...newShop, landmark: e.target.value })
+                    }
+                  />
+                  <Button
+                    type="button"
+                    block
+                    className="mt-6"
+                    onClick={() => {
+                      if (!newShop.name.trim() || !newShop.landmark.trim()) {
+                        setError("Business name and landmark are required.");
+                        return;
+                      }
+                      setError(null);
+                      setStep(2);
+                    }}
+                  >
+                    Continue
+                  </Button>
+                </>
+              )}
+
+              {step === 2 && (
+                <>
+                  <FloatingInput
+                    required
+                    type="email"
+                    label="Business email"
+                    autoComplete="username"
+                    value={newShop.email}
+                    onChange={(e) =>
+                      setNewShop({ ...newShop, email: e.target.value })
+                    }
+                  />
+                  <FloatingInput
+                    required
+                    label="WhatsApp / phone"
+                    value={newShop.phone}
+                    onChange={(e) =>
+                      setNewShop({ ...newShop, phone: e.target.value })
+                    }
+                  />
+                  <FloatingInput
+                    required
+                    type="password"
+                    label="Password (min 8)"
+                    minLength={8}
+                    autoComplete="new-password"
+                    value={newShop.password}
+                    onChange={(e) =>
+                      setNewShop({ ...newShop, password: e.target.value })
+                    }
+                  />
+                  <div className="mt-6 grid grid-cols-2 gap-2">
+                    <Button type="button" variant="secondary" onClick={() => setStep(1)}>
+                      Back
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        if (
+                          !newShop.email.includes("@") ||
+                          newShop.password.length < 8 ||
+                          !newShop.phone.trim()
+                        ) {
+                          setError("Enter email, phone, and a strong password.");
+                          return;
+                        }
+                        setError(null);
+                        setStep(3);
+                      }}
+                    >
+                      Continue
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {step === 3 && (
+                <>
+                  <FloatingInput
+                    label="Referral code (optional)"
+                    value={newShop.referral_code}
+                    onChange={(e) =>
+                      setNewShop({ ...newShop, referral_code: e.target.value })
+                    }
+                  />
+                  <p className="pt-3 text-xs text-[var(--ru-muted)]">
+                    Free signup · ~15% is from the driver wallet, not your shop.
+                  </p>
+                  <div className="mt-6 grid grid-cols-2 gap-2">
+                    <Button type="button" variant="secondary" onClick={() => setStep(2)}>
+                      Back
+                    </Button>
+                    <Button type="submit" disabled={pending}>
+                      {pending ? "Creating…" : "Create account"}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </form>
+          </>
+        )}
+      </Card>
+
+      <section className="ru-card p-5">
+        <h2 className="font-[family-name:var(--font-display)] text-lg font-bold">
+          Catalog
+        </h2>
         <select
           className="ru-input mt-3 max-w-md"
           value={shopId}
@@ -247,16 +337,16 @@ export function ShopPortal({
         >
           {shops.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.name} · {s.category}
+              {s.name}
             </option>
           ))}
         </select>
 
-        <form onSubmit={addProduct} className="mt-4 grid gap-3 sm:grid-cols-3">
+        <form onSubmit={addProduct} className="mt-4 grid gap-2 sm:grid-cols-3">
           <input
             required
             placeholder="Product name"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="ru-input"
             value={newProduct.name}
             onChange={(e) =>
               setNewProduct({ ...newProduct, name: e.target.value })
@@ -264,74 +354,37 @@ export function ShopPortal({
           />
           <input
             required
-            placeholder="Price (R)"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            placeholder="Price"
+            className="ru-input"
             value={newProduct.price}
             onChange={(e) =>
               setNewProduct({ ...newProduct, price: e.target.value })
             }
           />
-          <select
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-            value={newProduct.size}
-            onChange={(e) =>
-              setNewProduct({
-                ...newProduct,
-                size: e.target.value as typeof newProduct.size,
-              })
-            }
-          >
-            <option value="small">Small</option>
-            <option value="medium">Medium</option>
-            <option value="large">Large</option>
-            <option value="xl">XL</option>
-          </select>
-          <button
-            type="submit"
-            disabled={pending || !shopId}
-            className="ru-btn ru-btn-primary sm:col-span-3"
-          >
+          <Button type="submit" disabled={pending || !shopId} variant="brand">
             Add product
-          </button>
+          </Button>
         </form>
 
-        <ul className="mt-4 divide-y divide-slate-100">
+        <ul className="mt-4 space-y-2 text-sm">
           {shopProducts.map((p) => (
             <li
               key={p.id}
-              className="flex justify-between py-2 text-sm text-slate-700"
+              className="flex justify-between border-b border-[var(--ru-line)] py-2"
             >
-              <span>
-                {p.name} · {p.size}
+              <span className="font-medium">{p.name}</span>
+              <span className="text-[var(--ru-muted)]">
+                {formatMoney(p.price)}
               </span>
-              <span className="font-semibold">{formatMoney(Number(p.price))}</span>
             </li>
           ))}
-          {shopProducts.length === 0 ? (
-            <li className="py-2 text-sm text-slate-500">No products yet.</li>
-          ) : null}
         </ul>
 
-        <h3 className="mt-6 text-sm font-semibold text-slate-800">
-          Recent orders for this shop
-        </h3>
-        <ul className="mt-2 space-y-2">
-          {shopOrders.slice(0, 5).map((j) => (
-            <li key={j.id} className="text-sm text-slate-600">
-              {j.reference_code} · {j.customer_name} ·{" "}
-              {formatMoney(Number(j.fee_amount))}
-            </li>
-          ))}
-          {shopOrders.length === 0 ? (
-            <li className="text-sm text-slate-500">No orders yet.</li>
-          ) : null}
-        </ul>
-        <Link
-          href="/merchant/dashboard"
-          className="mt-4 inline-block text-sm font-semibold text-[#1A4D3A] underline"
-        >
-          Open full merchant dashboard →
-        </Link>
+        {shopOrders.length > 0 ? (
+          <p className="mt-4 text-xs text-[var(--ru-muted)]">
+            {shopOrders.length} recent order(s) for this shop
+          </p>
+        ) : null}
       </section>
     </div>
   );

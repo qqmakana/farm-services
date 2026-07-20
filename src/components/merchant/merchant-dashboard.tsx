@@ -7,14 +7,14 @@ import {
   createMerchantDelivery,
   generateMyWeeklyReport,
   markPartnerNotificationsRead,
+  rateTrip,
   saveMerchantFcmToken,
 } from "@/lib/actions";
+import { cancelMerchantOrder } from "@/lib/actions-ops";
 import {
   formatMoney,
   formatWhen,
-  SERVICE_LABELS,
   STATUS_LABELS,
-  statusBadgeClass,
 } from "@/lib/format";
 import { requestFcmToken } from "@/lib/firebase/client";
 import { isSearchingStatus } from "@/lib/job-status";
@@ -24,12 +24,42 @@ import {
   ScheduleWhen,
   type WhenMode,
 } from "@/components/uber/schedule-when";
+import { StatCard } from "@/components/ui/card";
+import { FloatingInput } from "@/components/ui/floating-input";
+import {
+  StatusBadge,
+  statusToneFromJob,
+} from "@/components/ui/status-badge";
+import { useOnlineStatus } from "@/components/offline-banner";
+import { MerchantPushPrompt } from "@/components/merchant/merchant-push-prompt";
+import { TripShare } from "@/components/trip-share";
+import { useToast } from "@/components/ui/toast";
 import type {
   JobWithDriver,
   PartnerNotification,
   PartnerWeeklyReport,
   Shop,
 } from "@/lib/types";
+
+type Period = "today" | "week" | "month";
+
+function startOfPeriod(period: Period): Date {
+  const d = new Date();
+  if (period === "today") {
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  if (period === "week") {
+    const day = d.getDay();
+    const diff = day === 0 ? 6 : day - 1;
+    d.setDate(d.getDate() - diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  d.setDate(1);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
 
 const CHECKLIST_KEY = "vr_partner_checklist_dismissed";
 
@@ -49,7 +79,10 @@ export function MerchantDashboard({
   referralCount: number;
 }) {
   const router = useRouter();
+  const online = useOnlineStatus();
+  const { success: toastSuccess } = useToast();
   const [pending, startTransition] = useTransition();
+  const [ratedJobs, setRatedJobs] = useState<Record<string, number>>({});
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -63,8 +96,17 @@ export function MerchantDashboard({
     item_description: "",
     size: "medium" as "small" | "medium" | "large" | "xl",
   });
+  const [period, setPeriod] = useState<Period>("week");
 
-  const open = jobs.filter(
+  const periodJobs = useMemo(() => {
+    const from = startOfPeriod(period).getTime();
+    return jobs.filter((j) => {
+      const t = new Date(j.scheduled_for || j.created_at).getTime();
+      return t >= from;
+    });
+  }, [jobs, period]);
+
+  const open = periodJobs.filter(
     (j) =>
       j.status === "new" ||
       j.status === "searching_driver" ||
@@ -72,18 +114,18 @@ export function MerchantDashboard({
       j.status === "assigned" ||
       j.status === "in_progress",
   ).length;
-  const done = jobs.filter((j) => j.status === "completed").length;
-  const pendingOrders = jobs.filter(
+  const done = periodJobs.filter((j) => j.status === "completed").length;
+  const pendingOrders = periodJobs.filter(
     (j) =>
       isSearchingStatus(j.status) ||
       j.status === "confirmed" ||
       j.status === "assigned" ||
       j.status === "in_progress",
   ).length;
-  const revenue = jobs
+  const revenue = periodJobs
     .filter((j) => j.status === "completed")
     .reduce((s, j) => s + Number(j.fee_amount || 0), 0);
-  const commissionShown = jobs
+  const commissionShown = periodJobs
     .filter((j) => j.status === "completed")
     .reduce((s, j) => {
       const fee = Number(j.fee_amount || 0);
@@ -175,6 +217,7 @@ export function MerchantDashboard({
     try {
       await navigator.clipboard.writeText(tripUrl(code));
       setMessage("Trip link copied — share with your customer.");
+      toastSuccess("Trip link copied");
     } catch {
       setError("Could not copy link. Open Track and share from there.");
     }
@@ -182,6 +225,10 @@ export function MerchantDashboard({
 
   function submitDelivery(e: React.FormEvent) {
     e.preventDefault();
+    if (!online) {
+      setError("You're offline — reconnect to create a delivery.");
+      return;
+    }
     setMessage(null);
     setError(null);
     const scheduled_for =
@@ -253,34 +300,45 @@ export function MerchantDashboard({
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 pb-20">
+    <main className="ru-page-enter mx-auto max-w-3xl px-4 py-8 pb-20">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+          <p className="text-xs font-semibold tracking-wide text-[var(--ru-muted)] uppercase">
             Partner
           </p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">{shop.name}</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            {shop.category} · {shop.landmark}
-            {email ? ` · ${email}` : ""}
+          <h1 className="mt-1 font-[family-name:var(--font-display)] text-[28px] font-bold tracking-tight text-black">
+            Hello, {shop.name}
+          </h1>
+          <p className="mt-1 text-sm text-[var(--ru-muted)]">
+            {formatMoney(revenue)} this{" "}
+            {period === "today" ? "day" : period === "week" ? "week" : "month"}{" "}
+            · {shop.landmark}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
+            href="/merchant/referrals"
+            className="ru-btn ru-btn-secondary !min-h-11 !px-4 !text-sm"
+          >
+            Referrals
+          </Link>
+          <Link
             href="/shop"
-            className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition active:scale-95"
+            className="ru-btn ru-btn-secondary !min-h-11 !px-4 !text-sm"
           >
             Catalog
           </Link>
           <button
             type="button"
             onClick={() => setShowForm((v) => !v)}
-            className="rounded-xl bg-[#1A4D3A] px-4 py-2 text-sm font-bold text-white transition active:scale-95"
+            className="ru-btn ru-btn-primary !min-h-11 !px-4 !text-sm"
           >
             {showForm ? "Close" : "Create delivery"}
           </button>
+          </div>
         </div>
-      </div>
+
+      <MerchantPushPrompt />
 
       {message && (
         <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
@@ -294,20 +352,20 @@ export function MerchantDashboard({
       )}
 
       {showChecklist && (
-        <section className="mt-6 rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-sm">
+        <section className="ru-card mt-6 border border-[var(--ru-line)] p-5">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h2 className="text-base font-bold text-slate-900">
+              <h2 className="text-base font-bold text-black">
                 Get started in 4 steps
               </h2>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-[var(--ru-muted)]">
                 Your first delivery is a tap away — no meeting required.
               </p>
             </div>
             <button
               type="button"
               onClick={dismissChecklist}
-              className="text-xs font-semibold text-slate-500 underline"
+              className="ru-btn-ghost text-xs font-semibold"
             >
               Dismiss
             </button>
@@ -316,18 +374,22 @@ export function MerchantDashboard({
             {checklist.map((step) => (
               <li
                 key={step.id}
-                className="flex items-center gap-2 text-sm text-slate-800"
+                className="flex items-center gap-2 text-sm text-black"
               >
                 <span
                   className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                     step.done
-                      ? "bg-[#1A4D3A] text-white"
-                      : "border border-slate-300 bg-white text-slate-400"
+                      ? "bg-black text-white"
+                      : "border border-[var(--ru-line)] bg-white text-[var(--ru-muted)]"
                   }`}
                 >
                   {step.done ? "✓" : "·"}
                 </span>
-                <span className={step.done ? "text-slate-500 line-through" : ""}>
+                <span
+                  className={
+                    step.done ? "text-[var(--ru-muted)] line-through" : ""
+                  }
+                >
                   {step.label}
                 </span>
               </li>
@@ -337,7 +399,7 @@ export function MerchantDashboard({
             <button
               type="button"
               onClick={() => setShowForm(true)}
-              className="mt-4 w-full rounded-xl bg-[#1A4D3A] px-4 py-3 text-sm font-bold text-white transition active:scale-95"
+              className="ru-btn ru-btn-primary ru-btn-block mt-4"
             >
               Create your first delivery
             </button>
@@ -348,16 +410,15 @@ export function MerchantDashboard({
       {showForm && (
         <form
           onSubmit={submitDelivery}
-          className="mt-6 space-y-3 rounded-xl border border-emerald-100 bg-emerald-50/40 p-4"
+          className="ru-card mt-6 space-y-4 p-5"
         >
-          <h2 className="text-base font-bold text-slate-900">
-            New delivery from your shop
-          </h2>
-          <p className="text-xs text-slate-600">
-            Pickup is fixed at <strong>{shop.name}</strong>. Drivers get an FCM
-            push automatically. Commission is deducted from the driver wallet
-            when complete.
-          </p>
+          <div>
+            <h2 className="text-lg font-bold text-black">Request delivery</h2>
+            <p className="mt-1 text-xs text-[var(--ru-muted)]">
+              Pickup: <strong className="text-black">{shop.name}</strong>. Drivers
+              get a push when you submit.
+            </p>
+          </div>
           <ScheduleWhen
             mode={whenMode}
             onModeChange={setWhenMode}
@@ -365,97 +426,122 @@ export function MerchantDashboard({
             onScheduledLocalChange={setScheduledLocal}
             nowLabel="Deliver now"
           />
-          <input
+          <FloatingInput
             required
-            placeholder="Customer name"
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm"
+            label="Customer name"
             value={delivery.customer_name}
             onChange={(e) =>
               setDelivery({ ...delivery, customer_name: e.target.value })
             }
           />
-          <input
+          <FloatingInput
             required
-            placeholder="Customer phone"
+            label="Customer phone"
             inputMode="tel"
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm"
             value={delivery.customer_phone}
             onChange={(e) =>
               setDelivery({ ...delivery, customer_phone: e.target.value })
             }
           />
-          <input
+          <FloatingInput
             required
-            placeholder="Drop-off landmark / address"
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm"
+            label="Where to?"
+            placeholder="Drop-off landmark"
             value={delivery.dropoff_landmark}
             onChange={(e) =>
               setDelivery({ ...delivery, dropoff_landmark: e.target.value })
             }
           />
-          <input
+          <FloatingInput
             required
-            placeholder="What to deliver"
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm"
+            label="What to deliver"
             value={delivery.item_description}
             onChange={(e) =>
               setDelivery({ ...delivery, item_description: e.target.value })
             }
           />
-          <select
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm"
-            value={delivery.size}
-            onChange={(e) =>
-              setDelivery({
-                ...delivery,
-                size: e.target.value as typeof delivery.size,
-              })
-            }
-          >
-            <option value="small">Small</option>
-            <option value="medium">Medium</option>
-            <option value="large">Large</option>
-            <option value="xl">XL / fridge / furniture</option>
-          </select>
+          <div className="ru-field has-value">
+            <label htmlFor="delivery-size">Package size</label>
+            <select
+              id="delivery-size"
+              className="ru-input"
+              value={delivery.size}
+              onChange={(e) =>
+                setDelivery({
+                  ...delivery,
+                  size: e.target.value as typeof delivery.size,
+                })
+              }
+            >
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+              <option value="xl">XL / fridge / furniture</option>
+            </select>
+          </div>
           <button
             type="submit"
-            disabled={pending}
-            className="w-full rounded-xl bg-[#1A4D3A] px-4 py-3 text-sm font-bold text-white transition active:scale-95 disabled:opacity-60"
+            disabled={pending || !online}
+            className="ru-btn ru-btn-primary ru-btn-block"
           >
-            {pending
-              ? "Creating…"
-              : whenMode === "later"
-                ? "Schedule delivery"
-                : "Create & notify drivers"}
+            {!online
+              ? "Offline — reconnect to request"
+              : pending
+                ? "Creating…"
+                : whenMode === "later"
+                  ? "Schedule delivery"
+                  : "Request delivery"}
           </button>
         </form>
       )}
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Total deliveries" value={String(jobs.length)} />
-        <Stat label="Pending" value={String(pendingOrders)} />
-        <Stat label="Completed" value={String(done)} />
-        <Stat label="Fees earned*" value={formatMoney(revenue)} />
+      <div className="mt-8 flex gap-6 border-b border-[var(--ru-line)]">
+        {(
+          [
+            ["today", "Today"],
+            ["week", "This week"],
+            ["month", "This month"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setPeriod(key)}
+            className={`-mb-px border-b-2 pb-2 text-sm font-semibold transition ${
+              period === key
+                ? "border-black text-black"
+                : "border-transparent text-[var(--ru-muted)]"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
-      <p className="mt-2 text-[11px] text-slate-500">
-        *Delivery fees on completed orders. Platform commission (~15% /{" "}
-        {formatMoney(commissionShown)}) is auto-deducted from the{" "}
-        <strong>driver</strong> wallet — not charged to your shop. Open: {open}.
+
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatCard label="Deliveries" value={String(periodJobs.length)} />
+        <StatCard label="Pending" value={String(pendingOrders)} />
+        <StatCard label="Completed" value={String(done)} />
+        <StatCard label="Fees" value={formatMoney(revenue)} />
+      </div>
+      <p className="mt-2 text-[11px] text-[var(--ru-muted)]">
+        Platform commission (~15% / {formatMoney(commissionShown)}) comes from
+        the driver wallet — not your shop. Open: {open}.
       </p>
 
-      <section className="mt-8 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-        <h2 className="text-lg font-bold text-slate-900">Your referral code</h2>
-        <p className="mt-1 font-mono text-2xl font-bold tracking-wide text-[#1A4D3A]">
+      <section className="ru-card mt-8 p-5">
+        <h2 className="text-lg font-bold text-black">Your referral code</h2>
+        <p className="mt-1 font-mono text-2xl font-bold tracking-wide text-black">
           {shop.referral_code ?? "—"}
         </p>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-[var(--ru-muted)]">
           {referralCount} partner{referralCount === 1 ? "" : "s"} signed up with
           your code. Share the link below — no meetings needed.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold"
+            className="ru-btn ru-btn-secondary !min-h-10 !px-3 !text-xs"
             onClick={() => {
               void navigator.clipboard?.writeText(shop.referral_code ?? "");
               setMessage("Referral code copied.");
@@ -465,7 +551,7 @@ export function MerchantDashboard({
           </button>
           <a
             href={`mailto:?subject=Join Village Ride&body=Register as a partner with my code ${shop.referral_code}: ${shareUrl}`}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold"
+            className="ru-btn ru-btn-secondary !min-h-10 !px-3 !text-xs"
           >
             Email invite
           </a>
@@ -474,10 +560,10 @@ export function MerchantDashboard({
 
       <section className="mt-8">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-bold text-slate-900">
+          <h2 className="text-lg font-bold text-black">
             Notifications
             {unread.length > 0 ? (
-              <span className="ml-2 rounded-full bg-[#1A4D3A] px-2 py-0.5 text-xs font-bold text-white">
+              <span className="ml-2 rounded-full bg-black px-2 py-0.5 text-xs font-bold text-white">
                 {unread.length}
               </span>
             ) : null}
@@ -486,14 +572,14 @@ export function MerchantDashboard({
             <button
               type="button"
               onClick={markAllRead}
-              className="text-xs font-semibold text-[#1A4D3A] underline"
+              className="text-xs font-semibold text-black underline"
             >
-              Mark all read
+              Mark all as read
             </button>
           ) : null}
         </div>
         {notifications.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">
+          <p className="mt-3 text-sm text-[var(--ru-muted)]">
             Order updates and weekly reports appear here (and via FCM push).
           </p>
         ) : (
@@ -501,17 +587,29 @@ export function MerchantDashboard({
             {notifications.slice(0, 12).map((n) => (
               <li
                 key={n.id}
-                className={`rounded-lg border px-3 py-2 text-sm ${
-                  n.read_at
-                    ? "border-gray-100 bg-white text-slate-600"
-                    : "border-emerald-100 bg-emerald-50/60 text-slate-900"
+                className={`ru-card flex gap-3 px-3 py-3 text-sm ${
+                  n.read_at ? "opacity-70" : ""
                 }`}
               >
-                <p className="font-semibold">{n.title}</p>
-                <p className="mt-0.5 text-xs">{n.body}</p>
-                <p className="mt-1 text-[10px] text-slate-400">
-                  {formatWhen(n.created_at)}
-                </p>
+                <span
+                  className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
+                    n.read_at ? "bg-transparent" : "bg-black"
+                  }`}
+                  aria-hidden
+                />
+                <div className="min-w-0">
+                  <p
+                    className={
+                      n.read_at ? "font-medium text-[var(--ru-muted)]" : "font-bold text-black"
+                    }
+                  >
+                    {n.title}
+                  </p>
+                  <p className="mt-0.5 text-xs text-[var(--ru-muted)]">{n.body}</p>
+                  <p className="mt-1 text-[10px] text-[var(--ru-muted)]">
+                    {formatWhen(n.created_at)}
+                  </p>
+                </div>
               </li>
             ))}
           </ul>
@@ -573,50 +671,51 @@ export function MerchantDashboard({
       </section>
 
       <section className="mt-8">
-        <h2 className="text-lg font-bold text-slate-900">Orders</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Live list of deliveries linked to your shop
+        <h2 className="text-lg font-bold text-black">Orders</h2>
+        <p className="mt-1 text-sm text-[var(--ru-muted)]">
+          {period === "today"
+            ? "Today"
+            : period === "week"
+              ? "This week"
+              : "This month"}{" "}
+          · trip-style history
         </p>
 
-        {jobs.length === 0 ? (
-          <div className="mt-6 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/30 p-8 text-center">
-            <p className="text-lg font-bold text-slate-900">
-              Your first delivery is a tap away
+        {periodJobs.length === 0 ? (
+          <div className="ru-card mt-6 border border-dashed border-[var(--ru-line)] p-8 text-center">
+            <p className="text-lg font-bold text-black">
+              No deliveries in this period
             </p>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-[var(--ru-muted)]">
               Create a delivery from your shop — online drivers get a push
-              notification instantly.
+              instantly.
             </p>
             <button
               type="button"
               onClick={() => setShowForm(true)}
-              className="mt-5 rounded-xl bg-[#1A4D3A] px-5 py-3 text-sm font-bold text-white transition active:scale-95"
+              className="ru-btn ru-btn-primary mt-5 !px-6"
             >
               Create delivery
             </button>
           </div>
         ) : (
           <ul className="mt-4 space-y-3">
-            {jobs.map((job) => {
+            {periodJobs.map((job) => {
               const exhausted =
                 Boolean(job.dispatch_exhausted) &&
                 isSearchingStatus(job.status);
               const driver = job.drivers;
               return (
-                <li
-                  key={job.id}
-                  className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
-                >
+                <li key={job.id} className="ru-card p-4">
                   {exhausted ? (
-                    <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+                    <div className="mb-3 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-950">
                       <p className="font-semibold">No drivers available right now</p>
                       <p className="mt-0.5">
-                        We&apos;ll keep looking. You can also schedule for later
-                        when more drivers are online.
+                        Schedule for later when more drivers are online.
                       </p>
                       <button
                         type="button"
-                        className="mt-2 font-semibold text-[#1A4D3A] underline"
+                        className="mt-2 font-semibold text-black underline"
                         onClick={() => {
                           setWhenMode("later");
                           setShowForm(true);
@@ -627,62 +726,141 @@ export function MerchantDashboard({
                     </div>
                   ) : null}
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="font-mono text-sm font-semibold">
-                        {job.reference_code}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-600">
-                        {job.customer_name} · {job.customer_phone}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-800">
-                        {job.pickup_landmark} → {job.dropoff_landmark}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {SERVICE_LABELS[job.service_type]} ·{" "}
-                        {formatWhen(job.scheduled_for || job.created_at)}
-                        {job.scheduled_for ? " (scheduled)" : ""}
-                      </p>
-                      {job.product_summary ? (
-                        <p className="mt-1 text-xs text-slate-500">
-                          {job.product_summary}
-                        </p>
-                      ) : null}
+                    <div className="min-w-0 flex-1">
                       {driver ? (
-                        <p className="mt-2 text-xs font-medium text-slate-700">
-                          Driver: {driver.full_name}
-                          {Number(driver.rating_avg) > 0
-                            ? ` · ★ ${Number(driver.rating_avg).toFixed(1)} (${driver.rating_count ?? 0})`
-                            : " · New driver"}
+                        <p className="text-sm font-semibold text-black">
+                          {driver.full_name}
+                          <span className="ml-1 font-normal text-[var(--ru-muted)]">
+                            {Number(driver.rating_avg) > 0
+                              ? `★ ${Number(driver.rating_avg).toFixed(1)}`
+                              : "New"}
+                          </span>
                         </p>
-                      ) : isSearchingStatus(job.status) && !exhausted ? (
-                        <p className="mt-2 text-xs text-slate-500">
-                          Searching for a driver…
+                      ) : (
+                        <p className="text-sm font-semibold text-[var(--ru-muted)]">
+                          {isSearchingStatus(job.status) && !exhausted
+                            ? "Finding driver…"
+                            : "Unassigned"}
                         </p>
-                      ) : null}
+                      )}
+                      <p className="mt-1 text-sm text-black">
+                        {job.pickup_landmark}
+                        <span className="mx-1 text-[var(--ru-muted)]">→</span>
+                        {job.dropoff_landmark}
+                      </p>
+                      <p className="mt-1 text-xs text-[var(--ru-muted)]">
+                        {job.customer_name} · {job.reference_code} ·{" "}
+                        {formatWhen(job.scheduled_for || job.created_at)}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-base font-bold text-slate-900">
+                      <p className="text-base font-bold text-black">
                         {formatMoney(Number(job.fee_amount))}
                       </p>
-                      <span
-                        className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass(job.status)}`}
-                      >
-                        {STATUS_LABELS[job.status]}
-                      </span>
+                      <div className="mt-1">
+                        <StatusBadge tone={statusToneFromJob(job.status)}>
+                          {STATUS_LABELS[job.status]}
+                        </StatusBadge>
+                      </div>
                       <div className="mt-2 flex flex-col items-end gap-1">
                         <Link
                           href={`/trip/${job.reference_code}`}
-                          className="text-xs font-semibold text-[#1A4D3A] underline"
+                          className="text-xs font-semibold text-black underline"
                         >
                           Track
                         </Link>
-                        <button
-                          type="button"
-                          onClick={() => void copyTripLink(job.reference_code)}
-                          className="text-xs font-semibold text-slate-600 underline"
-                        >
-                          Share trip link
-                        </button>
+                        <TripShare
+                          referenceCode={job.reference_code}
+                          pickup={job.pickup_landmark}
+                          dropoff={job.dropoff_landmark}
+                        />
+                        {job.status === "completed" && job.drivers ? (
+                          ratedJobs[job.id] ? (
+                            <p className="text-xs text-[var(--ru-muted)]">
+                              You rated ★{ratedJobs[job.id]}
+                            </p>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={pending}
+                              className="text-xs font-semibold text-black underline"
+                              onClick={() => {
+                                const raw = window.prompt(
+                                  "Rate driver 1–5 stars",
+                                  "5",
+                                );
+                                if (!raw) return;
+                                const stars = Math.min(
+                                  5,
+                                  Math.max(1, Number(raw) || 5),
+                                );
+                                startTransition(async () => {
+                                  try {
+                                    await rateTrip(job.id, stars);
+                                    setRatedJobs((m) => ({
+                                      ...m,
+                                      [job.id]: stars,
+                                    }));
+                                    toastSuccess("Thanks for rating the driver");
+                                  } catch (err) {
+                                    setError(
+                                      err instanceof Error
+                                        ? err.message
+                                        : "Rating failed",
+                                    );
+                                  }
+                                });
+                              }}
+                            >
+                              Rate driver
+                            </button>
+                          )
+                        ) : null}
+                        {job.status !== "completed" &&
+                        job.status !== "cancelled" ? (
+                          <button
+                            type="button"
+                            disabled={pending}
+                            className="text-xs font-semibold text-rose-700 underline"
+                            onClick={() => {
+                              const reason = window.prompt(
+                                "Cancel reason: customer_changed_mind | wrong_items | no_drivers | other",
+                                "customer_changed_mind",
+                              );
+                              if (!reason) return;
+                              const allowed = [
+                                "customer_changed_mind",
+                                "wrong_items",
+                                "no_drivers",
+                                "other",
+                              ] as const;
+                              const key = allowed.includes(
+                                reason as (typeof allowed)[number],
+                              )
+                                ? (reason as (typeof allowed)[number])
+                                : "other";
+                              startTransition(async () => {
+                                try {
+                                  await cancelMerchantOrder(
+                                    job.id,
+                                    key,
+                                    key === "other" ? reason : undefined,
+                                  );
+                                  setMessage(`Cancelled ${job.reference_code}`);
+                                  router.refresh();
+                                } catch (err) {
+                                  setError(
+                                    err instanceof Error
+                                      ? err.message
+                                      : "Cancel failed",
+                                  );
+                                }
+                              });
+                            }}
+                          >
+                            Cancel order
+                          </button>
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -693,14 +871,5 @@ export function MerchantDashboard({
         )}
       </section>
     </main>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-      <p className="text-xs font-semibold text-slate-500 uppercase">{label}</p>
-      <p className="mt-1 text-xl font-bold text-[#1A4D3A]">{value}</p>
-    </div>
   );
 }
