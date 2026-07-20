@@ -13,7 +13,8 @@ import type {
   Shop,
   ShopOrderInput,
 } from "./types";
-import { isSouthAfricanMobile } from "./brand";
+import { isValidMobileForCountry } from "./phone";
+import { DEFAULT_COUNTRY, getCountry } from "./countries";
 import { rankDriversForJob } from "./dispatch-score";
 import { jobNeedsFromJob } from "./job-needs";
 import { suggestVehicle, vehicleFitsJob } from "./vehicles";
@@ -474,10 +475,8 @@ export const mockRepo = {
     const phone = input.phone.trim();
     if (!name || !phone) throw new Error("Name and phone are required.");
     if (!input.area.trim()) throw new Error("Area / town is required.");
-    if (!isSouthAfricanMobile(phone)) {
-      throw new Error(
-        "South African mobile numbers only (e.g. 06x / 07x / 08x).",
-      );
+    if (!isValidMobileForCountry(phone, input.country_code || DEFAULT_COUNTRY)) {
+      throw new Error("Enter a valid mobile number for your country.");
     }
 
     const existing = store().drivers.find(
@@ -505,6 +504,7 @@ export const mockRepo = {
       rating_avg: 5,
       rating_count: 0,
       prefer_night: true,
+      country_code: input.country_code || DEFAULT_COUNTRY,
       prefer_heavy: true,
       prefer_village_routes: true,
       notes: [
@@ -732,7 +732,9 @@ export const mockRepo = {
       scheduled_for: input.scheduled_for ?? null,
       details: input.details,
       fee_amount: input.fee_amount,
-      fee_currency: "ZAR",
+      fee_currency: getCountry(input.country_code || DEFAULT_COUNTRY).currency,
+      country_code: input.country_code || DEFAULT_COUNTRY,
+      currency: getCountry(input.country_code || DEFAULT_COUNTRY).currency,
       payment_status: isCash ? "unpaid" : "paid_online",
       payment_method: isCash
         ? "cash"

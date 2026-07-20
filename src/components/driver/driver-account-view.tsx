@@ -10,16 +10,20 @@ import {
   Pencil,
   ShieldCheck,
 } from "lucide-react";
-import { updateDriverPreferences, updateDriverVehicle } from "@/lib/actions";
+import { updateDriverCountry, updateDriverPreferences, updateDriverVehicle } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
+import { CountrySelector } from "@/components/country/country-selector";
+import { useCountry } from "@/components/country/country-provider";
 import { DriverTrustPanel } from "@/components/driver-trust-panel";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
 import { BRAND, BRAND_WHATSAPP_HREF } from "@/lib/brand";
+import { getCountry, type CountryCode } from "@/lib/countries";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
 import type { VehicleType } from "@/lib/types";
 
 export function DriverAccountView() {
   const { driver, refresh, logout } = useDriverApp();
+  const { setCountry, countryCode } = useCountry();
   const [editVehicle, setEditVehicle] = useState(false);
   const [showDocs, setShowDocs] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
@@ -51,6 +55,20 @@ export function DriverAccountView() {
   if (!driver) return null;
 
   const initial = driver.full_name.charAt(0).toUpperCase();
+  const driverCountry = getCountry(driver.country_code);
+
+  function saveCountry(code: CountryCode) {
+    setError(null);
+    setCountry(code);
+    startTransition(async () => {
+      try {
+        await updateDriverCountry(driver!.id, code);
+        refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not save country");
+      }
+    });
+  }
 
   function saveVehicle(e: React.FormEvent) {
     e.preventDefault();
@@ -96,13 +114,39 @@ export function DriverAccountView() {
           {initial}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-lg font-bold text-slate-900">{driver.full_name}</p>
+          <p className="text-lg font-bold text-slate-900">
+            <span className="mr-1.5" aria-hidden>
+              {driverCountry.flag}
+            </span>
+            {driver.full_name}
+          </p>
           <p className="text-sm text-slate-500">{driver.phone}</p>
           <div className="mt-1">
             <DriverVerifiedBadge verified={driver.id_verified} compact />
           </div>
         </div>
       </div>
+
+      <section className="mt-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        <p className="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+          Operating country
+        </p>
+        <CountrySelector
+          showLanguage={false}
+          compact
+        />
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => saveCountry(countryCode)}
+          className="mt-3 w-full rounded-xl bg-[#1A4D3A] py-2.5 text-sm font-bold text-white disabled:opacity-50"
+        >
+          Save country for matching
+        </button>
+        <p className="mt-2 text-xs text-slate-500">
+          You only receive jobs in {driverCountry.flag} {driverCountry.name}.
+        </p>
+      </section>
 
       <section className="mt-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between gap-2">

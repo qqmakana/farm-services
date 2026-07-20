@@ -8,27 +8,32 @@ Village-to-village rides, bakkie delivery and farm connect for South African sma
 
 ## Social advert
 
-Two cards in this folder — same message, different shapes:
-
 | File | Use on |
 |------|--------|
-| `village-ride-social-feed.png` (also `village-ride-social-card.png`) | **Facebook**, **Instagram feed**, **X** — square post |
-| `village-ride-social-story.png` | **TikTok**, **Instagram Reels/Stories**, **Facebook Stories** — vertical 9:16 |
+| `public/village-ride-roles-master.png` | **Master post** — Facebook, Instagram, X, TikTok (square) — Drivers / Farms / Shops |
+| `public/village-ride-social-feed.png` | Customer booking focus — Facebook, Instagram feed, X |
+| `public/village-ride-social-story.png` | Vertical 9:16 — TikTok / Reels / Stories (if you need tall format) |
 
-Village Ride is an **installable web app (PWA)**. Open the link → tap **Install app** (home screen). Not on Play Store / App Store. Use **Share app** in the site to send the link.
+Village Ride is an **installable web app (PWA)**. Open the link → tap **Install** (Add to Home Screen). Not on Play Store / App Store.
 
-**Caption (all platforms):**
-> Village Ride by Sandton Streets  
-> One app for villages & small towns:  
-> • Uber-like rides (car)  
-> • Shop & bulky delivery (bakkie/truck)  
-> • Farm Connect (farm goods delivered)  
+**Caption — roles master (all platforms):**
+> Village Ride: Transport built for our villages 🇿🇦  
 >  
-> Open → Install on your phone home screen (browser install, not Play Store):  
-> https://village-ride.vercel.app  
-> Then Share the app with drivers & customers.  
-> Drivers & shops: apply only there.  
-> 📞 063 621 3590 · WhatsApp
+> Move goods, harvest & people — village to village. Nationwide registration is open.  
+>  
+> 🚗 Drivers — earn with your car or bakkie  
+> 🚜 Farm owners — harvest to market  
+> 📦 Shop owners — deliveries in one app  
+>  
+> How to join:  
+> 1. Open https://village-ride.vercel.app  
+> 2. Tap Install (Add to Home Screen — works like an app)  
+> 3. Apply as Driver, Farm, or Shop  
+>  
+> Built for our roads. Designed for our community.  
+> 063 621 3590  
+>  
+> #VillageRide #VillageToVillage #SouthAfrica #RuralTransport #FarmToMarket #SmallBizSA
 
 
 ## Product surfaces

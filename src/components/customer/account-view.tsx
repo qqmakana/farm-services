@@ -9,15 +9,21 @@ import {
   MapPinned,
   User,
 } from "lucide-react";
+import { CountrySelector } from "@/components/country/country-selector";
+import { useCountry } from "@/components/country/country-provider";
 import { BRAND, BRAND_WHATSAPP_HREF } from "@/lib/brand";
+import { AVAILABLE_IN_FLAGS } from "@/lib/countries";
+import { formatPhonePlaceholder } from "@/lib/country-preference";
 import {
   clearGuestProfile,
   getGuestProfile,
   setGuestProfile,
   type GuestProfile,
 } from "@/lib/guest-profile";
+import { t } from "@/lib/i18n";
 
 export function AccountView() {
+  const { country, countryCode, locale } = useCountry();
   const [profile, setProfile] = useState<GuestProfile | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [nameInput, setNameInput] = useState("");
@@ -37,7 +43,11 @@ export function AccountView() {
   function saveDetails(e: React.FormEvent) {
     e.preventDefault();
     if (!phoneInput.trim()) return;
-    setGuestProfile({ name: nameInput, phone: phoneInput });
+    setGuestProfile({
+      name: nameInput,
+      phone: phoneInput,
+      country_code: countryCode,
+    });
     setProfile(getGuestProfile());
     setEditing(false);
   }
@@ -60,15 +70,20 @@ export function AccountView() {
 
   const initial = (profile?.name || profile?.phone || "?").charAt(0).toUpperCase();
   const showForm = !profile?.phone || editing;
+  const flag = country.flag;
 
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-5 pb-24 pt-8">
       <h1 className="text-2xl font-bold text-slate-900">Account</h1>
 
+      <div className="mt-6 rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+        <CountrySelector />
+      </div>
+
       {showForm ? (
         <form
           onSubmit={saveDetails}
-          className="mt-6 space-y-3 rounded-xl border border-gray-100 bg-white p-5 shadow-sm"
+          className="mt-4 space-y-3 rounded-xl border border-gray-100 bg-white p-5 shadow-sm"
         >
           <p className="text-sm text-slate-600">
             Add your details so we can show your trips and keep in touch.
@@ -88,7 +103,7 @@ export function AccountView() {
               className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 outline-none focus:border-[#1A4D3A]"
               value={phoneInput}
               onChange={(e) => setPhoneInput(e.target.value)}
-              placeholder="063 621 3590"
+              placeholder={formatPhonePlaceholder(countryCode)}
               inputMode="tel"
               required
             />
@@ -113,17 +128,18 @@ export function AccountView() {
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="mt-6 flex w-full items-center gap-4 rounded-xl border border-gray-100 bg-white p-4 text-left shadow-sm transition active:scale-95"
+          className="mt-4 flex w-full items-center gap-4 rounded-xl border border-gray-100 bg-white p-4 text-left shadow-sm transition active:scale-95"
         >
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#1A4D3A] text-2xl font-bold text-white">
             {initial}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-lg font-bold text-slate-900">
+            <span className="flex items-center gap-2 text-lg font-bold text-slate-900">
+              <span aria-hidden>{flag}</span>
               {profile?.name || "Guest"}
             </span>
             <span className="mt-0.5 block text-sm text-slate-500">
-              {profile?.phone}
+              {profile?.phone} · {country.name}
             </span>
           </span>
           <User className="h-5 w-5 text-gray-400" aria-hidden />
@@ -134,7 +150,7 @@ export function AccountView() {
         <MenuRow
           href="/account/payment"
           icon={<CreditCard className="h-5 w-5" />}
-          label="Payment Methods"
+          label={t("payment_methods", { locale, country: countryCode })}
         />
         <MenuRow
           href="/account/places"
@@ -160,11 +176,16 @@ export function AccountView() {
         </li>
       </ul>
 
+      <p className="mt-6 text-center text-xs text-slate-400">
+        {t("available_in", { locale, country: countryCode })}:{" "}
+        {AVAILABLE_IN_FLAGS}
+      </p>
+
       {profile?.phone ? (
         <button
           type="button"
           onClick={logout}
-          className="mt-8 w-full py-3 text-center text-sm font-semibold text-rose-600 transition active:scale-95"
+          className="mt-4 w-full py-3 text-center text-sm font-semibold text-rose-600 transition active:scale-95"
         >
           Log Out / Clear Profile
         </button>

@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { mockRepo } from "./mock-store";
 import { calculateFare, type FareBreakdown } from "./fares";
-import { isSouthAfricanMobile } from "./brand";
+import { isValidMobileForCountry } from "./phone";
+import { DEFAULT_COUNTRY, getCountry } from "./countries";
 import {
   buildCustomerConfirmPush,
   expireStaleOffers,
@@ -39,6 +40,7 @@ import type {
   NewProductInput,
   NewShopInput,
   Rating,
+  ServiceType,
   Shop,
   ShopOrderInput,
   VehicleType,
@@ -80,6 +82,8 @@ function useAdmin() {
 
 async function resolveFare(params: {
   vehicle: VehicleType;
+  service_type?: ServiceType | null;
+  country_code?: string | null;
   pickup_lat?: number | null;
   pickup_lng?: number | null;
   dropoff_lat?: number | null;
@@ -87,12 +91,23 @@ async function resolveFare(params: {
   /** ISO datetime — night surcharge uses this (or now). */
   at?: string | null;
 }): Promise<FareBreakdown> {
+  const countryCode = params.country_code || DEFAULT_COUNTRY;
   let rules = null;
   if (useAdmin()) {
-    rules = await getFareRule(params.vehicle);
+    const row = await getFareRule(params.vehicle, countryCode);
+    if (row) {
+      rules = {
+        base_fare: Number(row.base_fare),
+        per_km: Number(row.per_km),
+        platform_commission_pct: Number(row.platform_commission_pct),
+        currency: getCountry(countryCode).currency,
+      };
+    }
   }
   return calculateFare({
     vehicle: params.vehicle,
+    serviceType: params.service_type,
+    countryCode,
     pickup:
       params.pickup_lat != null && params.pickup_lng != null
         ? { lat: params.pickup_lat, lng: params.pickup_lng }
@@ -108,6 +123,8 @@ async function resolveFare(params: {
 
 export async function quoteFareAction(params: {
   vehicle: VehicleType;
+  service_type?: ServiceType | null;
+  country_code?: string | null;
   pickup_lat?: number | null;
   pickup_lng?: number | null;
   dropoff_lat?: number | null;
@@ -372,9 +389,11 @@ export async function applyToDrive(input: NewDriverApplicationInput) {
     throw new Error("Name and phone are required.");
   }
   if (!input.area.trim()) throw new Error("Area / town is required.");
-  if (!isSouthAfricanMobile(input.phone)) {
+  const countryCode = input.country_code || DEFAULT_COUNTRY;
+  if (!isValidMobileForCountry(input.phone, countryCode)) {
+    const c = getCountry(countryCode);
     throw new Error(
-      "South African mobile numbers only (e.g. 06x / 07x / 08x).",
+      `Enter a valid ${c.name} mobile (e.g. +${c.phonePrefix}…).`,
     );
   }
 
@@ -401,7 +420,7 @@ export async function applyToDrive(input: NewDriverApplicationInput) {
 
   const notes = [
     `Area: ${input.area.trim()}`,
-    "SA mobile ?- auto-approved",
+    `${getCountry(countryCode).name} mobile — auto-approved`,
     input.notes?.trim() || null,
   ]
     .filter(Boolean)
@@ -422,10 +441,35 @@ export async function applyToDrive(input: NewDriverApplicationInput) {
       prefer_heavy: true,
       prefer_village_routes: true,
       notes,
+      country_code: countryCode,
     })
     .select("*")
     .single();
 
+  if (error) throw new Error(error.message);
+  revalidateAll();
+  return data as Driver;
+}
+
+export async function updateDriverCountry(
+  driverId: string,
+  countryCode: string,
+) {
+  const code = getCountry(countryCode).code;
+  if (!useAdmin()) {
+    const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
+    if (!driver) throw new Error("Driver not found");
+    driver.country_code = code;
+    revalidateAll();
+    return driver;
+  }
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("rr_drivers")
+    .update({ country_code: code })
+    .eq("id", driverId)
+    .select("*")
+    .single();
   if (error) throw new Error(error.message);
   revalidateAll();
   return data as Driver;
@@ -737,8 +781,11 @@ export async function listOpenJobsForDriver(driverId: string) {
   const jobs = await listJobs();
   return jobs.filter(
     (j) =>
-      j.status === "new" &&
-      vehicleFitsJob(driver.vehicle_type, j.required_vehicle),
+      (j.status === "new" || j.status === "searching_driver") &&
+      vehicleFitsJob(driver.vehicle_type, j.required_vehicle) &&
+      (!driver.country_code ||
+        !j.country_code ||
+        driver.country_code === j.country_code),
   );
 }
 
@@ -832,8 +879,11 @@ export async function createJob(input: NewJobInput) {
   }
 
   // Never trust client fee_amount for charging (includes night surcharge).
+  const countryCode = input.country_code || DEFAULT_COUNTRY;
   const fare = await resolveFare({
     vehicle: input.required_vehicle,
+    service_type: input.service_type,
+    country_code: countryCode,
     pickup_lat: input.pickup_lat,
     pickup_lng: input.pickup_lng,
     dropoff_lat: input.dropoff_lat,
@@ -886,6 +936,8 @@ export async function createJob(input: NewJobInput) {
     platform_commission: fare.platform_commission,
     driver_payout: fare.driver_payout,
     fee_currency: fare.currency,
+    country_code: countryCode,
+    currency: fare.currency,
     payment_status: isCash ? "unpaid" : "paid_online",
     payment_method: isCash
       ? "cash"
@@ -943,6 +995,8 @@ export async function capturePayPalAndCreateJob(
   // Recalculate fare server-side — do not trust draft.fee_amount.
   const fare = await resolveFare({
     vehicle: draft.required_vehicle,
+    service_type: draft.service_type,
+    country_code: draft.country_code || DEFAULT_COUNTRY,
     pickup_lat: draft.pickup_lat,
     pickup_lng: draft.pickup_lng,
     dropoff_lat: draft.dropoff_lat,
@@ -965,6 +1019,8 @@ export async function capturePayPalAndCreateJob(
 export async function createCashJob(draft: Omit<NewJobInput, "payment">) {
   const fare = await resolveFare({
     vehicle: draft.required_vehicle,
+    service_type: draft.service_type,
+    country_code: draft.country_code || DEFAULT_COUNTRY,
     pickup_lat: draft.pickup_lat,
     pickup_lng: draft.pickup_lng,
     dropoff_lat: draft.dropoff_lat,

@@ -18,6 +18,7 @@ import {
 } from "@/components/uber/schedule-when";
 import { quoteFareAction } from "@/lib/actions";
 import { locsFromSearchParams } from "@/lib/booking-query";
+import { useCountry } from "@/components/country/country-provider";
 import type { VehicleType } from "@/lib/types";
 
 export function RideSheet({
@@ -25,6 +26,7 @@ export function RideSheet({
 }: {
   onPinChange?: (pin: { lat: number; lng: number } | null) => void;
 }) {
+  const { countryCode, country } = useCountry();
   const searchParams = useSearchParams();
   const initial = locsFromSearchParams(searchParams);
   const [pickup, setPickup] = useState<Loc>(initial.pickup);
@@ -35,10 +37,11 @@ export function RideSheet({
   const [vehicle, setVehicle] = useState<VehicleType>("sedan");
   const [whenMode, setWhenMode] = useState<WhenMode>("now");
   const [scheduledLocal, setScheduledLocal] = useState(defaultLaterLocal);
-  const [fee, setFee] = useState(50);
-  const [baseFee, setBaseFee] = useState(50);
+  const [fee, setFee] = useState(country.pricing.ride.base);
+  const [baseFee, setBaseFee] = useState(country.pricing.ride.base);
   const [isNight, setIsNight] = useState(false);
   const [nightExtra, setNightExtra] = useState(0);
+  const [currency, setCurrency] = useState(country.currency);
 
   const atIso = useMemo(
     () =>
@@ -60,6 +63,8 @@ export function RideSheet({
       try {
         const fare = await quoteFareAction({
           vehicle,
+          service_type: "ride",
+          country_code: countryCode,
           pickup_lat: pickup.lat,
           pickup_lng: pickup.lng,
           dropoff_lat: dropoff.lat,
@@ -71,6 +76,7 @@ export function RideSheet({
           setBaseFee(fare.base_fee_amount);
           setIsNight(fare.is_night_ride);
           setNightExtra(fare.night_surcharge_amount);
+          setCurrency(fare.currency);
         }
       } catch {
         /* keep */
@@ -79,7 +85,7 @@ export function RideSheet({
     return () => {
       cancelled = true;
     };
-  }, [vehicle, pickup.lat, pickup.lng, dropoff.lat, dropoff.lng, atIso]);
+  }, [vehicle, pickup.lat, pickup.lng, dropoff.lat, dropoff.lng, atIso, countryCode]);
 
   const ready =
     Boolean(name.trim()) &&
@@ -193,12 +199,12 @@ export function RideSheet({
               {
                 id: "sedan" as const,
                 label: "Car (up to 4 people)",
-                from: 50,
+                from: country.pricing.ride.base,
               },
               {
                 id: "bakkie" as const,
                 label: "Bakkie (up to 6 people)",
-                from: 80,
+                from: country.pricing.delivery.base,
               },
             ] as const
           ).map((opt) => (
@@ -215,7 +221,10 @@ export function RideSheet({
               <span className="text-sm font-semibold text-[#1A4D3A]">
                 {opt.label}
               </span>
-              <span className="text-sm text-slate-600">from R{opt.from}</span>
+              <span className="text-sm text-slate-600">
+                from {country.currencySymbol}
+                {opt.from}
+              </span>
             </button>
           ))}
         </div>
@@ -223,6 +232,7 @@ export function RideSheet({
 
       <CheckoutBlock
         fee={fee}
+        currency={currency}
         vehicle={vehicle}
         ready={ready}
         serviceType="ride"
@@ -243,6 +253,7 @@ export function RideSheet({
           dropoff_lng: dropoff.lng,
           dropoff_landmark: dropoff.landmark.trim(),
           scheduled_for: atIso,
+          country_code: countryCode,
           dispatcher_notes: isNight
             ? "Night Ride (Premium) — after-hours safety surcharge applied"
             : null,

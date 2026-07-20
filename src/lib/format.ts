@@ -1,5 +1,6 @@
 import type { JobStatus, ServiceType } from "@/lib/types";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
+import { getCountry } from "@/lib/countries";
 
 export const SERVICE_LABELS: Record<ServiceType, string> = {
   ride: "Ride",
@@ -19,17 +20,43 @@ export const STATUS_LABELS: Record<JobStatus, string> = {
   cancelled: "Cancelled",
 };
 
-export function formatMoney(amount: number, currency = "ZAR") {
-  return new Intl.NumberFormat("en-ZA", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 0,
-  }).format(amount);
+const CURRENCY_LOCALE: Record<string, string> = {
+  ZAR: "en-ZA",
+  KES: "en-KE",
+  NGN: "en-NG",
+  GHS: "en-GH",
+  INR: "en-IN",
+  PHP: "en-PH",
+};
+
+export function formatMoney(
+  amount: number,
+  currency = "ZAR",
+  countryCode?: string | null,
+) {
+  const country = countryCode ? getCountry(countryCode) : null;
+  const code = currency || country?.currency || "ZAR";
+  const locale = country?.locale || CURRENCY_LOCALE[code] || "en-ZA";
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: code,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch {
+    const sym = country?.currencySymbol ?? code;
+    return `${sym}${Math.round(amount)}`;
+  }
 }
 
-export function formatWhen(iso: string | null) {
+export function formatWhen(
+  iso: string | null,
+  countryCode?: string | null,
+) {
   if (!iso) return "ASAP";
-  return new Date(iso).toLocaleString("en-ZA", {
+  const locale = getCountry(countryCode).locale;
+  return new Date(iso).toLocaleString(locale, {
     weekday: "short",
     day: "numeric",
     month: "short",

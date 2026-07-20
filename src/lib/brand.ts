@@ -24,6 +24,9 @@ export const BRAND_FULL = `${BRAND.appName} by ${BRAND.company}`;
 export const BRAND_TEL_HREF = `tel:+${BRAND.phoneWhatsApp}`;
 export const BRAND_WHATSAPP_HREF = `https://wa.me/${BRAND.phoneWhatsApp}`;
 
+/**
+ * Brand WhatsApp estimate line — uses currency symbol when provided.
+ */
 export type BookingWhatsAppDraft = {
   service_type: "ride" | "delivery" | "farm";
   pickup_landmark: string;
@@ -33,6 +36,7 @@ export type BookingWhatsAppDraft = {
   detailsLine: string;
   paymentLabel: "Cash" | "Card";
   estimateZar?: number;
+  currencySymbol?: string;
 };
 
 function serviceLabelForWhatsApp(
@@ -60,7 +64,8 @@ export function buildBookingWhatsAppMessage(draft: BookingWhatsAppDraft): string
     `- Phone: ${draft.customer_phone || "—"}`,
   ];
   if (draft.estimateZar != null && Number.isFinite(draft.estimateZar)) {
-    lines.push(`- Estimate: R${Math.round(draft.estimateZar)}`);
+    const sym = draft.currencySymbol ?? "R";
+    lines.push(`- Estimate: ${sym}${Math.round(draft.estimateZar)}`);
   }
   lines.push(`- Payment: ${draft.paymentLabel}`);
   lines.push("Please confirm my booking.");
@@ -92,15 +97,11 @@ export function emergencyMailtoHref(mapsUrl: string) {
   return `mailto:${BRAND.email}?subject=${subject}&body=${body}`;
 }
 
-/** True for SA mobile numbers (0xx… or 27…). */
+import { isValidMobileForCountry } from "./phone";
+
+/** True for SA mobile numbers (0xx… or 27…). Prefer isValidMobileForCountry. */
 export function isSouthAfricanMobile(phone: string): boolean {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("27") && digits.length === 11) {
-    const local = digits.slice(2);
-    return /^[6-8]\d{8}$/.test(local);
-  }
-  if (digits.startsWith("0") && digits.length === 10) {
-    return /^0[6-8]\d{8}$/.test(digits);
-  }
-  return false;
+  return isValidMobileForCountry(phone, "ZA");
 }
+
+export { isValidMobileForCountry };

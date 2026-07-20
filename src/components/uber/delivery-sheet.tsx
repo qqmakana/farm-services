@@ -22,6 +22,7 @@ import {
 } from "@/components/uber/sender-type-field";
 import { quoteFareAction } from "@/lib/actions";
 import { locsFromSearchParams } from "@/lib/booking-query";
+import { useCountry } from "@/components/country/country-provider";
 import type { VehicleType } from "@/lib/types";
 import { suggestVehicle } from "@/lib/vehicles";
 
@@ -53,6 +54,7 @@ export function DeliverySheet({
 }: {
   onPinChange?: (pin: { lat: number; lng: number } | null) => void;
 }) {
+  const { countryCode, country } = useCountry();
   const searchParams = useSearchParams();
   const initial = locsFromSearchParams(searchParams);
   const [pickup, setPickup] = useState<Loc>(initial.pickup);
@@ -68,10 +70,11 @@ export function DeliverySheet({
   const [vehicle, setVehicle] = useState<VehicleType>("bakkie");
   const [whenMode, setWhenMode] = useState<WhenMode>("now");
   const [scheduledLocal, setScheduledLocal] = useState(defaultLaterLocal);
-  const [fee, setFee] = useState(150);
-  const [baseFee, setBaseFee] = useState(150);
+  const [fee, setFee] = useState(country.pricing.delivery.base);
+  const [baseFee, setBaseFee] = useState(country.pricing.delivery.base);
   const [isNight, setIsNight] = useState(false);
   const [nightExtra, setNightExtra] = useState(0);
+  const [currency, setCurrency] = useState(country.currency);
 
   const atIso = useMemo(
     () =>
@@ -97,6 +100,8 @@ export function DeliverySheet({
       try {
         const fare = await quoteFareAction({
           vehicle,
+          service_type: "delivery",
+          country_code: countryCode,
           pickup_lat: pickup.lat,
           pickup_lng: pickup.lng,
           dropoff_lat: dropoff.lat,
@@ -104,7 +109,9 @@ export function DeliverySheet({
           at: atIso,
         });
         if (!cancelled) {
-          const floor = ITEM_OPTIONS.find((o) => o.id === size)?.from ?? 80;
+          const floor =
+            ITEM_OPTIONS.find((o) => o.id === size)?.from ??
+            country.pricing.delivery.base;
           const base = Math.max(fare.base_fee_amount, floor);
           const surcharge = fare.is_night_ride
             ? Math.round((base * fare.night_surcharge_pct) / 100)
@@ -113,6 +120,7 @@ export function DeliverySheet({
           setNightExtra(surcharge);
           setIsNight(fare.is_night_ride);
           setFee(base + surcharge);
+          setCurrency(fare.currency);
         }
       } catch {
         /* keep */
@@ -121,7 +129,7 @@ export function DeliverySheet({
     return () => {
       cancelled = true;
     };
-  }, [vehicle, size, pickup.lat, pickup.lng, dropoff.lat, dropoff.lng, atIso]);
+  }, [vehicle, size, pickup.lat, pickup.lng, dropoff.lat, dropoff.lng, atIso, countryCode, country.pricing.delivery.base]);
 
   const itemLabel =
     ITEM_OPTIONS.find((o) => o.id === size)?.label ?? "Goods";
@@ -240,6 +248,7 @@ export function DeliverySheet({
 
       <CheckoutBlock
         fee={fee}
+        currency={currency}
         vehicle={vehicle}
         ready={ready}
         serviceType="delivery"
@@ -260,6 +269,7 @@ export function DeliverySheet({
           dropoff_lng: dropoff.lng,
           dropoff_landmark: dropoff.landmark.trim(),
           scheduled_for: atIso,
+          country_code: countryCode,
           dispatcher_notes:
             [
               `Sender type: ${senderTypeLabel(senderType)}`,

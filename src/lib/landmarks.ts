@@ -1,6 +1,6 @@
 /**
- * South Africa–wide place search — towns, cities & landmarks with coordinates.
- * No Google/Mapbox key required. Expand VILLAGE_SEEDS anytime.
+ * Global village place search — towns, cities & landmarks with coordinates.
+ * No Google/Mapbox key required. Filtered by country_code.
  */
 
 export type Place = {
@@ -12,12 +12,14 @@ export type Place = {
   lat: number;
   lng: number;
   province?: string;
+  /** ISO-like country (ZA default) */
+  country?: string;
 };
 
-/** Default map centre — Johannesburg (national hub). */
+/** Default map centre — Mthatha, Eastern Cape (rural village focus). */
 export const DEFAULT_MAP_CENTER = {
-  lat: -26.2041,
-  lng: 28.0473,
+  lat: -31.5833,
+  lng: 28.7833,
 } as const;
 
 /** Common micro-landmarks (paired with every place below). */
@@ -45,6 +47,7 @@ type PlaceSeed = {
   lat: number;
   lng: number;
   province: string;
+  country?: string;
   /** Extra landmark labels unique to this place */
   extras?: string[];
 };
@@ -91,7 +94,7 @@ const PLACE_SEEDS: PlaceSeed[] = [
   { village: "Gqeberha", lat: -33.9608, lng: 25.6022, province: "EC", extras: ["Port Elizabeth", "NJ"] },
   { village: "Port Elizabeth", lat: -33.9608, lng: 25.6022, province: "EC" },
   { village: "East London", lat: -33.0153, lng: 27.9116, province: "EC", extras: ["Mdantsane"] },
-  { village: "Mthatha", lat: -31.5887, lng: 28.7844, province: "EC", extras: ["Boxer Superstore", "N2 entrance"] },
+  { village: "Mthatha", lat: -31.5833, lng: 28.7833, province: "EC", extras: ["Boxer Superstore", "N2 entrance"] },
   { village: "Engcobo", lat: -31.588, lng: 28.784, province: "EC", extras: ["Engcobo hospital", "Town hall"] },
   { village: "Ngcobo", lat: -31.588, lng: 28.784, province: "EC" },
   { village: "Cofimvaba", lat: -32.005, lng: 27.58, province: "EC" },
@@ -190,6 +193,43 @@ const PLACE_SEEDS: PlaceSeed[] = [
   { village: "Kuruman", lat: -27.46, lng: 23.43, province: "NC" },
   { village: "Kathu", lat: -27.7, lng: 23.05, province: "NC" },
   { village: "Calvinia", lat: -31.47, lng: 19.78, province: "NC" },
+
+  // ── Kenya ──
+  { village: "Nairobi", lat: -1.2921, lng: 36.8219, province: "Nairobi", country: "KE", extras: ["Kibera", "Westlands"] },
+  { village: "Mombasa", lat: -4.0435, lng: 39.6682, province: "Coast", country: "KE" },
+  { village: "Kisumu", lat: -0.0917, lng: 34.768, province: "Nyanza", country: "KE" },
+  { village: "Nakuru", lat: -0.3031, lng: 36.08, province: "Rift", country: "KE" },
+  { village: "Eldoret", lat: 0.5143, lng: 35.2698, province: "Rift", country: "KE" },
+  { village: "Kakamega", lat: 0.2827, lng: 34.7519, province: "Western", country: "KE" },
+
+  // ── Nigeria ──
+  { village: "Lagos", lat: 6.5244, lng: 3.3792, province: "Lagos", country: "NG", extras: ["Ikeja", "Lekki"] },
+  { village: "Abuja", lat: 9.0765, lng: 7.3986, province: "FCT", country: "NG" },
+  { village: "Ibadan", lat: 7.3775, lng: 3.947, province: "Oyo", country: "NG" },
+  { village: "Kano", lat: 12.0022, lng: 8.592, province: "Kano", country: "NG" },
+  { village: "Enugu", lat: 6.5244, lng: 7.5105, province: "Enugu", country: "NG" },
+  { village: "Port Harcourt", lat: 4.8156, lng: 7.0498, province: "Rivers", country: "NG" },
+
+  // ── Ghana ──
+  { village: "Accra", lat: 5.6037, lng: -0.187, province: "Greater Accra", country: "GH" },
+  { village: "Kumasi", lat: 6.6885, lng: -1.6244, province: "Ashanti", country: "GH" },
+  { village: "Tamale", lat: 9.4034, lng: -0.8424, province: "Northern", country: "GH" },
+  { village: "Cape Coast", lat: 5.1053, lng: -1.2466, province: "Central", country: "GH" },
+
+  // ── India ──
+  { village: "Delhi", lat: 28.6139, lng: 77.209, province: "Delhi", country: "IN", extras: ["Connaught Place"] },
+  { village: "Mumbai", lat: 19.076, lng: 72.8777, province: "Maharashtra", country: "IN" },
+  { village: "Bengaluru", lat: 12.9716, lng: 77.5946, province: "Karnataka", country: "IN" },
+  { village: "Jaipur", lat: 26.9124, lng: 75.7873, province: "Rajasthan", country: "IN" },
+  { village: "Lucknow", lat: 26.8467, lng: 80.9462, province: "UP", country: "IN" },
+  { village: "Patna", lat: 25.5941, lng: 85.1376, province: "Bihar", country: "IN" },
+
+  // ── Philippines ──
+  { village: "Manila", lat: 14.5995, lng: 120.9842, province: "NCR", country: "PH" },
+  { village: "Cebu", lat: 10.3157, lng: 123.8854, province: "Cebu", country: "PH" },
+  { village: "Davao", lat: 7.1907, lng: 125.4553, province: "Davao", country: "PH" },
+  { village: "Iloilo", lat: 10.7202, lng: 122.5621, province: "Iloilo", country: "PH" },
+  { village: "Baguio", lat: 16.4023, lng: 120.596, province: "Benguet", country: "PH" },
 ];
 
 /** Deterministic coords for landmarks (stable across reloads). */
@@ -202,7 +242,8 @@ function hashOffset(s: string): number {
 function buildPlacesStable(): Place[] {
   const out: Place[] = [];
   for (const v of PLACE_SEEDS) {
-    const slug = v.village.toLowerCase().replace(/\s+/g, "-");
+    const country = v.country ?? "ZA";
+    const slug = `${country}-${v.village}`.toLowerCase().replace(/\s+/g, "-");
     out.push({
       id: `v-${slug}`,
       label: v.village,
@@ -211,9 +252,10 @@ function buildPlacesStable(): Place[] {
       lat: v.lat,
       lng: v.lng,
       province: v.province,
+      country,
     });
     for (const hint of LANDMARK_HINTS) {
-      const key = `${v.village}-${hint}`;
+      const key = `${country}-${v.village}-${hint}`;
       out.push({
         id: `l-${key}`.toLowerCase().replace(/\s+/g, "-"),
         label: `${v.village} · ${hint}`,
@@ -222,6 +264,7 @@ function buildPlacesStable(): Place[] {
         lat: v.lat + hashOffset(key + "lat"),
         lng: v.lng + hashOffset(key + "lng"),
         province: v.province,
+        country,
       });
     }
     for (const extra of v.extras ?? []) {
@@ -233,6 +276,7 @@ function buildPlacesStable(): Place[] {
         lat: v.lat,
         lng: v.lng,
         province: v.province,
+        country,
       });
     }
   }
@@ -246,8 +290,12 @@ export const VILLAGE_NAMES = PLACE_SEEDS.map((v) => v.village);
 /** @deprecated use LANDMARK_HINTS / PLACES */
 export const LANDMARK_SUGGESTIONS = LANDMARK_HINTS;
 
-export function filterLandmarkSuggestions(query: string, limit = 6): string[] {
-  return searchPlaces(query, limit).map((p) => p.label);
+export function filterLandmarkSuggestions(
+  query: string,
+  limit = 6,
+  countryCode = "ZA",
+): string[] {
+  return searchPlaces(query, limit, countryCode).map((p) => p.label);
 }
 
 const PROVINCE_LABEL: Record<string, string> = {
@@ -262,55 +310,76 @@ const PROVINCE_LABEL: Record<string, string> = {
   NC: "Northern Cape",
 };
 
-export function searchPlaces(query: string, limit = 8): Place[] {
+const COUNTRY_HUBS: Record<string, string[]> = {
+  ZA: [
+    "Johannesburg",
+    "Cape Town",
+    "Durban",
+    "Pretoria",
+    "Gqeberha",
+    "Bloemfontein",
+    "Polokwane",
+    "Mbombela",
+    "Mthatha",
+    "Engcobo",
+  ],
+  KE: ["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret", "Kakamega"],
+  NG: ["Lagos", "Abuja", "Ibadan", "Kano", "Enugu", "Port Harcourt"],
+  GH: ["Accra", "Kumasi", "Tamale", "Cape Coast"],
+  IN: ["Delhi", "Mumbai", "Bengaluru", "Jaipur", "Lucknow", "Patna"],
+  PH: ["Manila", "Cebu", "Davao", "Iloilo", "Baguio"],
+};
+
+export function searchPlaces(
+  query: string,
+  limit = 8,
+  countryCode = "ZA",
+): Place[] {
+  const pool = PLACES.filter((p) => (p.country ?? "ZA") === countryCode);
   const q = query.trim().toLowerCase();
   if (!q) {
-    // National default browse: major metros / hubs first
-    const hubs = [
-      "Johannesburg",
-      "Cape Town",
-      "Durban",
-      "Pretoria",
-      "Gqeberha",
-      "Bloemfontein",
-      "Polokwane",
-      "Mbombela",
-      "Mthatha",
-      "Engcobo",
-    ];
+    const hubs = COUNTRY_HUBS[countryCode] ?? COUNTRY_HUBS.ZA;
     const listed = hubs
-      .map((name) => PLACES.find((p) => p.kind === "village" && p.village === name))
+      .map((name) =>
+        pool.find((p) => p.kind === "village" && p.village === name),
+      )
       .filter((p): p is Place => Boolean(p));
     return listed.slice(0, limit);
   }
 
-  const scored = PLACES.map((p) => {
-    const label = p.label.toLowerCase();
-    const village = p.village.toLowerCase();
-    const prov = (PROVINCE_LABEL[p.province ?? ""] ?? "").toLowerCase();
-    let score = 0;
-    if (label === q) score = 100;
-    else if (village === q) score = 90;
-    else if (label.startsWith(q)) score = 80;
-    else if (village.startsWith(q)) score = 70;
-    else if (label.includes(q)) score = 50;
-    else if (village.includes(q)) score = 40;
-    else if (prov.startsWith(q) || prov.includes(q)) score = 25;
-    if (p.kind === "village" && score > 0) score += 5;
-    return { p, score };
-  })
+  const scored = pool
+    .map((p) => {
+      const label = p.label.toLowerCase();
+      const village = p.village.toLowerCase();
+      const prov = (PROVINCE_LABEL[p.province ?? ""] ?? p.province ?? "").toLowerCase();
+      let score = 0;
+      if (label === q) score = 100;
+      else if (village === q) score = 90;
+      else if (label.startsWith(q)) score = 80;
+      else if (village.startsWith(q)) score = 70;
+      else if (label.includes(q)) score = 50;
+      else if (village.includes(q)) score = 40;
+      else if (prov.startsWith(q) || prov.includes(q)) score = 25;
+      if (p.kind === "village" && score > 0) score += 5;
+      return { p, score };
+    })
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score);
 
   return scored.slice(0, limit).map((x) => x.p);
 }
 
-export function findPlaceByLabel(label: string): Place | null {
+export function findPlaceByLabel(
+  label: string,
+  countryCode = "ZA",
+): Place | null {
   const q = label.trim().toLowerCase();
   if (!q) return null;
+  const pool = PLACES.filter((p) => (p.country ?? "ZA") === countryCode);
   return (
+    pool.find((p) => p.label.toLowerCase() === q) ??
+    pool.find((p) => p.village.toLowerCase() === q) ??
     PLACES.find((p) => p.label.toLowerCase() === q) ??
-    PLACES.find((p) => p.village.toLowerCase() === q) ??
     null
   );
 }

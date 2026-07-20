@@ -99,6 +99,8 @@ export type Driver = {
   vehicle_year?: number | null;
   /** Linked Supabase auth user (when set). */
   user_id?: string | null;
+  /** Operating country (ZA default). */
+  country_code?: string | null;
 };
 
 export type NewDriverApplicationInput = {
@@ -109,6 +111,7 @@ export type NewDriverApplicationInput = {
   area: string;
   /** Licence / bakkie details for ops review */
   notes?: string;
+  country_code?: string;
 };
 
 export type Shop = {
@@ -178,6 +181,10 @@ export type Job = {
   platform_commission?: number;
   driver_payout?: number;
   fee_currency: string;
+  /** ISO-like country (ZA, KE, …) — drivers matched within country */
+  country_code?: string | null;
+  /** Display / settlement currency (usually same as fee_currency) */
+  currency?: string | null;
   payment_status: PaymentStatus;
   payment_method: PaymentMethod | null;
   card_last4: string | null;
@@ -236,6 +243,7 @@ export type NewJobInput = {
   dispatcher_notes?: string | null;
   shop_id?: string | null;
   product_summary?: string | null;
+  country_code?: string;
   payment:
     | {
         method: "paypal" | "card";

@@ -12,14 +12,25 @@ function refCode() {
   return `RU-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 }
 
-export async function getFareRule(vehicle: VehicleType) {
+export async function getFareRule(
+  vehicle: VehicleType,
+  countryCode = "ZA",
+) {
   const admin = createAdminClient();
   const { data } = await admin
     .from("rr_fare_rules")
     .select("*")
     .eq("vehicle_type", vehicle)
+    .eq("country_code", countryCode)
     .maybeSingle();
-  return data;
+  if (data) return data;
+  // Backward compatible: older rows without country filter
+  const { data: legacy } = await admin
+    .from("rr_fare_rules")
+    .select("*")
+    .eq("vehicle_type", vehicle)
+    .maybeSingle();
+  return legacy;
 }
 
 /**
@@ -38,22 +49,40 @@ export async function matchJobAfterCreate(jobId: string) {
   const typedJob = job as Job;
   const needs = jobNeedsFromJob(typedJob);
   const required = typedJob.required_vehicle as VehicleType;
+  const jobCountry = typedJob.country_code || "ZA";
   const pickup =
     typedJob.pickup_lat != null && typedJob.pickup_lng != null
       ? { lat: typedJob.pickup_lat, lng: typedJob.pickup_lng }
       : null;
 
-  const { data: drivers } = await admin
+  let driversQuery = admin
     .from("rr_drivers")
     .select("*")
     .eq("is_active", true)
     .eq("is_online", true);
 
+  // Prefer same-country drivers; fall back if column missing on older DBs
+  const { data: driversSame, error: countryErr } = await driversQuery.eq(
+    "country_code",
+    jobCountry,
+  );
+
+  let drivers = driversSame;
+  if (countryErr) {
+    const { data: allOnline } = await admin
+      .from("rr_drivers")
+      .select("*")
+      .eq("is_active", true)
+      .eq("is_online", true);
+    drivers = allOnline;
+  }
+
   const approved = ((drivers ?? []) as Driver[]).filter(
     (d) =>
       d.approval_status !== "rejected" &&
       (d.approval_status == null || d.approval_status === "approved") &&
-      driverEligibleForDispatch(d),
+      driverEligibleForDispatch(d) &&
+      (!d.country_code || d.country_code === jobCountry),
   );
 
   const ranked = rankDriversForJob({

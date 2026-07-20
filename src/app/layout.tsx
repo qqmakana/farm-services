@@ -1,6 +1,8 @@
 import { Source_Sans_3, Space_Grotesk } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 import { ConditionalFooter } from "@/components/conditional-footer";
+import { CountryProvider } from "@/components/country/country-provider";
+import { CountryWelcomeModal } from "@/components/country/country-selector";
 import { InstallShareBar } from "@/components/install-share-bar";
 import { PwaRegister } from "@/components/pwa-register";
 import { WhatsAppFloat } from "@/components/whatsapp-float";
@@ -83,11 +85,14 @@ export default function RootLayout({
   return (
     <html lang="en-ZA" className={`${sans.variable} ${display.variable} h-full`}>
       <body className="flex min-h-full flex-col bg-[var(--ru-canvas)] font-[family-name:var(--font-sans)] text-[var(--ru-ink)] antialiased">
-        <PwaRegister />
-        <div className="flex-1">{children}</div>
-        <ConditionalFooter />
-        <InstallShareBar />
-        <WhatsAppFloat />
+        <CountryProvider>
+          <PwaRegister />
+          <div className="flex-1">{children}</div>
+          <ConditionalFooter />
+          <InstallShareBar />
+          <WhatsAppFloat />
+          <CountryWelcomeModal />
+        </CountryProvider>
       </body>
     </html>
   );

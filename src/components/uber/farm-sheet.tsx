@@ -22,6 +22,7 @@ import {
 } from "@/components/uber/sender-type-field";
 import { quoteFareAction } from "@/lib/actions";
 import { locsFromSearchParams } from "@/lib/booking-query";
+import { useCountry } from "@/components/country/country-provider";
 import type { VehicleType } from "@/lib/types";
 
 const TRANSPORT_TYPES = [
@@ -47,6 +48,7 @@ export function FarmSheet({
 }: {
   onPinChange?: (pin: { lat: number; lng: number } | null) => void;
 }) {
+  const { countryCode, country } = useCountry();
   const searchParams = useSearchParams();
   const initial = locsFromSearchParams(searchParams);
   const [farmName, setFarmName] = useState("");
@@ -62,10 +64,11 @@ export function FarmSheet({
   const [quantity, setQuantity] = useState("");
   const [whenMode, setWhenMode] = useState<WhenMode>("now");
   const [scheduledLocal, setScheduledLocal] = useState(defaultLaterLocal);
-  const [fee, setFee] = useState(180);
-  const [baseFee, setBaseFee] = useState(180);
+  const [fee, setFee] = useState(country.pricing.farm.base);
+  const [baseFee, setBaseFee] = useState(country.pricing.farm.base);
   const [isNight, setIsNight] = useState(false);
   const [nightExtra, setNightExtra] = useState(0);
+  const [currency, setCurrency] = useState(country.currency);
 
   const requiredVehicle: VehicleType =
     vehicleChoice === "bakkie" ? "bakkie" : "truck";
@@ -92,6 +95,8 @@ export function FarmSheet({
       try {
         const fare = await quoteFareAction({
           vehicle: requiredVehicle,
+          service_type: "farm",
+          country_code: countryCode,
           pickup_lat: pickup.lat,
           pickup_lng: pickup.lng,
           dropoff_lat: dropoff.lat,
@@ -107,6 +112,7 @@ export function FarmSheet({
           setNightExtra(surcharge);
           setIsNight(fare.is_night_ride);
           setFee(base + surcharge);
+          setCurrency(fare.currency);
         }
       } catch {
         /* keep */
@@ -123,6 +129,7 @@ export function FarmSheet({
     dropoff.lat,
     dropoff.lng,
     atIso,
+    countryCode,
   ]);
 
   const ready =
@@ -254,6 +261,7 @@ export function FarmSheet({
 
       <CheckoutBlock
         fee={fee}
+        currency={currency}
         vehicle={requiredVehicle}
         ready={ready}
         serviceType="farm"
@@ -279,6 +287,7 @@ export function FarmSheet({
           dropoff_lng: dropoff.lng,
           dropoff_landmark: dropoff.landmark.trim(),
           scheduled_for: atIso,
+          country_code: countryCode,
           dispatcher_notes:
             [
               `Sender type: ${senderTypeLabel(senderType)}`,

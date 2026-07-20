@@ -1,37 +1,43 @@
-/** Frictionless guest profile — name + phone in localStorage (no auth). */
+/** Frictionless guest profile — name + phone + country in localStorage. */
+
+import { DEFAULT_COUNTRY, isCountryCode, type CountryCode } from "./countries";
+import {
+  getStoredCountryCode,
+  setStoredCountryCode,
+} from "./country-preference";
+import {
+  normalizePhoneForCountry,
+  phoneMatchVariantsForCountry,
+} from "./phone";
 
 export type GuestProfile = {
   name: string;
   phone: string;
+  country_code: CountryCode;
 };
 
 const KEY = "village_ride_guest_profile";
 
-/** Digits-only SA form: 0XXXXXXXXX when possible. */
-export function normalizeGuestPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("27") && digits.length >= 11) {
-    return `0${digits.slice(2, 11)}`;
-  }
-  if (digits.startsWith("0") && digits.length >= 10) {
-    return digits.slice(0, 10);
-  }
-  return digits;
+/** Digits-only national form for the guest's country. */
+export function normalizeGuestPhone(
+  phone: string,
+  countryCode?: string | null,
+): string {
+  return normalizePhoneForCountry(
+    phone,
+    countryCode ?? getStoredCountryCode(),
+  );
 }
 
-/** Match variants (0xx / 27xx) for job lookup. */
-export function phoneMatchVariants(phone: string): string[] {
-  const n = normalizeGuestPhone(phone);
-  if (!n) return [];
-  const local = n.startsWith("0") ? n.slice(1) : n;
-  const variants = new Set<string>([
-    n,
-    phone.trim(),
-    `27${local}`,
-    `+27${local}`,
-    `0${local}`,
-  ]);
-  return [...variants].filter(Boolean);
+/** Match variants for job lookup. */
+export function phoneMatchVariants(
+  phone: string,
+  countryCode?: string | null,
+): string[] {
+  return phoneMatchVariantsForCountry(
+    phone,
+    countryCode ?? getStoredCountryCode(),
+  );
 }
 
 export function getGuestProfile(): GuestProfile | null {
@@ -39,28 +45,41 @@ export function getGuestProfile(): GuestProfile | null {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as GuestProfile;
+    const parsed = JSON.parse(raw) as Partial<GuestProfile>;
     if (!parsed?.phone) return null;
+    const country_code = isCountryCode(parsed.country_code)
+      ? parsed.country_code
+      : getStoredCountryCode();
     return {
       name: String(parsed.name ?? "").trim(),
-      phone: normalizeGuestPhone(String(parsed.phone)),
+      phone: normalizeGuestPhone(String(parsed.phone), country_code),
+      country_code,
     };
   } catch {
     return null;
   }
 }
 
-export function setGuestProfile(profile: GuestProfile): void {
+export function setGuestProfile(
+  profile: Omit<GuestProfile, "country_code"> & {
+    country_code?: CountryCode;
+  },
+): void {
   if (typeof window === "undefined") return;
+  const country_code = profile.country_code ?? getStoredCountryCode();
   const next: GuestProfile = {
     name: profile.name.trim(),
-    phone: normalizeGuestPhone(profile.phone),
+    phone: normalizeGuestPhone(profile.phone, country_code),
+    country_code,
   };
   if (!next.phone) return;
   localStorage.setItem(KEY, JSON.stringify(next));
+  setStoredCountryCode(country_code);
 }
 
 export function clearGuestProfile(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(KEY);
 }
+
+export { DEFAULT_COUNTRY };

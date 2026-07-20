@@ -1,23 +1,29 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { useCountry } from "@/components/country/country-provider";
 import {
   bookingWhatsAppHref,
   type BookingWhatsAppDraft,
 } from "@/lib/brand";
 import { createCashJob } from "@/lib/actions";
+import {
+  paymentHint,
+  paymentLabel,
+  type PaymentMethodId,
+} from "@/lib/countries";
+import { formatMoney } from "@/lib/format";
 import { setGuestProfile } from "@/lib/guest-profile";
 import { driverOptInNote } from "@/lib/night-fare";
 import type { NewJobInput, ServiceType, VehicleType } from "@/lib/types";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
 
 type Draft = Omit<NewJobInput, "payment">;
-type PayChoice = "cash" | "card";
 
-function detailsFromDraft(d: Draft): string {
+function detailsFromDraft(d: Draft, locale: string): string {
   const when = d.scheduled_for
-    ? new Date(d.scheduled_for).toLocaleString("en-ZA", {
+    ? new Date(d.scheduled_for).toLocaleString(locale, {
         dateStyle: "medium",
         timeStyle: "short",
       })
@@ -58,6 +64,7 @@ export function CheckoutBlock({
   isNightRide = false,
   baseFee,
   nightSurchargeAmount = 0,
+  currency,
 }: {
   fee: number;
   vehicle: VehicleType;
@@ -69,11 +76,16 @@ export function CheckoutBlock({
   isNightRide?: boolean;
   baseFee?: number;
   nightSurchargeAmount?: number;
+  currency?: string;
 }) {
   const router = useRouter();
+  const { country, countryCode } = useCountry();
   const [formError, setFormError] = useState<string | null>(null);
-  const [payMethod, setPayMethod] = useState<PayChoice>("cash");
+  const [payMethod, setPayMethod] = useState<PaymentMethodId>("cash");
   const [pending, startTransition] = useTransition();
+
+  const methods = useMemo(() => country.payments, [country.payments]);
+  const displayCurrency = currency || country.currency;
 
   const optIn = driverOptInNote(serviceType, isNightRide);
 
@@ -89,8 +101,12 @@ export function CheckoutBlock({
         setGuestProfile({
           name: d.customer_name,
           phone: d.customer_phone,
+          country_code: countryCode,
         });
-        const job = await createCashJob(d);
+        const job = await createCashJob({
+          ...d,
+          country_code: d.country_code || countryCode,
+        });
         router.push(`/trip/${job.reference_code}`);
         router.refresh();
       } catch (err) {
@@ -109,6 +125,7 @@ export function CheckoutBlock({
     setGuestProfile({
       name: d.customer_name,
       phone: d.customer_phone,
+      country_code: countryCode,
     });
     const payload: BookingWhatsAppDraft = {
       service_type: d.service_type,
@@ -116,9 +133,10 @@ export function CheckoutBlock({
       dropoff_landmark: d.dropoff_landmark,
       customer_name: d.customer_name,
       customer_phone: d.customer_phone,
-      detailsLine: detailsFromDraft(d),
+      detailsLine: detailsFromDraft(d, country.locale),
       paymentLabel: payMethod === "cash" ? "Cash" : "Card",
       estimateZar: fee,
+      currencySymbol: country.currencySymbol,
     };
     window.open(bookingWhatsAppHref(payload), "_blank", "noopener,noreferrer");
   }
@@ -131,11 +149,15 @@ export function CheckoutBlock({
             Price estimate
           </p>
           <p className="text-2xl font-bold text-[#1A4D3A]">
-            R{Number.isFinite(fee) ? fee : "—"}
+            {Number.isFinite(fee)
+              ? formatMoney(fee, displayCurrency, countryCode)
+              : "—"}
           </p>
           {isNightRide && baseFee != null ? (
             <p className="mt-0.5 text-xs text-slate-500">
-              Base R{baseFee} + after-hours R{nightSurchargeAmount}
+              Base {formatMoney(baseFee, displayCurrency, countryCode)} +
+              after-hours{" "}
+              {formatMoney(nightSurchargeAmount, displayCurrency, countryCode)}
             </p>
           ) : null}
         </div>
@@ -158,31 +180,22 @@ export function CheckoutBlock({
           Preferred payment
         </p>
         <div className="mt-2 grid grid-cols-2 gap-2">
-          {(
-            [
-              { id: "cash" as const, label: "Cash", hint: "Pay the driver" },
-              {
-                id: "card" as const,
-                label: "Card",
-                hint: "Arrange with driver",
-              },
-            ] as const
-          ).map((opt) => (
+          {methods.map((id) => (
             <button
-              key={opt.id}
+              key={id}
               type="button"
-              onClick={() => setPayMethod(opt.id)}
+              onClick={() => setPayMethod(id)}
               className={`rounded-xl border px-3 py-3 text-left transition ${
-                payMethod === opt.id
+                payMethod === id
                   ? "border-[#1A4D3A] bg-[#E8F5E9] shadow-sm"
                   : "border-slate-200 bg-white hover:bg-slate-50"
               }`}
             >
               <span className="block text-sm font-bold text-[#1A4D3A]">
-                {opt.label}
+                {paymentLabel(id)}
               </span>
               <span className="mt-0.5 block text-xs text-slate-500">
-                {opt.hint}
+                {paymentHint(id)}
               </span>
             </button>
           ))}

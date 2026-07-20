@@ -4,6 +4,7 @@ import {
   BRAND_TEL_HREF,
   BRAND_WHATSAPP_HREF,
 } from "@/lib/brand";
+import { AVAILABLE_IN_FLAGS } from "@/lib/countries";
 
 export function SiteFooter() {
   return (
@@ -14,6 +15,9 @@ export function SiteFooter() {
             {BRAND.appName}
           </p>
           <p className="mt-0.5 text-slate-500">by {BRAND.company}</p>
+          <p className="mt-2 text-xs text-slate-400">
+            Available in: {AVAILABLE_IN_FLAGS}
+          </p>
         </div>
         <div className="space-y-1">
           <p>{BRAND_ADDRESS_LINE}</p>

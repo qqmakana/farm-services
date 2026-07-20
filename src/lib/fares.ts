@@ -1,10 +1,15 @@
-import type { VehicleType } from "./types";
+import type { ServiceType, VehicleType } from "./types";
 import { distanceKm } from "./geo";
 import {
   isNightWindow,
   NIGHT_SURCHARGE_PCT,
   parseScheduleAt,
 } from "./night-fare";
+import {
+  DEFAULT_COUNTRY,
+  getCountry,
+  type CountryCode,
+} from "./countries";
 
 export type FareBreakdown = {
   fee_amount: number;
@@ -16,20 +21,75 @@ export type FareBreakdown = {
   is_night_ride: boolean;
   night_surcharge_pct: number;
   night_surcharge_amount: number;
+  country_code?: CountryCode;
 };
 
-const FALLBACK: Record<
-  VehicleType,
-  { base: number; perKm: number; commissionPct: number }
-> = {
-  sedan: { base: 50, perKm: 8, commissionPct: 15 },
-  bakkie: { base: 180, perKm: 12, commissionPct: 15 },
-  truck: { base: 450, perKm: 18, commissionPct: 15 },
-};
+function resolveRate(params: {
+  vehicle: VehicleType;
+  serviceType?: ServiceType | null;
+  countryCode?: string | null;
+}): { base: number; perKm: number; commissionPct: number; currency: string } {
+  const country = getCountry(params.countryCode);
+  const p = country.pricing;
+
+  if (params.vehicle === "truck") {
+    return {
+      base: p.truck.base,
+      perKm: p.truck.perKm,
+      commissionPct: p.commissionPct,
+      currency: p.currency,
+    };
+  }
+
+  const service = params.serviceType;
+  if (service === "ride") {
+    return {
+      base: p.ride.base,
+      perKm: p.ride.perKm,
+      commissionPct: p.commissionPct,
+      currency: p.currency,
+    };
+  }
+  if (service === "delivery") {
+    return {
+      base: p.delivery.base,
+      perKm: p.delivery.perKm,
+      commissionPct: p.commissionPct,
+      currency: p.currency,
+    };
+  }
+  if (service === "farm") {
+    return {
+      base: p.farm.base,
+      perKm: p.farm.perKm,
+      commissionPct: p.commissionPct,
+      currency: p.currency,
+    };
+  }
+
+  // Legacy vehicle-only path
+  if (params.vehicle === "sedan") {
+    return {
+      base: p.ride.base,
+      perKm: p.ride.perKm,
+      commissionPct: p.commissionPct,
+      currency: p.currency,
+    };
+  }
+  // bakkie → farm base (historical SA default)
+  return {
+    base: p.farm.base,
+    perKm: p.farm.perKm,
+    commissionPct: p.commissionPct,
+    currency: p.currency,
+  };
+}
 
 /** Server-side fare — never trust client fee for charging. */
 export function calculateFare(params: {
   vehicle: VehicleType;
+  serviceType?: ServiceType | null;
+  countryCode?: string | null;
   pickup?: { lat: number; lng: number } | null;
   dropoff?: { lat: number; lng: number } | null;
   /** ISO datetime or null = now (Ride Now) */
@@ -38,15 +98,24 @@ export function calculateFare(params: {
     base_fare: number;
     per_km: number;
     platform_commission_pct: number;
+    currency?: string;
   } | null;
 }): FareBreakdown {
+  const countryCode = (params.countryCode as CountryCode) || DEFAULT_COUNTRY;
+  const fromCountry = resolveRate({
+    vehicle: params.vehicle,
+    serviceType: params.serviceType,
+    countryCode,
+  });
+
   const rule = params.rules
     ? {
         base: Number(params.rules.base_fare),
         perKm: Number(params.rules.per_km),
         commissionPct: Number(params.rules.platform_commission_pct),
+        currency: params.rules.currency || fromCountry.currency,
       }
-    : FALLBACK[params.vehicle];
+    : fromCountry;
 
   let km = 0;
   if (
@@ -77,10 +146,11 @@ export function calculateFare(params: {
     fee_amount: fee,
     platform_commission: commission,
     driver_payout: payout,
-    currency: "ZAR",
+    currency: rule.currency,
     base_fee_amount: baseFee,
     is_night_ride: night,
     night_surcharge_pct: night ? NIGHT_SURCHARGE_PCT : 0,
     night_surcharge_amount: surcharge,
+    country_code: getCountry(countryCode).code,
   };
 }
