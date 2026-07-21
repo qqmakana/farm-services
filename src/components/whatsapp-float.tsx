@@ -13,7 +13,8 @@ export function WhatsAppFloat() {
     pathname.startsWith("/driver/earnings") ||
     pathname.startsWith("/driver/account") ||
     pathname.startsWith("/trip/") ||
-    pathname.startsWith("/admin")
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/onboarding")
   ) {
     return null;
   }

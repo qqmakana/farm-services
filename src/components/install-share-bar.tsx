@@ -246,7 +246,8 @@ export function InstallShareBar() {
   // Customer shell / Uber map — avoid covering the bottom tab bar or sheet
   if (
     UBER_PATHS.has(pathname) ||
-    pathname.startsWith("/account/")
+    pathname.startsWith("/account/") ||
+    pathname.startsWith("/onboarding")
   ) {
     return null;
   }

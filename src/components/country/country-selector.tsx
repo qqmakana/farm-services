@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useCountry } from "@/components/country/country-provider";
 import type { CountryCode } from "@/lib/countries";
 import { t } from "@/lib/i18n";
@@ -53,6 +54,7 @@ export function CountrySelector({
 
 /** First-open modal — confirm country (defaults to ZA if dismissed). */
 export function CountryWelcomeModal() {
+  const pathname = usePathname() ?? "";
   const {
     ready,
     needsCountryPick,
@@ -64,14 +66,16 @@ export function CountryWelcomeModal() {
 
   useEffect(() => {
     if (!ready || !needsCountryPick) return;
+    if (pathname.startsWith("/onboarding")) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setCountry(countryCode);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [ready, needsCountryPick, countryCode, setCountry]);
+  }, [ready, needsCountryPick, countryCode, setCountry, pathname]);
 
   if (!ready || !needsCountryPick) return null;
+  if (pathname.startsWith("/onboarding")) return null;
 
   function dismiss() {
     // Keep current default (ZA on first visit) and close — user changed their mind
