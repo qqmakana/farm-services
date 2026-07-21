@@ -24,6 +24,7 @@ import {
   ScheduleWhen,
   type WhenMode,
 } from "@/components/uber/schedule-when";
+import { DriverVehiclePhotos } from "@/components/driver-vehicle-photos";
 import { StatCard } from "@/components/ui/card";
 import { FloatingInput } from "@/components/ui/floating-input";
 import {
@@ -728,14 +729,22 @@ export function MerchantDashboard({
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       {driver ? (
-                        <p className="text-sm font-semibold text-black">
-                          {driver.full_name}
-                          <span className="ml-1 font-normal text-[var(--ru-muted)]">
-                            {Number(driver.rating_avg) > 0
-                              ? `★ ${Number(driver.rating_avg).toFixed(1)}`
-                              : "New"}
-                          </span>
-                        </p>
+                        <div className="space-y-2">
+                          <DriverVehiclePhotos driver={driver} />
+                          <p className="text-sm font-semibold text-black">
+                            {driver.full_name}
+                            <span className="ml-1 font-normal text-[var(--ru-muted)]">
+                              {Number(driver.rating_avg) > 0
+                                ? `★ ${Number(driver.rating_avg).toFixed(1)}`
+                                : "New"}
+                            </span>
+                            {driver.vehicle_registration ? (
+                              <span className="ml-1 font-mono text-xs font-normal text-[var(--ru-muted)]">
+                                · {driver.vehicle_registration}
+                              </span>
+                            ) : null}
+                          </p>
+                        </div>
                       ) : (
                         <p className="text-sm font-semibold text-[var(--ru-muted)]">
                           {isSearchingStatus(job.status) && !exhausted

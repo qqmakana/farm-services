@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Car, CircleDot, Tractor, Truck } from "lucide-react";
+import { Car, CircleDot, Tractor, Truck, Users } from "lucide-react";
 import { DriverWantedPromoCard } from "@/components/driver-wanted-promo-card";
 
 const cards = [
@@ -28,6 +28,14 @@ const cards = [
     Icon: Tractor,
     accent: "bg-orange-50 text-orange-800",
     iconBg: "bg-orange-100",
+  },
+  {
+    href: "/group",
+    title: "Group Rides",
+    subtitle: "Split the fare · shared loads",
+    Icon: Users,
+    accent: "bg-violet-50 text-violet-800",
+    iconBg: "bg-violet-100",
   },
   {
     href: "/driver/join",

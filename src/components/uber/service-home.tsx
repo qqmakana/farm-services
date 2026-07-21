@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Car, ChevronRight, Tractor, Truck } from "lucide-react";
+import { Car, ChevronRight, Tractor, Truck, Users } from "lucide-react";
 import {
   emptyPlaceValue,
   PlacesAutocomplete,
@@ -11,6 +11,8 @@ import {
 } from "@/components/uber/places-autocomplete";
 import { Button } from "@/components/ui/button";
 import { DriverWantedBanner } from "@/components/driver-wanted-banner";
+import { OpenGroupTripsPreview } from "@/components/group/driver-group-trips-view";
+import { SavedPlacesChips } from "@/components/location/saved-places-chips";
 
 const services = [
   {
@@ -68,6 +70,13 @@ export function ServiceHomeSheet() {
 
       <DriverWantedBanner />
 
+      <SavedPlacesChips
+        onSelect={(place) => {
+          if (!origin.label.trim()) setOrigin(place);
+          else setDestination(place);
+        }}
+      />
+
       <div className="space-y-1 rounded-2xl border border-[var(--ru-line)] bg-[#fafafa] px-3 py-2">
         <PlacesAutocomplete
           label="Pickup"
@@ -95,11 +104,13 @@ export function ServiceHomeSheet() {
           <Link href="/ride" className="ru-btn ru-btn-primary text-center">
             Ride now
           </Link>
-          <Link href="/driver/join" className="ru-btn ru-btn-secondary text-center">
-            Drive with us
+          <Link href="/group" className="ru-btn ru-btn-secondary text-center">
+            Join a group ride
           </Link>
         </div>
       )}
+
+      <OpenGroupTripsPreview limit={2} />
 
       <div>
         <h2 className="text-sm font-bold tracking-wide text-[var(--ru-muted)] uppercase">
@@ -125,6 +136,21 @@ export function ServiceHomeSheet() {
             );
           })}
         </div>
+        <Link
+          href="/group"
+          className="mt-2 flex items-center gap-3 rounded-2xl border border-[var(--ru-line)] bg-white px-4 py-3 shadow-[var(--ru-shadow)] transition active:scale-[0.99]"
+        >
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#1A4D3A] text-white">
+            <Users className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-bold text-black">Group rides</span>
+            <span className="block text-xs text-[var(--ru-muted)]">
+              Split the fare · shared loads too
+            </span>
+          </span>
+          <ChevronRight className="h-5 w-5 text-[var(--ru-muted)]" />
+        </Link>
       </div>
 
       <Link

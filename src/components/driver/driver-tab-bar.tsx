@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, Home, User, Wallet } from "lucide-react";
+import { Briefcase, Home, Users, User, Wallet } from "lucide-react";
 
 const TABS = [
   {
@@ -18,8 +18,14 @@ const TABS = [
     match: (p: string) => p.startsWith("/driver/jobs"),
   },
   {
+    href: "/driver/group",
+    label: "Groups",
+    icon: Users,
+    match: (p: string) => p.startsWith("/driver/group"),
+  },
+  {
     href: "/driver/earnings",
-    label: "Earnings",
+    label: "Earn",
     icon: Wallet,
     match: (p: string) => p.startsWith("/driver/earnings"),
   },

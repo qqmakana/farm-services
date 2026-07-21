@@ -1,15 +1,23 @@
 import type {
+  CommunityLocation,
+  CreateGroupTripInput,
+  CreateLocationInput,
   Driver,
+  GroupTrip,
+  GroupTripParticipant,
   Job,
   JobApplication,
   JobStatus,
   JobWithDriver,
+  JoinGroupTripInput,
   NewDriverApplicationInput,
   NewJobInput,
   NewProductInput,
   NewShopInput,
   Product,
   Rating,
+  SavedLocation,
+  SavePersonalLocationInput,
   Shop,
   ShopOrderInput,
 } from "./types";
@@ -60,6 +68,10 @@ const seedDrivers: Driver[] = [
     vehicle_front_url: "mock://vfront/thabo.jpg",
     vehicle_side_url: "mock://vside/thabo.jpg",
     code_of_conduct_accepted_at: new Date().toISOString(),
+    vehicle_make: "Toyota",
+    vehicle_model: "Hilux",
+    vehicle_color: "White",
+    vehicle_registration: "EC 123-456",
     created_at: new Date().toISOString(),
   },
   {
@@ -91,6 +103,10 @@ const seedDrivers: Driver[] = [
     vehicle_front_url: "mock://vfront/nomsa.jpg",
     vehicle_side_url: "mock://vside/nomsa.jpg",
     code_of_conduct_accepted_at: new Date().toISOString(),
+    vehicle_make: "VW",
+    vehicle_model: "Polo",
+    vehicle_color: "Silver",
+    vehicle_registration: "EC 987-654",
     created_at: new Date().toISOString(),
   },
   {
@@ -122,6 +138,78 @@ const seedDrivers: Driver[] = [
     vehicle_front_url: "mock://vfront/sipho.jpg",
     vehicle_side_url: "mock://vside/sipho.jpg",
     code_of_conduct_accepted_at: new Date().toISOString(),
+    vehicle_make: "Isuzu",
+    vehicle_model: "NPR",
+    vehicle_color: "Blue",
+    vehicle_registration: "EC 555-321",
+    created_at: new Date().toISOString(),
+  },
+];
+
+const seedGroupTrips: GroupTrip[] = [
+  {
+    id: "gt1",
+    driver_id: "d2",
+    kind: "ride",
+    title: "Group Ride to Mthatha",
+    route_pickup: "Engcobo taxi rank",
+    route_dropoff: "Mthatha town",
+    route_stops: ["Qunu"],
+    capacity: 4,
+    seats_taken: 1,
+    status: "open",
+    price_per_person: 100,
+    total_price: 400,
+    country_code: "ZA",
+    departs_at: null,
+    created_at: new Date().toISOString(),
+  },
+];
+
+const seedGroupParticipants: GroupTripParticipant[] = [
+  {
+    id: "gp1",
+    group_trip_id: "gt1",
+    guest_name: "Anele",
+    guest_phone: "27820001111",
+    seats: 1,
+    amount_due: 100,
+    status: "confirmed",
+    joined_at: new Date().toISOString(),
+  },
+];
+
+const seedCommunityLocations: CommunityLocation[] = [
+  {
+    id: "loc1",
+    name: "Sipho's Farm",
+    category: "farm",
+    description: "Next to the blue water tank",
+    village: "Qunu",
+    latitude: -31.78,
+    longitude: 28.62,
+    country_code: "ZA",
+    created_by_phone: "27820001111",
+    created_by_name: "Anele",
+    shop_id: null,
+    is_verified: false,
+    usage_count: 12,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "loc2",
+    name: "Engcobo Saturday Market",
+    category: "landmark",
+    description: "Opposite the taxi rank on market days",
+    village: "Engcobo",
+    latitude: -31.588,
+    longitude: 28.784,
+    country_code: "ZA",
+    created_by_phone: null,
+    created_by_name: null,
+    shop_id: null,
+    is_verified: true,
+    usage_count: 40,
     created_at: new Date().toISOString(),
   },
 ];
@@ -353,6 +441,10 @@ type Store = {
   products: Product[];
   applications: JobApplication[];
   ratings: Rating[];
+  groupTrips: GroupTrip[];
+  groupParticipants: GroupTripParticipant[];
+  communityLocations: CommunityLocation[];
+  savedLocations: SavedLocation[];
 };
 
 declare global {
@@ -369,6 +461,10 @@ function store(): Store {
       products: structuredClone(seedProducts),
       applications: [],
       ratings: [],
+      groupTrips: structuredClone(seedGroupTrips),
+      groupParticipants: structuredClone(seedGroupParticipants),
+      communityLocations: structuredClone(seedCommunityLocations),
+      savedLocations: [],
     };
   }
   const s = globalThis.__ruralMockStore;
@@ -376,6 +472,14 @@ function store(): Store {
   if (!s.products) s.products = structuredClone(seedProducts);
   if (!s.applications) s.applications = [];
   if (!s.ratings) s.ratings = [];
+  if (!s.groupTrips) s.groupTrips = structuredClone(seedGroupTrips);
+  if (!s.groupParticipants) {
+    s.groupParticipants = structuredClone(seedGroupParticipants);
+  }
+  if (!s.communityLocations) {
+    s.communityLocations = structuredClone(seedCommunityLocations);
+  }
+  if (!s.savedLocations) s.savedLocations = [];
   // Hot-reload: old seed missing Uber driver/job fields
   if (
     s.drivers.some(
@@ -400,6 +504,15 @@ function withDriver(job: Job): JobWithDriver {
   const driver = store().drivers.find((d) => d.id === job.driver_id) ?? null;
   const shop = store().shops.find((x) => x.id === job.shop_id) ?? null;
   return { ...job, drivers: driver, shops: shop };
+}
+
+function withGroupTrip(trip: GroupTrip): GroupTrip {
+  const driver =
+    store().drivers.find((d) => d.id === trip.driver_id) ?? null;
+  const participants = store().groupParticipants.filter(
+    (p) => p.group_trip_id === trip.id && p.status !== "cancelled",
+  );
+  return { ...trip, drivers: driver, participants };
 }
 
 function assignJobToDriver(job: Job, driver: Driver, at: string) {
@@ -1273,5 +1386,167 @@ export const mockRepo = {
       }
     }
     return withDriver(job);
+  },
+
+  listOpenGroupTrips(): GroupTrip[] {
+    return store()
+      .groupTrips.filter((t) => t.status === "open" || t.status === "full")
+      .map((t) => withGroupTrip(t))
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
+  },
+
+  getGroupTrip(id: string): GroupTrip | null {
+    const t = store().groupTrips.find((x) => x.id === id);
+    return t ? withGroupTrip(t) : null;
+  },
+
+  listDriverGroupTrips(driverId: string): GroupTrip[] {
+    return store()
+      .groupTrips.filter((t) => t.driver_id === driverId)
+      .map((t) => withGroupTrip(t))
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
+  },
+
+  createGroupTrip(input: CreateGroupTripInput): GroupTrip {
+    const capacity = Math.max(1, Math.min(40, Math.floor(input.capacity)));
+    const price = Math.max(0, Number(input.price_per_person) || 0);
+    const trip: GroupTrip = {
+      id: uid(),
+      driver_id: input.driver_id,
+      kind: input.kind,
+      title: input.title?.trim() || null,
+      route_pickup: input.route_pickup.trim(),
+      route_dropoff: input.route_dropoff.trim(),
+      route_stops: (input.route_stops ?? []).map((s) => s.trim()).filter(Boolean),
+      capacity,
+      seats_taken: 0,
+      status: "open",
+      price_per_person: price,
+      total_price: price * capacity,
+      country_code: input.country_code || DEFAULT_COUNTRY,
+      departs_at: input.departs_at ?? null,
+      created_at: new Date().toISOString(),
+    };
+    store().groupTrips.unshift(trip);
+    return withGroupTrip(trip);
+  },
+
+  joinGroupTrip(input: JoinGroupTripInput): GroupTrip {
+    const trip = store().groupTrips.find((t) => t.id === input.group_trip_id);
+    if (!trip) throw new Error("Group trip not found");
+    if (trip.status !== "open") throw new Error("This group is full or closed");
+    const seats = Math.max(1, Math.min(10, Math.floor(input.seats ?? 1)));
+    if (trip.seats_taken + seats > trip.capacity) {
+      throw new Error("Not enough spots left");
+    }
+    const participant: GroupTripParticipant = {
+      id: uid(),
+      group_trip_id: trip.id,
+      guest_name: input.guest_name.trim(),
+      guest_phone: input.guest_phone.trim(),
+      seats,
+      amount_due: Number(trip.price_per_person) * seats,
+      status: "confirmed",
+      joined_at: new Date().toISOString(),
+    };
+    store().groupParticipants.push(participant);
+    trip.seats_taken += seats;
+    if (trip.seats_taken >= trip.capacity) trip.status = "full";
+    return withGroupTrip(trip);
+  },
+
+  searchCommunityLocations(
+    query: string,
+    countryCode: string,
+    limit: number,
+  ): CommunityLocation[] {
+    const q = query.trim().toLowerCase();
+    let list = store().communityLocations.filter(
+      (l) => l.country_code === countryCode,
+    );
+    if (q) {
+      list = list.filter(
+        (l) =>
+          l.name.toLowerCase().includes(q) ||
+          l.village.toLowerCase().includes(q) ||
+          (l.description ?? "").toLowerCase().includes(q),
+      );
+    }
+    return list
+      .slice()
+      .sort((a, b) => b.usage_count - a.usage_count)
+      .slice(0, limit);
+  },
+
+  findSimilarLocations(
+    name: string,
+    village: string,
+    countryCode: string,
+  ): CommunityLocation[] {
+    const n = name.trim().toLowerCase();
+    const v = village.trim().toLowerCase();
+    return store().communityLocations.filter(
+      (l) =>
+        l.country_code === countryCode &&
+        l.name.toLowerCase().includes(n) &&
+        l.village.toLowerCase().includes(v),
+    );
+  },
+
+  createCommunityLocation(input: CreateLocationInput): CommunityLocation {
+    const loc: CommunityLocation = {
+      id: uid(),
+      name: input.name.trim(),
+      category: input.category,
+      description: input.description?.trim() || null,
+      village: input.village.trim(),
+      latitude: input.latitude,
+      longitude: input.longitude,
+      country_code: input.country_code || DEFAULT_COUNTRY,
+      created_by_phone: input.created_by_phone?.trim() || null,
+      created_by_name: input.created_by_name?.trim() || null,
+      shop_id: input.shop_id ?? null,
+      is_verified: Boolean(input.shop_id),
+      usage_count: 0,
+      created_at: new Date().toISOString(),
+    };
+    store().communityLocations.unshift(loc);
+    return loc;
+  },
+
+  bumpLocationUsage(locationId: string) {
+    const loc = store().communityLocations.find((l) => l.id === locationId);
+    if (loc) loc.usage_count += 1;
+  },
+
+  listSavedLocations(guestPhone: string): SavedLocation[] {
+    return store()
+      .savedLocations.filter((s) => s.guest_phone === guestPhone)
+      .slice()
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
+  },
+
+  savePersonalLocation(input: SavePersonalLocationInput): SavedLocation {
+    const row: SavedLocation = {
+      id: uid(),
+      guest_phone: input.guest_phone.trim(),
+      name: input.name.trim(),
+      label: input.label?.trim() || input.name.trim(),
+      latitude: input.latitude,
+      longitude: input.longitude,
+      location_id: input.location_id ?? null,
+      is_home: Boolean(input.is_home),
+      is_work: Boolean(input.is_work),
+      country_code: input.country_code || DEFAULT_COUNTRY,
+      created_at: new Date().toISOString(),
+    };
+    store().savedLocations.unshift(row);
+    return row;
+  },
+
+  deleteSavedLocation(id: string, guestPhone: string) {
+    store().savedLocations = store().savedLocations.filter(
+      (s) => !(s.id === id && s.guest_phone === guestPhone),
+    );
   },
 };

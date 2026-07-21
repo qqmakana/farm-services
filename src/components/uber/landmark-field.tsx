@@ -5,6 +5,7 @@ import {
   PlacesAutocomplete,
   type PlaceValue,
 } from "@/components/uber/places-autocomplete";
+import { SavedPlacesChips } from "@/components/location/saved-places-chips";
 
 export type Loc = {
   lat: number | null;
@@ -31,6 +32,7 @@ export function LandmarkField({
   onChange,
   required = true,
   preferVillages = false,
+  showSaved = true,
 }: {
   label: string;
   placeholder: string;
@@ -38,16 +40,24 @@ export function LandmarkField({
   onChange: (loc: Loc) => void;
   required?: boolean;
   preferVillages?: boolean;
+  showSaved?: boolean;
 }) {
   return (
-    <PlacesAutocomplete
-      label={label}
-      placeholder={placeholder}
-      value={locToPlace(loc)}
-      onChange={(v) => onChange(placeToLoc(v))}
-      required={required}
-      preferVillages={preferVillages}
-    />
+    <div className="space-y-2">
+      {showSaved ? (
+        <SavedPlacesChips
+          onSelect={(v) => onChange(placeToLoc(v))}
+        />
+      ) : null}
+      <PlacesAutocomplete
+        label={label}
+        placeholder={placeholder}
+        value={locToPlace(loc)}
+        onChange={(v) => onChange(placeToLoc(v))}
+        required={required}
+        preferVillages={preferVillages}
+      />
+    </div>
   );
 }
 

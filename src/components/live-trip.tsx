@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, useCallback } from "react";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
+import { DriverVehiclePhotos } from "@/components/driver-vehicle-photos";
 import { isDriverTrustVerified } from "@/lib/trust";
 import {
   getJobByReference,
@@ -321,40 +322,43 @@ export function LiveTrip({
       ) : null}
 
       {confirmed && job.drivers ? (
-        <div className="ru-card flex items-center gap-3 p-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-black text-lg font-bold text-white">
-            {job.drivers.full_name.charAt(0).toUpperCase()}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="font-bold text-black">
-              {job.drivers.full_name}
-              <span className="ml-1 font-normal text-[var(--ru-muted)]">
-                ★{job.drivers.rating_avg.toFixed(1)}
-              </span>
-            </p>
-            <p className="text-xs text-[var(--ru-muted)]">
-              {VEHICLE_LABELS[job.drivers.vehicle_type]}
-              {eta != null ? ` · ${eta} min away` : " · on the way"}
-            </p>
-            <div className="mt-1">
-              <DriverVerifiedBadge verified={job.drivers.id_verified} compact />
+        <div className="ru-card space-y-3 p-4">
+          <DriverVehiclePhotos driver={job.drivers} />
+          <div className="flex items-center justify-between gap-3 border-t border-[var(--ru-line)] pt-3">
+            <div className="min-w-0">
+              <p className="font-bold text-black">
+                {job.drivers.full_name}
+                <span className="ml-1 font-normal text-[var(--ru-muted)]">
+                  ★{job.drivers.rating_avg.toFixed(1)}
+                </span>
+              </p>
+              <p className="text-xs text-[var(--ru-muted)]">
+                {VEHICLE_LABELS[job.drivers.vehicle_type]}
+                {job.drivers.vehicle_registration
+                  ? ` · ${job.drivers.vehicle_registration}`
+                  : ""}
+                {eta != null ? ` · ${eta} min away` : " · on the way"}
+              </p>
+              <div className="mt-1">
+                <DriverVerifiedBadge verified={job.drivers.id_verified} compact />
+              </div>
             </div>
-          </div>
-          <div className="flex shrink-0 flex-col gap-1.5">
-            <a
-              href={`tel:${job.drivers.phone}`}
-              className="ru-btn ru-btn-primary !min-h-10 !px-3 !text-xs"
-            >
-              Call
-            </a>
-            <a
-              href={`https://wa.me/${toWhatsAppNumber(job.drivers.phone)}`}
-              target="_blank"
-              rel="noreferrer"
-              className="ru-btn ru-btn-secondary !min-h-10 !px-3 !text-xs"
-            >
-              Chat
-            </a>
+            <div className="flex shrink-0 flex-col gap-1.5">
+              <a
+                href={`tel:${job.drivers.phone}`}
+                className="ru-btn ru-btn-primary !min-h-10 !px-3 !text-xs"
+              >
+                Call
+              </a>
+              <a
+                href={`https://wa.me/${toWhatsAppNumber(job.drivers.phone)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="ru-btn ru-btn-secondary !min-h-10 !px-3 !text-xs"
+              >
+                Chat
+              </a>
+            </div>
           </div>
         </div>
       ) : null}

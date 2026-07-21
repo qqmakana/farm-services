@@ -328,6 +328,9 @@ export async function updateDriverVehicle(
     vehicle_type?: VehicleType;
     vehicle_registration?: string | null;
     vehicle_year?: number | null;
+    vehicle_make?: string | null;
+    vehicle_model?: string | null;
+    vehicle_color?: string | null;
   },
 ) {
   if (!useAdmin()) {
@@ -340,6 +343,13 @@ export async function updateDriverVehicle(
     if (patch.vehicle_year !== undefined) {
       driver.vehicle_year = patch.vehicle_year;
     }
+    if (patch.vehicle_make !== undefined) driver.vehicle_make = patch.vehicle_make;
+    if (patch.vehicle_model !== undefined) {
+      driver.vehicle_model = patch.vehicle_model;
+    }
+    if (patch.vehicle_color !== undefined) {
+      driver.vehicle_color = patch.vehicle_color;
+    }
     revalidateAll();
     return driver;
   }
@@ -350,6 +360,9 @@ export async function updateDriverVehicle(
       ...(patch.vehicle_type ? { vehicle_type: patch.vehicle_type } : {}),
       vehicle_registration: patch.vehicle_registration ?? null,
       vehicle_year: patch.vehicle_year ?? null,
+      vehicle_make: patch.vehicle_make ?? null,
+      vehicle_model: patch.vehicle_model ?? null,
+      vehicle_color: patch.vehicle_color ?? null,
     })
     .eq("id", driverId)
     .select("*")
@@ -603,6 +616,17 @@ function requireImageFile(formData: FormData, key: string, label: string): File 
   if (file.size > 5 * 1024 * 1024) {
     throw new Error(`${label} must be under 5MB.`);
   }
+  const type = (file.type || "").toLowerCase();
+  const okType =
+    type === "image/jpeg" ||
+    type === "image/jpg" ||
+    type === "image/png" ||
+    type === "";
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  const okExt = !ext || ["jpg", "jpeg", "png"].includes(ext);
+  if (!okType || !okExt) {
+    throw new Error(`${label} must be JPEG or PNG.`);
+  }
   return file;
 }
 
@@ -644,6 +668,12 @@ export async function applyToDriveWithTrust(formData: FormData) {
     "Vehicle side photo",
   );
 
+  const vehicle_make = String(formData.get("vehicle_make") ?? "").trim() || null;
+  const vehicle_model = String(formData.get("vehicle_model") ?? "").trim() || null;
+  const vehicle_color = String(formData.get("vehicle_color") ?? "").trim() || null;
+  const vehicle_registration =
+    String(formData.get("vehicle_registration") ?? "").trim() || null;
+
   const now = new Date().toISOString();
 
   if (!useAdmin()) {
@@ -659,6 +689,10 @@ export async function applyToDriveWithTrust(formData: FormData) {
     driver.selfie_url = `mock://selfie/${selfieFile.name}`;
     driver.vehicle_front_url = `mock://vfront/${vehicleFront.name}`;
     driver.vehicle_side_url = `mock://vside/${vehicleSide.name}`;
+    driver.vehicle_make = vehicle_make;
+    driver.vehicle_model = vehicle_model;
+    driver.vehicle_color = vehicle_color;
+    driver.vehicle_registration = vehicle_registration;
     driver.code_of_conduct_accepted_at = now;
     driver.verification_status = "pending";
     driver.id_verified = false;
@@ -708,6 +742,10 @@ export async function applyToDriveWithTrust(formData: FormData) {
       country_code,
       code_of_conduct_accepted_at: now,
       docs_submitted_at: now,
+      vehicle_make,
+      vehicle_model,
+      vehicle_color,
+      vehicle_registration,
     })
     .select("*")
     .single();
@@ -1025,6 +1063,30 @@ export async function getDriverDocSignedUrl(storagePath: string) {
     .createSignedUrl(storagePath, 3600);
   if (error) throw new Error(error.message);
   return data.signedUrl;
+}
+
+/**
+ * Customer-facing signed URLs for driver selfie + vehicle photo.
+ * Returns nulls when missing / mock / unsigned — UI falls back to initials.
+ */
+export async function getDriverDisplayPhotos(paths: {
+  selfie_url?: string | null;
+  vehicle_front_url?: string | null;
+}): Promise<{ selfie: string | null; vehicle: string | null }> {
+  async function sign(path: string | null | undefined): Promise<string | null> {
+    if (!path || path.startsWith("mock://")) return null;
+    if (!useAdmin()) return null;
+    try {
+      return await getDriverDocSignedUrl(path);
+    } catch {
+      return null;
+    }
+  }
+  const [selfie, vehicle] = await Promise.all([
+    sign(paths.selfie_url),
+    sign(paths.vehicle_front_url),
+  ]);
+  return { selfie, vehicle };
 }
 
 export async function approveDriverHire(driverId: string) {
@@ -1496,6 +1558,20 @@ export async function registerMerchantShop(input: MerchantRegisterInput): Promis
         emailBody: `${shop.name} registered on Village Ride with your code ${refIn}.`,
       });
     }
+    try {
+      const { publishShopAsLocation } = await import("./actions-locations");
+      await publishShopAsLocation({
+        shop_id: shop.id,
+        name: shop.name,
+        category: input.category,
+        landmark: input.landmark.trim(),
+        latitude: input.lat ?? null,
+        longitude: input.lng ?? null,
+        phone: input.phone.trim(),
+      });
+    } catch (err) {
+      console.error("[locations] shop publish failed", err);
+    }
     revalidateAll();
     return { shop, email };
   }
@@ -1639,6 +1715,21 @@ export async function registerMerchantShop(input: MerchantRegisterInput): Promis
     });
   } catch {
     /* optional */
+  }
+
+  try {
+    const { publishShopAsLocation } = await import("./actions-locations");
+    await publishShopAsLocation({
+      shop_id: (shop as Shop).id,
+      name: input.name.trim(),
+      category: input.category,
+      landmark: input.landmark.trim(),
+      latitude: input.lat ?? null,
+      longitude: input.lng ?? null,
+      phone: input.phone.trim(),
+    });
+  } catch (err) {
+    console.error("[locations] shop publish failed", err);
   }
 
   revalidateAll();

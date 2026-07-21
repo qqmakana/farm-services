@@ -10,6 +10,7 @@ import {
   LandmarkHelperText,
   type Loc,
 } from "@/components/uber/landmark-field";
+import { SaveLocationPrompt } from "@/components/location/save-location-prompt";
 import {
   ScheduleWhen,
   defaultLaterLocal,
@@ -144,6 +145,13 @@ export function RideSheet({
         loc={dropoff}
         onChange={setDropoff}
       />
+      {dropoff.landmark.trim() && dropoff.lat != null ? (
+        <SaveLocationPrompt
+          label={dropoff.landmark}
+          lat={dropoff.lat}
+          lng={dropoff.lng}
+        />
+      ) : null}
       <LandmarkHelperText />
 
       <div className="grid grid-cols-2 gap-3">

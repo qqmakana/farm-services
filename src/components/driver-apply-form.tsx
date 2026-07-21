@@ -4,13 +4,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useCountry } from "@/components/country/country-provider";
+import { PhotoUploadField } from "@/components/photo-upload-field";
 import { applyToDriveWithTrust } from "@/lib/actions";
 import { enabledCountries, type CountryCode } from "@/lib/countries";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
 import type { VehicleType } from "@/lib/types";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
 
-export function DriverApplyForm() {
+export function DriverApplyForm({
+  compactTitle,
+}: {
+  compactTitle?: string;
+}) {
   const router = useRouter();
   const { countryCode, country, setCountry } = useCountry();
   const [pending, startTransition] = useTransition();
@@ -45,12 +50,11 @@ export function DriverApplyForm() {
   return (
     <section className="ru-card p-5">
       <h2 className="font-[family-name:var(--font-display)] text-xl font-bold">
-        Apply to drive
+        {compactTitle ?? "Apply to drive"}
       </h2>
       <p className="mt-1 text-sm text-slate-600">
-        Apply <strong>only in this app</strong>. Upload clear photos — we
-        manually verify every driver before they go online. &ldquo;Verified&rdquo;
-        means Village Ride checked your ID &amp; vehicle photos.
+        Upload a clear photo of yourself and your vehicle (plate visible). We
+        verify every driver before they go online.
       </p>
 
       <form onSubmit={onSubmit} className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -106,60 +110,74 @@ export function DriverApplyForm() {
             placeholder="Your village or town"
           />
         </label>
+        <label className="block text-sm">
+          <span className="font-medium">Make</span>
+          <input
+            name="vehicle_make"
+            className="ru-input mt-1"
+            placeholder="Toyota"
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium">Model</span>
+          <input
+            name="vehicle_model"
+            className="ru-input mt-1"
+            placeholder="Hilux"
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium">Color</span>
+          <input
+            name="vehicle_color"
+            className="ru-input mt-1"
+            placeholder="White"
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium">License plate</span>
+          <input
+            name="vehicle_registration"
+            className="ru-input mt-1"
+            placeholder="EC 123-456"
+          />
+        </label>
         <label className="block text-sm sm:col-span-2">
           <span className="font-medium">Notes (optional)</span>
           <input
             name="notes"
             className="ru-input mt-1"
-            placeholder="Licence / bakkie details"
+            placeholder="Anything else we should know"
           />
         </label>
 
         <div className="sm:col-span-2 rounded-xl border border-amber-100 bg-amber-50/80 p-4">
           <p className="text-sm font-bold text-amber-950">
-            Required photos (max 5MB each)
+            Required photos (JPEG/PNG, max 5MB each)
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <label className="block text-xs font-medium text-slate-700">
-              ID photo (front) *
-              <input
-                required
-                name="id_doc"
-                type="file"
-                accept="image/*"
-                className="mt-1 block w-full text-sm"
-              />
-            </label>
-            <label className="block text-xs font-medium text-slate-700">
-              Face / selfie *
-              <input
-                required
-                name="selfie"
-                type="file"
-                accept="image/*"
-                className="mt-1 block w-full text-sm"
-              />
-            </label>
-            <label className="block text-xs font-medium text-slate-700">
-              Vehicle front (plate visible) *
-              <input
-                required
-                name="vehicle_front"
-                type="file"
-                accept="image/*"
-                className="mt-1 block w-full text-sm"
-              />
-            </label>
-            <label className="block text-xs font-medium text-slate-700">
-              Vehicle side *
-              <input
-                required
-                name="vehicle_side"
-                type="file"
-                accept="image/*"
-                className="mt-1 block w-full text-sm"
-              />
-            </label>
+            <PhotoUploadField
+              required
+              name="id_doc"
+              label="ID photo (front)"
+            />
+            <PhotoUploadField
+              required
+              name="selfie"
+              label="Your photo (face)"
+              hint="So customers know who to look for"
+            />
+            <PhotoUploadField
+              required
+              name="vehicle_front"
+              label="Vehicle photo"
+              hint="Front with license plate visible"
+            />
+            <PhotoUploadField
+              required
+              name="vehicle_side"
+              label="Vehicle side"
+            />
           </div>
         </div>
 
@@ -190,7 +208,7 @@ export function DriverApplyForm() {
             disabled={pending || !conduct}
             className="rounded-xl bg-[#1A4D3A] px-5 py-3 text-sm font-bold text-white disabled:opacity-50"
           >
-            {pending ? "Submitting…" : "Submit for verification"}
+            {pending ? "Uploading photos…" : "Submit for verification"}
           </button>
         </div>
       </form>

@@ -16,7 +16,9 @@ import { CountrySelector } from "@/components/country/country-selector";
 import { useCountry } from "@/components/country/country-provider";
 import { DriverTrustPanel } from "@/components/driver-trust-panel";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
+import { DriverVehiclePhotos } from "@/components/driver-vehicle-photos";
 import { BRAND, BRAND_WHATSAPP_HREF } from "@/lib/brand";
+import { vehicleDisplayLabel } from "@/lib/driver-display";
 import { getCountry, type CountryCode } from "@/lib/countries";
 import { isDriverTrustVerified } from "@/lib/trust";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
@@ -32,6 +34,9 @@ export function DriverAccountView() {
   const [year, setYear] = useState(
     driver?.vehicle_year != null ? String(driver.vehicle_year) : "",
   );
+  const [make, setMake] = useState(driver?.vehicle_make ?? "");
+  const [model, setModel] = useState(driver?.vehicle_model ?? "");
+  const [color, setColor] = useState(driver?.vehicle_color ?? "");
   const [vehicleType, setVehicleType] = useState<VehicleType>(
     driver?.vehicle_type ?? "sedan",
   );
@@ -47,6 +52,9 @@ export function DriverAccountView() {
     if (!driver) return;
     setReg(driver.vehicle_registration ?? "");
     setYear(driver.vehicle_year != null ? String(driver.vehicle_year) : "");
+    setMake(driver.vehicle_make ?? "");
+    setModel(driver.vehicle_model ?? "");
+    setColor(driver.vehicle_color ?? "");
     setVehicleType(driver.vehicle_type);
     setNight(driver.prefer_night !== false);
     setHeavy(driver.prefer_heavy !== false);
@@ -55,7 +63,6 @@ export function DriverAccountView() {
 
   if (!driver) return null;
 
-  const initial = driver.full_name.charAt(0).toUpperCase();
   const driverCountry = getCountry(driver.country_code);
 
   function saveCountry(code: CountryCode) {
@@ -80,6 +87,9 @@ export function DriverAccountView() {
           vehicle_type: vehicleType,
           vehicle_registration: reg.trim() || null,
           vehicle_year: year ? Number(year) : null,
+          vehicle_make: make.trim() || null,
+          vehicle_model: model.trim() || null,
+          vehicle_color: color.trim() || null,
         });
         setEditVehicle(false);
         refresh();
@@ -112,26 +122,25 @@ export function DriverAccountView() {
         Account
       </h1>
 
-      <div className="ru-card mt-6 flex items-center gap-4 p-5">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-black text-2xl font-bold text-white">
-          {initial}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-lg font-bold text-black">
-            <span className="mr-1.5" aria-hidden>
-              {driverCountry.flag}
-            </span>
-            {driver.full_name}
-          </p>
-          <p className="text-sm text-[var(--ru-muted)]">{driver.phone}</p>
-          <div className="mt-1">
-            <DriverVerifiedBadge
-              verified={isDriverTrustVerified(driver)}
-              compact
-            />
+      <div className="ru-card mt-6 space-y-4 p-5">
+        <DriverVehiclePhotos driver={driver} variant="profile" />
+        <div className="flex items-center justify-between gap-2 border-t border-[var(--ru-line)] pt-3">
+          <div className="min-w-0">
+            <p className="text-sm text-[var(--ru-muted)]">
+              <span className="mr-1.5" aria-hidden>
+                {driverCountry.flag}
+              </span>
+              {driver.phone}
+            </p>
+            <div className="mt-1">
+              <DriverVerifiedBadge
+                verified={isDriverTrustVerified(driver)}
+                compact
+              />
+            </div>
           </div>
+          <ChevronRight className="h-5 w-5 text-[var(--ru-muted)]" aria-hidden />
         </div>
-        <ChevronRight className="h-5 w-5 text-[var(--ru-muted)]" aria-hidden />
       </div>
 
       <section className="ru-card mt-4 p-4">
@@ -171,7 +180,7 @@ export function DriverAccountView() {
           )}
         </div>
         <p className="mt-2 text-sm font-semibold text-slate-900">
-          {VEHICLE_LABELS[driver.vehicle_type]}
+          {vehicleDisplayLabel(driver)}
           {driver.vehicle_registration
             ? ` · ${driver.vehicle_registration}`
             : ""}
@@ -270,16 +279,47 @@ export function DriverAccountView() {
               placeholder="e.g. HX 12 EC"
             />
           </label>
-          <label className="block text-sm font-medium">
-            Year
-            <input
-              className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3"
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
-              inputMode="numeric"
-              placeholder="2018"
-            />
-          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block text-sm font-medium">
+              Make
+              <input
+                className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3"
+                value={make}
+                onChange={(e) => setMake(e.target.value)}
+                placeholder="Toyota"
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              Model
+              <input
+                className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                placeholder="Hilux"
+              />
+            </label>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block text-sm font-medium">
+              Color
+              <input
+                className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                placeholder="White"
+              />
+            </label>
+            <label className="block text-sm font-medium">
+              Year
+              <input
+                className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                inputMode="numeric"
+                placeholder="2018"
+              />
+            </label>
+          </div>
           <button
             type="submit"
             disabled={pending}

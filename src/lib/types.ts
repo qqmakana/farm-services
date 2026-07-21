@@ -97,6 +97,9 @@ export type Driver = {
   /** Vehicle plate / reg (optional). */
   vehicle_registration?: string | null;
   vehicle_year?: number | null;
+  vehicle_make?: string | null;
+  vehicle_model?: string | null;
+  vehicle_color?: string | null;
   /** Linked Supabase auth user (when set). */
   user_id?: string | null;
   /** Operating country (ZA default). */
@@ -113,6 +116,65 @@ export type Driver = {
   code_of_conduct_accepted_at?: string | null;
   suspended_at?: string | null;
   suspend_reason?: string | null;
+};
+
+export type GroupTripKind = "ride" | "goods";
+export type GroupTripStatus =
+  | "open"
+  | "full"
+  | "in_progress"
+  | "completed"
+  | "cancelled";
+
+export type GroupTrip = {
+  id: string;
+  driver_id: string;
+  kind: GroupTripKind;
+  title: string | null;
+  route_pickup: string;
+  route_dropoff: string;
+  route_stops: string[] | null;
+  capacity: number;
+  seats_taken: number;
+  status: GroupTripStatus;
+  price_per_person: number;
+  total_price: number;
+  country_code: string;
+  departs_at: string | null;
+  created_at: string;
+  drivers?: Driver | null;
+  participants?: GroupTripParticipant[];
+};
+
+export type GroupTripParticipant = {
+  id: string;
+  group_trip_id: string;
+  guest_name: string;
+  guest_phone: string;
+  seats: number;
+  amount_due: number;
+  status: "confirmed" | "pending" | "cancelled";
+  joined_at: string;
+};
+
+export type CreateGroupTripInput = {
+  driver_id: string;
+  kind: GroupTripKind;
+  title?: string;
+  route_pickup: string;
+  route_dropoff: string;
+  route_stops?: string[];
+  capacity: number;
+  price_per_person: number;
+  country_code?: string;
+  departs_at?: string | null;
+};
+
+export type JoinGroupTripInput = {
+  group_trip_id: string;
+  guest_name: string;
+  guest_phone: string;
+  seats?: number;
 };
 
 export type NewDriverApplicationInput = {
@@ -366,4 +428,67 @@ export type ShopOrderInput = {
     paypalOrderId: string;
     paypalCaptureId: string;
   };
+};
+
+export type LocationCategory =
+  | "shop"
+  | "farm"
+  | "landmark"
+  | "home"
+  | "other";
+
+export type CommunityLocation = {
+  id: string;
+  name: string;
+  category: LocationCategory;
+  description: string | null;
+  village: string;
+  latitude: number | null;
+  longitude: number | null;
+  country_code: string;
+  created_by_phone: string | null;
+  created_by_name: string | null;
+  shop_id: string | null;
+  is_verified: boolean;
+  usage_count: number;
+  created_at: string;
+};
+
+export type CreateLocationInput = {
+  name: string;
+  category: LocationCategory;
+  description?: string;
+  village: string;
+  latitude: number;
+  longitude: number;
+  country_code?: string;
+  created_by_phone?: string;
+  created_by_name?: string;
+  shop_id?: string | null;
+};
+
+export type SavedLocation = {
+  id: string;
+  guest_phone: string;
+  name: string;
+  label: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  location_id: string | null;
+  is_home: boolean;
+  is_work: boolean;
+  country_code: string;
+  created_at: string;
+};
+
+export type SavePersonalLocationInput = {
+  guest_phone: string;
+  name: string;
+  label?: string;
+  latitude: number;
+  longitude: number;
+  location_id?: string | null;
+  is_home?: boolean;
+  is_work?: boolean;
+  country_code?: string;
 };

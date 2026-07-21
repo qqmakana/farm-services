@@ -9,6 +9,10 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { FloatingInput } from "@/components/ui/floating-input";
 import { Card } from "@/components/ui/card";
+import {
+  PlacesAutocomplete,
+  type PlaceValue,
+} from "@/components/uber/places-autocomplete";
 import type { JobWithDriver, Product, Shop } from "@/lib/types";
 
 export function ShopPortal({
@@ -33,6 +37,8 @@ export function ShopPortal({
     phone: "",
     category: "appliances",
     landmark: "",
+    lat: null as number | null,
+    lng: null as number | null,
     email: "",
     password: "",
     referral_code: "",
@@ -70,6 +76,8 @@ export function ShopPortal({
           phone: newShop.phone,
           category: newShop.category,
           landmark: newShop.landmark,
+          lat: newShop.lat,
+          lng: newShop.lng,
           email: newShop.email,
           password: newShop.password,
           referral_code: newShop.referral_code.trim() || null,
@@ -217,14 +225,30 @@ export function ShopPortal({
                       <option value="general">General</option>
                     </select>
                   </div>
-                  <FloatingInput
-                    required
-                    label="Landmark / address"
-                    value={newShop.landmark}
-                    onChange={(e) =>
-                      setNewShop({ ...newShop, landmark: e.target.value })
-                    }
-                  />
+                  <div>
+                    <PlacesAutocomplete
+                      label="Shop / farm location"
+                      placeholder="Search or add your business location"
+                      value={{
+                        label: newShop.landmark,
+                        lat: newShop.lat,
+                        lng: newShop.lng,
+                      }}
+                      onChange={(v: PlaceValue) =>
+                        setNewShop({
+                          ...newShop,
+                          landmark: v.label,
+                          lat: v.lat,
+                          lng: v.lng,
+                        })
+                      }
+                      required
+                      showGps
+                    />
+                    <p className="mt-1 text-xs text-[var(--ru-muted)]">
+                      Pin your location so customers can find and pick up from you.
+                    </p>
+                  </div>
                   <Button
                     type="button"
                     block
