@@ -218,20 +218,30 @@ export function DriverHomeView() {
       <div className="z-[500] shrink-0 rounded-t-3xl border-t border-[var(--ru-line)] bg-white px-4 pb-4 pt-3 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-gray-200" />
         {driver ? (
-          <div className="mb-3 flex items-center justify-between gap-3 text-xs text-[var(--ru-muted)]">
-            <span>
-              Today{" "}
-              <strong className="text-black">
-                {formatMoney(Number(driver.wallet_balance ?? 0))}
-              </strong>{" "}
-              wallet
-            </span>
-            <span>
-              ★{" "}
-              <strong className="text-black">
-                {Number(driver.rating_avg || 0).toFixed(1)}
-              </strong>
-            </span>
+          <div className="mb-3 space-y-2">
+            <div className="flex items-center justify-between gap-3 text-xs text-[var(--ru-muted)]">
+              <span>
+                Wallet{" "}
+                <strong className="text-black">
+                  {formatMoney(Number(driver.wallet_balance ?? 0))}
+                </strong>
+              </span>
+              <span>
+                ★{" "}
+                <strong className="text-black">
+                  {Number(driver.rating_avg || 0).toFixed(1)}
+                </strong>
+              </span>
+            </div>
+            {Number(driver.wallet_balance ?? 0) < 0 ||
+            Number(driver.commission_owed ?? 0) > 0 ? (
+              <a
+                href="/driver/earnings"
+                className="block rounded-xl bg-rose-50 px-3 py-2 text-center text-xs font-semibold text-rose-800"
+              >
+                Top up wallet to keep receiving offers →
+              </a>
+            ) : null}
           </div>
         ) : null}
         {error ? (

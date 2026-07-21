@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { listDriverJobs } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
-import { BRAND } from "@/lib/brand";
+import { BRAND, BRAND_TEL_HREF, BRAND_WHATSAPP_HREF } from "@/lib/brand";
 import { formatMoney } from "@/lib/format";
 import type { JobWithDriver } from "@/lib/types";
 
@@ -37,6 +37,10 @@ export function DriverEarningsView() {
   const wallet = Number(driver?.wallet_balance ?? 0);
   const owed = Number(driver?.commission_owed ?? 0);
 
+  useEffect(() => {
+    if (owed > 0 || wallet < 0) setShowTopUp(true);
+  }, [owed, wallet]);
+
   const completed = useMemo(
     () => jobs.filter((j) => j.status === "completed"),
     [jobs],
@@ -47,10 +51,19 @@ export function DriverEarningsView() {
     const week = completed.filter(
       (j) => new Date(j.completed_at || j.created_at).getTime() >= from,
     );
-    const total = week.reduce((s, j) => s + Number(j.fee_amount || 0), 0);
+    const gross = week.reduce((s, j) => s + Number(j.fee_amount || 0), 0);
+    const commission = week.reduce((s, j) => {
+      const fee = Number(j.fee_amount) || 0;
+      const c =
+        Number(j.platform_commission) > 0
+          ? Math.round(Number(j.platform_commission))
+          : Math.round((fee * 15) / 100);
+      return s + c;
+    }, 0);
     const trips = week.length;
-    const avg = trips ? Math.round(total / trips) : 0;
-    return { total, trips, avg };
+    const keep = Math.max(0, gross - commission);
+    const avg = trips ? Math.round(keep / trips) : 0;
+    return { gross, keep, commission, trips, avg };
   }, [completed]);
 
   const transactions = useMemo(() => {
@@ -64,13 +77,13 @@ export function DriverEarningsView() {
       const at = j.completed_at || j.created_at;
       rows.push({
         id: `${j.id}-earn`,
-        label: `Trip ${j.reference_code}`,
+        label: `Cash from customer · ${j.reference_code}`,
         amount: fee,
         at,
       });
       rows.push({
         id: `${j.id}-comm`,
-        label: `Commission · ${j.reference_code}`,
+        label: `Platform ~15% · ${j.reference_code}`,
         amount: -commission,
         at,
       });
@@ -81,15 +94,16 @@ export function DriverEarningsView() {
   }, [completed]);
 
   return (
-    <main className="mx-auto min-h-dvh max-w-lg px-5 pb-24 pt-8">
+    <main className="mx-auto min-h-dvh max-w-lg bg-white px-5 pb-24 pt-8 text-slate-900">
       <h1 className="text-2xl font-bold text-slate-900">Earnings</h1>
-      <p className="mt-1 text-sm text-slate-500">
-        Wallet, commission &amp; weekly stats
+      <p className="mt-1 text-sm text-slate-600">
+        Customers pay you cash. You keep ~85%; ~15% comes from this prepaid
+        wallet.
       </p>
 
       <section className="mt-6 rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
         <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-          Wallet balance
+          Commission wallet
         </p>
         <p
           className={`mt-1 text-4xl font-bold ${
@@ -100,10 +114,13 @@ export function DriverEarningsView() {
         </p>
         {owed > 0 || wallet < 0 ? (
           <p className="mt-2 text-sm font-semibold text-orange-700">
-            Commission owed: {formatMoney(owed || Math.abs(Math.min(0, wallet)))}
+            Top up needed: {formatMoney(owed || Math.abs(Math.min(0, wallet)))}
+            . Low wallet can pause new job offers.
           </p>
         ) : (
-          <p className="mt-2 text-sm text-slate-500">No commission debt</p>
+          <p className="mt-2 text-sm text-slate-500">
+            Wallet healthy — you can accept rides, deliveries &amp; farm jobs.
+          </p>
         )}
 
         <button
@@ -111,13 +128,13 @@ export function DriverEarningsView() {
           onClick={() => setShowTopUp((v) => !v)}
           className="mt-4 w-full rounded-xl bg-[#1A4D3A] py-3.5 text-sm font-bold text-white transition active:scale-95"
         >
-          Top Up Wallet
+          Top up wallet
         </button>
 
         {showTopUp ? (
-          <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm text-slate-700">
+          <div className="mt-3 space-y-3 rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm text-slate-700">
             <p className="font-semibold text-slate-900">How to top up</p>
-            <ol className="mt-2 list-inside list-decimal space-y-1">
+            <ol className="list-inside list-decimal space-y-1">
               <li>
                 Send eWallet / Send-iMali / EFT to{" "}
                 <strong>{BRAND.phone}</strong>
@@ -125,6 +142,24 @@ export function DriverEarningsView() {
               <li>Use your name + phone as the payment reference</li>
               <li>WhatsApp proof of payment — ops will credit your wallet</li>
             </ol>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={`${BRAND_WHATSAPP_HREF}?text=${encodeURIComponent(
+                  `Hi — wallet top-up proof for driver ${driver?.full_name ?? ""} ${driver?.phone ?? ""}`,
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-xl bg-[#25D366] px-4 py-2.5 text-xs font-bold text-white"
+              >
+                WhatsApp proof
+              </a>
+              <a
+                href={BRAND_TEL_HREF}
+                className="rounded-xl border border-[#1A4D3A]/30 bg-white px-4 py-2.5 text-xs font-semibold text-[#1A4D3A]"
+              >
+                Call ops
+              </a>
+            </div>
           </div>
         ) : null}
       </section>
@@ -134,8 +169,13 @@ export function DriverEarningsView() {
           This week
         </p>
         <p className="mt-2 text-sm font-semibold text-slate-900">
-          This Week: {formatMoney(weekStats.total)} · Trips: {weekStats.trips} ·
-          Avg: {formatMoney(weekStats.avg)}/trip
+          You keep ~{formatMoney(weekStats.keep)} · Gross fares{" "}
+          {formatMoney(weekStats.gross)} · Trips {weekStats.trips} · Avg keep{" "}
+          {formatMoney(weekStats.avg)}/trip
+        </p>
+        <p className="mt-1 text-xs text-slate-500">
+          Platform share this week ~{formatMoney(weekStats.commission)} (from
+          wallet)
         </p>
       </section>
 
@@ -143,7 +183,7 @@ export function DriverEarningsView() {
         <h2 className="text-base font-bold text-slate-900">Recent activity</h2>
         {transactions.length === 0 ? (
           <p className="mt-3 text-sm text-slate-500">
-            Complete trips to see earnings and commission here.
+            Complete trips to see cash received and ~15% wallet deductions here.
           </p>
         ) : (
           <ul className="mt-3 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
@@ -153,10 +193,7 @@ export function DriverEarningsView() {
                 className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
               >
                 <div>
-                  <p className="font-medium text-slate-900">
-                    {tx.amount >= 0 ? "+" : ""}
-                    {formatMoney(tx.amount)} · {tx.label}
-                  </p>
+                  <p className="font-medium text-slate-900">{tx.label}</p>
                   <p className="text-xs text-slate-400">
                     {new Date(tx.at).toLocaleString("en-ZA", {
                       day: "numeric",

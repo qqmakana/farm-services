@@ -14,6 +14,7 @@ import {
 } from "@/lib/actions";
 import {
   BRAND,
+  BRAND_WHATSAPP_HREF,
   emergencyMailtoHref,
   emergencySmsHref,
   whatsappTripShareHref,
@@ -129,7 +130,7 @@ export function LiveTrip({
       try {
         const r = await rateTrip(job.id, stars, comment || undefined);
         setRating(r);
-        setMsg("Thanks for your rating.");
+        setMsg("Thanks — your rating keeps Village Ride safer for everyone.");
         router.refresh();
       } catch (e) {
         setMsg(e instanceof Error ? e.message : "Could not rate");
@@ -164,10 +165,8 @@ export function LiveTrip({
             ? `https://maps.google.com/?q=${lat},${lng}`
             : `${window.location.origin}/trip/${job.reference_code}`;
 
-        // Prefer SMS; mailto as secondary (some desktop browsers).
         window.location.href = emergencySmsHref(mapsUrl);
         window.setTimeout(() => {
-          // If SMS app didn't take over (desktop), open email too.
           if (!/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
             window.open(emergencyMailtoHref(mapsUrl), "_blank");
           }
@@ -182,6 +181,13 @@ export function LiveTrip({
     });
   }
 
+  const bookAgainHref =
+    job.service_type === "delivery"
+      ? "/delivery"
+      : job.service_type === "farm"
+        ? "/farm"
+        : "/ride";
+
   const paymentLabel =
     job.payment_method === "cash"
       ? job.payment_status === "cash_collected"
@@ -193,8 +199,15 @@ export function LiveTrip({
           : "Paid · PayPal"
         : "Payment pending";
 
+  const showCashReminder =
+    job.payment_method === "cash" &&
+    job.payment_status === "unpaid" &&
+    (confirmed ||
+      job.status === "in_progress" ||
+      job.status === "completed");
+
   return (
-    <div className="ru-page-enter relative space-y-4">
+    <div className="ru-page-enter relative space-y-4 text-slate-900">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold tracking-[0.16em] text-[var(--ru-muted)] uppercase">
@@ -300,24 +313,60 @@ export function LiveTrip({
               : ""}
             . If they don&apos;t accept in 30 seconds, we try the next one.
           </p>
+          <div className="mt-1 flex flex-wrap justify-center gap-2">
+            <a
+              href="/"
+              className="rounded-xl border border-[#1A4D3A]/30 bg-white px-4 py-2.5 text-sm font-semibold text-[#1A4D3A]"
+            >
+              Back to home
+            </a>
+            <a
+              href={`${BRAND_WHATSAPP_HREF}?text=${encodeURIComponent(
+                `Hi Village Ride — need help with trip ${job.reference_code}`,
+              )}`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-bold text-white"
+            >
+              WhatsApp dispatch
+            </a>
+          </div>
         </div>
       ) : null}
 
       {noDrivers ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-6 text-center">
           <p className="text-base font-bold text-amber-950">
-            No drivers available. Try again later.
+            No drivers available right now
           </p>
           <p className="mt-2 text-sm text-amber-900/80">
-            Three drivers were offered and none accepted. You can book again
-            from the home screen, or WhatsApp dispatch on {BRAND.phone}.
+            Three drivers were offered and none accepted. Book again, schedule
+            for later, or WhatsApp dispatch on {BRAND.phone}.
           </p>
-          <a
-            href="/"
-            className="mt-4 inline-flex rounded-xl bg-[#1A4D3A] px-4 py-2.5 text-sm font-bold text-white"
-          >
-            Back to home
-          </a>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <a
+              href={bookAgainHref}
+              className="inline-flex justify-center rounded-xl bg-[#1A4D3A] px-4 py-2.5 text-sm font-bold text-white"
+            >
+              Book again
+            </a>
+            <a
+              href={`${BRAND_WHATSAPP_HREF}?text=${encodeURIComponent(
+                `Hi — no driver for ${job.reference_code}. Can you help?`,
+              )}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex justify-center rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-bold text-white"
+            >
+              WhatsApp dispatch
+            </a>
+            <a
+              href="/"
+              className="inline-flex justify-center rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-sm font-semibold text-amber-950"
+            >
+              Home
+            </a>
+          </div>
         </div>
       ) : null}
 
@@ -438,10 +487,12 @@ export function LiveTrip({
             </span>
           </span>
         </div>
-        {job.payment_method === "cash" && job.payment_status === "unpaid" ? (
-          <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-950">
-            Please pay the driver {formatMoney(Number(job.fee_amount))} in cash
-            when the trip starts.
+        {showCashReminder ? (
+          <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-950">
+            Pay the driver {formatMoney(Number(job.fee_amount))} in cash
+            {job.status === "completed"
+              ? " now if you haven't already."
+              : " when you meet them."}
           </p>
         ) : null}
         <div>
@@ -520,10 +571,18 @@ export function LiveTrip({
       )}
 
       {rating && (
-        <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-          You rated ★{rating.stars}
-          {rating.comment ? ` — “${rating.comment}”` : ""}
-        </p>
+        <div className="space-y-3 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          <p>
+            You rated ★{rating.stars}
+            {rating.comment ? ` — “${rating.comment}”` : ""}
+          </p>
+          <a
+            href={bookAgainHref}
+            className="inline-flex rounded-xl bg-[#1A4D3A] px-4 py-2.5 text-sm font-bold text-white"
+          >
+            Request another
+          </a>
+        </div>
       )}
       {msg && <p className="text-sm text-slate-600">{msg}</p>}
     </div>

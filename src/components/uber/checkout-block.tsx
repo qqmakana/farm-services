@@ -142,7 +142,7 @@ export function CheckoutBlock({
   }
 
   return (
-    <div className="space-y-3 border-t border-slate-100 pt-4">
+    <div className="space-y-3 border-t border-slate-100 bg-white pt-4 text-slate-900">
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
@@ -177,7 +177,7 @@ export function CheckoutBlock({
 
       <div>
         <p className="text-sm font-semibold text-[#1A4D3A]">
-          Preferred payment
+          How you&apos;ll pay the driver
         </p>
         <div className="mt-2 grid grid-cols-2 gap-2">
           {methods.map((id) => (
@@ -195,22 +195,43 @@ export function CheckoutBlock({
                 {paymentLabel(id)}
               </span>
               <span className="mt-0.5 block text-xs text-slate-500">
-                {paymentHint(id)}
+                {id === "cash"
+                  ? "Pay driver in person (recommended)"
+                  : paymentHint(id)}
               </span>
             </button>
           ))}
         </div>
+        {payMethod !== "cash" ? (
+          <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-950">
+            In-app {paymentLabel(payMethod)} isn&apos;t live yet.{" "}
+            <strong>Request</strong> still books as cash to the driver — or use
+            WhatsApp below to ask for another payment option.
+          </p>
+        ) : (
+          <p className="mt-2 text-xs text-slate-500">
+            You pay the driver in cash. Village Ride takes ~15% from the
+            driver&apos;s prepaid wallet — not from you.
+          </p>
+        )}
       </div>
 
       {formError ? (
-        <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-800">
-          {formError}
-        </p>
+        <div className="space-y-2 rounded-xl bg-rose-50 px-3 py-3 text-sm text-rose-800">
+          <p>{formError}</p>
+          <button
+            type="button"
+            onClick={openWhatsAppBooking}
+            className="font-semibold underline"
+          >
+            Try WhatsApp booking instead
+          </button>
+        </div>
       ) : null}
 
       <p className="rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-2.5 text-xs leading-relaxed text-slate-700">
         We&apos;ll find the best available driver and ping them. You&apos;ll see
-        live updates on the next screen.
+        live updates — photos, plate, and status — on the next screen.
       </p>
 
       <button
