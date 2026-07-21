@@ -10,6 +10,7 @@ import {
   type PlaceValue,
 } from "@/components/uber/places-autocomplete";
 import { Button } from "@/components/ui/button";
+import { DriverWantedBanner } from "@/components/driver-wanted-banner";
 
 const services = [
   {
@@ -64,6 +65,8 @@ export function ServiceHomeSheet() {
           Village rides, delivery &amp; farm logistics — book in seconds.
         </p>
       </div>
+
+      <DriverWantedBanner />
 
       <div className="space-y-1 rounded-2xl border border-[var(--ru-line)] bg-[#fafafa] px-3 py-2">
         <PlacesAutocomplete

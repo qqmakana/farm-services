@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Car, CircleDot, Tractor, Truck } from "lucide-react";
+import { DriverWantedPromoCard } from "@/components/driver-wanted-promo-card";
 
 const cards = [
   {
@@ -29,7 +30,7 @@ const cards = [
     iconBg: "bg-orange-100",
   },
   {
-    href: "/driver",
+    href: "/driver/join",
     title: "Become a Driver",
     subtitle: "Earn with Village Ride",
     Icon: CircleDot,
@@ -74,6 +75,8 @@ export default function ServicesPage() {
           );
         })}
       </div>
+
+      <DriverWantedPromoCard />
     </main>
   );
 }

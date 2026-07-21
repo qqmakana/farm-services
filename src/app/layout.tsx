@@ -11,6 +11,7 @@ import { ErrorReporter } from "@/components/error-reporter";
 import { AnalyticsBeacon } from "@/components/analytics-beacon";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
+import { DriverWantedNotice } from "@/components/driver-wanted-notice";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 import "./globals.css";
 
@@ -101,6 +102,7 @@ export default function RootLayout({
               <ConditionalFooter />
               <InstallShareBar />
               <WhatsAppFloat />
+              <DriverWantedNotice />
               <CountryWelcomeModal />
             </ToastProvider>
           </ThemeProvider>
