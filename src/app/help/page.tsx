@@ -9,6 +9,14 @@ export const metadata = {
 
 const FAQS = [
   {
+    q: "How do I add a location without a map or GPS?",
+    a: "Search for the place. If it’s missing, tap “Add missing location”. Enter a name (e.g. Sipho’s Farm), a description drivers will recognise (e.g. Next to the blue water tank), and the village. Pinning the map is optional — skip it if you have no signal. Everyone can then find that landmark when booking.",
+  },
+  {
+    q: "Does Village Ride require GPS or a street address?",
+    a: "No. Bookings work with landmark text alone — “Pick me up at the clinic”, “Deliver to Shoprite Mthatha”. Map and GPS are helpful when available, but never required. Saved Home/Work places also work offline from your phone cache.",
+  },
+  {
     q: "How do I sign up as a business partner?",
     a: "Go to /partners or /shop, create an account with your business email, then open /merchant/dashboard. No in-person meeting required.",
   },
@@ -30,7 +38,7 @@ const FAQS = [
   },
   {
     q: "Are drivers verified?",
-    a: "Yes. Drivers submit ID and vehicle photos and must be approved before going online. You can see name and star rating on assigned orders.",
+    a: "Yes. Drivers submit ID and vehicle photos and must be approved before going online. You can see name, photos, and star rating on assigned orders.",
   },
   {
     q: "Need human support?",

@@ -145,7 +145,7 @@ export function RideSheet({
         loc={dropoff}
         onChange={setDropoff}
       />
-      {dropoff.landmark.trim() && dropoff.lat != null ? (
+      {dropoff.landmark.trim() ? (
         <SaveLocationPrompt
           label={dropoff.landmark}
           lat={dropoff.lat}

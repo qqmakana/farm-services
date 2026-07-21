@@ -117,7 +117,8 @@ export function GpsButton({
 export function LandmarkHelperText() {
   return (
     <p className="text-xs text-slate-500">
-      Search towns &amp; landmarks across South Africa — no street name needed.
+      Search towns &amp; landmarks — no street address needed. Map pin is
+      optional; a clear description works for drivers.
     </p>
   );
 }

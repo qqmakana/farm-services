@@ -459,8 +459,9 @@ export type CreateLocationInput = {
   category: LocationCategory;
   description?: string;
   village: string;
-  latitude: number;
-  longitude: number;
+  /** Optional — villages often use description only (no GPS). */
+  latitude?: number | null;
+  longitude?: number | null;
   country_code?: string;
   created_by_phone?: string;
   created_by_name?: string;
@@ -485,8 +486,9 @@ export type SavePersonalLocationInput = {
   guest_phone: string;
   name: string;
   label?: string;
-  latitude: number;
-  longitude: number;
+  /** Optional pin — landmark text alone is enough for village trips. */
+  latitude?: number | null;
+  longitude?: number | null;
   location_id?: string | null;
   is_home?: boolean;
   is_work?: boolean;

@@ -119,8 +119,10 @@ export function PlacesAutocomplete({
   }
 
   function selectCommunity(loc: CommunityLocation) {
+    const desc = loc.description?.trim();
+    const base = `${loc.name} · ${loc.village}`;
     onChange({
-      label: `${loc.name} · ${loc.village}`,
+      label: desc ? `${base} (${desc})` : base,
       lat: loc.latitude,
       lng: loc.longitude,
       locationId: loc.id,
@@ -213,7 +215,8 @@ export function PlacesAutocomplete({
         ) : null}
       </div>
       <p className="mt-1 text-xs text-slate-500">
-        {country.flag} {country.name} — e.g. &ldquo;{hintExample}&rdquo;
+        {country.flag} {country.name} — landmark names work without GPS (e.g.
+        &ldquo;{hintExample}&rdquo;)
       </p>
       {gpsError ? (
         <p className="mt-1 text-xs text-rose-600">{gpsError}</p>
@@ -264,9 +267,12 @@ export function PlacesAutocomplete({
                     </span>
                     <span className="block text-xs text-slate-500 capitalize">
                       {s.loc.category} · {s.loc.village}
-                      {s.loc.is_verified
-                        ? " · Verified"
-                        : " · Suggested by user"}
+                      {s.loc.description
+                        ? ` · ${s.loc.description}`
+                        : s.loc.is_verified
+                          ? " · Verified"
+                          : " · Suggested by user"}
+                      {s.loc.latitude == null ? " · Landmark only" : ""}
                     </span>
                   </span>
                 </button>

@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { Briefcase, Home, MapPin } from "lucide-react";
 import { listSavedLocations } from "@/lib/actions-locations";
 import { getGuestProfile } from "@/lib/guest-profile";
+import {
+  readSavedPlacesCache,
+  writeSavedPlacesCache,
+} from "@/lib/saved-places-cache";
 import type { PlaceValue } from "@/components/uber/places-autocomplete";
 import type { SavedLocation } from "@/lib/types";
 
@@ -17,9 +21,17 @@ export function SavedPlacesChips({ onSelect }: Props) {
   useEffect(() => {
     const guest = getGuestProfile();
     if (!guest?.phone) return;
+    const cached = readSavedPlacesCache(guest.phone);
+    if (cached.length) setPlaces(cached);
+
     void listSavedLocations(guest.phone)
-      .then(setPlaces)
-      .catch(() => setPlaces([]));
+      .then((rows) => {
+        setPlaces(rows);
+        writeSavedPlacesCache(guest.phone, rows);
+      })
+      .catch(() => {
+        if (!cached.length) setPlaces([]);
+      });
   }, []);
 
   if (places.length === 0) return null;

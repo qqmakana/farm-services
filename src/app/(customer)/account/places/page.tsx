@@ -18,6 +18,11 @@ import {
 import { LocationPinPicker } from "@/components/location/location-pin-picker";
 import { getGuestProfile } from "@/lib/guest-profile";
 import { useCountry } from "@/components/country/country-provider";
+import {
+  readSavedPlacesCache,
+  removeSavedPlaceCache,
+  writeSavedPlacesCache,
+} from "@/lib/saved-places-cache";
 import type { SavedLocation } from "@/lib/types";
 
 export default function SavedPlacesPage() {
@@ -26,16 +31,25 @@ export default function SavedPlacesPage() {
   const [guestPhone, setGuestPhone] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
+  const [directions, setDirections] = useState("");
   const [kind, setKind] = useState<"home" | "work" | "custom">("custom");
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
+  const [showMap, setShowMap] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
   function reload(phone: string) {
+    const cached = readSavedPlacesCache(phone);
+    if (cached.length) setPlaces(cached);
     void listSavedLocations(phone)
-      .then(setPlaces)
-      .catch(() => setPlaces([]));
+      .then((rows) => {
+        setPlaces(rows);
+        writeSavedPlacesCache(phone, rows);
+      })
+      .catch(() => {
+        if (!cached.length) setPlaces([]);
+      });
   }
 
   useEffect(() => {
@@ -44,6 +58,11 @@ export default function SavedPlacesPage() {
     setGuestPhone(guest.phone);
     reload(guest.phone);
   }, []);
+
+  const canSave =
+    name.trim().length > 0 ||
+    directions.trim().length >= 3 ||
+    (lat != null && lng != null);
 
   function onSave(e: React.FormEvent) {
     e.preventDefault();
@@ -54,20 +73,33 @@ export default function SavedPlacesPage() {
     setError(null);
     start(async () => {
       try {
-        await savePersonalLocation({
+        const placeName =
+          name.trim() ||
+          (kind === "home" ? "Home" : kind === "work" ? "Work" : "Place");
+        const label =
+          directions.trim() ||
+          name.trim() ||
+          placeName;
+        const row = await savePersonalLocation({
           guest_phone: guestPhone,
-          name: name.trim() || (kind === "home" ? "Home" : kind === "work" ? "Work" : "Place"),
-          label: name.trim() || undefined,
-          latitude: lat!,
-          longitude: lng!,
+          name: placeName,
+          label,
+          latitude: lat,
+          longitude: lng,
           is_home: kind === "home",
           is_work: kind === "work",
           country_code: countryCode,
         });
+        writeSavedPlacesCache(guestPhone, [
+          row,
+          ...readSavedPlacesCache(guestPhone).filter((p) => p.id !== row.id),
+        ]);
         setAdding(false);
         setName("");
+        setDirections("");
         setLat(null);
         setLng(null);
+        setShowMap(false);
         setKind("custom");
         reload(guestPhone);
       } catch (err) {
@@ -80,6 +112,7 @@ export default function SavedPlacesPage() {
     if (!guestPhone) return;
     start(async () => {
       await deleteSavedLocation(id, guestPhone);
+      removeSavedPlaceCache(guestPhone, id);
       reload(guestPhone);
     });
   }
@@ -96,7 +129,8 @@ export default function SavedPlacesPage() {
         Saved Places
       </h1>
       <p className="mt-2 text-sm text-slate-500">
-        Pin Home, Work, and places you use often — they show up when booking.
+        Home, Work, and landmarks — works offline once saved. Map pin is
+        optional.
       </p>
 
       {!guestPhone ? (
@@ -128,8 +162,8 @@ export default function SavedPlacesPage() {
                   <p className="truncate text-xs text-slate-500">
                     {p.label || "Saved place"}
                     {p.latitude != null
-                      ? ` · ${p.latitude.toFixed(3)}, ${p.longitude?.toFixed(3)}`
-                      : ""}
+                      ? ` · pin`
+                      : " · landmark only"}
                   </p>
                 </div>
                 <button
@@ -155,10 +189,7 @@ export default function SavedPlacesPage() {
           <Plus className="h-4 w-4" /> Add new location
         </button>
       ) : (
-        <form
-          onSubmit={onSave}
-          className="ru-card mt-6 space-y-3 p-4"
-        >
+        <form onSubmit={onSave} className="ru-card mt-6 space-y-3 p-4">
           {error ? (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-800">
               {error}
@@ -188,22 +219,51 @@ export default function SavedPlacesPage() {
             className="ru-input"
             placeholder={
               kind === "home"
-                ? "Home (e.g. Qunu)"
+                ? "Name (e.g. Home)"
                 : kind === "work"
-                  ? "Work (e.g. my shop)"
+                  ? "Name (e.g. Work)"
                   : "Name (e.g. Joe's House)"
             }
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
-          <LocationPinPicker
-            lat={lat}
-            lng={lng}
-            onChange={(a, b) => {
-              setLat(a);
-              setLng(b);
-            }}
+          <input
+            className="ru-input"
+            placeholder="How to find it (e.g. Clinic gate, Qunu)"
+            value={directions}
+            onChange={(e) => setDirections(e.target.value)}
           />
+          {!showMap ? (
+            <button
+              type="button"
+              onClick={() => setShowMap(true)}
+              className="w-full rounded-xl border border-dashed border-gray-200 bg-[#fafafa] px-3 py-2.5 text-left text-xs font-semibold text-[#1A4D3A]"
+            >
+              Optional: pin on map
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <LocationPinPicker
+                lat={lat}
+                lng={lng}
+                onChange={(a, b) => {
+                  setLat(a);
+                  setLng(b);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMap(false);
+                  setLat(null);
+                  setLng(null);
+                }}
+                className="text-xs font-semibold text-slate-500"
+              >
+                Skip map
+              </button>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
@@ -214,7 +274,7 @@ export default function SavedPlacesPage() {
             </button>
             <button
               type="submit"
-              disabled={pending || lat == null || lng == null}
+              disabled={pending || !canSave}
               className="ru-btn ru-btn-primary"
             >
               {pending ? "Saving…" : "Save"}

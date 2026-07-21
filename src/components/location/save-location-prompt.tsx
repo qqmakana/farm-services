@@ -4,6 +4,10 @@ import { useEffect, useState, useTransition } from "react";
 import { savePersonalLocation } from "@/lib/actions-locations";
 import { getGuestProfile } from "@/lib/guest-profile";
 import { useCountry } from "@/components/country/country-provider";
+import {
+  readSavedPlacesCache,
+  writeSavedPlacesCache,
+} from "@/lib/saved-places-cache";
 
 type Props = {
   label: string;
@@ -11,7 +15,7 @@ type Props = {
   lng: number | null;
 };
 
-/** Soft prompt after a booking destination is set. */
+/** Soft prompt after a booking destination is set — works with landmark-only. */
 export function SaveLocationPrompt({ label, lat, lng }: Props) {
   const { countryCode } = useCountry();
   const [visible, setVisible] = useState(false);
@@ -20,7 +24,7 @@ export function SaveLocationPrompt({ label, lat, lng }: Props) {
   const [pending, start] = useTransition();
 
   useEffect(() => {
-    if (!label.trim() || lat == null || lng == null) {
+    if (!label.trim()) {
       setVisible(false);
       return;
     }
@@ -60,14 +64,18 @@ export function SaveLocationPrompt({ label, lat, lng }: Props) {
     }
     start(async () => {
       try {
-        await savePersonalLocation({
+        const row = await savePersonalLocation({
           guest_phone: guest.phone,
           name: name.trim() || label.split("·")[0]?.trim() || "Saved place",
           label,
-          latitude: lat!,
-          longitude: lng!,
+          latitude: lat,
+          longitude: lng,
           country_code: countryCode,
         });
+        writeSavedPlacesCache(guest.phone, [
+          row,
+          ...readSavedPlacesCache(guest.phone).filter((p) => p.id !== row.id),
+        ]);
         setDone(true);
         dismiss();
       } catch {
@@ -80,6 +88,9 @@ export function SaveLocationPrompt({ label, lat, lng }: Props) {
     <div className="rounded-xl border border-[var(--ru-line)] bg-[#fafafa] px-3 py-3">
       <p className="text-sm font-semibold text-black">
         Save this location for next time?
+      </p>
+      <p className="mt-0.5 text-[11px] text-[var(--ru-muted)]">
+        Works offline later — even without a map pin.
       </p>
       <input
         className="ru-input mt-2"

@@ -23,6 +23,12 @@ const CATEGORIES: { value: LocationCategory; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
+function bookingLabel(name: string, village: string, description?: string | null) {
+  const base = `${name.trim()} · ${village.trim()}`;
+  const d = description?.trim();
+  return d ? `${base} (${d})` : base;
+}
+
 export function AddLocationModal({ initialName = "", onClose, onCreated }: Props) {
   const { countryCode } = useCountry();
   const guest = typeof window !== "undefined" ? getGuestProfile() : null;
@@ -34,6 +40,12 @@ export function AddLocationModal({ initialName = "", onClose, onCreated }: Props
   const [village, setVillage] = useState("");
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
+  const [showMap, setShowMap] = useState(false);
+
+  const canSubmit =
+    name.trim().length > 0 &&
+    village.trim().length > 0 &&
+    (description.trim().length >= 3 || (lat != null && lng != null));
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,17 +57,17 @@ export function AddLocationModal({ initialName = "", onClose, onCreated }: Props
           category,
           description,
           village,
-          latitude: lat!,
-          longitude: lng!,
+          latitude: lat,
+          longitude: lng,
           country_code: countryCode,
           created_by_phone: guest?.phone,
           created_by_name: guest?.name,
         });
-        const label = `${loc.name} · ${loc.village}`;
         onCreated({
-          label,
+          label: bookingLabel(loc.name, loc.village, loc.description),
           lat: loc.latitude,
           lng: loc.longitude,
+          locationId: loc.id,
         });
         onClose();
       } catch (err) {
@@ -90,7 +102,7 @@ export function AddLocationModal({ initialName = "", onClose, onCreated }: Props
               Add a missing location
             </h2>
             <p className="mt-0.5 text-xs text-[var(--ru-muted)]">
-              Everyone will be able to find it when booking.
+              No GPS? No problem — a clear landmark description is enough.
             </p>
           </div>
           <button
@@ -142,13 +154,17 @@ export function AddLocationModal({ initialName = "", onClose, onCreated }: Props
           </fieldset>
 
           <label className="block text-sm font-medium">
-            Description
+            How to find it (description)
             <input
               className="ru-input mt-1"
               placeholder="Next to the blue water tank"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              required={lat == null || lng == null}
             />
+            <span className="mt-1 block text-[11px] font-normal text-[var(--ru-muted)]">
+              Drivers use this when there is no map or street address.
+            </span>
           </label>
 
           <label className="block text-sm font-medium">
@@ -162,14 +178,37 @@ export function AddLocationModal({ initialName = "", onClose, onCreated }: Props
             />
           </label>
 
-          <LocationPinPicker
-            lat={lat}
-            lng={lng}
-            onChange={(a, b) => {
-              setLat(a);
-              setLng(b);
-            }}
-          />
+          {!showMap ? (
+            <button
+              type="button"
+              onClick={() => setShowMap(true)}
+              className="w-full rounded-xl border border-dashed border-[var(--ru-line)] bg-[#fafafa] px-3 py-3 text-left text-xs font-semibold text-[#1A4D3A]"
+            >
+              Optional: pin on map (if you have signal)
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <LocationPinPicker
+                lat={lat}
+                lng={lng}
+                onChange={(a, b) => {
+                  setLat(a);
+                  setLng(b);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMap(false);
+                  setLat(null);
+                  setLng(null);
+                }}
+                className="text-xs font-semibold text-[var(--ru-muted)]"
+              >
+                Skip map — description only
+              </button>
+            </div>
+          )}
 
           {guest?.name ? (
             <p className="text-xs text-[var(--ru-muted)]">
@@ -188,7 +227,7 @@ export function AddLocationModal({ initialName = "", onClose, onCreated }: Props
           </button>
           <button
             type="submit"
-            disabled={pending || lat == null || lng == null}
+            disabled={pending || !canSubmit}
             className="ru-btn ru-btn-primary"
           >
             {pending ? "Saving…" : "Submit"}

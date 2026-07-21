@@ -93,14 +93,19 @@ export async function createCommunityLocation(
 ): Promise<CommunityLocation> {
   const name = input.name.trim();
   const village = input.village.trim();
+  const description = input.description?.trim() || "";
   if (!name || !village) throw new Error("Name and village/town are required.");
-  if (
-    input.latitude == null ||
-    input.longitude == null ||
-    !Number.isFinite(input.latitude) ||
-    !Number.isFinite(input.longitude)
-  ) {
-    throw new Error("Place a pin on the map (GPS required).");
+
+  const hasPin =
+    input.latitude != null &&
+    input.longitude != null &&
+    Number.isFinite(input.latitude) &&
+    Number.isFinite(input.longitude);
+
+  if (!hasPin && description.length < 3) {
+    throw new Error(
+      "No GPS? Add a clear description (e.g. “Next to the blue water tank”). Map pin is optional.",
+    );
   }
 
   const similar = await findSimilarLocations(
@@ -119,8 +124,16 @@ export async function createCommunityLocation(
     );
   }
 
+  const lat = hasPin ? input.latitude! : null;
+  const lng = hasPin ? input.longitude! : null;
+
   if (!useAdmin()) {
-    const loc = mockRepo.createCommunityLocation(input);
+    const loc = mockRepo.createCommunityLocation({
+      ...input,
+      description,
+      latitude: lat,
+      longitude: lng,
+    });
     revalidateLocations();
     return loc;
   }
@@ -131,10 +144,10 @@ export async function createCommunityLocation(
     .insert({
       name,
       category: input.category,
-      description: input.description?.trim() || null,
+      description: description || null,
       village,
-      latitude: input.latitude,
-      longitude: input.longitude,
+      latitude: lat,
+      longitude: lng,
       country_code: input.country_code || DEFAULT_COUNTRY,
       created_by_phone: input.created_by_phone?.trim() || null,
       created_by_name: input.created_by_name?.trim() || null,
@@ -189,18 +202,31 @@ export async function savePersonalLocation(
 ): Promise<SavedLocation> {
   const phone = input.guest_phone.trim();
   const name = input.name.trim();
+  const label = (input.label?.trim() || name).trim();
   if (!phone || !name) throw new Error("Phone and place name are required.");
-  if (
-    input.latitude == null ||
-    input.longitude == null ||
-    !Number.isFinite(input.latitude) ||
-    !Number.isFinite(input.longitude)
-  ) {
-    throw new Error("Location needs a map pin.");
+
+  const hasPin =
+    input.latitude != null &&
+    input.longitude != null &&
+    Number.isFinite(input.latitude) &&
+    Number.isFinite(input.longitude);
+
+  if (!hasPin && label.length < 2) {
+    throw new Error(
+      "Add a landmark description (e.g. “Clinic gate, Qunu”). Map pin is optional.",
+    );
   }
 
+  const lat = hasPin ? input.latitude! : null;
+  const lng = hasPin ? input.longitude! : null;
+
   if (!useAdmin()) {
-    const row = mockRepo.savePersonalLocation(input);
+    const row = mockRepo.savePersonalLocation({
+      ...input,
+      label,
+      latitude: lat,
+      longitude: lng,
+    });
     revalidateLocations();
     return row;
   }
@@ -211,9 +237,9 @@ export async function savePersonalLocation(
     .insert({
       guest_phone: phone,
       name,
-      label: input.label?.trim() || name,
-      latitude: input.latitude,
-      longitude: input.longitude,
+      label,
+      latitude: lat,
+      longitude: lng,
       location_id: input.location_id ?? null,
       is_home: Boolean(input.is_home),
       is_work: Boolean(input.is_work),
