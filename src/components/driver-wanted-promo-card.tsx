@@ -15,12 +15,13 @@ export function DriverWantedPromoCard() {
   if (!show) return null;
 
   return (
-    <div className="ru-card mt-6 border border-[var(--ru-line)] bg-white p-5 shadow-[var(--ru-shadow)]">
-      <p className="font-[family-name:var(--font-display)] text-lg font-bold text-black">
-        Turn your bakkie into income
+    <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <p className="font-[family-name:var(--font-display)] text-lg font-bold text-slate-900">
+        Drive for all three services
       </p>
-      <p className="mt-1 text-sm text-[var(--ru-muted)]">
-        Keep ~85% of every trip. Flexible hours. Free to join.
+      <p className="mt-1 text-sm text-slate-600">
+        Village Ride · Village Delivery · Farm Connect — keep ~85%, flexible
+        hours, free to join.
       </p>
       <Link
         href="/driver/join"

@@ -53,8 +53,10 @@ export function DriverApplyForm({
         {compactTitle ?? "Apply to drive"}
       </h2>
       <p className="mt-1 text-sm text-slate-600">
-        Upload a clear photo of yourself and your vehicle (plate visible). We
-        verify every driver before they go online.
+        Apply for <strong>Village Ride</strong>,{" "}
+        <strong>Village Delivery</strong>, and <strong>Farm Connect</strong>{" "}
+        jobs in one go. Upload a clear photo of yourself and your vehicle
+        (plate visible) — we verify every driver before they go online.
       </p>
 
       <form onSubmit={onSubmit} className="mt-4 grid gap-3 sm:grid-cols-2">

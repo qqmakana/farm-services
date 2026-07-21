@@ -51,18 +51,18 @@ export function DriverWantedNotice() {
         aria-label="Dismiss"
         onClick={close}
       />
-      <div className="relative w-full max-w-md rounded-2xl bg-white p-5 shadow-xl dark:bg-[#1e1e1e]">
+      <div className="relative w-full max-w-md rounded-2xl bg-white p-5 text-slate-900 shadow-xl">
         <div className="flex items-start justify-between gap-2">
           <div>
             <p
               id="driver-wanted-notice-title"
-              className="font-[family-name:var(--font-display)] text-lg font-bold text-black dark:text-white"
+              className="font-[family-name:var(--font-display)] text-lg font-bold text-slate-900"
             >
               Drivers wanted in your village
             </p>
-            <p className="mt-1 text-sm text-[var(--ru-muted)]">
-              Earn 85% of every trip — flexible hours, no boss. Apply in a few
-              minutes.
+            <p className="mt-1 text-sm text-slate-600">
+              Earn 85% on rides, deliveries &amp; farm jobs — apply once for all
+              three Village Ride services.
             </p>
           </div>
           <button

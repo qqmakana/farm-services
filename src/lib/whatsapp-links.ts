@@ -15,8 +15,10 @@ export const WhatsAppLinks = {
     ),
   driverSignup: (joinUrl: string) =>
     waLink(
-      `I want to drive with ${BRAND.appName}. Keep 85% of every trip. Apply: ${joinUrl}`,
+      `I want to drive with ${BRAND.appName} — rides, deliveries & farm jobs. Keep 85%. Apply: ${joinUrl}`,
     ),
   chatUs: () =>
-    waLink(`Hi ${BRAND.appName} — I'd like to chat about driving / delivering.`),
+    waLink(
+      `Hi ${BRAND.appName} — I'd like to chat about driving (rides, delivery & farm).`,
+    ),
 } as const;
