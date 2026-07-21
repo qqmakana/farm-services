@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getSelectedDriverId } from "@/lib/driver-session";
 import {
@@ -13,14 +14,22 @@ import {
  * Bottom sheet — tap goes to /driver/join.
  */
 export function DriverWantedNotice() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (getSelectedDriverId()) return;
     if (hasSeenDriverWantedNotice()) return;
+    if (
+      pathname?.startsWith("/onboarding") ||
+      pathname?.startsWith("/driver") ||
+      pathname?.startsWith("/admin")
+    ) {
+      return;
+    }
     const t = window.setTimeout(() => setOpen(true), 900);
     return () => window.clearTimeout(t);
-  }, []);
+  }, [pathname]);
 
   function close() {
     markDriverWantedNoticeSeen();
