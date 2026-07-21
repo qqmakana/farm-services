@@ -2,19 +2,19 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { hasSeenOnboarding } from "@/lib/onboarding";
+import { shouldShowOnboarding } from "@/lib/onboarding";
 import { DashboardSkeleton } from "@/components/ui/skeleton";
 
 /**
- * First visit to home → /onboarding.
- * Returning users see children immediately after a localStorage check.
+ * Home first paint: send new users to /onboarding unless they
+ * permanently dismissed or skipped for this session.
  */
 export function OnboardingGate({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!hasSeenOnboarding()) {
+    if (shouldShowOnboarding()) {
       router.replace("/onboarding");
       return;
     }

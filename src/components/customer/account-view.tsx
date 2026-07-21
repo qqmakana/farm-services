@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ChevronRight,
   CreditCard,
   HelpCircle,
   MapPinned,
+  PlayCircle,
   User,
 } from "lucide-react";
 import { CountrySelector } from "@/components/country/country-selector";
@@ -20,9 +22,11 @@ import {
   setGuestProfile,
   type GuestProfile,
 } from "@/lib/guest-profile";
+import { resetOnboardingForReplay } from "@/lib/onboarding";
 import { t } from "@/lib/i18n";
 
 export function AccountView() {
+  const router = useRouter();
   const { country, countryCode, locale } = useCountry();
   const [profile, setProfile] = useState<GuestProfile | null>(null);
   const [hydrated, setHydrated] = useState(false);
@@ -147,6 +151,25 @@ export function AccountView() {
       )}
 
       <ul className="mt-6 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+        <li>
+          <button
+            type="button"
+            onClick={() => {
+              resetOnboardingForReplay();
+              router.push("/onboarding?replay=1");
+            }}
+            className="flex w-full items-center gap-3 px-4 py-4 text-left transition active:scale-[0.99] active:bg-gray-50"
+          >
+            <span className="text-[#1A4D3A]">
+              <PlayCircle className="h-5 w-5" />
+            </span>
+            <span className="flex-1 text-sm font-medium text-slate-900">
+              How Village Ride works
+            </span>
+            <span className="text-xs text-slate-400">Replay</span>
+            <ChevronRight className="h-4 w-4 text-gray-400" aria-hidden />
+          </button>
+        </li>
         <MenuRow
           href="/account/payment"
           icon={<CreditCard className="h-5 w-5" />}

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { OnboardingFlow } from "@/components/onboarding/onboarding-flow";
 import { BRAND } from "@/lib/brand";
@@ -9,5 +10,15 @@ export const metadata: Metadata = {
 };
 
 export default function OnboardingPage() {
-  return <OnboardingFlow />;
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-dvh items-center justify-center bg-white text-sm text-[var(--ru-muted)]">
+          Loading…
+        </div>
+      }
+    >
+      <OnboardingFlow />
+    </Suspense>
+  );
 }
