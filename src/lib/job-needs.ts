@@ -21,9 +21,13 @@ export function jobNeedsFromJob(job: Pick<
     notes.includes("night ride") ||
     notes.includes("after-hours");
   const heavy =
-    job.service_type === "delivery" || job.service_type === "farm";
+    job.service_type === "delivery" ||
+    job.service_type === "farm" ||
+    job.service_type === "courier";
   const village =
-    job.service_type === "ride" || job.service_type === "farm";
+    job.service_type === "ride" ||
+    job.service_type === "farm" ||
+    job.service_type === "courier";
   const scheduled = Boolean(job.scheduled_for);
 
   return { night, heavy, village, scheduled };

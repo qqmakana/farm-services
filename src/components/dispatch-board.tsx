@@ -44,6 +44,19 @@ function detailsSummary(job: JobWithDriver) {
   if (job.service_type === "delivery") {
     return `${d.item_description ?? "Item"} · ${d.size ?? "?"} · helpers: ${d.needs_helpers ? "yes" : "no"}`;
   }
+  if (job.service_type === "courier") {
+    const weight =
+      d.item_weight === "under_5"
+        ? "<5kg"
+        : d.item_weight === "5_10"
+          ? "5–10kg"
+          : d.item_weight === "10_20"
+            ? "10–20kg"
+            : String(d.item_weight ?? "—");
+    return `${d.item_description ?? "Package"} · ${weight}${
+      d.recipient_name ? ` · to ${d.recipient_name}` : ""
+    }`;
+  }
   if (job.service_type === "farm" && Array.isArray(d.items)) {
     return (d.items as Array<{ name: string; qty: number }>)
       .map((i) => `${i.qty}× ${i.name}`)

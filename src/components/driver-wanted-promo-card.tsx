@@ -20,7 +20,7 @@ export function DriverWantedPromoCard() {
         Drive for all three services
       </p>
       <p className="mt-1 text-sm text-slate-600">
-        Village Ride · Village Delivery · Farm Connect — keep ~85%, flexible
+        Village Ride · Delivery · Farm · Courier — keep ~85%, flexible
         hours, free to join.
       </p>
       <Link

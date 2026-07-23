@@ -31,10 +31,10 @@ export function DriverWantedBanner() {
       <div className="flex items-start gap-3 pl-2">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold tracking-tight text-black">
-            Drivers wanted — rides, delivery &amp; farm jobs
+            Drivers wanted — rides, delivery, farm &amp; courier
           </p>
           <p className="mt-0.5 text-xs text-[var(--ru-muted)]">
-            Earn 85% on Village Ride, Village Delivery &amp; Farm Connect.
+            Earn 85% on Village Ride, Delivery, Farm Connect &amp; Courier.
             Flexible hours.
           </p>
           <Link

@@ -50,7 +50,7 @@ function resolveRate(params: {
       currency: p.currency,
     };
   }
-  if (service === "delivery") {
+  if (service === "delivery" || service === "courier") {
     return {
       base: p.delivery.base,
       perKm: p.delivery.perKm,

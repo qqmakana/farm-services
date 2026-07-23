@@ -274,6 +274,33 @@ export function DriverHomeView() {
                   </span>
                   {job.dropoff_landmark}
                 </p>
+                {job.service_type === "courier" ? (
+                  <p className="mt-1 text-xs text-[var(--ru-muted)]">
+                    Package:{" "}
+                    {String(
+                      (job.details as Record<string, unknown>)
+                        .item_description ?? "—",
+                    )}
+                    {(job.details as Record<string, unknown>).item_weight
+                      ? ` · ${
+                          (job.details as Record<string, unknown>)
+                            .item_weight === "under_5"
+                            ? "<5kg"
+                            : (job.details as Record<string, unknown>)
+                                  .item_weight === "5_10"
+                              ? "5–10kg"
+                              : (job.details as Record<string, unknown>)
+                                    .item_weight === "10_20"
+                                ? "10–20kg"
+                                : String(
+                                    (job.details as Record<string, unknown>)
+                                      .item_weight,
+                                  )
+                        }`
+                      : ""}
+                    {" · keep ~85%"}
+                  </p>
+                ) : null}
               </div>
               <p className="text-lg font-bold text-black">
                 {formatMoney(Number(job.fee_amount))}

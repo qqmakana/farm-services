@@ -11,6 +11,7 @@ const HIDE_FOOTER = new Set([
   "/ride",
   "/delivery",
   "/farm",
+  "/courier",
   "/driver/home",
   "/driver/jobs",
   "/driver/earnings",

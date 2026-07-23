@@ -2,18 +2,18 @@ import OpenAI from "openai";
 import type { ServiceType } from "@/lib/types";
 import type { BookingExtraction } from "./types";
 
-export const BOOKING_SYSTEM_PROMPT = `You are a booking assistant for Village Ride, a rural SA transport app. Extract the following from the user's message: service_type (ride, delivery, farm), pickup_landmark, dropoff_landmark, item_details (if delivery/farm), and preferred_time. Return ONLY a valid JSON object.
+export const BOOKING_SYSTEM_PROMPT = `You are a booking assistant for Village Ride, a rural SA transport app. Extract the following from the user's message: service_type (ride, delivery, farm, courier), pickup_landmark, dropoff_landmark, item_details (if delivery/farm/courier), and preferred_time. Return ONLY a valid JSON object.
 
 Rules:
-- service_type: "ride" for passengers; "delivery" for goods/furniture/parcels; "farm" for farm produce/crates/livestock feed. Use null if unclear.
+- service_type: "ride" for passengers; "delivery" for bulky shop goods/furniture; "courier" for person-to-person packages (keys, gifts, documents, Marketplace items); "farm" for farm produce/crates/livestock feed. Use null if unclear.
 - pickup_landmark / dropoff_landmark: landmark names people use in villages/towns (shop, taxi rank, clinic, farm name). Not street numbers. null if missing.
-- item_details: short description for delivery/farm; null for rides.
+- item_details: short description for delivery/farm/courier; null for rides.
 - preferred_time: natural language or ISO-ish string the user said (e.g. "tonight 8pm", "tomorrow morning", "now"); null if ASAP/unspecified.
 - delivery_size: optional "small" | "medium" | "large" | "xl" when goods size is implied; else null.
 - Do not invent landmarks. Prefer null over guessing.
 - Output JSON keys exactly: service_type, pickup_landmark, dropoff_landmark, item_details, preferred_time, delivery_size.`;
 
-const SERVICES: ServiceType[] = ["ride", "delivery", "farm"];
+const SERVICES: ServiceType[] = ["ride", "delivery", "farm", "courier"];
 const SIZES = ["small", "medium", "large", "xl"] as const;
 
 function stripCodeFence(text: string): string {

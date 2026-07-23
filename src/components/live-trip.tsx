@@ -186,7 +186,9 @@ export function LiveTrip({
       ? "/delivery"
       : job.service_type === "farm"
         ? "/farm"
-        : "/ride";
+        : job.service_type === "courier"
+          ? "/courier"
+          : "/ride";
 
   const paymentLabel =
     job.payment_method === "cash"
@@ -507,6 +509,35 @@ export function LiveTrip({
           </p>
           <p className="mt-1">{job.dropoff_landmark}</p>
         </div>
+        {job.service_type === "courier" || job.service_type === "delivery" ? (
+          <div className="rounded-xl bg-violet-50 px-3 py-3">
+            <p className="text-xs font-semibold text-violet-800 uppercase">
+              {job.service_type === "courier" ? "Package" : "Goods"}
+            </p>
+            <p className="mt-1 font-medium text-slate-900">
+              {String(
+                (job.details as Record<string, unknown>).item_description ??
+                  "—",
+              )}
+            </p>
+            {job.service_type === "courier" ? (
+              <p className="mt-1 text-xs text-slate-600">
+                Weight:{" "}
+                {(() => {
+                  const w = (job.details as Record<string, unknown>)
+                    .item_weight;
+                  if (w === "under_5") return "Under 5 kg";
+                  if (w === "5_10") return "5–10 kg";
+                  if (w === "10_20") return "10–20 kg";
+                  return String(w ?? "—");
+                })()}
+                {(job.details as Record<string, unknown>).recipient_name
+                  ? ` · Recipient: ${String((job.details as Record<string, unknown>).recipient_name)}`
+                  : ""}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         {job.drivers && (
           <div className="rounded-xl bg-slate-50 px-3 py-3">
             <p className="text-xs font-semibold text-slate-500 uppercase">

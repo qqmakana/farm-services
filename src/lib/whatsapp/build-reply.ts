@@ -5,13 +5,14 @@ import type { BookingExtraction, ConciergeQuote } from "./types";
 export function buildClarificationReply(extraction: BookingExtraction | null): string {
   const missing: string[] = [];
   if (!extraction?.service_type) {
-    missing.push("service (ride, delivery, or farm)");
+    missing.push("service (ride, delivery, farm, or courier)");
   }
   if (!extraction?.pickup_landmark) missing.push("pickup landmark");
   if (!extraction?.dropoff_landmark) missing.push("dropoff landmark");
   if (
     extraction?.service_type === "delivery" ||
-    extraction?.service_type === "farm"
+    extraction?.service_type === "farm" ||
+    extraction?.service_type === "courier"
   ) {
     if (!extraction.item_details) missing.push("what you are sending");
   }

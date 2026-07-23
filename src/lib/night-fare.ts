@@ -23,10 +23,14 @@ export function driverOptInLabels(
 ): string[] {
   const labels: string[] = [];
   if (isNight) labels.push("Night Shifts");
-  if (service === "delivery" || service === "farm") {
+  if (
+    service === "delivery" ||
+    service === "farm" ||
+    service === "courier"
+  ) {
     labels.push("Heavy Loads");
   }
-  if (service === "ride" || service === "farm") {
+  if (service === "ride" || service === "farm" || service === "courier") {
     labels.push("Direct Village Routes");
   }
   if (labels.length === 0) labels.push("Direct Village Routes");

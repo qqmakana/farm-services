@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Car, ChevronRight, Tractor, Truck, Users } from "lucide-react";
+import { Car, ChevronRight, Package, Tractor, Truck, Users } from "lucide-react";
 import {
   emptyPlaceValue,
   PlacesAutocomplete,
@@ -32,6 +32,12 @@ const services = [
     title: "Farm",
     subtitle: "Produce & livestock",
     Icon: Tractor,
+  },
+  {
+    href: "/courier",
+    title: "Courier",
+    subtitle: "Send a package",
+    Icon: Package,
   },
 ] as const;
 
@@ -64,7 +70,7 @@ export function ServiceHomeSheet() {
           Transport for everyone
         </h1>
         <p className="mt-1 text-[15px] text-[var(--ru-muted)]">
-          Village rides, delivery &amp; farm logistics — book in seconds.
+          Village rides, delivery, farm &amp; courier — book in seconds.
         </p>
       </div>
 
@@ -116,7 +122,7 @@ export function ServiceHomeSheet() {
         <h2 className="text-sm font-bold tracking-wide text-[var(--ru-muted)] uppercase">
           Services
         </h2>
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {services.map((s) => {
             const Icon = s.Icon;
             return (

@@ -17,7 +17,7 @@ export const BRAND = {
 export const BRAND_ADDRESS_LINE = `${BRAND.street}, ${BRAND.suburb}, ${BRAND.city}, ${BRAND.postalCode}`;
 
 export const BRAND_TAGLINE =
-  "Book rides, delivery & Farm Connect via WhatsApp — by Sandton Streets";
+  "Book rides, delivery, courier & Farm Connect via WhatsApp — by Sandton Streets";
 
 export const BRAND_FULL = `${BRAND.appName} by ${BRAND.company}`;
 
@@ -28,7 +28,7 @@ export const BRAND_WHATSAPP_HREF = `https://wa.me/${BRAND.phoneWhatsApp}`;
  * Brand WhatsApp estimate line — uses currency symbol when provided.
  */
 export type BookingWhatsAppDraft = {
-  service_type: "ride" | "delivery" | "farm";
+  service_type: "ride" | "delivery" | "farm" | "courier";
   pickup_landmark: string;
   dropoff_landmark: string;
   customer_name: string;
@@ -49,6 +49,8 @@ function serviceLabelForWhatsApp(
       return "Village Delivery";
     case "farm":
       return "Farm Connect";
+    case "courier":
+      return "Village Courier";
   }
 }
 

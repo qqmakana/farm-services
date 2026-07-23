@@ -28,7 +28,9 @@ export function extractionIsComplete(e: BookingExtraction): boolean {
     return false;
   }
   if (
-    (e.service_type === "delivery" || e.service_type === "farm") &&
+    (e.service_type === "delivery" ||
+      e.service_type === "farm" ||
+      e.service_type === "courier") &&
     !e.item_details
   ) {
     return false;
@@ -60,7 +62,9 @@ export function quoteFromExtraction(
     extraction.delivery_size ??
     (service === "delivery"
       ? inferDeliverySize(extraction.item_details)
-      : undefined);
+      : service === "courier"
+        ? "small"
+        : undefined);
 
   const vehicle = suggestVehicle({
     service_type: service,
@@ -68,7 +72,7 @@ export function quoteFromExtraction(
   });
 
   const at = resolveAt(extraction.preferred_time);
-  const fare = calculateFare({ vehicle, at });
+  const fare = calculateFare({ vehicle, at, serviceType: service });
 
   return { vehicle, fare, extraction };
 }

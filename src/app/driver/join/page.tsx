@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Car, Tractor, Truck } from "lucide-react";
+import { Car, Package, Tractor, Truck } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
 import { DriverApplyForm } from "@/components/driver-apply-form";
 import { BRAND } from "@/lib/brand";
@@ -23,6 +23,11 @@ const SERVICES = [
     title: "Farm Connect",
     blurb: "Farm logistics — produce, livestock crates, equipment",
   },
+  {
+    Icon: Package,
+    title: "Courier",
+    blurb: "Person-to-person packages — keys, gifts, documents, Marketplace items",
+  },
 ] as const;
 
 export default function DriverJoinPage() {
@@ -41,7 +46,7 @@ export default function DriverJoinPage() {
           <p className="mt-3 text-base leading-relaxed text-slate-700">
             Keep <strong className="text-slate-900">85%</strong> of every job.
             Village Ride needs drivers for{" "}
-            <strong className="text-slate-900">all three services</strong> —
+            <strong className="text-slate-900">all four services</strong> —
             not rides only.
           </p>
 
@@ -68,7 +73,7 @@ export default function DriverJoinPage() {
 
           <ul className="mt-5 space-y-2 text-sm text-slate-700">
             <li>✓ Photo of you + vehicle (plate visible) on every job</li>
-            <li>✓ Apply once — get offered rides, deliveries &amp; farm jobs</li>
+            <li>✓ Apply once — get offered rides, deliveries, farm &amp; courier</li>
             <li>✓ Flexible hours · go online when you want</li>
           </ul>
 

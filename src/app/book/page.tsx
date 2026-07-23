@@ -10,5 +10,6 @@ export default async function BookPage({
   const raw = sp.service;
   if (raw === "delivery") redirect("/delivery");
   if (raw === "farm") redirect("/farm");
+  if (raw === "courier") redirect("/courier");
   redirect("/ride");
 }

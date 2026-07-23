@@ -35,14 +35,24 @@ function detailsFromDraft(d: Draft, locale: string): string {
     return `${seats} passenger${seats === 1 ? "" : "s"} · ${VEHICLE_LABELS[d.required_vehicle]} · ${when}`;
   }
 
-  if (d.service_type === "delivery") {
+  if (d.service_type === "delivery" || d.service_type === "courier") {
     const item =
       "item_description" in d.details
-        ? String(d.details.item_description || "Goods")
-        : "Goods";
+        ? String(d.details.item_description || "Package")
+        : "Package";
     const size =
       "size" in d.details ? String(d.details.size || "") : "";
-    return [item, size && `size ${size}`, VEHICLE_LABELS[d.required_vehicle], when]
+    const weight =
+      "item_weight" in d.details && d.details.item_weight
+        ? String(d.details.item_weight)
+        : "";
+    return [
+      item,
+      weight && `weight ${weight}`,
+      size && `size ${size}`,
+      VEHICLE_LABELS[d.required_vehicle],
+      when,
+    ]
       .filter(Boolean)
       .join(" · ");
   }

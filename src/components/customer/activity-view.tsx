@@ -233,7 +233,7 @@ export function ActivityView() {
             No {segment} trips
           </p>
           <p className="mt-1 max-w-xs text-sm text-slate-500">
-            Book a ride, delivery, or farm trip and it will show up here.
+            Book a ride, delivery, farm, or courier trip and it will show up here.
           </p>
           <Link
             href="/"

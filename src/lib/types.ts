@@ -1,4 +1,4 @@
-export type ServiceType = "ride" | "delivery" | "farm";
+export type ServiceType = "ride" | "delivery" | "farm" | "courier";
 export type VehicleType = "sedan" | "bakkie" | "truck";
 export type JobStatus =
   | "new" // legacy — treat as searching_driver
@@ -39,10 +39,24 @@ export type FarmDetails = {
   sender_type?: "individual" | "business";
 };
 
+export type CourierWeight = "under_5" | "5_10" | "10_20";
+
+/** Person-to-person packages between villages (not shop furniture). */
+export type CourierDetails = {
+  item_description: string;
+  item_weight: CourierWeight;
+  size: "small" | "medium";
+  needs_helpers: boolean;
+  recipient_name?: string;
+  recipient_phone?: string;
+  special_instructions?: string;
+};
+
 export type JobDetails =
   | RideDetails
   | DeliveryDetails
   | FarmDetails
+  | CourierDetails
   | Record<string, unknown>;
 
 export type Driver = {

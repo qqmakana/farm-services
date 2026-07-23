@@ -33,7 +33,9 @@ export default async function TripPage({
                     ? "/delivery"
                     : job.service_type === "farm"
                       ? "/farm"
-                      : "/ride"
+                      : job.service_type === "courier"
+                        ? "/courier"
+                        : "/ride"
                 }
                 className="ru-btn ru-btn-primary w-full text-center"
               >

@@ -5,7 +5,7 @@ import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
   title: `How ${BRAND.appName} works`,
-  description: "Request. Connect. Get it done — rides, delivery, and farm transport.",
+  description: "Request. Connect. Get it done — rides, delivery, courier, and farm transport.",
   robots: { index: false, follow: false },
 };
 

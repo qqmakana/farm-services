@@ -12,7 +12,7 @@
 create extension if not exists "pgcrypto";
 
 -- ---------- ENUMS (rr_ = Rural Ride only) ----------
-do $$ begin create type public.rr_service_type as enum ('ride', 'delivery', 'farm'); exception when duplicate_object then null; end $$;
+do $$ begin create type public.rr_service_type as enum ('ride', 'delivery', 'farm', 'courier'); exception when duplicate_object then null; end $$;
 do $$ begin create type public.rr_vehicle_type as enum ('sedan', 'bakkie', 'truck'); exception when duplicate_object then null; end $$;
 do $$ begin create type public.rr_job_status as enum ('new', 'assigned', 'in_progress', 'completed', 'cancelled'); exception when duplicate_object then null; end $$;
 do $$ begin create type public.rr_payment_status as enum ('unpaid', 'pending', 'paid_online', 'failed', 'refunded', 'cash_collected'); exception when duplicate_object then null; end $$;

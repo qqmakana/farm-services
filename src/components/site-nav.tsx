@@ -11,6 +11,7 @@ const links = [
   { href: "/", label: "Home", key: "home" },
   { href: "/ride", label: "Ride", key: "book" },
   { href: "/delivery", label: "Deliver", key: "delivery" },
+  { href: "/courier", label: "Courier", key: "courier" },
   { href: "/farm", label: "Farm", key: "farm" },
   { href: "/shops", label: "Buy", key: "shops" },
   { href: "/driver/join", label: "Drive", key: "driver" },

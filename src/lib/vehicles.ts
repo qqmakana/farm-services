@@ -18,6 +18,9 @@ export function suggestVehicle(params: {
   delivery_size?: "small" | "medium" | "large" | "xl";
 }): VehicleType {
   if (params.service_type === "ride") return "sedan";
+  if (params.service_type === "courier") {
+    return params.delivery_size === "medium" ? "bakkie" : "sedan";
+  }
   if (params.service_type === "farm") return "bakkie";
   if (params.delivery_size === "xl" || params.delivery_size === "large") {
     return "truck";

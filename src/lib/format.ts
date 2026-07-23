@@ -6,6 +6,7 @@ export const SERVICE_LABELS: Record<ServiceType, string> = {
   ride: "Ride",
   delivery: "Delivery",
   farm: "Farm Connect",
+  courier: "Courier",
 };
 
 export { VEHICLE_LABELS };
@@ -73,6 +74,8 @@ export function serviceBadgeClass(type: ServiceType) {
       return "bg-amber-100 text-amber-950";
     case "farm":
       return "bg-emerald-100 text-emerald-950";
+    case "courier":
+      return "bg-violet-100 text-violet-950";
   }
 }
 

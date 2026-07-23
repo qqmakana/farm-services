@@ -16,6 +16,8 @@ function serviceLabel(job: Job): string {
       return "Bulky Delivery";
     case "farm":
       return "Farm Connect";
+    case "courier":
+      return "Courier";
     default:
       return "Job";
   }
@@ -28,6 +30,20 @@ function detailsLine(job: Job): string {
   }
   if (job.service_type === "delivery") {
     return `Item: ${d.item_description ?? "—"} · Size: ${d.size ?? "—"} · Helpers: ${d.needs_helpers ? "Yes" : "No"}`;
+  }
+  if (job.service_type === "courier") {
+    const weight =
+      d.item_weight === "under_5"
+        ? "<5kg"
+        : d.item_weight === "5_10"
+          ? "5–10kg"
+          : d.item_weight === "10_20"
+            ? "10–20kg"
+            : String(d.item_weight ?? "—");
+    const recipient = d.recipient_name
+      ? ` · To: ${d.recipient_name}`
+      : "";
+    return `Package: ${d.item_description ?? "—"} · ${weight}${recipient}`;
   }
   if (job.service_type === "farm" && Array.isArray(d.items)) {
     const items = (d.items as Array<{ name: string; qty: number }>)
