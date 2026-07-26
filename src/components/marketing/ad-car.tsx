@@ -1,39 +1,18 @@
 import Image from "next/image";
-import { PaymentBadge, type PaymentBadgeMethod } from "./payment-badge";
+import { DRIVER_AD_IMAGE } from "@/lib/marketing/driver-ad-copy";
 
-const VARIANT_SRC = {
-  village: "/marketing/ads/ad-car-village-square.png",
-  white: "/marketing/ads/ad-car-white-square.png",
-  gradient: "/marketing/ads/ad-car-gradient-square.png",
-} as const;
-
-export function AdCar({
-  variant = "village",
-  paymentMethods = ["cash", "card"],
-  showBadge = true,
-  className = "",
-}: {
-  variant?: keyof typeof VARIANT_SRC;
-  size?: "square" | "vertical" | "landscape";
-  paymentMethods?: PaymentBadgeMethod[];
-  showBadge?: boolean;
-  className?: string;
-}) {
+/** Single official Village Ride driver recruitment creative. */
+export function AdCar({ className = "" }: { className?: string }) {
   return (
-    <div className={`relative overflow-hidden rounded-2xl ${className}`}>
+    <div className={`overflow-hidden rounded-2xl ${className}`}>
       <Image
-        src={VARIANT_SRC[variant]}
-        alt={`Village Ride driver ad — ${variant} — cash and card accepted`}
+        src={DRIVER_AD_IMAGE}
+        alt="Village Ride — Drivers wanted. Cash & Card accepted. Keep 85%."
         width={1080}
         height={1080}
         className="h-auto w-full"
-        priority={variant === "village"}
+        priority
       />
-      {showBadge ? (
-        <div className="absolute bottom-3 left-3 right-3 flex justify-center sm:bottom-4">
-          <PaymentBadge methods={paymentMethods} />
-        </div>
-      ) : null}
     </div>
   );
 }
