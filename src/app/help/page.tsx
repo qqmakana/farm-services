@@ -50,7 +50,7 @@ export default function HelpPage() {
   return (
     <>
       <SiteNav />
-      <main className="mx-auto max-w-2xl px-4 py-10 pb-20">
+      <main className="ru-force-light mx-auto min-h-dvh max-w-2xl bg-white px-4 py-10 pb-20">
         <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
           Support
         </p>

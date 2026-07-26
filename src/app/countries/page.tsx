@@ -19,7 +19,7 @@ export default function CountriesPage() {
   return (
     <>
       <SiteNav />
-      <main className="min-h-dvh bg-white text-slate-900">
+      <main className="ru-force-light min-h-dvh bg-white text-slate-900">
         <div className="mx-auto max-w-3xl px-4 py-10 pb-24">
           <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
             {MARKET_REGIONS_LABEL}

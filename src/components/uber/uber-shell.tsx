@@ -38,7 +38,7 @@ export function UberShell({
 
   return (
     <div
-      className="fixed inset-x-0 top-0 z-[45] flex flex-col bg-[#F9FAFB] font-[system-ui,Segoe_UI,sans-serif]"
+      className="ru-force-light fixed inset-x-0 top-0 z-[45] flex flex-col bg-[#F9FAFB] font-[system-ui,Segoe_UI,sans-serif] text-slate-900"
       style={{ bottom: bottomInset }}
     >
       {/* Top ~55%: map */}
@@ -75,7 +75,7 @@ export function UberShell({
 
       {/* Bottom ~45%: floating sheet */}
       <div
-        className="relative z-[500] -mt-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.12)]"
+        className="relative z-[500] -mt-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-t-3xl bg-white text-slate-900 shadow-[0_-4px_20px_rgba(0,0,0,0.12)]"
       >
         <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-gray-200" />
         <div

@@ -70,7 +70,7 @@ export function SiteNav({
   return (
     <>
       <header
-        className={`sticky top-0 z-40 border-b bg-white/95 text-black backdrop-blur transition-shadow ${
+        className={`ru-force-light sticky top-0 z-40 border-b bg-white/95 text-black backdrop-blur transition-shadow ${
           scrolled
             ? "border-[var(--ru-line)] shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
             : "border-transparent"
@@ -153,7 +153,7 @@ export function SiteNav({
           onClick={() => setOpen(false)}
         />
         <aside
-          className={`absolute top-0 right-0 flex h-full w-[min(100%,320px)] flex-col bg-white shadow-xl transition-transform duration-300 ${
+          className={`ru-force-light absolute top-0 right-0 flex h-full w-[min(100%,320px)] flex-col bg-white text-slate-900 shadow-xl transition-transform duration-300 ${
             open ? "translate-x-0" : "translate-x-full"
           }`}
         >

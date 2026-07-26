@@ -50,7 +50,7 @@ export default function PartnersPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-3xl px-4 py-12">
+        <section className="ru-force-light mx-auto max-w-3xl bg-white px-4 py-12">
           <h2 className="text-2xl font-bold text-slate-900">How it works</h2>
           <ol className="mt-6 space-y-5">
             {[
@@ -88,7 +88,7 @@ export default function PartnersPage() {
           </ol>
         </section>
 
-        <section className="border-y border-slate-100 bg-slate-50">
+        <section className="ru-force-light border-y border-slate-100 bg-slate-50 text-slate-900">
           <div className="mx-auto max-w-3xl px-4 py-12">
             <h2 className="text-2xl font-bold text-slate-900">Pricing</h2>
             <p className="mt-3 text-sm text-slate-600">
@@ -114,7 +114,7 @@ export default function PartnersPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-3xl px-4 py-12 pb-20 text-center">
+        <section className="ru-force-light mx-auto max-w-3xl bg-white px-4 py-12 pb-20 text-center text-slate-900">
           <h2 className="text-2xl font-bold text-slate-900">
             Ready to go self-serve?
           </h2>

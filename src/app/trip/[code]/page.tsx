@@ -22,7 +22,7 @@ export default async function TripPage({
   return (
     <>
       <SiteNav />
-      <main className="min-h-dvh bg-white text-slate-900">
+      <main className="ru-force-light min-h-dvh bg-white text-slate-900">
         <div className="mx-auto max-w-lg px-4 py-8 pb-16">
           <LiveTrip initialJob={job} initialRating={rating} />
           {!stillSearching ? (

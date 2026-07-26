@@ -11,6 +11,12 @@ import { formatPhonePlaceholder } from "@/lib/country-preference";
 import type { VehicleType } from "@/lib/types";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
 
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="block text-sm font-semibold text-slate-800">{children}</span>
+  );
+}
+
 export function DriverApplyForm({
   compactTitle,
 }: {
@@ -48,22 +54,23 @@ export function DriverApplyForm({
   }
 
   return (
-    <section className="ru-card p-5">
-      <h2 className="font-[family-name:var(--font-display)] text-xl font-bold">
+    <section className="ru-card border border-slate-200 bg-white p-5 text-slate-900 shadow-sm">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-bold text-slate-900">
         {compactTitle ?? "Apply to drive"}
       </h2>
-      <p className="mt-1 text-sm text-slate-600">
-        Apply for <strong>Village Ride</strong>,{" "}
-        <strong>Village Delivery</strong>, and <strong>Farm Connect</strong>{" "}
-        jobs in one go. Upload a clear photo of yourself and your vehicle
-        (plate visible) — we verify every driver before they go online.
+      <p className="mt-1 text-sm leading-relaxed text-slate-700">
+        Apply for <strong className="text-slate-900">Village Ride</strong>,{" "}
+        <strong className="text-slate-900">Village Delivery</strong>,{" "}
+        <strong className="text-slate-900">Farm Connect</strong>, and{" "}
+        <strong className="text-slate-900">Courier</strong> in one go. Upload a
+        clear photo of yourself and your vehicle (plate visible).
       </p>
 
-      <form onSubmit={onSubmit} className="mt-4 grid gap-3 sm:grid-cols-2">
-        <label className="block text-sm sm:col-span-2">
-          <span className="font-medium">Country</span>
+      <form onSubmit={onSubmit} className="mt-5 grid gap-4 sm:grid-cols-2">
+        <label className="block sm:col-span-2">
+          <FieldLabel>Country</FieldLabel>
           <select
-            className="ru-input mt-1"
+            className="ru-input mt-1.5"
             value={countryCode}
             onChange={(e) => setCountry(e.target.value as CountryCode)}
           >
@@ -74,26 +81,26 @@ export function DriverApplyForm({
             ))}
           </select>
         </label>
-        <label className="block text-sm">
-          <span className="font-medium">Full name</span>
-          <input required name="full_name" className="ru-input mt-1" />
+        <label className="block">
+          <FieldLabel>Full name</FieldLabel>
+          <input required name="full_name" className="ru-input mt-1.5" />
         </label>
-        <label className="block text-sm">
-          <span className="font-medium">
+        <label className="block">
+          <FieldLabel>
             Phone ({country.flag} +{country.phonePrefix})
-          </span>
+          </FieldLabel>
           <input
             required
             name="phone"
-            className="ru-input mt-1"
+            className="ru-input mt-1.5"
             placeholder={formatPhonePlaceholder(countryCode)}
           />
         </label>
-        <label className="block text-sm">
-          <span className="font-medium">Vehicle</span>
+        <label className="block">
+          <FieldLabel>Vehicle</FieldLabel>
           <select
             name="vehicle_type"
-            className="ru-input mt-1"
+            className="ru-input mt-1.5"
             defaultValue={"bakkie" satisfies VehicleType}
           >
             {(Object.keys(VEHICLE_LABELS) as VehicleType[]).map((v) => (
@@ -103,57 +110,57 @@ export function DriverApplyForm({
             ))}
           </select>
         </label>
-        <label className="block text-sm">
-          <span className="font-medium">Area / town you cover</span>
+        <label className="block">
+          <FieldLabel>Area / town you cover</FieldLabel>
           <input
             required
             name="area"
-            className="ru-input mt-1"
+            className="ru-input mt-1.5"
             placeholder="Your village or town"
           />
         </label>
-        <label className="block text-sm">
-          <span className="font-medium">Make</span>
+        <label className="block">
+          <FieldLabel>Make</FieldLabel>
           <input
             name="vehicle_make"
-            className="ru-input mt-1"
+            className="ru-input mt-1.5"
             placeholder="Toyota"
           />
         </label>
-        <label className="block text-sm">
-          <span className="font-medium">Model</span>
+        <label className="block">
+          <FieldLabel>Model</FieldLabel>
           <input
             name="vehicle_model"
-            className="ru-input mt-1"
+            className="ru-input mt-1.5"
             placeholder="Hilux"
           />
         </label>
-        <label className="block text-sm">
-          <span className="font-medium">Color</span>
+        <label className="block">
+          <FieldLabel>Color</FieldLabel>
           <input
             name="vehicle_color"
-            className="ru-input mt-1"
+            className="ru-input mt-1.5"
             placeholder="White"
           />
         </label>
-        <label className="block text-sm">
-          <span className="font-medium">License plate</span>
+        <label className="block">
+          <FieldLabel>License plate</FieldLabel>
           <input
             name="vehicle_registration"
-            className="ru-input mt-1"
+            className="ru-input mt-1.5"
             placeholder="EC 123-456"
           />
         </label>
-        <label className="block text-sm sm:col-span-2">
-          <span className="font-medium">Notes (optional)</span>
+        <label className="block sm:col-span-2">
+          <FieldLabel>Notes (optional)</FieldLabel>
           <input
             name="notes"
-            className="ru-input mt-1"
+            className="ru-input mt-1.5"
             placeholder="Anything else we should know"
           />
         </label>
 
-        <div className="sm:col-span-2 rounded-xl border border-amber-100 bg-amber-50/80 p-4">
+        <div className="sm:col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-4">
           <p className="text-sm font-bold text-amber-950">
             Required photos (JPEG/PNG, max 5MB each)
           </p>
@@ -183,10 +190,10 @@ export function DriverApplyForm({
           </div>
         </div>
 
-        <label className="flex items-start gap-2 sm:col-span-2 text-sm text-slate-700">
+        <label className="flex items-start gap-2 text-sm text-slate-800 sm:col-span-2">
           <input
             type="checkbox"
-            className="mt-1"
+            className="mt-1 h-4 w-4 accent-[#1A4D3A]"
             checked={conduct}
             onChange={(e) => setConduct(e.target.checked)}
             required
@@ -208,7 +215,7 @@ export function DriverApplyForm({
           <button
             type="submit"
             disabled={pending || !conduct}
-            className="rounded-xl bg-[#1A4D3A] px-5 py-3 text-sm font-bold text-white disabled:opacity-50"
+            className="w-full rounded-xl bg-[#1A4D3A] px-5 py-3.5 text-sm font-bold text-white disabled:opacity-50 sm:w-auto"
           >
             {pending ? "Uploading photos…" : "Submit for verification"}
           </button>
@@ -216,12 +223,12 @@ export function DriverApplyForm({
       </form>
 
       {message ? (
-        <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+        <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-950">
           {message}
         </p>
       ) : null}
       {error ? (
-        <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800">
+        <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-900">
           {error}
         </p>
       ) : null}
