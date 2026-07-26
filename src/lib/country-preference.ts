@@ -45,9 +45,12 @@ export function getStoredLocale(): AppLocale | "en" {
   if (typeof window === "undefined") return "en";
   try {
     const raw = localStorage.getItem(LOCALE_KEY);
+    if (!raw) return "en";
     if (raw === "en") return "en";
     const country = getCountry(getStoredCountryCode());
-    if (raw === country.language) return country.language;
+    if (country.languages.some((l) => l.code === raw)) {
+      return raw as AppLocale | "en";
+    }
   } catch {
     /* ignore */
   }
@@ -65,6 +68,7 @@ export function formatPhonePlaceholder(countryCode?: string | null): string {
     case "ZA":
       return "063 621 3590";
     case "KE":
+    case "TZ":
       return "0712 345 678";
     case "NG":
       return "0803 123 4567";
@@ -74,7 +78,11 @@ export function formatPhonePlaceholder(countryCode?: string | null): string {
       return "98765 43210";
     case "PH":
       return "0917 123 4567";
+    case "BR":
+      return "11 91234 5678";
+    case "MX":
+      return "55 1234 5678";
     default:
-      return c.phonePrefix;
+      return `+${c.phonePrefix}…`;
   }
 }

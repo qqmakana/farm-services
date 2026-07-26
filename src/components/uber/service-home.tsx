@@ -70,7 +70,7 @@ export function ServiceHomeSheet() {
           Transport for everyone
         </h1>
         <p className="mt-1 text-[15px] text-[var(--ru-muted)]">
-          Village rides, delivery, farm &amp; courier — book in seconds.
+          Rural rides worldwide — delivery, farm &amp; courier. Book in seconds.
         </p>
       </div>
 

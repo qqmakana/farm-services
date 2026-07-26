@@ -16,7 +16,11 @@ export function SiteFooter() {
           </p>
           <p className="mt-0.5 text-slate-500">by {BRAND.company}</p>
           <p className="mt-2 text-xs text-slate-400">
-            Available in: {AVAILABLE_IN_FLAGS}
+            Available in {AVAILABLE_IN_FLAGS.split(" ").length} countries:{" "}
+            {AVAILABLE_IN_FLAGS} ·{" "}
+            <a href="/countries" className="underline">
+              See all
+            </a>
           </p>
         </div>
         <div className="space-y-1">

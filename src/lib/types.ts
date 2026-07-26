@@ -1,5 +1,5 @@
 export type ServiceType = "ride" | "delivery" | "farm" | "courier";
-export type VehicleType = "sedan" | "bakkie" | "truck";
+export type VehicleType = "sedan" | "bakkie" | "truck" | "motorcycle";
 export type JobStatus =
   | "new" // legacy — treat as searching_driver
   | "searching_driver"

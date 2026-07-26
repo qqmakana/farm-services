@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useCountry } from "@/components/country/country-provider";
-import type { CountryCode } from "@/lib/countries";
+import type { AppLocale, CountryCode } from "@/lib/countries";
+import { GLOBAL_COUNTRY_COUNT } from "@/lib/countries";
 import { t } from "@/lib/i18n";
 
 export function CountrySelector({
@@ -15,19 +16,39 @@ export function CountrySelector({
 }) {
   const { country, countryCode, locale, setCountry, setLocale, countries } =
     useCountry();
+  const [filter, setFilter] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return countries;
+    return countries.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.code.toLowerCase().includes(q) ||
+        c.currencySymbol.toLowerCase().includes(q),
+    );
+  }, [countries, filter]);
 
   return (
     <div className={compact ? "space-y-2" : "space-y-3"}>
       <label className="block text-sm font-medium text-slate-700">
         {t("country_label", { locale, country: countryCode })}
+        {!compact ? (
+          <input
+            className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-2.5 text-sm outline-none focus:border-[#1A4D3A]"
+            placeholder={`Search ${GLOBAL_COUNTRY_COUNT} countries…`}
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+        ) : null}
         <select
           className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 text-sm outline-none focus:border-[#1A4D3A]"
           value={countryCode}
           onChange={(e) => setCountry(e.target.value as CountryCode)}
         >
-          {countries.map((c) => (
+          {(filter.trim() ? filtered : countries).map((c) => (
             <option key={c.code} value={c.code}>
-              {c.flag} {c.name} ({c.currencySymbol})
+              {c.flag} {c.name} — {c.currencySymbol}
             </option>
           ))}
         </select>
@@ -40,11 +61,14 @@ export function CountrySelector({
             className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 text-sm outline-none focus:border-[#1A4D3A]"
             value={locale}
             onChange={(e) =>
-              setLocale(e.target.value as typeof locale)
+              setLocale(e.target.value as AppLocale | "en")
             }
           >
-            <option value="en">English</option>
-            <option value={country.language}>{country.languageLabel}</option>
+            {country.languages.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.label}
+              </option>
+            ))}
           </select>
         </label>
       ) : null}
@@ -63,6 +87,17 @@ export function CountryWelcomeModal() {
     setCountry,
     countries,
   } = useCountry();
+  const [filter, setFilter] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return countries;
+    return countries.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.code.toLowerCase().includes(q),
+    );
+  }, [countries, filter]);
 
   useEffect(() => {
     if (!ready || !needsCountryPick) return;
@@ -78,7 +113,6 @@ export function CountryWelcomeModal() {
   if (pathname.startsWith("/onboarding")) return null;
 
   function dismiss() {
-    // Keep current default (ZA on first visit) and close — user changed their mind
     setCountry(countryCode);
   }
 
@@ -95,7 +129,7 @@ export function CountryWelcomeModal() {
         aria-label="Close"
         onClick={dismiss}
       />
-      <div className="relative w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+      <div className="relative flex max-h-[85vh] w-full max-w-md flex-col rounded-2xl bg-white p-5 shadow-xl">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p
@@ -105,7 +139,8 @@ export function CountryWelcomeModal() {
               {t("select_country", { locale, country: countryCode })}
             </p>
             <p className="mt-1 text-sm text-slate-600">
-              {t("welcome_country", { locale, country: countryCode })}
+              {t("welcome_country", { locale, country: countryCode })}{" "}
+              ({GLOBAL_COUNTRY_COUNT} countries)
             </p>
           </div>
           <button
@@ -117,8 +152,14 @@ export function CountryWelcomeModal() {
             ×
           </button>
         </div>
-        <div className="mt-4 grid gap-2">
-          {countries.map((c) => (
+        <input
+          className="mt-3 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-2.5 text-sm outline-none focus:border-[#1A4D3A]"
+          placeholder="Search country…"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+        />
+        <div className="mt-3 grid max-h-[45vh] gap-2 overflow-y-auto pr-1">
+          {filtered.map((c) => (
             <button
               key={c.code}
               type="button"

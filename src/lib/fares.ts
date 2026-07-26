@@ -41,6 +41,15 @@ function resolveRate(params: {
     };
   }
 
+  if (params.vehicle === "motorcycle") {
+    return {
+      base: p.motorcycle.base,
+      perKm: p.motorcycle.perKm,
+      commissionPct: p.commissionPct,
+      currency: p.currency,
+    };
+  }
+
   const service = params.serviceType;
   if (service === "ride") {
     return {

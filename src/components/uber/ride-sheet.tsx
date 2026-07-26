@@ -36,6 +36,7 @@ export function RideSheet({
   const [phone, setPhone] = useState("");
   const [passengers, setPassengers] = useState(1);
   const [vehicle, setVehicle] = useState<VehicleType>("sedan");
+  const [localModeId, setLocalModeId] = useState<string | null>(null);
   const [whenMode, setWhenMode] = useState<WhenMode>("now");
   const [scheduledLocal, setScheduledLocal] = useState(defaultLaterLocal);
   const [fee, setFee] = useState(country.pricing.ride.base);
@@ -205,23 +206,34 @@ export function RideSheet({
           {(
             [
               {
-                id: "sedan" as const,
+                id: "sedan" as VehicleType,
                 label: "Car (up to 4 people)",
                 from: country.pricing.ride.base,
+                modeId: null as string | null,
               },
               {
-                id: "bakkie" as const,
-                label: "Bakkie (up to 6 people)",
+                id: "bakkie" as VehicleType,
+                label: "Bakkie / pickup (up to 6 people)",
                 from: country.pricing.delivery.base,
+                modeId: null as string | null,
               },
-            ] as const
+              ...country.localRideModes.map((m) => ({
+                id: "motorcycle" as VehicleType,
+                label: m.label,
+                from: country.pricing.motorcycle.base,
+                modeId: m.id as string,
+              })),
+            ]
           ).map((opt) => (
             <button
-              key={opt.id}
+              key={`${opt.id}-${opt.modeId ?? opt.label}`}
               type="button"
-              onClick={() => setVehicle(opt.id)}
+              onClick={() => {
+                setVehicle(opt.id);
+                setLocalModeId(opt.modeId);
+              }}
               className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition ${
-                vehicle === opt.id
+                vehicle === opt.id && localModeId === opt.modeId
                   ? "border-[#1A4D3A] bg-[#E8F5E9]"
                   : "border-slate-200 bg-white hover:bg-slate-50"
               }`}
@@ -248,7 +260,12 @@ export function RideSheet({
         baseFee={baseFee}
         nightSurchargeAmount={nightExtra}
         buttonLabel="Request Ride"
-        description={`Village Ride · ${vehicle}${isNight ? " · Night" : ""}`}
+        description={`Village Ride · ${
+          localModeId
+            ? country.localRideModes.find((m) => m.id === localModeId)?.label ??
+              vehicle
+            : vehicle
+        }${isNight ? " · Night" : ""}`}
         draft={() => ({
           service_type: "ride",
           required_vehicle: vehicle,
@@ -269,6 +286,7 @@ export function RideSheet({
             seats: passengers,
             route_name: `${pickup.landmark} → ${dropoff.landmark}`,
             direction: "to_village" as const,
+            ...(localModeId ? { local_mode: localModeId } : {}),
           },
           fee_amount: fee,
         })}

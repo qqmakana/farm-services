@@ -547,7 +547,7 @@ export async function submitDriverJoinApplication(input: {
   full_name: string;
   email?: string;
   phone: string;
-  vehicle_type: "sedan" | "bakkie" | "truck";
+  vehicle_type: "sedan" | "bakkie" | "truck" | "motorcycle";
   area?: string;
 }) {
   if (!input.full_name.trim() || !input.phone.trim()) {
