@@ -1,6 +1,9 @@
 /**
- * Multi-country Village Ride config — global rural markets.
- * South Africa remains default; all listed markets are enabled.
+ * Multi-country Village Ride config — emerging rural markets only.
+ *
+ * Strategy: villages in Africa, Asia, and Latin America.
+ * NOT targeting US, UK, Canada, Australia, or Western Europe
+ * (Uber/Lyft saturation, high CAC, different problem set).
  */
 
 export type CountryCode =
@@ -632,6 +635,9 @@ export function isCountryCode(value: unknown): value is CountryCode {
 }
 
 export function getCountry(code?: string | null): CountryConfig {
+  if (code && isCountryBlocked(code)) {
+    return COUNTRIES[DEFAULT_COUNTRY];
+  }
   if (isCountryCode(code) && COUNTRIES[code].enabled) {
     return COUNTRIES[code];
   }
@@ -726,3 +732,101 @@ export const AVAILABLE_IN_FLAGS = enabledCountries()
   .join(" ");
 
 export const GLOBAL_COUNTRY_COUNT = enabledCountries().length;
+
+/** Explicit allow-list — must match CountryCode keys above. */
+export const SUPPORTED_COUNTRIES: readonly CountryCode[] = [
+  "ZA",
+  "KE",
+  "NG",
+  "GH",
+  "TZ",
+  "KZ",
+  "NA",
+  "BW",
+  "EG",
+  "PK",
+  "BR",
+  "IN",
+  "PH",
+  "MX",
+  "ID",
+  "VN",
+  "TH",
+  "CO",
+  "PE",
+  "UZ",
+  "KG",
+  "MN",
+];
+
+/** Developed markets we deliberately do not serve (yet). */
+export const BLOCKED_COUNTRIES = [
+  "US",
+  "GB",
+  "UK",
+  "CA",
+  "AU",
+  "NZ",
+  "DE",
+  "FR",
+  "ES",
+  "IT",
+  "NL",
+  "BE",
+  "SE",
+  "NO",
+  "DK",
+  "FI",
+  "IE",
+  "AT",
+  "CH",
+  "GR",
+  "PT",
+  "PL",
+  "CZ",
+  "HU",
+] as const;
+
+export const MARKET_REGIONS_LABEL = "Africa, Asia, and Latin America";
+
+export const UNSUPPORTED_MARKET_MESSAGE = `Village Ride is currently available in ${GLOBAL_COUNTRY_COUNT} countries across ${MARKET_REGIONS_LABEL}. We're not yet in the US, UK, or other developed city markets — we build for villages. Stay tuned for future expansion.`;
+
+export function isCountrySupported(countryCode: string): boolean {
+  return (SUPPORTED_COUNTRIES as readonly string[]).includes(
+    countryCode.toUpperCase(),
+  );
+}
+
+export function isCountryBlocked(countryCode: string): boolean {
+  return (BLOCKED_COUNTRIES as readonly string[]).includes(
+    countryCode.toUpperCase(),
+  );
+}
+
+/** Timezones that strongly suggest a blocked developed market (soft notice only). */
+const DEVELOPED_TZ_PREFIXES = [
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Toronto",
+  "America/Vancouver",
+  "Europe/London",
+  "Europe/Dublin",
+  "Europe/Paris",
+  "Europe/Berlin",
+  "Europe/Amsterdam",
+  "Europe/Rome",
+  "Europe/Madrid",
+  "Australia/",
+  "Pacific/Auckland",
+] as const;
+
+export function looksLikeUnsupportedMarketTimezone(
+  timeZone?: string | null,
+): boolean {
+  if (!timeZone) return false;
+  return DEVELOPED_TZ_PREFIXES.some(
+    (p) => timeZone === p || timeZone.startsWith(p),
+  );
+}

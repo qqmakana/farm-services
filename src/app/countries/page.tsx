@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
 import {
   GLOBAL_COUNTRY_COUNT,
+  MARKET_REGIONS_LABEL,
   enabledCountries,
   paymentLabel,
 } from "@/lib/countries";
@@ -9,8 +10,7 @@ import { BRAND } from "@/lib/brand";
 
 export const metadata = {
   title: `Available in ${GLOBAL_COUNTRY_COUNT} countries | ${BRAND.appName}`,
-  description:
-    "Village Ride — rural transport worldwide. Landmark booking, cash payment, fair driver earnings.",
+  description: `Village Ride — rural transport across ${MARKET_REGIONS_LABEL}. Landmark booking, cash payment, fair driver earnings. Not a US/UK city app.`,
 };
 
 export default function CountriesPage() {
@@ -22,15 +22,16 @@ export default function CountriesPage() {
       <main className="min-h-dvh bg-white text-slate-900">
         <div className="mx-auto max-w-3xl px-4 py-10 pb-24">
           <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-            Global rural logistics
+            {MARKET_REGIONS_LABEL}
           </p>
           <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-[#1A4D3A] sm:text-4xl">
-            Village Ride — available in {GLOBAL_COUNTRY_COUNT} countries
+            Village Ride — {GLOBAL_COUNTRY_COUNT} countries, 3 continents
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
-            Same problems exist in villages worldwide: no street addresses, cash
-            economies, and drivers who deserve a fair share. We built for rural
-            South Africa — and the same playbook works from Kenya to Kazakhstan.
+            We serve villages — not Uber cities. Landmark booking, cash
+            economies, and fair driver pay matter in {MARKET_REGIONS_LABEL}. We
+            are not launching in the US, UK, or other saturated developed markets
+            where street addresses and cards already dominate.
           </p>
 
           <ul className="mt-6 flex flex-wrap gap-2 text-sm font-medium text-[#1A4D3A]">

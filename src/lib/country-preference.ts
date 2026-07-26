@@ -5,7 +5,9 @@
 import {
   DEFAULT_COUNTRY,
   getCountry,
+  isCountryBlocked,
   isCountryCode,
+  isCountrySupported,
   type AppLocale,
   type CountryCode,
 } from "./countries";
@@ -28,6 +30,7 @@ export function getStoredCountryCode(): CountryCode {
 export function setStoredCountryCode(code: CountryCode): void {
   if (typeof window === "undefined") return;
   if (!getCountry(code).enabled) return;
+  if (isCountryBlocked(code) || !isCountrySupported(code)) return;
   localStorage.setItem(COUNTRY_KEY, code);
   localStorage.setItem(PICKED_KEY, "1");
 }
