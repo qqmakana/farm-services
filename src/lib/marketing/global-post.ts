@@ -5,27 +5,26 @@ import {
 } from "@/lib/countries";
 
 /** Ready-to-copy global launch post for social / WhatsApp. */
-export const GLOBAL_LAUNCH_POST = `🌍 Village Ride is now available in ${GLOBAL_COUNTRY_COUNT} countries across 3 continents!
+export const GLOBAL_LAUNCH_POST = `🌍 Village Ride is now available in ${GLOBAL_COUNTRY_COUNT} countries!
 
-${AVAILABLE_IN_FLAGS}
+${AVAILABLE_IN_FLAGS} + ${GLOBAL_COUNTRY_COUNT - AVAILABLE_IN_FLAGS.split(" ").filter(Boolean).length} more
 
-Africa · Asia · Latin America
+Every continent · villages & small towns worldwide
 
-We serve villages — not Uber cities. That's why we're not in the US or UK.
-Landmark booking · Cash payment · Drivers keep 85%
+Landmark booking · Cash & Card · Drivers keep 85%
 
 🚗 Rides · 📦 Delivery · 🚜 Farm · 📦 Courier
 
 https://village-ride.vercel.app
 https://village-ride.vercel.app/countries
 
-#VillageRide #RuralLogistics #EmergingMarkets`;
+#VillageRide #RuralLogistics #Global`;
 
 export function globalPostForCountry(countryName: string, flag: string): string {
   return `${flag} Village Ride is live in ${countryName}!
 
-Rural rides, delivery, farm & courier — built for villages, not big-city apps.
-Landmark booking. Cash payment. Drivers keep 85%.
+Rural rides, delivery, farm & courier.
+Landmark booking. Cash & Card. Drivers keep 85%.
 
 Open: https://village-ride.vercel.app
 Drive: https://village-ride.vercel.app/driver/join

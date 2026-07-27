@@ -1,34 +1,12 @@
 /**
- * Multi-country Village Ride config — emerging rural markets only.
- *
- * Strategy: villages in Africa, Asia, and Latin America.
- * NOT targeting US, UK, Canada, Australia, or Western Europe
- * (Uber/Lyft saturation, high CAC, different problem set).
+ * Multi-country Village Ride config — global rural logistics.
+ * Every country in WORLD_COUNTRY_SEEDS is enabled. Featured markets keep
+ * richer local languages, payments, and ride modes.
  */
 
-export type CountryCode =
-  | "ZA"
-  | "KE"
-  | "NG"
-  | "GH"
-  | "TZ"
-  | "KZ"
-  | "NA"
-  | "BW"
-  | "EG"
-  | "PK"
-  | "BR"
-  | "IN"
-  | "PH"
-  | "MX"
-  | "ID"
-  | "VN"
-  | "TH"
-  | "CO"
-  | "PE"
-  | "UZ"
-  | "KG"
-  | "MN";
+import { WORLD_COUNTRY_SEEDS } from "./world-countries-data";
+
+export type CountryCode = string;
 
 export type PaymentMethodId =
   | "cash"
@@ -73,7 +51,12 @@ export type AppLocale =
   | "ur"
   | "mn"
   | "uz"
-  | "ky";
+  | "ky"
+  | "fr"
+  | "de"
+  | "zh"
+  | "ja"
+  | "ko";
 
 export type LocalRideMode = {
   id: "boda" | "okada" | "auto" | "tuktuk" | "tricycle";
@@ -100,7 +83,6 @@ export type CountryConfig = {
   currencySymbol: string;
   phonePrefix: string;
   phoneLocalDigits: number;
-  /** Primary local language code (non-English). */
   language: AppLocale;
   languageLabel: string;
   languages: LanguageOption[];
@@ -110,7 +92,6 @@ export type CountryConfig = {
   payments: PaymentMethodId[];
   landmarkHints: readonly string[];
   pricing: CountryPricing;
-  /** Country-specific ride modes (Boda, Okada, Auto, etc.). */
   localRideModes: LocalRideMode[];
   enabled: boolean;
 };
@@ -160,30 +141,115 @@ function pricingFromMin(
   };
 }
 
-function country(
-  partial: Omit<CountryConfig, "landmarkHints" | "enabled" | "localRideModes"> & {
-    landmarkHints?: readonly string[];
-    localRideModes?: LocalRideMode[];
-    enabled?: boolean;
-  },
-): CountryConfig {
-  return {
-    ...partial,
-    landmarkHints: partial.landmarkHints ?? RURAL_HINTS,
-    localRideModes: partial.localRideModes ?? [],
-    enabled: partial.enabled ?? true,
-  };
+/** Rough fare floors by currency so new markets get usable quotes. */
+function defaultFareForCurrency(currency: string): { min: number; perKm: number } {
+  switch (currency) {
+    case "USD":
+    case "CAD":
+    case "AUD":
+    case "NZD":
+    case "SGD":
+    case "CHF":
+      return { min: 5, perKm: 1.5 };
+    case "EUR":
+    case "GBP":
+      return { min: 4, perKm: 1.2 };
+    case "JPY":
+    case "KRW":
+      return { min: 800, perKm: 200 };
+    case "CNY":
+    case "HKD":
+    case "TWD":
+      return { min: 20, perKm: 6 };
+    case "INR":
+    case "PKR":
+    case "BDT":
+    case "LKR":
+    case "NPR":
+      return { min: 100, perKm: 30 };
+    case "IDR":
+    case "VND":
+    case "UZS":
+    case "LAK":
+    case "KHR":
+      return { min: 20000, perKm: 5000 };
+    case "NGN":
+      return { min: 1500, perKm: 500 };
+    case "KES":
+    case "UGX":
+    case "TZS":
+      return { min: 300, perKm: 100 };
+    case "ZAR":
+    case "NAD":
+    case "BWP":
+    case "LSL":
+    case "SZL":
+      return { min: 30, perKm: 10 };
+    case "GHS":
+      return { min: 20, perKm: 7 };
+    case "XOF":
+    case "XAF":
+      return { min: 1500, perKm: 400 };
+    case "BRL":
+    case "PEN":
+    case "MXN":
+    case "CLP":
+    case "COP":
+    case "ARS":
+      return { min: 20, perKm: 6 };
+    case "AED":
+    case "SAR":
+    case "QAR":
+    case "KWD":
+    case "OMR":
+    case "BHD":
+      return { min: 15, perKm: 4 };
+    case "TRY":
+    case "EGP":
+    case "MAD":
+    case "TND":
+      return { min: 50, perKm: 15 };
+    case "RUB":
+    case "UAH":
+    case "KZT":
+    case "KGS":
+      return { min: 300, perKm: 80 };
+    case "THB":
+    case "MYR":
+    case "PHP":
+      return { min: 60, perKm: 20 };
+    case "PLN":
+    case "CZK":
+    case "HUF":
+    case "RON":
+      return { min: 20, perKm: 6 };
+    case "SEK":
+    case "NOK":
+    case "DKK":
+    case "ISK":
+      return { min: 50, perKm: 15 };
+    default:
+      return { min: 10, perKm: 3 };
+  }
 }
 
-export const COUNTRIES: Record<CountryCode, CountryConfig> = {
-  ZA: country({
-    code: "ZA",
-    name: "South Africa",
-    flag: "🇿🇦",
-    currency: "ZAR",
-    currencySymbol: "R",
-    phonePrefix: "27",
-    phoneLocalDigits: 9,
+type FeaturedOverride = Partial<
+  Pick<
+    CountryConfig,
+    | "language"
+    | "languageLabel"
+    | "languages"
+    | "locale"
+    | "timezone"
+    | "payments"
+    | "localRideModes"
+    | "pricing"
+  >
+> & { fareMin?: number; farePerKm?: number };
+
+/** Richer config for priority / launch markets. */
+const FEATURED: Record<string, FeaturedOverride> = {
+  ZA: {
     language: "xh",
     languageLabel: "isiXhosa",
     languages: [
@@ -194,18 +260,11 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "en-ZA",
     timezone: "Africa/Johannesburg",
-    mapCenter: { lat: -31.5833, lng: 28.7833 },
-    payments: ["cash", "paypal", "eft"],
-    pricing: pricingFromMin("ZAR", 30, 10),
-  }),
-  KE: country({
-    code: "KE",
-    name: "Kenya",
-    flag: "🇰🇪",
-    currency: "KES",
-    currencySymbol: "KSh",
-    phonePrefix: "254",
-    phoneLocalDigits: 9,
+    payments: ["cash", "paypal", "eft", "card"],
+    fareMin: 30,
+    farePerKm: 10,
+  },
+  KE: {
     language: "sw",
     languageLabel: "Swahili",
     languages: [
@@ -214,19 +273,12 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "en-KE",
     timezone: "Africa/Nairobi",
-    mapCenter: { lat: -1.2921, lng: 36.8219 },
-    payments: ["cash", "mpesa"],
+    payments: ["cash", "mpesa", "card"],
     localRideModes: [{ id: "boda", label: "Boda (motorcycle)" }],
-    pricing: pricingFromMin("KES", 300, 100),
-  }),
-  NG: country({
-    code: "NG",
-    name: "Nigeria",
-    flag: "🇳🇬",
-    currency: "NGN",
-    currencySymbol: "₦",
-    phonePrefix: "234",
-    phoneLocalDigits: 10,
+    fareMin: 300,
+    farePerKm: 100,
+  },
+  NG: {
     language: "yo",
     languageLabel: "Yoruba",
     languages: [
@@ -237,19 +289,12 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "en-NG",
     timezone: "Africa/Lagos",
-    mapCenter: { lat: 6.5244, lng: 3.3792 },
-    payments: ["cash", "bank_transfer", "paystack"],
+    payments: ["cash", "bank_transfer", "paystack", "card"],
     localRideModes: [{ id: "okada", label: "Okada (motorcycle)" }],
-    pricing: pricingFromMin("NGN", 1500, 500),
-  }),
-  GH: country({
-    code: "GH",
-    name: "Ghana",
-    flag: "🇬🇭",
-    currency: "GHS",
-    currencySymbol: "GH₵",
-    phonePrefix: "233",
-    phoneLocalDigits: 9,
+    fareMin: 1500,
+    farePerKm: 500,
+  },
+  GH: {
     language: "ak",
     languageLabel: "Twi",
     languages: [
@@ -258,18 +303,11 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "en-GH",
     timezone: "Africa/Accra",
-    mapCenter: { lat: 5.6037, lng: -0.187 },
-    payments: ["cash", "mtn_momo", "paystack"],
-    pricing: pricingFromMin("GHS", 20, 7),
-  }),
-  TZ: country({
-    code: "TZ",
-    name: "Tanzania",
-    flag: "🇹🇿",
-    currency: "TZS",
-    currencySymbol: "TSh",
-    phonePrefix: "255",
-    phoneLocalDigits: 9,
+    payments: ["cash", "mtn_momo", "paystack", "card"],
+    fareMin: 20,
+    farePerKm: 7,
+  },
+  TZ: {
     language: "sw",
     languageLabel: "Swahili",
     languages: [
@@ -278,19 +316,12 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "en-TZ",
     timezone: "Africa/Dar_es_Salaam",
-    mapCenter: { lat: -6.7924, lng: 39.2083 },
-    payments: ["cash", "mpesa"],
+    payments: ["cash", "mpesa", "card"],
     localRideModes: [{ id: "boda", label: "Boda (motorcycle)" }],
-    pricing: pricingFromMin("TZS", 5000, 1500),
-  }),
-  KZ: country({
-    code: "KZ",
-    name: "Kazakhstan",
-    flag: "🇰🇿",
-    currency: "KZT",
-    currencySymbol: "₸",
-    phonePrefix: "7",
-    phoneLocalDigits: 10,
+    fareMin: 5000,
+    farePerKm: 1500,
+  },
+  KZ: {
     language: "kk",
     languageLabel: "Kazakh",
     languages: [
@@ -300,52 +331,21 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "ru-KZ",
     timezone: "Asia/Almaty",
-    mapCenter: { lat: 43.222, lng: 76.8512 },
-    payments: ["cash", "kaspi"],
-    pricing: pricingFromMin("KZT", 800, 200),
-  }),
-  NA: country({
-    code: "NA",
-    name: "Namibia",
-    flag: "🇳🇦",
-    currency: "NAD",
-    currencySymbol: "N$",
-    phonePrefix: "264",
-    phoneLocalDigits: 9,
-    language: "en",
-    languageLabel: "English",
-    languages: [{ code: "en", label: "English" }],
-    locale: "en-NA",
-    timezone: "Africa/Windhoek",
-    mapCenter: { lat: -22.5609, lng: 17.0658 },
-    payments: ["cash"],
-    pricing: pricingFromMin("NAD", 30, 10),
-  }),
-  BW: country({
-    code: "BW",
-    name: "Botswana",
-    flag: "🇧🇼",
-    currency: "BWP",
-    currencySymbol: "P",
-    phonePrefix: "267",
-    phoneLocalDigits: 8,
-    language: "en",
-    languageLabel: "English",
-    languages: [{ code: "en", label: "English" }],
-    locale: "en-BW",
-    timezone: "Africa/Gaborone",
-    mapCenter: { lat: -24.6282, lng: 25.9231 },
-    payments: ["cash"],
-    pricing: pricingFromMin("BWP", 25, 8),
-  }),
-  EG: country({
-    code: "EG",
-    name: "Egypt",
-    flag: "🇪🇬",
-    currency: "EGP",
-    currencySymbol: "E£",
-    phonePrefix: "20",
-    phoneLocalDigits: 10,
+    payments: ["cash", "kaspi", "card"],
+    fareMin: 800,
+    farePerKm: 200,
+  },
+  NA: {
+    payments: ["cash", "card"],
+    fareMin: 30,
+    farePerKm: 10,
+  },
+  BW: {
+    payments: ["cash", "card"],
+    fareMin: 25,
+    farePerKm: 8,
+  },
+  EG: {
     language: "ar",
     languageLabel: "Arabic",
     languages: [
@@ -354,18 +354,11 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "ar-EG",
     timezone: "Africa/Cairo",
-    mapCenter: { lat: 30.0444, lng: 31.2357 },
-    payments: ["cash"],
-    pricing: pricingFromMin("EGP", 100, 30),
-  }),
-  PK: country({
-    code: "PK",
-    name: "Pakistan",
-    flag: "🇵🇰",
-    currency: "PKR",
-    currencySymbol: "₨",
-    phonePrefix: "92",
-    phoneLocalDigits: 10,
+    payments: ["cash", "card"],
+    fareMin: 100,
+    farePerKm: 30,
+  },
+  PK: {
     language: "ur",
     languageLabel: "Urdu",
     languages: [
@@ -374,18 +367,11 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "en-PK",
     timezone: "Asia/Karachi",
-    mapCenter: { lat: 31.5204, lng: 74.3587 },
-    payments: ["cash", "bank_transfer"],
-    pricing: pricingFromMin("PKR", 500, 150),
-  }),
-  BR: country({
-    code: "BR",
-    name: "Brazil",
-    flag: "🇧🇷",
-    currency: "BRL",
-    currencySymbol: "R$",
-    phonePrefix: "55",
-    phoneLocalDigits: 11,
+    payments: ["cash", "bank_transfer", "card"],
+    fareMin: 500,
+    farePerKm: 150,
+  },
+  BR: {
     language: "pt",
     languageLabel: "Português",
     languages: [
@@ -394,18 +380,11 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "pt-BR",
     timezone: "America/Sao_Paulo",
-    mapCenter: { lat: -23.5505, lng: -46.6333 },
-    payments: ["cash", "pix"],
-    pricing: pricingFromMin("BRL", 15, 5),
-  }),
-  IN: country({
-    code: "IN",
-    name: "India",
-    flag: "🇮🇳",
-    currency: "INR",
-    currencySymbol: "₹",
-    phonePrefix: "91",
-    phoneLocalDigits: 10,
+    payments: ["cash", "pix", "card"],
+    fareMin: 15,
+    farePerKm: 5,
+  },
+  IN: {
     language: "hi",
     languageLabel: "Hindi",
     languages: [
@@ -416,19 +395,12 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "en-IN",
     timezone: "Asia/Kolkata",
-    mapCenter: { lat: 28.6139, lng: 77.209 },
-    payments: ["cash", "upi"],
+    payments: ["cash", "upi", "card"],
     localRideModes: [{ id: "auto", label: "Auto (rickshaw)" }],
-    pricing: pricingFromMin("INR", 100, 30),
-  }),
-  PH: country({
-    code: "PH",
-    name: "Philippines",
-    flag: "🇵🇭",
-    currency: "PHP",
-    currencySymbol: "₱",
-    phonePrefix: "63",
-    phoneLocalDigits: 10,
+    fareMin: 100,
+    farePerKm: 30,
+  },
+  PH: {
     language: "tl",
     languageLabel: "Filipino",
     languages: [
@@ -437,19 +409,12 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "en-PH",
     timezone: "Asia/Manila",
-    mapCenter: { lat: 14.5995, lng: 120.9842 },
-    payments: ["cash", "gcash"],
+    payments: ["cash", "gcash", "card"],
     localRideModes: [{ id: "tricycle", label: "Tricycle" }],
-    pricing: pricingFromMin("PHP", 100, 30),
-  }),
-  MX: country({
-    code: "MX",
-    name: "Mexico",
-    flag: "🇲🇽",
-    currency: "MXN",
-    currencySymbol: "$",
-    phonePrefix: "52",
-    phoneLocalDigits: 10,
+    fareMin: 100,
+    farePerKm: 30,
+  },
+  MX: {
     language: "es",
     languageLabel: "Español",
     languages: [
@@ -458,18 +423,11 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "es-MX",
     timezone: "America/Mexico_City",
-    mapCenter: { lat: 19.4326, lng: -99.1332 },
-    payments: ["cash"],
-    pricing: pricingFromMin("MXN", 80, 25),
-  }),
-  ID: country({
-    code: "ID",
-    name: "Indonesia",
-    flag: "🇮🇩",
-    currency: "IDR",
-    currencySymbol: "Rp",
-    phonePrefix: "62",
-    phoneLocalDigits: 11,
+    payments: ["cash", "card"],
+    fareMin: 80,
+    farePerKm: 25,
+  },
+  ID: {
     language: "id",
     languageLabel: "Bahasa Indonesia",
     languages: [
@@ -478,18 +436,11 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "id-ID",
     timezone: "Asia/Jakarta",
-    mapCenter: { lat: -6.2088, lng: 106.8456 },
-    payments: ["cash", "gopay", "ovo"],
-    pricing: pricingFromMin("IDR", 15000, 5000),
-  }),
-  VN: country({
-    code: "VN",
-    name: "Vietnam",
-    flag: "🇻🇳",
-    currency: "VND",
-    currencySymbol: "₫",
-    phonePrefix: "84",
-    phoneLocalDigits: 9,
+    payments: ["cash", "gopay", "ovo", "card"],
+    fareMin: 15000,
+    farePerKm: 5000,
+  },
+  VN: {
     language: "vi",
     languageLabel: "Tiếng Việt",
     languages: [
@@ -498,18 +449,11 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "vi-VN",
     timezone: "Asia/Ho_Chi_Minh",
-    mapCenter: { lat: 21.0278, lng: 105.8342 },
-    payments: ["cash", "momo_vn"],
-    pricing: pricingFromMin("VND", 50000, 15000),
-  }),
-  TH: country({
-    code: "TH",
-    name: "Thailand",
-    flag: "🇹🇭",
-    currency: "THB",
-    currencySymbol: "฿",
-    phonePrefix: "66",
-    phoneLocalDigits: 9,
+    payments: ["cash", "momo_vn", "card"],
+    fareMin: 50000,
+    farePerKm: 15000,
+  },
+  TH: {
     language: "th",
     languageLabel: "ไทย",
     languages: [
@@ -518,19 +462,12 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "th-TH",
     timezone: "Asia/Bangkok",
-    mapCenter: { lat: 13.7563, lng: 100.5018 },
-    payments: ["cash", "promptpay"],
+    payments: ["cash", "promptpay", "card"],
     localRideModes: [{ id: "tuktuk", label: "Tuk Tuk" }],
-    pricing: pricingFromMin("THB", 60, 20),
-  }),
-  CO: country({
-    code: "CO",
-    name: "Colombia",
-    flag: "🇨🇴",
-    currency: "COP",
-    currencySymbol: "$",
-    phonePrefix: "57",
-    phoneLocalDigits: 10,
+    fareMin: 60,
+    farePerKm: 20,
+  },
+  CO: {
     language: "es",
     languageLabel: "Español",
     languages: [
@@ -539,18 +476,11 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "es-CO",
     timezone: "America/Bogota",
-    mapCenter: { lat: 4.711, lng: -74.0721 },
-    payments: ["cash"],
-    pricing: pricingFromMin("COP", 8000, 2500),
-  }),
-  PE: country({
-    code: "PE",
-    name: "Peru",
-    flag: "🇵🇪",
-    currency: "PEN",
-    currencySymbol: "S/",
-    phonePrefix: "51",
-    phoneLocalDigits: 9,
+    payments: ["cash", "card"],
+    fareMin: 8000,
+    farePerKm: 2500,
+  },
+  PE: {
     language: "es",
     languageLabel: "Español",
     languages: [
@@ -559,18 +489,11 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "es-PE",
     timezone: "America/Lima",
-    mapCenter: { lat: -12.0464, lng: -77.0428 },
-    payments: ["cash"],
-    pricing: pricingFromMin("PEN", 15, 5),
-  }),
-  UZ: country({
-    code: "UZ",
-    name: "Uzbekistan",
-    flag: "🇺🇿",
-    currency: "UZS",
-    currencySymbol: "so'm",
-    phonePrefix: "998",
-    phoneLocalDigits: 9,
+    payments: ["cash", "card"],
+    fareMin: 15,
+    farePerKm: 5,
+  },
+  UZ: {
     language: "uz",
     languageLabel: "Oʻzbek",
     languages: [
@@ -580,18 +503,11 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "uz-UZ",
     timezone: "Asia/Tashkent",
-    mapCenter: { lat: 41.2995, lng: 69.2401 },
-    payments: ["cash"],
-    pricing: pricingFromMin("UZS", 8000, 2500),
-  }),
-  KG: country({
-    code: "KG",
-    name: "Kyrgyzstan",
-    flag: "🇰🇬",
-    currency: "KGS",
-    currencySymbol: "som",
-    phonePrefix: "996",
-    phoneLocalDigits: 9,
+    payments: ["cash", "card"],
+    fareMin: 8000,
+    farePerKm: 2500,
+  },
+  KG: {
     language: "ky",
     languageLabel: "Кыргызча",
     languages: [
@@ -601,18 +517,11 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "ky-KG",
     timezone: "Asia/Bishkek",
-    mapCenter: { lat: 42.8746, lng: 74.5698 },
-    payments: ["cash"],
-    pricing: pricingFromMin("KGS", 150, 50),
-  }),
-  MN: country({
-    code: "MN",
-    name: "Mongolia",
-    flag: "🇲🇳",
-    currency: "MNT",
-    currencySymbol: "₮",
-    phonePrefix: "976",
-    phoneLocalDigits: 8,
+    payments: ["cash", "card"],
+    fareMin: 150,
+    farePerKm: 50,
+  },
+  MN: {
     language: "mn",
     languageLabel: "Монгол",
     languages: [
@@ -621,11 +530,74 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     ],
     locale: "mn-MN",
     timezone: "Asia/Ulaanbaatar",
-    mapCenter: { lat: 47.8864, lng: 106.9057 },
-    payments: ["cash"],
-    pricing: pricingFromMin("MNT", 3000, 1000),
-  }),
+    payments: ["cash", "card"],
+    fareMin: 3000,
+    farePerKm: 1000,
+  },
+  US: {
+    locale: "en-US",
+    timezone: "America/New_York",
+    payments: ["cash", "card", "paypal"],
+    fareMin: 8,
+    farePerKm: 2,
+  },
+  GB: {
+    locale: "en-GB",
+    timezone: "Europe/London",
+    payments: ["cash", "card", "paypal"],
+    fareMin: 6,
+    farePerKm: 1.8,
+  },
+  CA: {
+    locale: "en-CA",
+    timezone: "America/Toronto",
+    payments: ["cash", "card", "paypal"],
+    fareMin: 8,
+    farePerKm: 2,
+  },
+  AU: {
+    locale: "en-AU",
+    timezone: "Australia/Sydney",
+    payments: ["cash", "card", "paypal"],
+    fareMin: 8,
+    farePerKm: 2,
+  },
 };
+
+function buildCountry(seed: (typeof WORLD_COUNTRY_SEEDS)[number]): CountryConfig {
+  const featured = FEATURED[seed.code] ?? {};
+  const fare =
+    featured.fareMin != null && featured.farePerKm != null
+      ? { min: featured.fareMin, perKm: featured.farePerKm }
+      : defaultFareForCurrency(seed.currency);
+
+  return {
+    code: seed.code,
+    name: seed.name,
+    flag: seed.flag,
+    currency: seed.currency,
+    currencySymbol: seed.currencySymbol,
+    phonePrefix: seed.phonePrefix,
+    phoneLocalDigits: seed.phoneLocalDigits,
+    language: featured.language ?? "en",
+    languageLabel: featured.languageLabel ?? "English",
+    languages: featured.languages ?? [{ code: "en", label: "English" }],
+    locale: featured.locale ?? `en-${seed.code}`,
+    timezone: featured.timezone ?? "UTC",
+    mapCenter: seed.mapCenter,
+    payments: featured.payments ?? ["cash", "card"],
+    landmarkHints: RURAL_HINTS,
+    pricing:
+      featured.pricing ??
+      pricingFromMin(seed.currency, fare.min, fare.perKm),
+    localRideModes: featured.localRideModes ?? [],
+    enabled: true,
+  };
+}
+
+export const COUNTRIES: Record<string, CountryConfig> = Object.fromEntries(
+  WORLD_COUNTRY_SEEDS.map((seed) => [seed.code, buildCountry(seed)]),
+);
 
 export function isCountryCode(value: unknown): value is CountryCode {
   return (
@@ -635,18 +607,29 @@ export function isCountryCode(value: unknown): value is CountryCode {
 }
 
 export function getCountry(code?: string | null): CountryConfig {
-  if (code && isCountryBlocked(code)) {
-    return COUNTRIES[DEFAULT_COUNTRY];
-  }
-  if (isCountryCode(code) && COUNTRIES[code].enabled) {
+  if (isCountryCode(code) && COUNTRIES[code]?.enabled) {
     return COUNTRIES[code];
   }
   return COUNTRIES[DEFAULT_COUNTRY];
 }
 
-/** Countries shown in the selector (feature-flagged). */
 export function enabledCountries(): CountryConfig[] {
-  return (Object.values(COUNTRIES) as CountryConfig[]).filter((c) => c.enabled);
+  const featured = new Set(FEATURED_COUNTRY_CODES);
+  return Object.values(COUNTRIES)
+    .filter((c) => c.enabled)
+    .sort((a, b) => {
+      const af = featured.has(a.code) ? 0 : 1;
+      const bf = featured.has(b.code) ? 0 : 1;
+      if (af !== bf) return af - bf;
+      return a.name.localeCompare(b.name);
+    });
+}
+
+/** Featured launch markets (shown first in some UIs). */
+export const FEATURED_COUNTRY_CODES = Object.keys(FEATURED);
+
+export function featuredCountries(): CountryConfig[] {
+  return FEATURED_COUNTRY_CODES.map((code) => COUNTRIES[code]).filter(Boolean);
 }
 
 export function currencyForCountry(code?: string | null): string {
@@ -703,7 +686,7 @@ export function paymentHint(method: PaymentMethodId): string {
     case "paystack":
       return "Card / mobile money via Paystack — coming soon.";
     case "card":
-      return "Card payment.";
+      return "Card payment — available where enabled.";
     case "mtn_momo":
       return "MTN MoMo checkout coming soon — cash works today.";
     case "bank_transfer":
@@ -727,106 +710,34 @@ export function paymentHint(method: PaymentMethodId): string {
   }
 }
 
-export const AVAILABLE_IN_FLAGS = enabledCountries()
+export const AVAILABLE_IN_FLAGS = featuredCountries()
   .map((c) => c.flag)
   .join(" ");
 
 export const GLOBAL_COUNTRY_COUNT = enabledCountries().length;
 
-/** Explicit allow-list — must match CountryCode keys above. */
-export const SUPPORTED_COUNTRIES: readonly CountryCode[] = [
-  "ZA",
-  "KE",
-  "NG",
-  "GH",
-  "TZ",
-  "KZ",
-  "NA",
-  "BW",
-  "EG",
-  "PK",
-  "BR",
-  "IN",
-  "PH",
-  "MX",
-  "ID",
-  "VN",
-  "TH",
-  "CO",
-  "PE",
-  "UZ",
-  "KG",
-  "MN",
-];
+/** All countries are supported — global rural logistics. */
+export const SUPPORTED_COUNTRIES: readonly string[] = WORLD_COUNTRY_SEEDS.map(
+  (c) => c.code,
+);
 
-/** Developed markets we deliberately do not serve (yet). */
-export const BLOCKED_COUNTRIES = [
-  "US",
-  "GB",
-  "UK",
-  "CA",
-  "AU",
-  "NZ",
-  "DE",
-  "FR",
-  "ES",
-  "IT",
-  "NL",
-  "BE",
-  "SE",
-  "NO",
-  "DK",
-  "FI",
-  "IE",
-  "AT",
-  "CH",
-  "GR",
-  "PT",
-  "PL",
-  "CZ",
-  "HU",
-] as const;
+/** @deprecated No blocked markets — kept empty for compatibility. */
+export const BLOCKED_COUNTRIES: readonly string[] = [];
 
-export const MARKET_REGIONS_LABEL = "Africa, Asia, and Latin America";
+export const MARKET_REGIONS_LABEL = "every continent";
 
-export const UNSUPPORTED_MARKET_MESSAGE = `Village Ride is currently available in ${GLOBAL_COUNTRY_COUNT} countries across ${MARKET_REGIONS_LABEL}. We're not yet in the US, UK, or other developed city markets — we build for villages. Stay tuned for future expansion.`;
+export const UNSUPPORTED_MARKET_MESSAGE = `Village Ride is available in ${GLOBAL_COUNTRY_COUNT} countries worldwide. Landmark booking, cash & card, fair driver pay — built for villages and small towns everywhere.`;
 
 export function isCountrySupported(countryCode: string): boolean {
-  return (SUPPORTED_COUNTRIES as readonly string[]).includes(
-    countryCode.toUpperCase(),
-  );
+  return isCountryCode(countryCode.toUpperCase());
 }
 
-export function isCountryBlocked(countryCode: string): boolean {
-  return (BLOCKED_COUNTRIES as readonly string[]).includes(
-    countryCode.toUpperCase(),
-  );
+export function isCountryBlocked(_countryCode: string): boolean {
+  return false;
 }
-
-/** Timezones that strongly suggest a blocked developed market (soft notice only). */
-const DEVELOPED_TZ_PREFIXES = [
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "America/Toronto",
-  "America/Vancouver",
-  "Europe/London",
-  "Europe/Dublin",
-  "Europe/Paris",
-  "Europe/Berlin",
-  "Europe/Amsterdam",
-  "Europe/Rome",
-  "Europe/Madrid",
-  "Australia/",
-  "Pacific/Auckland",
-] as const;
 
 export function looksLikeUnsupportedMarketTimezone(
-  timeZone?: string | null,
+  _timeZone?: string | null,
 ): boolean {
-  if (!timeZone) return false;
-  return DEVELOPED_TZ_PREFIXES.some(
-    (p) => timeZone === p || timeZone.startsWith(p),
-  );
+  return false;
 }

@@ -17,7 +17,7 @@ export const BRAND = {
 export const BRAND_ADDRESS_LINE = `${BRAND.street}, ${BRAND.suburb}, ${BRAND.city}, ${BRAND.postalCode}`;
 
 export const BRAND_TAGLINE =
-  "Rural transport across Africa, Asia & Latin America — landmark booking, cash, fair driver pay.";
+  "Global rural transport — landmark booking, cash & card, fair driver pay. Available worldwide.";
 
 export const BRAND_FULL = `${BRAND.appName} by ${BRAND.company}`;
 

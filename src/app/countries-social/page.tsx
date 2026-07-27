@@ -1,20 +1,21 @@
 import Link from "next/link";
 import {
   GLOBAL_COUNTRY_COUNT,
-  MARKET_REGIONS_LABEL,
   enabledCountries,
+  featuredCountries,
 } from "@/lib/countries";
 import { BRAND } from "@/lib/brand";
 
 export const metadata = {
   title: `${GLOBAL_COUNTRY_COUNT} Countries — Drive with ${BRAND.appName}`,
-  description: `Drivers wanted across ${MARKET_REGIONS_LABEL}. Keep 85%. Cash & Card. Apply now.`,
+  description: `Drivers wanted worldwide — ${GLOBAL_COUNTRY_COUNT} countries. Keep 85%. Cash & Card. Apply now.`,
   robots: { index: false, follow: false },
 };
 
 /** Tall phone-first poster for Instagram / WhatsApp screenshots. */
 export default function CountriesSocialPage() {
-  const countries = enabledCountries();
+  const featured = featuredCountries();
+  const all = enabledCountries();
 
   return (
     <main className="ru-force-light min-h-dvh bg-[#F7F5F0] text-slate-900">
@@ -27,25 +28,37 @@ export default function CountriesSocialPage() {
             {GLOBAL_COUNTRY_COUNT} countries
           </h1>
           <p className="mt-2 text-base text-slate-600">
-            Rural logistics across {MARKET_REGIONS_LABEL}
+            Global rural logistics — every continent
           </p>
         </header>
 
+        <p className="mt-6 text-center text-xs font-semibold tracking-wide text-slate-500 uppercase">
+          Featured markets
+        </p>
         <div
-          className="mt-8 grid grid-cols-5 gap-x-2 gap-y-4"
-          aria-label={`${GLOBAL_COUNTRY_COUNT} country flags`}
+          className="mt-3 grid grid-cols-6 gap-2"
+          aria-label="Featured country flags"
         >
-          {countries.map((c) => (
-            <div
-              key={c.code}
-              className="flex flex-col items-center gap-1"
-              title={c.name}
-            >
-              <span className="text-[2rem] leading-none" aria-hidden>
+          {featured.map((c) => (
+            <div key={c.code} className="text-center" title={c.name}>
+              <span className="text-[1.75rem] leading-none" aria-hidden>
                 {c.flag}
               </span>
-              <span className="max-w-[4.5rem] truncate text-center text-[9px] font-medium text-slate-500">
-                {c.name}
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-6 text-center text-xs font-semibold tracking-wide text-slate-500 uppercase">
+          All {GLOBAL_COUNTRY_COUNT} markets
+        </p>
+        <div
+          className="mt-3 grid grid-cols-8 gap-1.5"
+          aria-label={`${GLOBAL_COUNTRY_COUNT} country flags`}
+        >
+          {all.map((c) => (
+            <div key={c.code} className="text-center" title={c.name}>
+              <span className="text-lg leading-none" aria-hidden>
+                {c.flag}
               </span>
             </div>
           ))}
@@ -60,7 +73,7 @@ export default function CountriesSocialPage() {
             <li>Keep 85% of every trip</li>
             <li>Cash &amp; Card accepted</li>
             <li>Work when you want</li>
-            <li>Drivers wanted in every village</li>
+            <li>Drivers wanted worldwide</li>
           </ul>
         </div>
 
@@ -73,11 +86,6 @@ export default function CountriesSocialPage() {
 
         <p className="mt-4 text-center text-xs text-slate-500">
           village-ride.vercel.app/driver/join
-        </p>
-
-        <p className="mt-auto pt-8 text-center text-[10px] leading-relaxed text-slate-400">
-          Screenshot this page for social posts · Not for US/UK city markets —
-          built for villages
         </p>
       </div>
     </main>
