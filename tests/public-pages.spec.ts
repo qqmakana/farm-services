@@ -46,7 +46,7 @@ test.describe("Public pages", () => {
       page.getByRole("heading", { name: /Shop or farm|Register|merchant/i }).first(),
     ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByLabel(/Business name/i)).toBeVisible();
-    await expect(page.getByLabel(/Business email/i)).toBeVisible();
+    await expect(page.getByText(/Step 1 of 3/i)).toBeVisible();
   });
 
   test("trip tracking — invalid code shows graceful state", async ({ page }) => {
