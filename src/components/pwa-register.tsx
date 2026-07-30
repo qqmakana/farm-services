@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
+// Capture beforeinstallprompt as early as this client bundle loads
+import "@/lib/pwa-install";
 
 /** Registers the service worker so the site becomes installable. */
 export function PwaRegister() {

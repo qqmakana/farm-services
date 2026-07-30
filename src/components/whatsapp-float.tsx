@@ -14,7 +14,8 @@ export function WhatsAppFloat() {
     pathname.startsWith("/driver/account") ||
     pathname.startsWith("/trip/") ||
     pathname.startsWith("/admin") ||
-    pathname.startsWith("/onboarding")
+    pathname.startsWith("/onboarding") ||
+    pathname === "/get-app"
   ) {
     return null;
   }

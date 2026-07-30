@@ -2,9 +2,20 @@
 
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
+import { BRAND } from "@/lib/brand";
+import {
+  getAppInstallUrl,
+  getDeferredPrompt,
+  isAndroidDevice,
+  isInAppBrowser,
+  isIosDevice,
+  isStandaloneDisplay,
+  openInstallInChrome,
+  promptNativeInstall,
+  subscribeInstallReady,
+} from "@/lib/pwa-install";
 
-const UBER_PATHS = new Set([
+const HIDE_BANNER = new Set([
   "/",
   "/services",
   "/activity",
@@ -17,120 +28,24 @@ const UBER_PATHS = new Set([
   "/driver/jobs",
   "/driver/earnings",
   "/driver/account",
+  "/get-app",
 ]);
 
-type BeforeInstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-};
-
-declare global {
-  interface WindowEventMap {
-    beforeinstallprompt: BeforeInstallPromptEvent;
-  }
-}
-
-/** Capture install prompt ASAP — it can fire before React mounts. */
-let deferredPrompt: BeforeInstallPromptEvent | null = null;
-const listeners = new Set<() => void>();
-
-function notifyInstallReady() {
-  listeners.forEach((fn) => fn());
-}
-
-function captureInstallPrompt(e: BeforeInstallPromptEvent) {
-  e.preventDefault();
-  deferredPrompt = e;
-  notifyInstallReady();
-}
-
-if (typeof window !== "undefined") {
-  window.addEventListener("beforeinstallprompt", captureInstallPrompt);
-  window.addEventListener("appinstalled", () => {
-    deferredPrompt = null;
-    notifyInstallReady();
-  });
-}
-
-function isStandaloneDisplay() {
-  if (typeof window === "undefined") return false;
-  const iosStandalone =
-    "standalone" in navigator &&
-    Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
-  return window.matchMedia("(display-mode: standalone)").matches || iosStandalone;
-}
-
-function isIosDevice() {
-  if (typeof window === "undefined") return false;
-  return (
-    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
-  );
-}
-
-/** WhatsApp / Instagram / Facebook / etc. — no native install prompt. */
-function isInAppBrowser() {
-  if (typeof window === "undefined") return false;
-  const ua = navigator.userAgent || "";
-  return /FBAN|FBAV|FB_IAB|Instagram|Line\/|Twitter|TikTok|BytedanceWebview|Snapchat|WhatsApp|MicroMessenger|Pinterest|LinkedInApp|GSA\//i.test(
-    ua,
-  );
-}
-
-function inAppBrowserName() {
-  const ua = navigator.userAgent || "";
-  if (/WhatsApp/i.test(ua)) return "WhatsApp";
-  if (/Instagram/i.test(ua)) return "Instagram";
-  if (/FBAN|FBAV|FB_IAB/i.test(ua)) return "Facebook";
-  if (/TikTok|BytedanceWebview/i.test(ua)) return "TikTok";
-  return "this app";
-}
-
 async function shareAppLink() {
-  const url =
-    typeof window !== "undefined" ? window.location.origin : "https://village-ride.vercel.app";
-  const text = `${BRAND.appName} by ${BRAND.company}
-${BRAND_TAGLINE}
-
-${url}
-
-To INSTALL on Android:
-1) Tap the link
-2) Tap ⋮ → Open in Chrome
-3) Tap Install app
-
-(Install does not work inside WhatsApp — only in Chrome.)`;
+  const url = getAppInstallUrl();
+  const text = `${BRAND.appName} — tap to install the app:\n${url}`;
   if (navigator.share) {
-    // Prefer text+url so WhatsApp shows the steps; some apps ignore `text` if only `url` is set.
-    await navigator.share({ title: BRAND.appName, text, url });
+    await navigator.share({ title: `${BRAND.appName} app`, text, url });
     return "shared";
   }
   await navigator.clipboard.writeText(text);
   return "copied";
 }
 
-function openInSystemBrowser() {
-  const url = window.location.href;
-  if (/Android/i.test(navigator.userAgent)) {
-    const { host, pathname, search, hash } = window.location;
-    window.location.href = `intent://${host}${pathname}${search}${hash}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(url)};end`;
-    return;
-  }
-  void navigator.clipboard.writeText(url).catch(() => undefined);
-}
-
 function useDeferredInstall() {
   const [, bump] = useState(0);
-  useEffect(() => {
-    const refresh = () => bump((n) => n + 1);
-    listeners.add(refresh);
-    // Sync if prompt already arrived before this hook mounted
-    if (deferredPrompt) refresh();
-    return () => {
-      listeners.delete(refresh);
-    };
-  }, []);
-  return deferredPrompt;
+  useEffect(() => subscribeInstallReady(() => bump((n) => n + 1)), []);
+  return getDeferredPrompt();
 }
 
 export function useInstallActions() {
@@ -149,49 +64,45 @@ export function useInstallActions() {
   }, []);
 
   const install = useCallback(async () => {
-    if (isInAppBrowser()) {
-      setInApp(true);
+    // WhatsApp / Facebook on Android → one tap opens Chrome install page
+    if (isInAppBrowser() && isAndroidDevice()) {
+      openInstallInChrome();
+      return;
+    }
+
+    if (isIosDevice()) {
       setHelpOpen(true);
-      setNote(`Open in Chrome or Safari — Install does not work inside ${inAppBrowserName()}`);
-      setTimeout(() => setNote(null), 5000);
       return;
     }
 
     if (deferred) {
       setInstalling(true);
       try {
-        await deferred.prompt();
-        const { outcome } = await deferred.userChoice;
+        const outcome = await promptNativeInstall();
         if (outcome === "accepted") {
-          deferredPrompt = null;
           setStandalone(true);
           setNote("Installed — check your home screen");
-        } else {
-          setNote("Install cancelled — tap Install again when ready");
-          setTimeout(() => setNote(null), 4000);
         }
-      } catch {
-        setHelpOpen(true);
-        setNote("Install popup blocked — follow the steps below");
       } finally {
         setInstalling(false);
       }
       return;
     }
 
-    setHelpOpen(true);
+    // Fallback: take them to the simple install page
+    window.location.href = "/get-app";
   }, [deferred]);
 
   const share = useCallback(async () => {
     try {
       const result = await shareAppLink();
       if (result === "copied") {
-        setNote("Link copied — paste to WhatsApp / Facebook");
+        setNote("Link copied — paste to WhatsApp");
         setTimeout(() => setNote(null), 3000);
       }
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") return;
-      setNote("Copy this link: https://village-ride.vercel.app");
+      setNote(`Copy: ${getAppInstallUrl()}`);
     }
   }, []);
 
@@ -209,121 +120,38 @@ export function useInstallActions() {
   };
 }
 
-function HelpPanel({
-  ios,
-  inApp,
-  onClose,
-}: {
-  ios: boolean;
-  inApp: boolean;
-  onClose: () => void;
-}) {
-  const appName = inApp ? inAppBrowserName() : "";
-
+function HelpPanel({ ios, onClose }: { ios: boolean; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-4 sm:items-center">
       <div className="w-full max-w-md rounded-2xl bg-white p-5 text-slate-900 shadow-2xl">
         <p className="font-[family-name:var(--font-display)] text-lg font-bold">
           Install {BRAND.appName}
         </p>
-
-        {inApp ? (
-          <>
-            <p className="mt-2 text-sm text-slate-600">
-              You opened the link inside <strong>{appName}</strong>. Install only works in{" "}
-              <strong>Chrome</strong> or <strong>Safari</strong> — not inside another app.
-            </p>
-            <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-800">
-              {ios ? (
-                <>
-                  <li>
-                    Tap <strong>⋯</strong> or <strong>Share</strong> in {appName}
-                  </li>
-                  <li>
-                    Choose <strong>Open in Safari</strong> (or Chrome)
-                  </li>
-                  <li>
-                    In Safari: Share → <strong>Add to Home Screen</strong>
-                  </li>
-                </>
-              ) : (
-                <>
-                  <li>
-                    Tap the menu <strong>⋮</strong> in {appName}
-                  </li>
-                  <li>
-                    Choose <strong>Open in Chrome</strong> (or browser)
-                  </li>
-                  <li>
-                    In Chrome tap <strong>Install app</strong>
-                  </li>
-                </>
-              )}
-            </ol>
-            {!ios ? (
-              <button
-                type="button"
-                onClick={() => {
-                  openInSystemBrowser();
-                }}
-                className="mt-4 w-full rounded-xl bg-[var(--ru-brand)] py-3 text-sm font-bold text-white"
-              >
-                Open in Chrome
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  void navigator.clipboard.writeText(window.location.href);
-                }}
-                className="mt-4 w-full rounded-xl bg-[var(--ru-brand)] py-3 text-sm font-bold text-white"
-              >
-                Copy link — open in Safari
-              </button>
-            )}
-          </>
+        {ios ? (
+          <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-800">
+            <li>
+              Tap <strong>Share</strong> in Safari
+            </li>
+            <li>
+              Tap <strong>Add to Home Screen</strong>
+            </li>
+            <li>
+              Tap <strong>Add</strong>
+            </li>
+          </ol>
         ) : (
-          <>
-            <p className="mt-2 text-sm text-slate-600">
-              This is a browser app (not Play Store / App Store). Add it to your home screen:
-            </p>
-            <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-800">
-              {ios ? (
-                <>
-                  <li>
-                    Tap the <strong>Share</strong> button in Safari
-                  </li>
-                  <li>
-                    Scroll and tap <strong>Add to Home Screen</strong>
-                  </li>
-                  <li>
-                    Tap <strong>Add</strong>
-                  </li>
-                </>
-              ) : (
-                <>
-                  <li>Open the browser menu (⋮ or ⋯)</li>
-                  <li>
-                    Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>
-                  </li>
-                  <li>Confirm Install</li>
-                </>
-              )}
-            </ol>
-            <p className="mt-3 text-xs text-slate-500">
-              Tip: use Chrome or Edge on Android for the one-tap Install button.
-            </p>
-          </>
+          <p className="mt-2 text-sm text-slate-600">
+            Open{" "}
+            <a href="/get-app" className="font-bold text-[var(--ru-brand)] underline">
+              the install page
+            </a>{" "}
+            and tap the big Install button.
+          </p>
         )}
-
         <button
           type="button"
           onClick={onClose}
-          className={`w-full rounded-xl py-3 text-sm font-bold ${
-            inApp
-              ? "mt-2 border border-slate-200 bg-white text-slate-800"
-              : "mt-4 bg-[var(--ru-brand)] text-white"
-          }`}
+          className="mt-4 w-full rounded-xl bg-[var(--ru-brand)] py-3 text-sm font-bold text-white"
         >
           Got it
         </button>
@@ -334,7 +162,7 @@ function HelpPanel({
 
 /** Always-visible Install + Share in the top nav. */
 export function NavInstallShare() {
-  const { standalone, ios, inApp, helpOpen, setHelpOpen, note, installing, install, share } =
+  const { standalone, ios, helpOpen, setHelpOpen, note, installing, install, share } =
     useInstallActions();
 
   if (standalone) {
@@ -371,9 +199,7 @@ export function NavInstallShare() {
           {note}
         </span>
       ) : null}
-      {helpOpen ? (
-        <HelpPanel ios={ios} inApp={inApp} onClose={() => setHelpOpen(false)} />
-      ) : null}
+      {helpOpen ? <HelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
     </>
   );
 }
@@ -381,7 +207,7 @@ export function NavInstallShare() {
 /** Bottom banner — shown until installed or dismissed. */
 export function InstallShareBar() {
   const pathname = usePathname();
-  const { standalone, ios, inApp, helpOpen, setHelpOpen, note, installing, install, share, deferred } =
+  const { standalone, ios, helpOpen, setHelpOpen, note, installing, install, share, deferred } =
     useInstallActions();
   const [minimized, setMinimized] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -394,9 +220,8 @@ export function InstallShareBar() {
     }
   }, []);
 
-  // Customer shell / Uber map — avoid covering the bottom tab bar or sheet
   if (
-    UBER_PATHS.has(pathname) ||
+    HIDE_BANNER.has(pathname) ||
     pathname.startsWith("/account/") ||
     pathname.startsWith("/onboarding")
   ) {
@@ -430,9 +255,7 @@ export function InstallShareBar() {
         >
           Install app
         </button>
-        {helpOpen ? (
-          <HelpPanel ios={ios} inApp={inApp} onClose={() => setHelpOpen(false)} />
-        ) : null}
+        {helpOpen ? <HelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
       </div>
     );
   }
@@ -453,13 +276,7 @@ export function InstallShareBar() {
             Install {BRAND.appName}
           </p>
           <p className="text-xs text-[var(--ru-muted)]">
-            {inApp
-              ? "Open in Chrome / Safari to install"
-              : ios
-                ? "Add to Home Screen for the app feel"
-                : deferred
-                  ? "Add to your home screen"
-                  : "Install for faster access"}
+            {deferred ? "Add to your home screen" : "One tap to install"}
           </p>
         </div>
         <button
@@ -492,16 +309,14 @@ export function InstallShareBar() {
           {note}
         </p>
       ) : null}
-      {helpOpen ? (
-        <HelpPanel ios={ios} inApp={inApp} onClose={() => setHelpOpen(false)} />
-      ) : null}
+      {helpOpen ? <HelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
     </div>
   );
 }
 
 /** Hero CTAs for the home page. */
 export function HomeInstallShareCtas() {
-  const { standalone, ios, inApp, helpOpen, setHelpOpen, note, installing, install, share } =
+  const { standalone, ios, helpOpen, setHelpOpen, note, installing, install, share } =
     useInstallActions();
   if (standalone) {
     return (
@@ -530,9 +345,7 @@ export function HomeInstallShareCtas() {
         Share app
       </button>
       {note ? <p className="w-full text-sm text-sky-200">{note}</p> : null}
-      {helpOpen ? (
-        <HelpPanel ios={ios} inApp={inApp} onClose={() => setHelpOpen(false)} />
-      ) : null}
+      {helpOpen ? <HelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
     </div>
   );
 }

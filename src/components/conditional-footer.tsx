@@ -16,6 +16,7 @@ const HIDE_FOOTER = new Set([
   "/driver/jobs",
   "/driver/earnings",
   "/driver/account",
+  "/get-app",
 ]);
 
 export function ConditionalFooter() {
