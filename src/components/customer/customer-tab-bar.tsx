@@ -45,7 +45,7 @@ export function CustomerTabBar() {
                 href={tab.href}
                 className={`flex flex-1 flex-col items-center justify-center gap-0.5 transition active:scale-95 ${
                   active
-                    ? "font-bold text-[#1A4D3A]"
+                    ? "font-bold text-[#000000]"
                     : "font-normal text-[#6B7280]"
                 }`}
               >

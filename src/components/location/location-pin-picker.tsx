@@ -10,7 +10,7 @@ const PinMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-48 items-center justify-center rounded-xl bg-[#E8EEE9] text-sm text-[#1A4D3A]">
+      <div className="flex h-48 items-center justify-center rounded-xl bg-[#f5f5f5] text-sm text-[#000000]">
         Loading map…
       </div>
     ),
@@ -48,7 +48,7 @@ export function LocationPinPicker({ lat, lng, onChange }: Props) {
         <button
           type="button"
           onClick={useGps}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-[#1A4D3A]"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-[#000000]"
         >
           <MapPin className="h-3.5 w-3.5" /> Use my GPS
         </button>

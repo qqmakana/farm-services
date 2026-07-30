@@ -193,7 +193,7 @@ export function DriverApplyForm({
         <label className="flex items-start gap-2 text-sm text-slate-800 sm:col-span-2">
           <input
             type="checkbox"
-            className="mt-1 h-4 w-4 accent-[#1A4D3A]"
+            className="mt-1 h-4 w-4 accent-[#000000]"
             checked={conduct}
             onChange={(e) => setConduct(e.target.checked)}
             required
@@ -202,7 +202,7 @@ export function DriverApplyForm({
             I agree to the{" "}
             <Link
               href="/driver/conduct"
-              className="font-semibold text-[#1A4D3A] underline"
+              className="font-semibold text-[#000000] underline"
               target="_blank"
             >
               Village Ride Driver Code of Conduct
@@ -215,7 +215,7 @@ export function DriverApplyForm({
           <button
             type="submit"
             disabled={pending || !conduct}
-            className="w-full rounded-xl bg-[#1A4D3A] px-5 py-3.5 text-sm font-bold text-white disabled:opacity-50 sm:w-auto"
+            className="w-full rounded-xl bg-[#000000] px-5 py-3.5 text-sm font-bold text-white disabled:opacity-50 sm:w-auto"
           >
             {pending ? "Uploading photos…" : "Submit for verification"}
           </button>

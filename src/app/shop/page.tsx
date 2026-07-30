@@ -25,7 +25,7 @@ export default async function ShopPage() {
         <p className="mt-1 text-sm text-slate-600">
           Register as a <strong>Farm</strong> (farmer) or a town shop. List
           products. When buyers order, delivery jobs go to bakkie/truck drivers.{" "}
-          <Link href="/partners" className="font-semibold text-[#1A4D3A] underline">
+          <Link href="/partners" className="font-semibold text-[#000000] underline">
             Why partner with Village Ride?
           </Link>
         </p>

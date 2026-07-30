@@ -198,7 +198,7 @@ export function MerchantDashboard({
         </p>
         <Link
           href="/shop"
-          className="mt-6 inline-block rounded-xl bg-[#1A4D3A] px-5 py-3 text-sm font-bold text-white transition active:scale-95"
+          className="mt-6 inline-block rounded-xl bg-[#000000] px-5 py-3 text-sm font-bold text-white transition active:scale-95"
         >
           Register your business
         </Link>
@@ -652,7 +652,7 @@ export function MerchantDashboard({
                   </div>
                   <a
                     href={`mailto:${email ?? ""}?subject=Village Ride ${r.week_key}&body=${encodeURIComponent(r.summary_text)}`}
-                    className="text-xs font-semibold text-[#1A4D3A] underline"
+                    className="text-xs font-semibold text-[#000000] underline"
                   >
                     Email me
                   </a>

@@ -30,7 +30,7 @@ export default async function AdminErrorsPage({
           <h1 className="text-2xl font-bold">Admin access required</h1>
           <Link
             href="/login?next=/admin/errors"
-            className="mt-6 inline-block text-[#1A4D3A] underline"
+            className="mt-6 inline-block text-[#000000] underline"
           >
             Sign in
           </Link>
@@ -68,7 +68,7 @@ export default async function AdminErrorsPage({
           <h1 className="text-2xl font-bold">Error inbox</h1>
           <a
             href={`mailto:${BRAND.email}?subject=Village%20Ride%20errors`}
-            className="text-sm font-semibold text-[#1A4D3A] underline"
+            className="text-sm font-semibold text-[#000000] underline"
           >
             Email ops
           </a>

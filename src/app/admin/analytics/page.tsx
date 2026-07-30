@@ -12,7 +12,7 @@ export default async function AdminAnalyticsPage() {
         <SiteNav active="admin" />
         <main className="mx-auto max-w-lg px-4 py-12 text-center">
           <h1 className="text-2xl font-bold">Admin access required</h1>
-          <Link href="/login?next=/admin/analytics" className="mt-6 inline-block text-[#1A4D3A] underline">
+          <Link href="/login?next=/admin/analytics" className="mt-6 inline-block text-[#000000] underline">
             Sign in
           </Link>
         </main>
@@ -88,7 +88,7 @@ function Card({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border bg-white p-4 shadow-sm">
       <p className="text-xs font-semibold text-slate-500 uppercase">{label}</p>
-      <p className="mt-1 text-xl font-bold text-[#1A4D3A]">{value}</p>
+      <p className="mt-1 text-xl font-bold text-[#000000]">{value}</p>
     </div>
   );
 }

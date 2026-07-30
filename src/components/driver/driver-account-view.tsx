@@ -201,7 +201,7 @@ export function DriverAccountView() {
             onClick={() => setEditVehicle((v) => !v)}
             className="flex w-full items-center gap-3 px-4 py-4 text-left transition active:scale-[0.99] active:bg-gray-50"
           >
-            <Pencil className="h-5 w-5 text-[#1A4D3A]" />
+            <Pencil className="h-5 w-5 text-[#000000]" />
             <span className="flex-1 text-sm font-medium">Edit Vehicle Details</span>
             <ChevronRight className="h-4 w-4 text-gray-400" />
           </button>
@@ -213,7 +213,7 @@ export function DriverAccountView() {
               onClick={() => setShowDocs((v) => !v)}
               className="flex w-full items-center gap-3 border-t border-gray-100 px-4 py-4 text-left transition active:scale-[0.99] active:bg-gray-50"
             >
-              <IdCard className="h-5 w-5 text-[#1A4D3A]" />
+              <IdCard className="h-5 w-5 text-[#000000]" />
               <span className="flex-1 text-sm font-medium">
                 Upload License/ID
               </span>
@@ -227,7 +227,7 @@ export function DriverAccountView() {
             onClick={() => setShowNotifs((v) => !v)}
             className="flex w-full items-center gap-3 border-t border-gray-100 px-4 py-4 text-left transition active:scale-[0.99] active:bg-gray-50"
           >
-            <span className="flex h-5 w-5 items-center justify-center text-[#1A4D3A]">
+            <span className="flex h-5 w-5 items-center justify-center text-[#000000]">
               ⚙
             </span>
             <span className="flex-1 text-sm font-medium">
@@ -243,7 +243,7 @@ export function DriverAccountView() {
             rel="noreferrer"
             className="flex items-center gap-3 border-t border-gray-100 px-4 py-4 transition active:scale-[0.99] active:bg-gray-50"
           >
-            <HelpCircle className="h-5 w-5 text-[#1A4D3A]" />
+            <HelpCircle className="h-5 w-5 text-[#000000]" />
             <span className="flex-1 text-sm font-medium">Help &amp; Support</span>
             <span className="text-xs text-slate-400">{BRAND.phone}</span>
             <ChevronRight className="h-4 w-4 text-gray-400" />
@@ -323,7 +323,7 @@ export function DriverAccountView() {
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded-xl bg-[#1A4D3A] py-3 text-sm font-bold text-white transition active:scale-95"
+            className="w-full rounded-xl bg-[#000000] py-3 text-sm font-bold text-white transition active:scale-95"
           >
             Save vehicle
           </button>
@@ -357,7 +357,7 @@ export function DriverAccountView() {
             type="button"
             disabled={pending}
             onClick={savePrefs}
-            className="w-full rounded-xl bg-[#1A4D3A] py-3 text-sm font-bold text-white transition active:scale-95"
+            className="w-full rounded-xl bg-[#000000] py-3 text-sm font-bold text-white transition active:scale-95"
           >
             Save preferences
           </button>
@@ -400,7 +400,7 @@ function Toggle({
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={`relative h-7 w-12 rounded-full transition active:scale-95 ${
-          checked ? "bg-[#1A4D3A]" : "bg-gray-300"
+          checked ? "bg-[#000000]" : "bg-gray-300"
         }`}
       >
         <span

@@ -157,7 +157,7 @@ export function DispatchBoard({
             onClick={() => setFilter(key)}
             className={`rounded-md px-3 py-1.5 text-sm ${
               filter === key
-                ? "bg-[#1A4D3A] text-white"
+                ? "bg-[#000000] text-white"
                 : "bg-white text-stone-700 ring-1 ring-stone-200 hover:bg-stone-50"
             }`}
           >
@@ -211,7 +211,7 @@ export function DispatchBoard({
                       {badges.map((b) => (
                         <span
                           key={b}
-                          className="rounded-full bg-[#1A4D3A] px-2 py-0.5 text-xs font-semibold text-white"
+                          className="rounded-full bg-[#000000] px-2 py-0.5 text-xs font-semibold text-white"
                         >
                           {b}
                         </span>

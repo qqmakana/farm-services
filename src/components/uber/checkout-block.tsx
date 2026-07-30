@@ -158,7 +158,7 @@ export function CheckoutBlock({
           <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
             Price estimate
           </p>
-          <p className="text-2xl font-bold text-[#1A4D3A]">
+          <p className="text-2xl font-bold text-[#000000]">
             {Number.isFinite(fee)
               ? formatMoney(fee, displayCurrency, countryCode)
               : "—"}
@@ -175,18 +175,18 @@ export function CheckoutBlock({
       </div>
 
       {isNightRide ? (
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#1A4D3A] px-3 py-1.5 text-xs font-bold text-white shadow-sm">
+        <div className="inline-flex items-center gap-2 rounded-full bg-[#000000] px-3 py-1.5 text-xs font-bold text-white shadow-sm">
           <span aria-hidden>🌙</span>
           Night Ride (Premium)
         </div>
       ) : null}
 
-      <p className="rounded-xl border border-[#1A4D3A]/15 bg-[#E8F5E9] px-3 py-2.5 text-xs leading-relaxed text-[#1A4D3A]">
+      <p className="rounded-xl border border-[#000000]/15 bg-[#f5f5f5] px-3 py-2.5 text-xs leading-relaxed text-[#000000]">
         {optIn}
       </p>
 
       <div>
-        <p className="text-sm font-semibold text-[#1A4D3A]">
+        <p className="text-sm font-semibold text-[#000000]">
           How you&apos;ll pay the driver
         </p>
         <div className="mt-2 grid grid-cols-2 gap-2">
@@ -197,11 +197,11 @@ export function CheckoutBlock({
               onClick={() => setPayMethod(id)}
               className={`rounded-xl border px-3 py-3 text-left transition ${
                 payMethod === id
-                  ? "border-[#1A4D3A] bg-[#E8F5E9] shadow-sm"
+                  ? "border-[#000000] bg-[#f5f5f5] shadow-sm"
                   : "border-slate-200 bg-white hover:bg-slate-50"
               }`}
             >
-              <span className="block text-sm font-bold text-[#1A4D3A]">
+              <span className="block text-sm font-bold text-[#000000]">
                 {paymentLabel(id)}
               </span>
               <span className="mt-0.5 block text-xs text-slate-500">
@@ -248,7 +248,7 @@ export function CheckoutBlock({
         type="button"
         disabled={!ready || pending}
         onClick={requestJob}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1A4D3A] px-4 py-4 text-base font-bold text-white shadow-sm transition hover:bg-[#163d2e] disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#000000] px-4 py-4 text-base font-bold text-white shadow-sm transition hover:bg-[#1a1a1a] disabled:opacity-50"
       >
         {pending ? (
           <>
@@ -264,7 +264,7 @@ export function CheckoutBlock({
         type="button"
         disabled={!ready || pending}
         onClick={openWhatsAppBooking}
-        className="w-full rounded-xl border border-[#1A4D3A]/30 bg-white px-4 py-3 text-sm font-semibold text-[#1A4D3A] disabled:opacity-50"
+        className="w-full rounded-xl border border-[#000000]/30 bg-white px-4 py-3 text-sm font-semibold text-[#000000] disabled:opacity-50"
       >
         Or send booking via WhatsApp
       </button>

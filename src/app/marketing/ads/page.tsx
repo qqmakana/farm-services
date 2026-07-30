@@ -31,7 +31,7 @@ export default function MarketingAdsPage() {
           <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
             Driver recruitment
           </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#1A4D3A]">
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#000000]">
             Official social ad
           </h1>
           <p className="mt-1 text-sm text-slate-600">
@@ -45,7 +45,7 @@ export default function MarketingAdsPage() {
           <a
             href={DRIVER_AD_IMAGE}
             download="village-ride-driver-ad.png"
-            className="mt-5 flex w-full items-center justify-center rounded-xl bg-[#1A4D3A] py-3.5 text-sm font-bold text-white"
+            className="mt-5 flex w-full items-center justify-center rounded-xl bg-[#000000] py-3.5 text-sm font-bold text-white"
           >
             Download PNG
           </a>
@@ -57,7 +57,7 @@ export default function MarketingAdsPage() {
                 <button
                   type="button"
                   onClick={() => copy(DRIVER_AD_CAPTION, "cap")}
-                  className="text-sm font-bold text-[#1A4D3A]"
+                  className="text-sm font-bold text-[#000000]"
                 >
                   {copied === "cap" ? "Copied!" : "Copy"}
                 </button>
@@ -72,7 +72,7 @@ export default function MarketingAdsPage() {
                 <button
                   type="button"
                   onClick={() => copy(DRIVER_AD_WHATSAPP, "wa")}
-                  className="text-sm font-bold text-[#1A4D3A]"
+                  className="text-sm font-bold text-[#000000]"
                 >
                   {copied === "wa" ? "Copied!" : "Copy"}
                 </button>
@@ -87,7 +87,7 @@ export default function MarketingAdsPage() {
             Boost link:{" "}
             <Link
               href="/driver/join"
-              className="font-semibold text-[#1A4D3A] underline"
+              className="font-semibold text-[#000000] underline"
             >
               /driver/join
             </Link>

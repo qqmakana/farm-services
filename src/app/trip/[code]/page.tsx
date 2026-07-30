@@ -43,7 +43,7 @@ export default async function TripPage({
               </Link>
               <Link
                 href="/"
-                className="text-center text-sm font-semibold text-[#1A4D3A]"
+                className="text-center text-sm font-semibold text-[#000000]"
               >
                 Back to home
               </Link>

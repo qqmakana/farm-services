@@ -10,7 +10,7 @@ export default function AdminVerificationsPage() {
       <SiteNav />
       <main className="mx-auto max-w-5xl px-4 py-8 pb-16">
         <p className="mb-4 text-sm">
-          <Link href="/dispatch" className="font-semibold text-[#1A4D3A]">
+          <Link href="/dispatch" className="font-semibold text-[#000000]">
             ← Dispatch
           </Link>
         </p>

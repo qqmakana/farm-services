@@ -44,7 +44,7 @@ function FixIcons() {
 
 const jobIcon = L.divIcon({
   className: "",
-  html: `<div style="width:28px;height:28px;border-radius:9999px;background:#1A4D3A;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25)"></div>`,
+  html: `<div style="width:28px;height:28px;border-radius:9999px;background:#000000;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25)"></div>`,
   iconSize: [28, 28],
   iconAnchor: [14, 14],
 });

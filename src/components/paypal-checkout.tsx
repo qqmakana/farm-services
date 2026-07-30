@@ -68,7 +68,7 @@ export function PayPalCheckout({
               }
             });
           }}
-          className="mt-4 w-full rounded-xl bg-[#1A4D3A] px-4 py-3.5 text-sm font-bold text-white disabled:opacity-50"
+          className="mt-4 w-full rounded-xl bg-[#000000] px-4 py-3.5 text-sm font-bold text-white disabled:opacity-50"
         >
           {pending
             ? "Creating trip…"

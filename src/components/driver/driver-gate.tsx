@@ -24,13 +24,13 @@ export function DriverGate({ children }: { children: React.ReactNode }) {
         </p>
         <Link
           href="/driver"
-          className="mt-6 rounded-xl bg-[#1A4D3A] py-3.5 text-center text-sm font-bold text-white transition active:scale-95"
+          className="mt-6 rounded-xl bg-[#000000] py-3.5 text-center text-sm font-bold text-white transition active:scale-95"
         >
           Choose driver / Apply
         </Link>
         <Link
           href="/login?next=/driver/home"
-          className="mt-3 text-center text-sm font-semibold text-[#1A4D3A] transition active:scale-95"
+          className="mt-3 text-center text-sm font-semibold text-[#000000] transition active:scale-95"
         >
           Sign in with email
         </Link>

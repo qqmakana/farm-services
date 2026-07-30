@@ -22,7 +22,7 @@ export default async function AdminDashboardPage() {
           </p>
           <Link
             href="/login?next=/admin/dashboard"
-            className="mt-6 inline-block rounded-xl bg-[#1A4D3A] px-5 py-3 text-sm font-bold text-white"
+            className="mt-6 inline-block rounded-xl bg-[#000000] px-5 py-3 text-sm font-bold text-white"
           >
             Sign in
           </Link>
@@ -155,7 +155,7 @@ export default async function AdminDashboardPage() {
                 />
                 <button
                   type="submit"
-                  className="rounded-lg bg-[#1A4D3A] px-4 py-2 text-sm font-bold text-white"
+                  className="rounded-lg bg-[#000000] px-4 py-2 text-sm font-bold text-white"
                 >
                   Save refund note
                 </button>
@@ -180,7 +180,7 @@ function Stat({
   return (
     <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
       <p className="text-xs font-semibold text-slate-500 uppercase">{label}</p>
-      <p className="mt-1 text-xl font-bold text-[#1A4D3A]">{value}</p>
+      <p className="mt-1 text-xl font-bold text-[#000000]">{value}</p>
       {hint ? <p className="mt-0.5 text-[11px] text-slate-500">{hint}</p> : null}
     </div>
   );

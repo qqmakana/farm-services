@@ -19,14 +19,14 @@ export function ScheduleWhen({
 }) {
   return (
     <div className="space-y-2">
-      <p className="text-sm font-semibold text-[#1A4D3A]">When</p>
+      <p className="text-sm font-semibold text-[#000000]">When</p>
       <div className="grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => onModeChange("now")}
           className={`rounded-xl border px-3 py-3 text-sm font-bold transition ${
             mode === "now"
-              ? "border-[#1A4D3A] bg-[#E8F5E9] text-[#1A4D3A]"
+              ? "border-[#000000] bg-[#f5f5f5] text-[#000000]"
               : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
           }`}
         >
@@ -37,7 +37,7 @@ export function ScheduleWhen({
           onClick={() => onModeChange("later")}
           className={`rounded-xl border px-3 py-3 text-sm font-bold transition ${
             mode === "later"
-              ? "border-[#1A4D3A] bg-[#E8F5E9] text-[#1A4D3A]"
+              ? "border-[#000000] bg-[#f5f5f5] text-[#000000]"
               : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
           }`}
         >
@@ -48,7 +48,7 @@ export function ScheduleWhen({
         Taxis not running? Book a verified ride or delivery in advance.
       </p>
       {mode === "later" ? (
-        <label className="block text-sm font-semibold text-[#1A4D3A]">
+        <label className="block text-sm font-semibold text-[#000000]">
           Date &amp; time
           <input
             type="datetime-local"

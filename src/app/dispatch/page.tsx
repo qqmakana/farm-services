@@ -44,7 +44,7 @@ export default async function DispatchPage() {
               Jobs · drivers ·{" "}
               <a
                 href="/admin/verifications"
-                className="font-semibold text-[#1A4D3A] underline"
+                className="font-semibold text-[#000000] underline"
               >
                 ID verifications
               </a>

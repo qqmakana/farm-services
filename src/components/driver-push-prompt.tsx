@@ -52,8 +52,8 @@ export function DriverPushPrompt({ driverId }: { driverId: string }) {
   }
 
   return (
-    <div className="rounded-xl border border-[#1A4D3A]/25 bg-[#E8F5E9] px-4 py-3">
-      <p className="text-sm font-semibold text-[#1A4D3A]">
+    <div className="rounded-xl border border-[#000000]/25 bg-[#f5f5f5] px-4 py-3">
+      <p className="text-sm font-semibold text-[#000000]">
         Allow notifications to receive jobs?
       </p>
       <p className="mt-1 text-xs text-slate-600">
@@ -65,7 +65,7 @@ export function DriverPushPrompt({ driverId }: { driverId: string }) {
           type="button"
           disabled={pending}
           onClick={enable}
-          className="rounded-lg bg-[#1A4D3A] px-3 py-2 text-sm font-bold text-white disabled:opacity-50"
+          className="rounded-lg bg-[#000000] px-3 py-2 text-sm font-bold text-white disabled:opacity-50"
         >
           {pending ? "Enabling…" : "Allow notifications"}
         </button>
@@ -78,7 +78,7 @@ export function DriverPushPrompt({ driverId }: { driverId: string }) {
         </button>
       </div>
       {status ? (
-        <p className="mt-2 text-xs text-[#1A4D3A]">{status}</p>
+        <p className="mt-2 text-xs text-[#000000]">{status}</p>
       ) : null}
     </div>
   );

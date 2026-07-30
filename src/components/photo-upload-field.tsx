@@ -40,7 +40,7 @@ export function PhotoUploadField({
         name={name}
         type="file"
         accept={accept}
-        className="mt-1 block w-full text-sm text-slate-800 file:mr-3 file:rounded-lg file:border-0 file:bg-[#1A4D3A] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white"
+        className="mt-1 block w-full text-sm text-slate-800 file:mr-3 file:rounded-lg file:border-0 file:bg-[#000000] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white"
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (preview) URL.revokeObjectURL(preview);

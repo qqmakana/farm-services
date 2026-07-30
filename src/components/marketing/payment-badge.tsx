@@ -15,7 +15,7 @@ export function PaymentBadge({
 }) {
   return (
     <div
-      className={`inline-flex flex-wrap items-center gap-1.5 rounded-full border border-[#1A4D3A]/25 bg-[#E8F5E9] font-bold text-[#1A4D3A] ${
+      className={`inline-flex flex-wrap items-center gap-1.5 rounded-full border border-[#000000]/25 bg-[#f5f5f5] font-bold text-[#000000] ${
         compact ? "px-2.5 py-1 text-[11px]" : "px-3.5 py-1.5 text-sm"
       }`}
     >

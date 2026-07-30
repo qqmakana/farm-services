@@ -153,7 +153,7 @@ export function CourierSheet({
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-[#1A4D3A]">Send a package</h1>
+        <h1 className="text-xl font-bold text-[#000000]">Send a package</h1>
         <p className="text-sm text-slate-600">
           Person-to-person courier between villages — keys, gifts, documents,
           Marketplace items. Max ~20 kg, packaged &amp; sealed. No hazardous or
@@ -180,7 +180,7 @@ export function CourierSheet({
         onChange={setPickup}
       />
       <div className="grid grid-cols-2 gap-3">
-        <label className="block text-sm font-semibold text-[#1A4D3A]">
+        <label className="block text-sm font-semibold text-[#000000]">
           Your name
           <input
             className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
@@ -188,7 +188,7 @@ export function CourierSheet({
             onChange={(e) => setSenderName(e.target.value)}
           />
         </label>
-        <label className="block text-sm font-semibold text-[#1A4D3A]">
+        <label className="block text-sm font-semibold text-[#000000]">
           Your phone
           <input
             className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
@@ -205,7 +205,7 @@ export function CourierSheet({
         onChange={setDropoff}
       />
       <div className="grid grid-cols-2 gap-3">
-        <label className="block text-sm font-semibold text-[#1A4D3A]">
+        <label className="block text-sm font-semibold text-[#000000]">
           Recipient name
           <input
             className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
@@ -214,7 +214,7 @@ export function CourierSheet({
             placeholder="Optional"
           />
         </label>
-        <label className="block text-sm font-semibold text-[#1A4D3A]">
+        <label className="block text-sm font-semibold text-[#000000]">
           Recipient phone
           <input
             className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
@@ -226,7 +226,7 @@ export function CourierSheet({
       </div>
       <LandmarkHelperText />
 
-      <label className="block text-sm font-semibold text-[#1A4D3A]">
+      <label className="block text-sm font-semibold text-[#000000]">
         Item description
         <input
           className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
@@ -236,7 +236,7 @@ export function CourierSheet({
         />
       </label>
 
-      <label className="block text-sm font-semibold text-[#1A4D3A]">
+      <label className="block text-sm font-semibold text-[#000000]">
         Item weight
         <select
           className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
@@ -251,7 +251,7 @@ export function CourierSheet({
         </select>
       </label>
 
-      <label className="block text-sm font-semibold text-[#1A4D3A]">
+      <label className="block text-sm font-semibold text-[#000000]">
         Special instructions
         <textarea
           rows={2}

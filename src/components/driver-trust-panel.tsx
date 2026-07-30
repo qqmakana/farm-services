@@ -64,14 +64,14 @@ export function DriverTrustPanel({ driver }: { driver: Driver }) {
   return (
     <section className="ru-card space-y-4 p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-base font-bold text-[#1A4D3A]">
+        <h2 className="text-base font-bold text-[#000000]">
           Trust & trip types
         </h2>
         <DriverVerifiedBadge verified={driver.id_verified} />
       </div>
 
       <div>
-        <p className="text-sm font-semibold text-[#1A4D3A]">
+        <p className="text-sm font-semibold text-[#000000]">
           I accept these jobs
         </p>
         <p className="mt-1 text-xs text-slate-500">
@@ -109,7 +109,7 @@ export function DriverTrustPanel({ driver }: { driver: Driver }) {
                 type="checkbox"
                 checked={opt.checked}
                 onChange={(e) => opt.set(e.target.checked)}
-                className="h-4 w-4 accent-[#1A4D3A]"
+                className="h-4 w-4 accent-[#000000]"
               />
               <span className="font-medium text-slate-800">{opt.label}</span>
             </label>
@@ -119,14 +119,14 @@ export function DriverTrustPanel({ driver }: { driver: Driver }) {
           type="button"
           disabled={pending}
           onClick={savePrefs}
-          className="mt-3 rounded-xl bg-[#1A4D3A] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+          className="mt-3 rounded-xl bg-[#000000] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
         >
           Save preferences
         </button>
       </div>
 
       <form onSubmit={submitDocs} className="space-y-3 border-t border-slate-100 pt-4">
-        <p className="text-sm font-semibold text-[#1A4D3A]">
+        <p className="text-sm font-semibold text-[#000000]">
           ID &amp; license verification
         </p>
         <p className="text-xs text-slate-500">
@@ -186,7 +186,7 @@ export function DriverTrustPanel({ driver }: { driver: Driver }) {
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-xl border border-[#1A4D3A] bg-white px-4 py-2.5 text-sm font-bold text-[#1A4D3A] disabled:opacity-50"
+          className="w-full rounded-xl border border-[#000000] bg-white px-4 py-2.5 text-sm font-bold text-[#000000] disabled:opacity-50"
         >
           {pending ? "Uploading…" : "Submit documents"}
         </button>

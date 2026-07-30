@@ -121,7 +121,7 @@ export default function SavedPlacesPage() {
     <main className="mx-auto min-h-dvh max-w-lg bg-white px-5 pb-24 pt-6">
       <Link
         href="/account"
-        className="inline-flex items-center gap-1 text-sm font-semibold text-[#1A4D3A] transition active:scale-95"
+        className="inline-flex items-center gap-1 text-sm font-semibold text-[#000000] transition active:scale-95"
       >
         <ChevronLeft className="h-4 w-4" /> Account
       </Link>
@@ -156,7 +156,7 @@ export default function SavedPlacesPage() {
                 key={p.id}
                 className="flex items-center gap-3 rounded-xl border border-gray-100 bg-[#F9FAFB] px-4 py-3 shadow-sm"
               >
-                <Icon className="h-5 w-5 text-[#1A4D3A]" aria-hidden />
+                <Icon className="h-5 w-5 text-[#000000]" aria-hidden />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-900">{p.name}</p>
                   <p className="truncate text-xs text-slate-500">
@@ -237,7 +237,7 @@ export default function SavedPlacesPage() {
             <button
               type="button"
               onClick={() => setShowMap(true)}
-              className="w-full rounded-xl border border-dashed border-gray-200 bg-[#fafafa] px-3 py-2.5 text-left text-xs font-semibold text-[#1A4D3A]"
+              className="w-full rounded-xl border border-dashed border-gray-200 bg-[#fafafa] px-3 py-2.5 text-left text-xs font-semibold text-[#000000]"
             >
               Optional: pin on map
             </button>

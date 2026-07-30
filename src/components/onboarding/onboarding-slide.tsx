@@ -44,13 +44,13 @@ export function ArtRequest() {
     <svg viewBox="0 0 320 280" className="h-auto w-full" aria-hidden>
       <defs>
         <linearGradient id="vr-req-sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#E8F5E9" />
+          <stop offset="0%" stopColor="#f5f5f5" />
           <stop offset="100%" stopColor="#F6F6F6" />
         </linearGradient>
       </defs>
       <rect width="320" height="280" rx="32" fill="url(#vr-req-sky)" />
       {/* soft map grid */}
-      <g stroke="#1A4D3A" strokeOpacity="0.08" strokeWidth="1.5">
+      <g stroke="#000000" strokeOpacity="0.08" strokeWidth="1.5">
         <path d="M40 90h240M40 140h240M40 190h240" />
         <path d="M90 50v180M160 50v180M230 50v180" />
       </g>
@@ -69,7 +69,7 @@ export function ArtRequest() {
       <g transform="translate(148 98)">
         <path
           d="M24 0c-10 0-18 8-18 18 0 14 18 34 18 34s18-20 18-34c0-10-8-18-18-18z"
-          fill="#1A4D3A"
+          fill="#000000"
         />
         <circle cx="24" cy="17" r="6" fill="#fff" />
       </g>
@@ -84,7 +84,7 @@ export function ArtRequest() {
 export function ArtConnect() {
   return (
     <svg viewBox="0 0 320 280" className="h-auto w-full" aria-hidden>
-      <rect width="320" height="280" rx="32" fill="#F0F7F3" />
+      <rect width="320" height="280" rx="32" fill="#f5f5f5" />
       {/* driver card */}
       <rect
         x="48"
@@ -96,7 +96,7 @@ export function ArtConnect() {
         stroke="#EAEAEA"
         strokeWidth="2"
       />
-      <circle cx="96" cy="128" r="28" fill="#1A4D3A" />
+      <circle cx="96" cy="128" r="28" fill="#000000" />
       <text
         x="96"
         y="134"
@@ -144,14 +144,14 @@ export function ArtDone() {
       {/* soft road */}
       <path
         d="M0 200c60-40 100-40 160 0s100 40 160 0v80H0z"
-        fill="#E8EEE9"
+        fill="#f5f5f5"
       />
       {/* bakkie / car body */}
       <g transform="translate(70 118)">
-        <rect x="20" y="36" width="140" height="40" rx="10" fill="#1A4D3A" />
-        <path d="M50 36h70l18 28H40z" fill="#0F3328" />
-        <rect x="58" y="42" width="28" height="16" rx="3" fill="#B8D4C4" />
-        <rect x="98" y="42" width="28" height="16" rx="3" fill="#B8D4C4" />
+        <rect x="20" y="36" width="140" height="40" rx="10" fill="#000000" />
+        <path d="M50 36h70l18 28H40z" fill="#1a1a1a" />
+        <rect x="58" y="42" width="28" height="16" rx="3" fill="#d4d4d4" />
+        <rect x="98" y="42" width="28" height="16" rx="3" fill="#d4d4d4" />
         <circle cx="52" cy="78" r="14" fill="#1A1A1A" />
         <circle cx="52" cy="78" r="6" fill="#888" />
         <circle cx="148" cy="78" r="14" fill="#1A1A1A" />

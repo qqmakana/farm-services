@@ -142,7 +142,7 @@ export function FarmSheet({
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-[#1A4D3A]">Farm Connect</h1>
+        <h1 className="text-xl font-bold text-[#000000]">Farm Connect</h1>
         <p className="text-sm text-slate-600">
           Farm &amp; regional logistics anywhere — produce, livestock, equipment.
         </p>
@@ -162,7 +162,7 @@ export function FarmSheet({
         label="Sender type"
       />
 
-      <label className="block text-sm font-semibold text-[#1A4D3A]">
+      <label className="block text-sm font-semibold text-[#000000]">
         Farm / business / place name
         <input
           className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
@@ -191,7 +191,7 @@ export function FarmSheet({
       <LandmarkHelperText />
 
       <div className="grid grid-cols-2 gap-3">
-        <label className="block text-sm font-semibold text-[#1A4D3A]">
+        <label className="block text-sm font-semibold text-[#000000]">
           Your name
           <input
             className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
@@ -199,7 +199,7 @@ export function FarmSheet({
             onChange={(e) => setName(e.target.value)}
           />
         </label>
-        <label className="block text-sm font-semibold text-[#1A4D3A]">
+        <label className="block text-sm font-semibold text-[#000000]">
           Phone
           <input
             className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
@@ -209,7 +209,7 @@ export function FarmSheet({
         </label>
       </div>
 
-      <label className="block text-sm font-semibold text-[#1A4D3A]">
+      <label className="block text-sm font-semibold text-[#000000]">
         Transport type
         <select
           className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
@@ -227,7 +227,7 @@ export function FarmSheet({
       </label>
 
       <div>
-        <p className="text-sm font-semibold text-[#1A4D3A]">Vehicle needed</p>
+        <p className="text-sm font-semibold text-[#000000]">Vehicle needed</p>
         <div className="mt-2 space-y-2">
           {VEHICLES.map((opt) => (
             <button
@@ -236,11 +236,11 @@ export function FarmSheet({
               onClick={() => setVehicleChoice(opt.id)}
               className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left ${
                 vehicleChoice === opt.id
-                  ? "border-[#1A4D3A] bg-[#FFF3E0]"
+                  ? "border-[#000000] bg-[#FFF3E0]"
                   : "border-slate-200 bg-white hover:bg-slate-50"
               }`}
             >
-              <span className="text-sm font-semibold text-[#1A4D3A]">
+              <span className="text-sm font-semibold text-[#000000]">
                 {opt.label}
               </span>
               <span className="text-sm text-slate-600">from R{opt.from}</span>
@@ -249,7 +249,7 @@ export function FarmSheet({
         </div>
       </div>
 
-      <label className="block text-sm font-semibold text-[#1A4D3A]">
+      <label className="block text-sm font-semibold text-[#000000]">
         Weight / quantity estimate
         <input
           className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"

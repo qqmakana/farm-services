@@ -15,7 +15,7 @@ export default function DriverConductPage() {
         <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
           {BRAND.appName}
         </p>
-        <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold text-[#1A4D3A]">
+        <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold text-[#000000]">
           Driver Code of Conduct
         </h1>
         <p className="mt-2 text-sm text-slate-600">
@@ -34,7 +34,7 @@ export default function DriverConductPage() {
         </p>
         <Link
           href="/driver"
-          className="mt-6 inline-block rounded-xl bg-[#1A4D3A] px-5 py-3 text-sm font-bold text-white"
+          className="mt-6 inline-block rounded-xl bg-[#000000] px-5 py-3 text-sm font-bold text-white"
         >
           Back to driver apply
         </Link>

@@ -56,7 +56,7 @@ export default function DriverJoinPage() {
                 key={title}
                 className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5"
               >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#1A4D3A] text-white">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#000000] text-white">
                   <Icon className="h-5 w-5" aria-hidden />
                 </span>
                 <span className="min-w-0">
@@ -87,7 +87,7 @@ export default function DriverJoinPage() {
             Already applied?{" "}
             <Link
               href="/driver"
-              className="font-semibold text-[#1A4D3A] underline"
+              className="font-semibold text-[#000000] underline"
             >
               Open driver app
             </Link>

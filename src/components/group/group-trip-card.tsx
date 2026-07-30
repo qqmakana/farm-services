@@ -59,7 +59,7 @@ export function GroupTripCard({ trip, showJoin = true }: Props) {
               ? ` · via ${trip.route_stops.join(", ")}`
               : ""}
           </p>
-          <p className="mt-2 text-sm font-semibold text-[#1A4D3A]">
+          <p className="mt-2 text-sm font-semibold text-[#000000]">
             {formatMoney(Number(trip.price_per_person))} per{" "}
             {trip.kind === "goods" ? "package" : "person"}
           </p>

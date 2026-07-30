@@ -72,11 +72,11 @@ export default function HelpPage() {
           ))}
         </ul>
         <p className="mt-8 text-center text-sm">
-          <Link href="/partners" className="font-semibold text-[#1A4D3A] underline">
+          <Link href="/partners" className="font-semibold text-[#000000] underline">
             For businesses
           </Link>
           {" · "}
-          <Link href="/driver" className="font-semibold text-[#1A4D3A] underline">
+          <Link href="/driver" className="font-semibold text-[#000000] underline">
             Drive with us
           </Link>
         </p>

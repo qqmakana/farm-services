@@ -335,7 +335,7 @@ export function HireQueue({ drivers }: { drivers: Driver[] }) {
                     type="button"
                     disabled={pending}
                     onClick={() => run(() => setDriverIdVerified(d.id, true))}
-                    className="rounded-md bg-[#1A4D3A] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#163d2e] disabled:opacity-50"
+                    className="rounded-md bg-[#000000] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#1a1a1a] disabled:opacity-50"
                   >
                     Mark verified
                   </button>

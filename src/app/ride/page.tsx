@@ -17,7 +17,7 @@ export default function RidePage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-dvh items-center justify-center bg-[#F5F5F5] text-[#1A4D3A]">
+        <div className="flex min-h-dvh items-center justify-center bg-[#F5F5F5] text-[#000000]">
           Loading ride…
         </div>
       }

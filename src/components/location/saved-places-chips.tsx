@@ -54,7 +54,7 @@ export function SavedPlacesChips({ onSelect }: Props) {
             }
             className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--ru-line)] bg-white px-3 py-1.5 text-xs font-semibold text-black shadow-sm transition active:scale-95"
           >
-            <Icon className="h-3.5 w-3.5 text-[#1A4D3A]" />
+            <Icon className="h-3.5 w-3.5 text-[#000000]" />
             {p.name}
           </button>
         );

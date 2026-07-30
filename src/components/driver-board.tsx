@@ -197,7 +197,7 @@ export function DriverBoard({
           onClick={() => setTab("jobs")}
           className={`rounded-t-lg px-4 py-2 text-sm font-semibold ${
             tab === "jobs"
-              ? "bg-[#1A4D3A] text-white"
+              ? "bg-[#000000] text-white"
               : "bg-emerald-50 text-slate-700 hover:bg-emerald-100"
           }`}
         >
@@ -208,7 +208,7 @@ export function DriverBoard({
           onClick={() => setTab("wallet")}
           className={`rounded-t-lg px-4 py-2 text-sm font-semibold ${
             tab === "wallet"
-              ? "bg-[#1A4D3A] text-white"
+              ? "bg-[#000000] text-white"
               : "bg-emerald-50 text-slate-700 hover:bg-emerald-100"
           }`}
         >
@@ -283,7 +283,7 @@ export function DriverBoard({
           <button
             type="button"
             onClick={() => setShowTopUp((v) => !v)}
-            className="ru-btn w-full bg-[#1A4D3A] py-3 text-base font-semibold text-white hover:bg-[#163d2e] sm:w-auto"
+            className="ru-btn w-full bg-[#000000] py-3 text-base font-semibold text-white hover:bg-[#1a1a1a] sm:w-auto"
           >
             Top Up Wallet
           </button>

@@ -182,7 +182,7 @@ export function AddLocationModal({ initialName = "", onClose, onCreated }: Props
             <button
               type="button"
               onClick={() => setShowMap(true)}
-              className="w-full rounded-xl border border-dashed border-[var(--ru-line)] bg-[#fafafa] px-3 py-3 text-left text-xs font-semibold text-[#1A4D3A]"
+              className="w-full rounded-xl border border-dashed border-[var(--ru-line)] bg-[#fafafa] px-3 py-3 text-left text-xs font-semibold text-[#000000]"
             >
               Optional: pin on map (if you have signal)
             </button>

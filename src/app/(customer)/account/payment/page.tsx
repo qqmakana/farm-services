@@ -12,7 +12,7 @@ export default function PaymentMethodsPage() {
     <main className="mx-auto min-h-dvh max-w-lg bg-white px-5 pb-24 pt-6">
       <Link
         href="/account"
-        className="inline-flex items-center gap-1 text-sm font-semibold text-[#1A4D3A] transition active:scale-95"
+        className="inline-flex items-center gap-1 text-sm font-semibold text-[#000000] transition active:scale-95"
       >
         <ChevronLeft className="h-4 w-4" /> Account
       </Link>

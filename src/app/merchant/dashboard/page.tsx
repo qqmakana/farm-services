@@ -19,7 +19,7 @@ export default async function MerchantDashboardPage() {
           </p>
           <Link
             href="/login?next=/merchant/dashboard"
-            className="mt-6 inline-block rounded-xl bg-[#1A4D3A] px-5 py-3 text-sm font-bold text-white"
+            className="mt-6 inline-block rounded-xl bg-[#000000] px-5 py-3 text-sm font-bold text-white"
           >
             Sign in
           </Link>
@@ -46,7 +46,7 @@ export default async function MerchantDashboardPage() {
           </p>
           <Link
             href="/shop"
-            className="mt-6 inline-block rounded-xl bg-[#1A4D3A] px-5 py-3 text-sm font-bold text-white"
+            className="mt-6 inline-block rounded-xl bg-[#000000] px-5 py-3 text-sm font-bold text-white"
           >
             Go to Sell / Register
           </Link>

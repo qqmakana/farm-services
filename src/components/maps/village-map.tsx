@@ -63,8 +63,8 @@ export function VillageMap({
             center={[pin.lat, pin.lng]}
             radius={10}
             pathOptions={{
-              color: "#1A4D3A",
-              fillColor: "#1A4D3A",
+              color: "#000000",
+              fillColor: "#000000",
               fillOpacity: 0.9,
               weight: 3,
             }}
@@ -74,8 +74,8 @@ export function VillageMap({
             center={[DEFAULT_MAP_CENTER.lat, DEFAULT_MAP_CENTER.lng]}
             radius={8}
             pathOptions={{
-              color: "#1A4D3A",
-              fillColor: "#4ade80",
+              color: "#000000",
+              fillColor: "#a3a3a3",
               fillOpacity: 0.7,
               weight: 2,
             }}

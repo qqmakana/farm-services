@@ -163,7 +163,7 @@ export function ActivityView() {
           <label className="block text-sm font-medium text-slate-700">
             Phone number
             <input
-              className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 text-base outline-none focus:border-[#1A4D3A]"
+              className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 text-base outline-none focus:border-[#000000]"
               placeholder="063 621 3590"
               inputMode="tel"
               value={phoneInput}
@@ -173,7 +173,7 @@ export function ActivityView() {
           <label className="block text-sm font-medium text-slate-700">
             Name <span className="font-normal text-slate-400">(optional)</span>
             <input
-              className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 text-base outline-none focus:border-[#1A4D3A]"
+              className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 text-base outline-none focus:border-[#000000]"
               placeholder="Your name"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
@@ -185,7 +185,7 @@ export function ActivityView() {
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded-xl bg-[#1A4D3A] py-3.5 text-sm font-bold text-white transition active:scale-95 disabled:opacity-60"
+            className="w-full rounded-xl bg-[#000000] py-3.5 text-sm font-bold text-white transition active:scale-95 disabled:opacity-60"
           >
             {pending ? "Loading…" : "View my trips"}
           </button>
@@ -207,7 +207,7 @@ export function ActivityView() {
             onClick={() => setSegment(key)}
             className={`flex-1 rounded-lg py-2.5 text-sm capitalize transition active:scale-95 ${
               segment === key
-                ? "bg-white font-bold text-[#1A4D3A] shadow-sm"
+                ? "bg-white font-bold text-[#000000] shadow-sm"
                 : "font-normal text-[#6B7280]"
             }`}
           >
@@ -237,7 +237,7 @@ export function ActivityView() {
           </p>
           <Link
             href="/"
-            className="mt-6 rounded-xl bg-[#1A4D3A] px-6 py-3 text-sm font-bold text-white transition active:scale-95"
+            className="mt-6 rounded-xl bg-[#000000] px-6 py-3 text-sm font-bold text-white transition active:scale-95"
           >
             Book your first trip
           </Link>
@@ -257,7 +257,7 @@ export function ActivityView() {
                     </p>
                     <p className="mt-2 flex items-start gap-1.5 text-sm font-semibold text-slate-900">
                       <MapPin
-                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#1A4D3A]"
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#000000]"
                         aria-hidden
                       />
                       <span className="min-w-0">

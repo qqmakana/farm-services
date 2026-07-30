@@ -30,7 +30,7 @@ export default function PricingPage() {
             </ul>
             <Link
               href="/shop"
-              className="mt-4 inline-block rounded-xl bg-[#1A4D3A] px-4 py-2 text-sm font-bold text-white"
+              className="mt-4 inline-block rounded-xl bg-[#000000] px-4 py-2 text-sm font-bold text-white"
             >
               Sign up free
             </Link>
@@ -45,7 +45,7 @@ export default function PricingPage() {
             </ul>
             <Link
               href="/driver/join"
-              className="mt-4 inline-block rounded-xl border border-[#1A4D3A] px-4 py-2 text-sm font-bold text-[#1A4D3A]"
+              className="mt-4 inline-block rounded-xl border border-[#000000] px-4 py-2 text-sm font-bold text-[#000000]"
             >
               Apply to drive
             </Link>

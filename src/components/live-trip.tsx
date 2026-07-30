@@ -303,9 +303,9 @@ export function LiveTrip({
       </div>
 
       {searching ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-[#1A4D3A]/20 bg-[#E8F5E9] px-4 py-8 text-center">
-          <span className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-[#1A4D3A] border-t-transparent" />
-          <p className="text-base font-bold text-[#1A4D3A]">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-[#000000]/20 bg-[#f5f5f5] px-4 py-8 text-center">
+          <span className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-[#000000] border-t-transparent" />
+          <p className="text-base font-bold text-[#000000]">
             Finding your driver...
           </p>
           <p className="max-w-sm text-sm text-slate-600">
@@ -318,7 +318,7 @@ export function LiveTrip({
           <div className="mt-1 flex flex-wrap justify-center gap-2">
             <a
               href="/"
-              className="rounded-xl border border-[#1A4D3A]/30 bg-white px-4 py-2.5 text-sm font-semibold text-[#1A4D3A]"
+              className="rounded-xl border border-[#000000]/30 bg-white px-4 py-2.5 text-sm font-semibold text-[#000000]"
             >
               Back to home
             </a>
@@ -348,7 +348,7 @@ export function LiveTrip({
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
             <a
               href={bookAgainHref}
-              className="inline-flex justify-center rounded-xl bg-[#1A4D3A] px-4 py-2.5 text-sm font-bold text-white"
+              className="inline-flex justify-center rounded-xl bg-[#000000] px-4 py-2.5 text-sm font-bold text-white"
             >
               Book again
             </a>
@@ -609,7 +609,7 @@ export function LiveTrip({
           </p>
           <a
             href={bookAgainHref}
-            className="inline-flex rounded-xl bg-[#1A4D3A] px-4 py-2.5 text-sm font-bold text-white"
+            className="inline-flex rounded-xl bg-[#000000] px-4 py-2.5 text-sm font-bold text-white"
           >
             Request another
           </a>

@@ -87,7 +87,7 @@ export function EasyInstallScreen() {
         className="pointer-events-none absolute inset-0 opacity-30"
         style={{
           background:
-            "radial-gradient(ellipse 80% 50% at 50% -10%, #2d7a5c, transparent), radial-gradient(ellipse 60% 40% at 100% 100%, #0f2e24, transparent)",
+            "radial-gradient(ellipse 80% 50% at 50% -10%, #404040, transparent), radial-gradient(ellipse 60% 40% at 100% 100%, #1a1a1a, transparent)",
         }}
       />
 

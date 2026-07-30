@@ -36,7 +36,7 @@ export default function GroupTripDetailPage() {
     return (
       <main className="mx-auto max-w-lg px-5 py-10">
         <p className="text-sm text-rose-700">Group trip not found.</p>
-        <Link href="/group" className="mt-4 inline-block text-sm font-semibold text-[#1A4D3A]">
+        <Link href="/group" className="mt-4 inline-block text-sm font-semibold text-[#000000]">
           ← Back to groups
         </Link>
       </main>
@@ -49,7 +49,7 @@ export default function GroupTripDetailPage() {
 
   return (
     <main className="ru-page-enter mx-auto min-h-dvh max-w-lg space-y-4 bg-white px-5 pb-24 pt-8">
-      <Link href="/group" className="text-sm font-semibold text-[#1A4D3A]">
+      <Link href="/group" className="text-sm font-semibold text-[#000000]">
         ← All groups
       </Link>
 

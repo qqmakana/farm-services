@@ -26,7 +26,7 @@ export default function CountriesPage() {
           <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
             Global · {MARKET_REGIONS_LABEL}
           </p>
-          <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-[#1A4D3A] sm:text-4xl">
+          <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-[#000000] sm:text-4xl">
             Village Ride — {GLOBAL_COUNTRY_COUNT} countries
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
@@ -35,17 +35,17 @@ export default function CountriesPage() {
             towns worldwide. Pick your country in the app to see local prices.
           </p>
 
-          <ul className="mt-6 flex flex-wrap gap-2 text-sm font-medium text-[#1A4D3A]">
-            <li className="rounded-full bg-[#E8F5E9] px-3 py-1">
+          <ul className="mt-6 flex flex-wrap gap-2 text-sm font-medium text-[#000000]">
+            <li className="rounded-full bg-[#f5f5f5] px-3 py-1">
               Landmark booking
             </li>
-            <li className="rounded-full bg-[#E8F5E9] px-3 py-1">
+            <li className="rounded-full bg-[#f5f5f5] px-3 py-1">
               Cash &amp; Card
             </li>
-            <li className="rounded-full bg-[#E8F5E9] px-3 py-1">
+            <li className="rounded-full bg-[#f5f5f5] px-3 py-1">
               Drivers keep ~85%
             </li>
-            <li className="rounded-full bg-[#E8F5E9] px-3 py-1">
+            <li className="rounded-full bg-[#f5f5f5] px-3 py-1">
               Ride · Delivery · Farm · Courier
             </li>
           </ul>
@@ -76,7 +76,7 @@ export default function CountriesPage() {
                       Pay: {c.payments.map((p) => paymentLabel(p)).join(", ")}
                     </p>
                     {c.localRideModes.length > 0 ? (
-                      <p className="mt-1 text-xs font-semibold text-[#1A4D3A]">
+                      <p className="mt-1 text-xs font-semibold text-[#000000]">
                         Local:{" "}
                         {c.localRideModes.map((m) => m.label).join(" · ")}
                       </p>
@@ -112,13 +112,13 @@ export default function CountriesPage() {
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/"
-              className="inline-flex flex-1 items-center justify-center rounded-xl bg-[#1A4D3A] px-4 py-3.5 text-sm font-bold text-white"
+              className="inline-flex flex-1 items-center justify-center rounded-xl bg-[#000000] px-4 py-3.5 text-sm font-bold text-white"
             >
               Open Village Ride
             </Link>
             <Link
               href="/driver/join"
-              className="inline-flex flex-1 items-center justify-center rounded-xl border border-[#1A4D3A] px-4 py-3.5 text-sm font-bold text-[#1A4D3A]"
+              className="inline-flex flex-1 items-center justify-center rounded-xl border border-[#000000] px-4 py-3.5 text-sm font-bold text-[#000000]"
             >
               Become a driver
             </Link>

@@ -12,7 +12,7 @@ export default async function AdminMonitoringPage() {
         <SiteNav active="admin" />
         <main className="mx-auto max-w-lg px-4 py-12 text-center">
           <h1 className="text-2xl font-bold">Admin access required</h1>
-          <Link href="/login?next=/admin/monitoring" className="mt-6 inline-block text-[#1A4D3A] underline">
+          <Link href="/login?next=/admin/monitoring" className="mt-6 inline-block text-[#000000] underline">
             Sign in
           </Link>
         </main>
@@ -46,7 +46,7 @@ export default async function AdminMonitoringPage() {
           <p className="mt-1 text-sm">
             Critical unfixed: <strong>{h.criticalUnfixed}</strong>
           </p>
-          <Link href="/admin/errors" className="mt-3 inline-block text-sm font-semibold text-[#1A4D3A] underline">
+          <Link href="/admin/errors" className="mt-3 inline-block text-sm font-semibold text-[#000000] underline">
             Open error inbox
           </Link>
         </div>

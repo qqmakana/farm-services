@@ -95,7 +95,7 @@ export function AccountView() {
           <label className="block text-sm font-medium text-slate-700">
             Name
             <input
-              className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 outline-none focus:border-[#1A4D3A]"
+              className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 outline-none focus:border-[#000000]"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
               placeholder="Your name"
@@ -104,7 +104,7 @@ export function AccountView() {
           <label className="block text-sm font-medium text-slate-700">
             Phone
             <input
-              className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 outline-none focus:border-[#1A4D3A]"
+              className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 outline-none focus:border-[#000000]"
               value={phoneInput}
               onChange={(e) => setPhoneInput(e.target.value)}
               placeholder={formatPhonePlaceholder(countryCode)}
@@ -114,7 +114,7 @@ export function AccountView() {
           </label>
           <button
             type="submit"
-            className="w-full rounded-xl bg-[#1A4D3A] py-3 text-sm font-bold text-white transition active:scale-95"
+            className="w-full rounded-xl bg-[#000000] py-3 text-sm font-bold text-white transition active:scale-95"
           >
             Save profile
           </button>
@@ -134,7 +134,7 @@ export function AccountView() {
           onClick={() => setEditing(true)}
           className="mt-4 flex w-full items-center gap-4 rounded-xl border border-gray-100 bg-white p-4 text-left shadow-sm transition active:scale-95"
         >
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#1A4D3A] text-2xl font-bold text-white">
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#000000] text-2xl font-bold text-white">
             {initial}
           </span>
           <span className="min-w-0 flex-1">
@@ -160,7 +160,7 @@ export function AccountView() {
             }}
             className="flex w-full items-center gap-3 px-4 py-4 text-left transition active:scale-[0.99] active:bg-gray-50"
           >
-            <span className="text-[#1A4D3A]">
+            <span className="text-[#000000]">
               <PlayCircle className="h-5 w-5" />
             </span>
             <span className="flex-1 text-sm font-medium text-slate-900">
@@ -187,7 +187,7 @@ export function AccountView() {
             rel="noreferrer"
             className="flex items-center gap-3 border-t border-gray-100 px-4 py-4 transition active:scale-[0.99] active:bg-gray-50"
           >
-            <span className="text-[#1A4D3A]">
+            <span className="text-[#000000]">
               <HelpCircle className="h-5 w-5" />
             </span>
             <span className="flex-1 text-sm font-medium text-slate-900">
@@ -232,7 +232,7 @@ function MenuRow({
         href={href}
         className="flex items-center gap-3 border-t border-gray-100 px-4 py-4 first:border-t-0 transition active:scale-[0.99] active:bg-gray-50"
       >
-        <span className="text-[#1A4D3A]">{icon}</span>
+        <span className="text-[#000000]">{icon}</span>
         <span className="flex-1 text-sm font-medium text-slate-900">
           {label}
         </span>

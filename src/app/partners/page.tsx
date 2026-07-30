@@ -13,7 +13,7 @@ export default function PartnersPage() {
     <>
       <SiteNav active="partners" />
       <main>
-        <section className="relative overflow-hidden bg-[linear-gradient(160deg,#0f3328_0%,#1A4D3A_45%,#2d6b52_100%)] text-white">
+        <section className="relative overflow-hidden bg-[linear-gradient(160deg,#1a1a1a_0%,#000000_45%,#404040_100%)] text-white">
           <div
             className="pointer-events-none absolute inset-0 opacity-30"
             style={{
@@ -36,7 +36,7 @@ export default function PartnersPage() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/shop"
-                className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-[#1A4D3A] transition active:scale-95"
+                className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-[#000000] transition active:scale-95"
               >
                 Sign up free
               </Link>
@@ -76,7 +76,7 @@ export default function PartnersPage() {
               },
             ].map((step) => (
               <li key={step.n} className="flex gap-4">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1A4D3A] text-sm font-bold text-white">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#000000] text-sm font-bold text-white">
                   {step.n}
                 </span>
                 <div>
@@ -105,7 +105,7 @@ export default function PartnersPage() {
               ].map((badge) => (
                 <li
                   key={badge}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-semibold text-[#1A4D3A]"
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-semibold text-[#000000]"
                 >
                   {badge}
                 </li>
@@ -123,7 +123,7 @@ export default function PartnersPage() {
           </p>
           <Link
             href="/shop"
-            className="mt-6 inline-block rounded-xl bg-[#1A4D3A] px-6 py-3 text-sm font-bold text-white transition active:scale-95"
+            className="mt-6 inline-block rounded-xl bg-[#000000] px-6 py-3 text-sm font-bold text-white transition active:scale-95"
           >
             Create partner account
           </Link>

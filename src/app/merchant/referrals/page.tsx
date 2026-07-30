@@ -27,7 +27,7 @@ export default function MerchantReferralsPage() {
         <SiteNav active="shop" />
         <main className="mx-auto max-w-lg px-4 py-12 text-center">
           <p className="text-sm text-slate-600">{error}</p>
-          <Link href="/login?next=/merchant/referrals" className="mt-4 inline-block text-[#1A4D3A] underline">
+          <Link href="/login?next=/merchant/referrals" className="mt-4 inline-block text-[#000000] underline">
             Sign in
           </Link>
         </main>
@@ -126,7 +126,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border bg-white p-3 shadow-sm">
       <p className="text-[10px] font-semibold text-slate-500 uppercase">{label}</p>
-      <p className="mt-1 text-lg font-bold text-[#1A4D3A]">{value}</p>
+      <p className="mt-1 text-lg font-bold text-[#000000]">{value}</p>
     </div>
   );
 }

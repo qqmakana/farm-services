@@ -175,7 +175,7 @@ export function DriverGroupTripsView() {
 
       <Link
         href="/group"
-        className="mt-6 block text-center text-sm font-semibold text-[#1A4D3A]"
+        className="mt-6 block text-center text-sm font-semibold text-[#000000]"
       >
         See all open groups →
       </Link>
@@ -203,7 +203,7 @@ export function OpenGroupTripsPreview({ limit = 3 }: { limit?: number }) {
         </h2>
         <Link
           href="/group"
-          className="text-xs font-semibold text-[#1A4D3A]"
+          className="text-xs font-semibold text-[#000000]"
         >
           See all
         </Link>

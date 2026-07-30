@@ -11,7 +11,7 @@ const VillageMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full w-full items-center justify-center bg-[#E8EEE9] text-sm text-[#1A4D3A]">
+      <div className="flex h-full w-full items-center justify-center bg-[#f5f5f5] text-sm text-[#000000]">
         Loading map…
       </div>
     ),
@@ -49,7 +49,7 @@ export function UberShell({
             {backHref ? (
               <Link
                 href={backHref}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#1A4D3A] shadow-md transition active:scale-95"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#000000] shadow-md transition active:scale-95"
                 aria-label="Back"
               >
                 ←
@@ -59,10 +59,10 @@ export function UberShell({
               href="/"
               className="rounded-full bg-white/95 px-3 py-2 shadow-md backdrop-blur transition active:scale-95"
             >
-              <span className="block text-sm font-bold text-[#1A4D3A]">
+              <span className="block text-sm font-bold text-[#000000]">
                 {title ?? BRAND.appName}
               </span>
-              <span className="block text-[10px] font-medium tracking-wide text-[#1A4D3A]/70 uppercase">
+              <span className="block text-[10px] font-medium tracking-wide text-[#000000]/70 uppercase">
                 {BRAND.company}
               </span>
             </Link>

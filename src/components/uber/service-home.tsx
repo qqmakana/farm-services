@@ -146,7 +146,7 @@ export function ServiceHomeSheet() {
           href="/group"
           className="mt-2 flex items-center gap-3 rounded-2xl border border-[var(--ru-line)] bg-white px-4 py-3 shadow-[var(--ru-shadow)] transition active:scale-[0.99]"
         >
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#1A4D3A] text-white">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#000000] text-white">
             <Users className="h-5 w-5" />
           </span>
           <span className="min-w-0 flex-1">

@@ -107,7 +107,7 @@ export function DriverEarningsView() {
         </p>
         <p
           className={`mt-1 text-4xl font-bold ${
-            wallet < 0 ? "text-rose-600" : "text-[#1A4D3A]"
+            wallet < 0 ? "text-rose-600" : "text-[#000000]"
           }`}
         >
           {formatMoney(wallet)}
@@ -126,7 +126,7 @@ export function DriverEarningsView() {
         <button
           type="button"
           onClick={() => setShowTopUp((v) => !v)}
-          className="mt-4 w-full rounded-xl bg-[#1A4D3A] py-3.5 text-sm font-bold text-white transition active:scale-95"
+          className="mt-4 w-full rounded-xl bg-[#000000] py-3.5 text-sm font-bold text-white transition active:scale-95"
         >
           Top up wallet
         </button>
@@ -155,7 +155,7 @@ export function DriverEarningsView() {
               </a>
               <a
                 href={BRAND_TEL_HREF}
-                className="rounded-xl border border-[#1A4D3A]/30 bg-white px-4 py-2.5 text-xs font-semibold text-[#1A4D3A]"
+                className="rounded-xl border border-[#000000]/30 bg-white px-4 py-2.5 text-xs font-semibold text-[#000000]"
               >
                 Call ops
               </a>

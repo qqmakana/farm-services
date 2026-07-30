@@ -76,7 +76,7 @@ export default function DriverLandingPage() {
               type="button"
               disabled={!driverId || pending}
               onClick={openApp}
-              className="rounded-xl bg-[#1A4D3A] px-5 py-3 text-sm font-bold text-white transition active:scale-95 disabled:opacity-50"
+              className="rounded-xl bg-[#000000] px-5 py-3 text-sm font-bold text-white transition active:scale-95 disabled:opacity-50"
             >
               Enter driver app
             </button>

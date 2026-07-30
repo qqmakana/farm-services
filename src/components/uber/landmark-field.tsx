@@ -102,7 +102,7 @@ export function GpsButton({
         type="button"
         onClick={captureGps}
         disabled={loading}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#1A4D3A]/25 bg-[#E8F5E9] px-3 py-3 text-sm font-semibold text-[#1A4D3A] transition hover:bg-[#d7ecd9] active:scale-95 disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#000000]/25 bg-[#f5f5f5] px-3 py-3 text-sm font-semibold text-[#000000] transition hover:bg-[#f5f5f5] active:scale-95 disabled:opacity-60"
       >
         <span aria-hidden>◎</span>
         {loading ? "Getting location…" : "Use my current location"}

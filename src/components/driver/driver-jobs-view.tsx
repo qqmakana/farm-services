@@ -164,7 +164,7 @@ export function DriverJobsView() {
           {segment === "active" ? (
             <Link
               href="/driver/home"
-              className="mt-6 inline-block rounded-xl bg-[#1A4D3A] px-6 py-3 text-sm font-bold text-white transition active:scale-95"
+              className="mt-6 inline-block rounded-xl bg-[#000000] px-6 py-3 text-sm font-bold text-white transition active:scale-95"
             >
               Open Home map
             </Link>

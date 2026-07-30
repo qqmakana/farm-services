@@ -61,8 +61,8 @@ export function PinMapInner({
             center={[lat, lng]}
             radius={10}
             pathOptions={{
-              color: "#1A4D3A",
-              fillColor: "#1A4D3A",
+              color: "#000000",
+              fillColor: "#000000",
               fillOpacity: 0.9,
               weight: 3,
             }}

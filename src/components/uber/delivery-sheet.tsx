@@ -144,7 +144,7 @@ export function DeliverySheet({
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-[#1A4D3A]">Village Delivery</h1>
+        <h1 className="text-xl font-bold text-[#000000]">Village Delivery</h1>
         <p className="text-sm text-slate-600">
           Town &amp; village — store-to-home, person-to-person, town-to-town.
           Fridges, furniture, building materials.
@@ -172,7 +172,7 @@ export function DeliverySheet({
         onChange={setPickup}
       />
       <div className="grid grid-cols-2 gap-3">
-        <label className="block text-sm font-semibold text-[#1A4D3A]">
+        <label className="block text-sm font-semibold text-[#000000]">
           Sender name
           <input
             className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
@@ -180,7 +180,7 @@ export function DeliverySheet({
             onChange={(e) => setSenderName(e.target.value)}
           />
         </label>
-        <label className="block text-sm font-semibold text-[#1A4D3A]">
+        <label className="block text-sm font-semibold text-[#000000]">
           Sender phone
           <input
             className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
@@ -197,7 +197,7 @@ export function DeliverySheet({
         onChange={setDropoff}
       />
       <div className="grid grid-cols-2 gap-3">
-        <label className="block text-sm font-semibold text-[#1A4D3A]">
+        <label className="block text-sm font-semibold text-[#000000]">
           Recipient name
           <input
             className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
@@ -206,7 +206,7 @@ export function DeliverySheet({
             placeholder="Optional"
           />
         </label>
-        <label className="block text-sm font-semibold text-[#1A4D3A]">
+        <label className="block text-sm font-semibold text-[#000000]">
           Recipient phone
           <input
             className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
@@ -218,7 +218,7 @@ export function DeliverySheet({
       </div>
       <LandmarkHelperText />
 
-      <label className="block text-sm font-semibold text-[#1A4D3A]">
+      <label className="block text-sm font-semibold text-[#000000]">
         What are you sending?
         <select
           className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
@@ -235,7 +235,7 @@ export function DeliverySheet({
         </select>
       </label>
 
-      <label className="block text-sm font-semibold text-[#1A4D3A]">
+      <label className="block text-sm font-semibold text-[#000000]">
         Special notes
         <textarea
           rows={2}

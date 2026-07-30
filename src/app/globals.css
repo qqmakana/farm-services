@@ -7,8 +7,8 @@
   --ru-line: #eaeaea;
   --ru-surface: #ffffff;
   --ru-canvas: #f6f6f6;
-  --ru-brand: #1a4d3a;
-  --ru-brand-2: #0f3328;
+  --ru-brand: #000000;
+  --ru-brand-2: #1a1a1a;
   --ru-black: #000000;
   --ru-success: #0ecb81;
   --ru-warning: #ff6b00;
@@ -227,8 +227,8 @@ html[data-theme="dark"] :where(.text-slate-500, .text-gray-500) {
 }
 
 .ru-force-light .ru-input:focus {
-  border-color: #1a4d3a;
-  outline: 2px solid color-mix(in srgb, #1a4d3a 25%, transparent);
+  border-color: #000000;
+  outline: 2px solid color-mix(in srgb, #000000 25%, transparent);
   outline-offset: 0;
 }
 

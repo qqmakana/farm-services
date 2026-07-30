@@ -35,14 +35,14 @@ export function CountrySelector({
         {t("country_label", { locale, country: countryCode })}
         {!compact ? (
           <input
-            className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-2.5 text-sm outline-none focus:border-[#1A4D3A]"
+            className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-2.5 text-sm outline-none focus:border-[#000000]"
             placeholder={`Search ${GLOBAL_COUNTRY_COUNT} countries…`}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
         ) : null}
         <select
-          className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 text-sm outline-none focus:border-[#1A4D3A]"
+          className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 text-sm outline-none focus:border-[#000000]"
           value={countryCode}
           onChange={(e) => setCountry(e.target.value as CountryCode)}
         >
@@ -58,7 +58,7 @@ export function CountrySelector({
         <label className="block text-sm font-medium text-slate-700">
           {t("language_label", { locale, country: countryCode })}
           <select
-            className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 text-sm outline-none focus:border-[#1A4D3A]"
+            className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 text-sm outline-none focus:border-[#000000]"
             value={locale}
             onChange={(e) =>
               setLocale(e.target.value as AppLocale | "en")
@@ -134,7 +134,7 @@ export function CountryWelcomeModal() {
           <div className="min-w-0">
             <p
               id="country-welcome-title"
-              className="text-lg font-bold text-[#1A4D3A]"
+              className="text-lg font-bold text-[#000000]"
             >
               {t("select_country", { locale, country: countryCode })}
             </p>
@@ -153,7 +153,7 @@ export function CountryWelcomeModal() {
           </button>
         </div>
         <input
-          className="mt-3 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-2.5 text-sm outline-none focus:border-[#1A4D3A]"
+          className="mt-3 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-2.5 text-sm outline-none focus:border-[#000000]"
           placeholder="Search country…"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
@@ -166,7 +166,7 @@ export function CountryWelcomeModal() {
               onClick={() => setCountry(c.code)}
               className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm font-semibold transition active:scale-[0.99] ${
                 countryCode === c.code
-                  ? "border-[#1A4D3A] bg-[#E8F5E9] text-[#1A4D3A]"
+                  ? "border-[#000000] bg-[#f5f5f5] text-[#000000]"
                   : "border-gray-200 bg-white text-slate-800"
               }`}
             >
@@ -183,7 +183,7 @@ export function CountryWelcomeModal() {
         <button
           type="button"
           onClick={() => setCountry(countryCode)}
-          className="mt-4 w-full rounded-xl bg-[#1A4D3A] py-3 text-sm font-bold text-white transition active:scale-95"
+          className="mt-4 w-full rounded-xl bg-[#000000] py-3 text-sm font-bold text-white transition active:scale-95"
         >
           Continue
         </button>

@@ -178,7 +178,7 @@ export function PlacesAutocomplete({
   return (
     <div className="relative">
       {label ? (
-        <label className="mb-1 block text-sm font-semibold text-[#1A4D3A]">
+        <label className="mb-1 block text-sm font-semibold text-[#000000]">
           {label}
           {required ? " *" : ""}
         </label>
@@ -198,7 +198,7 @@ export function PlacesAutocomplete({
               t("search_places", { locale, country: countryCode })
             }
             required={required}
-            className="w-full rounded-xl border border-gray-200 bg-[#F9FAFB] py-3 pr-3 pl-10 text-sm outline-none focus:border-[#1A4D3A]"
+            className="w-full rounded-xl border border-gray-200 bg-[#F9FAFB] py-3 pr-3 pl-10 text-sm outline-none focus:border-[#000000]"
             autoComplete="off"
           />
         </div>
@@ -207,7 +207,7 @@ export function PlacesAutocomplete({
             type="button"
             onClick={useGps}
             disabled={gpsLoading}
-            className="flex shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white px-3 text-[#1A4D3A] transition active:scale-95 disabled:opacity-50"
+            className="flex shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white px-3 text-[#000000] transition active:scale-95 disabled:opacity-50"
             aria-label="Use GPS"
           >
             <LocateFixed className="h-5 w-5" />
@@ -228,11 +228,11 @@ export function PlacesAutocomplete({
               <li key={`s-${s.place.id}`}>
                 <button
                   type="button"
-                  className="flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm hover:bg-[#E8F5E9]"
+                  className="flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm hover:bg-[#f5f5f5]"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => selectStatic(s.place)}
                 >
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#1A4D3A]" />
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#000000]" />
                   <span>
                     <span className="font-medium text-slate-900">
                       {s.place.label}
@@ -250,11 +250,11 @@ export function PlacesAutocomplete({
               <li key={`c-${s.loc.id}`}>
                 <button
                   type="button"
-                  className="flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm hover:bg-[#E8F5E9]"
+                  className="flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm hover:bg-[#f5f5f5]"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => selectCommunity(s.loc)}
                 >
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#1A4D3A]" />
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#000000]" />
                   <span className="min-w-0 flex-1">
                     <span className="inline-flex items-center gap-1 font-medium text-slate-900">
                       {s.loc.name}
@@ -286,7 +286,7 @@ export function PlacesAutocomplete({
             <li className="border-t border-gray-100">
               <button
                 type="button"
-                className="flex w-full items-center gap-2 px-3 py-3 text-left text-sm font-semibold text-[#1A4D3A] hover:bg-[#E8F5E9]"
+                className="flex w-full items-center gap-2 px-3 py-3 text-left text-sm font-semibold text-[#000000] hover:bg-[#f5f5f5]"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   setFocused(false);
