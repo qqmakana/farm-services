@@ -89,8 +89,19 @@ function inAppBrowserName() {
 async function shareAppLink() {
   const url =
     typeof window !== "undefined" ? window.location.origin : "https://village-ride.vercel.app";
-  const text = `${BRAND.appName} by ${BRAND.company}\n${BRAND_TAGLINE}\nOpen & install from browser:\n${url}`;
+  const text = `${BRAND.appName} by ${BRAND.company}
+${BRAND_TAGLINE}
+
+${url}
+
+To INSTALL on Android:
+1) Tap the link
+2) Tap ⋮ → Open in Chrome
+3) Tap Install app
+
+(Install does not work inside WhatsApp — only in Chrome.)`;
   if (navigator.share) {
+    // Prefer text+url so WhatsApp shows the steps; some apps ignore `text` if only `url` is set.
     await navigator.share({ title: BRAND.appName, text, url });
     return "shared";
   }
