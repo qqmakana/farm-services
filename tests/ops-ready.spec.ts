@@ -22,7 +22,7 @@ test.describe("Production readiness surfaces", () => {
   test("driver join recruitment page", async ({ page, baseURL }) => {
     await page.goto("/driver/join");
     await expect(
-      page.getByRole("heading", { name: /Earn money with your vehicle/i }),
+      page.getByRole("heading", { name: /Earn with your car, bakkie, or truck/i }),
     ).toBeVisible({ timeout: 15_000 });
     if (isProductionBase(baseURL)) {
       await expect(page.getByRole("button", { name: /Apply to drive/i })).toBeVisible();

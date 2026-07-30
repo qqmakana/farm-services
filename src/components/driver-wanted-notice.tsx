@@ -9,6 +9,18 @@ import {
   markDriverWantedNoticeSeen,
 } from "@/lib/driver-recruit";
 
+// Recruitment belongs on marketing surfaces, never over a booking, sign-up,
+// checkout, or installed-app flow.
+const RECRUITMENT_PROMOTION_PATHS = new Set([
+  "/",
+  "/partners",
+  "/countries",
+  "/countries-social",
+  "/pricing",
+  "/help",
+  "/marketing/ads",
+]);
+
 /**
  * One-time in-app notice after first open (not FCM).
  * Bottom sheet — tap goes to /driver/join.
@@ -20,13 +32,7 @@ export function DriverWantedNotice() {
   useEffect(() => {
     if (getSelectedDriverId()) return;
     if (hasSeenDriverWantedNotice()) return;
-    if (
-      pathname?.startsWith("/onboarding") ||
-      pathname?.startsWith("/driver") ||
-      pathname?.startsWith("/admin")
-    ) {
-      return;
-    }
+    if (!pathname || !RECRUITMENT_PROMOTION_PATHS.has(pathname)) return;
     const t = window.setTimeout(() => setOpen(true), 900);
     return () => window.clearTimeout(t);
   }, [pathname]);
