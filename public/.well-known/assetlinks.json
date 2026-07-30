@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.villageride.twa",
+      "sha256_cert_fingerprints": [
+        "0D:82:0B:2D:70:80:4C:03:8C:CC:12:A4:95:3F:07:5A:18:4C:50:D1:A3:F3:6A:DA:F7:8B:CC:4F:7B:5B:D2:E4"
+      ]
+    }
+  }
+]

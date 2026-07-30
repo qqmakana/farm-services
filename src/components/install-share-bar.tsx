@@ -4,13 +4,12 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { BRAND } from "@/lib/brand";
 import {
+  getApkUrl,
   getAppInstallUrl,
   getDeferredPrompt,
   isAndroidDevice,
-  isInAppBrowser,
   isIosDevice,
   isStandaloneDisplay,
-  openInstallInChrome,
   promptNativeInstall,
   subscribeInstallReady,
 } from "@/lib/pwa-install";
@@ -33,7 +32,7 @@ const HIDE_BANNER = new Set([
 
 async function shareAppLink() {
   const url = getAppInstallUrl();
-  const text = `${BRAND.appName} — tap to install the app:\n${url}`;
+  const text = `${BRAND.appName} — tap to get the app (Android: downloads directly, no Play Store needed):\n${url}`;
   if (navigator.share) {
     await navigator.share({ title: `${BRAND.appName} app`, text, url });
     return "shared";
@@ -52,7 +51,6 @@ export function useInstallActions() {
   const deferred = useDeferredInstall();
   const [standalone, setStandalone] = useState(false);
   const [ios, setIos] = useState(false);
-  const [inApp, setInApp] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [installing, setInstalling] = useState(false);
@@ -60,13 +58,13 @@ export function useInstallActions() {
   useEffect(() => {
     setStandalone(isStandaloneDisplay());
     setIos(isIosDevice());
-    setInApp(isInAppBrowser());
   }, []);
 
   const install = useCallback(async () => {
-    // WhatsApp / Facebook on Android → one tap opens Chrome install page
-    if (isInAppBrowser() && isAndroidDevice()) {
-      openInstallInChrome();
+    // Android → download the real signed app directly. Works from WhatsApp,
+    // Chrome, or any browser — no beforeinstallprompt dependency, no menu hunting.
+    if (isAndroidDevice()) {
+      window.location.href = getApkUrl();
       return;
     }
 
@@ -110,7 +108,6 @@ export function useInstallActions() {
     deferred,
     standalone,
     ios,
-    inApp,
     helpOpen,
     setHelpOpen,
     note,

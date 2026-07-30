@@ -49,4 +49,7 @@ scenic-oxygen-*-firebase-adminsdk-*.json
 *.tsbuildinfo
 next-env.d.ts
 
+# Android TWA build project (signing key must stay private — never commit)
+/android-twa/
+
 .vercel

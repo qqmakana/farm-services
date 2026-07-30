@@ -4,90 +4,65 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { BRAND } from "@/lib/brand";
 import {
-  clearDeferredPrompt,
-  getDeferredPrompt,
+  getApkUrl,
   inAppBrowserName,
   isAndroidDevice,
   isInAppBrowser,
   isIosDevice,
   isStandaloneDisplay,
-  openInstallInChrome,
-  promptNativeInstall,
-  subscribeInstallReady,
 } from "@/lib/pwa-install";
 
 /**
  * One-button install screen for WhatsApp shares.
- * Android in WhatsApp → one tap opens Chrome → one tap installs.
+ * Android: downloads the real signed app (.apk) directly — works from any browser,
+ * including WhatsApp/Facebook's in-app browser, with no menu hunting required.
  */
 export function EasyInstallScreen() {
   const [standalone, setStandalone] = useState(false);
   const [ios, setIos] = useState(false);
   const [android, setAndroid] = useState(false);
   const [inApp, setInApp] = useState(false);
-  const [canPrompt, setCanPrompt] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [iosHint, setIosHint] = useState(false);
-  const [chromeHint, setChromeHint] = useState(false);
+  const [downloadStarted, setDownloadStarted] = useState(false);
 
   useEffect(() => {
     setStandalone(isStandaloneDisplay());
     setIos(isIosDevice());
     setAndroid(isAndroidDevice());
     setInApp(isInAppBrowser());
-    setCanPrompt(Boolean(getDeferredPrompt()));
-    return subscribeInstallReady(() => {
-      setCanPrompt(Boolean(getDeferredPrompt()));
-      if (isStandaloneDisplay()) {
-        setStandalone(true);
-        setDone(true);
-      }
-    });
   }, []);
 
-  const onInstall = useCallback(async () => {
-    if (busy) return;
-    setBusy(true);
-
-    try {
-      // Already in WhatsApp/Facebook → jump straight into Chrome (one tap).
-      if (inApp && android) {
-        openInstallInChrome();
-        return;
-      }
-
-      if (ios) {
-        setIosHint(true);
-        return;
-      }
-
-      const outcome = await promptNativeInstall();
-      if (outcome === "accepted") {
-        clearDeferredPrompt();
-        setDone(true);
-        setStandalone(true);
-        return;
-      }
-
-      if (outcome === "dismissed") return;
-
-      // In Chrome but prompt not ready — show a simple follow-up, don't loop.
-      setChromeHint(true);
-    } finally {
-      setBusy(false);
+  const onInstall = useCallback(() => {
+    if (ios) {
+      setIosHint(true);
+      return;
     }
-  }, [android, busy, inApp, ios]);
 
-  if (standalone || done) {
+    if (android) {
+      setDownloading(true);
+      // Trigger the .apk download directly — works inside WhatsApp too.
+      window.location.href = getApkUrl();
+      setTimeout(() => {
+        setDownloading(false);
+        setDownloadStarted(true);
+      }, 1200);
+      return;
+    }
+
+    // Desktop / unknown — send them to the apk anyway, browser will just download it.
+    window.location.href = getApkUrl();
+  }, [android, ios]);
+
+  if (standalone) {
     return (
       <main className="flex min-h-dvh flex-col items-center justify-center bg-[var(--ru-brand)] px-6 text-center text-white">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/icons/icon-192.png"
           alt=""
-          width={88}
-          height={88}
+          width={80}
+          height={80}
           className="h-20 w-20 rounded-[1.25rem] shadow-lg"
         />
         <h1 className="mt-8 font-[family-name:var(--font-display)] text-3xl font-bold">
@@ -132,22 +107,20 @@ export function EasyInstallScreen() {
           {BRAND.appName}
         </h1>
         <p className="mt-4 max-w-sm text-lg text-white/90">
-          {inApp && android
-            ? "Tap once below — we open Chrome and install for you."
-            : canPrompt
-              ? "Tap once to add the app to your phone."
-              : ios
-                ? "Add Village Ride to your home screen."
-                : "Tap once to install the app on your phone."}
+          {android
+            ? "Tap once to download the app — works right here, no menus."
+            : ios
+              ? "Add Village Ride to your home screen."
+              : "Tap once to get the app on your phone."}
         </p>
 
         <button
           type="button"
           onClick={onInstall}
-          disabled={busy}
+          disabled={downloading}
           className="mt-12 w-full max-w-sm rounded-2xl bg-white py-5 text-xl font-bold text-[var(--ru-brand)] shadow-lg active:scale-[0.98] disabled:opacity-70"
         >
-          {busy ? "Opening…" : "Install app"}
+          {downloading ? "Downloading…" : android ? "Download app" : "Install app"}
         </button>
 
         {iosHint ? (
@@ -176,28 +149,28 @@ export function EasyInstallScreen() {
               </>
             )}
           </div>
-        ) : chromeHint ? (
+        ) : downloadStarted ? (
           <div className="mt-8 w-full max-w-sm rounded-2xl bg-white/10 p-4 text-left text-sm leading-relaxed text-white">
             <p className="font-bold">Almost there</p>
-            <p className="mt-2">
-              Tap the <strong>⋮</strong> menu at the top of Chrome, then tap{" "}
-              <strong>Install app</strong>.
+            <p className="mt-2">1. Open the downloaded file (check notifications)</p>
+            <p>2. Tap Install</p>
+            <p>
+              3. If Android warns about the source, tap <strong>Settings</strong> →{" "}
+              <strong>Allow</strong>, then Install again
             </p>
             <button
               type="button"
               onClick={onInstall}
               className="mt-4 w-full rounded-xl bg-white py-3 text-base font-bold text-[var(--ru-brand)]"
             >
-              Try Install again
+              Download again
             </button>
           </div>
         ) : (
           <p className="mt-6 max-w-xs text-sm text-white/65">
-            {inApp && android
-              ? "Chrome will open — then tap Install once more."
-              : inApp && ios
-                ? `Works best outside ${inAppBrowserName()} — tap Install for steps.`
-                : "Free · No Play Store needed"}
+            {android
+              ? "Free · Works from WhatsApp, Chrome, or any browser"
+              : "Free · No Play Store needed"}
           </p>
         )}
       </div>

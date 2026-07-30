@@ -97,6 +97,12 @@ export function getAppInstallUrl() {
   return `${window.location.origin}/get-app`;
 }
 
+/** Direct download for the signed Android app (APK) — no browser install prompt needed. */
+export function getApkUrl() {
+  if (typeof window === "undefined") return "https://village-ride.vercel.app/village-ride.apk";
+  return `${window.location.origin}/village-ride.apk`;
+}
+
 /** Open the install page in Chrome (Android). One tap from WhatsApp. */
 export function openInstallInChrome() {
   const url = getAppInstallUrl();
