@@ -70,21 +70,25 @@ async function selectDriverAndEnterApp(page: Page) {
   await select.selectOption(DRIVER_ID);
   await page.getByRole("button", { name: /Enter driver app/i }).click();
   await page.waitForURL("**/driver/home", { timeout: 20_000 });
-  await expect(page.getByRole("button", { name: /Go Online|Go Offline/i })).toBeVisible({
+  await expect(page.getByRole("button", { name: /^(ONLINE|OFFLINE)$/i })).toBeVisible({
     timeout: 20_000,
   });
 }
 
 async function ensureDriverOnline(page: Page) {
-  // Test: Driver availability toggle (Uber "Go Online")
-  const goOnline = page.getByRole("button", { name: "Go Online" });
-  const goOffline = page.getByRole("button", { name: "Go Offline" });
-
-  if (await goOnline.isVisible().catch(() => false)) {
-    await goOnline.click();
+  const notNow = page.getByRole("button", { name: /Not now/i });
+  if (await notNow.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    await notNow.click();
   }
 
-  await expect(goOffline).toBeVisible({ timeout: 15_000 });
+  const offline = page.getByRole("button", { name: /^OFFLINE$/i });
+  if (await offline.isVisible().catch(() => false)) {
+    await offline.click();
+  }
+
+  await expect(page.getByRole("button", { name: /^ONLINE$/i })).toBeVisible({
+    timeout: 15_000,
+  });
   await expect(
     page.getByText(/No pending jobs|Stay online|Delivery|Ride|Farm/i).first(),
   ).toBeVisible({ timeout: 10_000 });

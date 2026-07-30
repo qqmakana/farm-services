@@ -106,7 +106,8 @@ test.describe.serial("Driver flow", () => {
     }
 
     await page.goto("/driver/earnings");
-    await expect(page.getByText("Wallet balance")).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Earnings/i })).toBeVisible();
+    await expect(page.getByText(/Wallet/i).first()).toBeVisible();
 
     const after = await page.request.get(`/api/e2e/driver?driverId=${DRIVER_ID}`);
     const json = await after.json();
