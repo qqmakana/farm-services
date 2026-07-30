@@ -6,6 +6,7 @@ import { BRAND } from "@/lib/brand";
 import {
   clearDeferredPrompt,
   getDeferredPrompt,
+  inAppBrowserName,
   isAndroidDevice,
   isInAppBrowser,
   isIosDevice,
@@ -151,10 +152,29 @@ export function EasyInstallScreen() {
 
         {iosHint ? (
           <div className="mt-8 w-full max-w-sm rounded-2xl bg-white/10 p-4 text-left text-sm leading-relaxed text-white">
-            <p className="font-bold">On iPhone (Safari only):</p>
-            <p className="mt-2">1. Tap the Share button</p>
-            <p>2. Tap Add to Home Screen</p>
-            <p>3. Tap Add</p>
+            {inApp ? (
+              <>
+                <p className="font-bold">First, leave {inAppBrowserName()}:</p>
+                <p className="mt-2">
+                  1. Tap <strong>⋯</strong> or <strong>Share</strong> at the bottom of the
+                  screen
+                </p>
+                <p>
+                  2. Tap <strong>Open in Safari</strong>
+                </p>
+                <p className="mt-3 font-bold">Then in Safari:</p>
+                <p className="mt-2">3. Tap the Share button</p>
+                <p>4. Tap Add to Home Screen</p>
+                <p>5. Tap Add</p>
+              </>
+            ) : (
+              <>
+                <p className="font-bold">On iPhone (Safari only):</p>
+                <p className="mt-2">1. Tap the Share button</p>
+                <p>2. Tap Add to Home Screen</p>
+                <p>3. Tap Add</p>
+              </>
+            )}
           </div>
         ) : chromeHint ? (
           <div className="mt-8 w-full max-w-sm rounded-2xl bg-white/10 p-4 text-left text-sm leading-relaxed text-white">
@@ -175,7 +195,9 @@ export function EasyInstallScreen() {
           <p className="mt-6 max-w-xs text-sm text-white/65">
             {inApp && android
               ? "Chrome will open — then tap Install once more."
-              : "Free · No Play Store needed"}
+              : inApp && ios
+                ? `Works best outside ${inAppBrowserName()} — tap Install for steps.`
+                : "Free · No Play Store needed"}
           </p>
         )}
       </div>

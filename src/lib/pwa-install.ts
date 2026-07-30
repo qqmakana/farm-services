@@ -78,6 +78,16 @@ export function isInAppBrowser() {
   );
 }
 
+export function inAppBrowserName() {
+  if (typeof window === "undefined") return "this app";
+  const ua = navigator.userAgent || "";
+  if (/WhatsApp/i.test(ua)) return "WhatsApp";
+  if (/Instagram/i.test(ua)) return "Instagram";
+  if (/FBAN|FBAV|FB_IAB/i.test(ua)) return "Facebook";
+  if (/TikTok|BytedanceWebview/i.test(ua)) return "TikTok";
+  return "this app";
+}
+
 export function getAppInstallPath() {
   return "/get-app";
 }
