@@ -25,12 +25,14 @@ test.describe("Production readiness surfaces", () => {
       page.getByRole("heading", { name: /Earn with your car, bakkie, or truck/i }),
     ).toBeVisible({ timeout: 15_000 });
     if (isProductionBase(baseURL)) {
-      await expect(page.getByRole("button", { name: /Apply to drive/i })).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: /Submit for verification/i }),
+      ).toBeVisible();
       return;
     }
     await page.getByPlaceholder("Full name").fill("E2E Applicant");
     await page.getByPlaceholder(/Phone/i).fill("0825550199");
-    await page.getByRole("button", { name: /Apply to drive/i }).click();
+    await page.getByRole("button", { name: /Submit for verification/i }).click();
     await expect(page.getByText(/Application received/i)).toBeVisible({
       timeout: 15_000,
     });
