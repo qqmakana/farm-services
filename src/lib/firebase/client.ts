@@ -53,10 +53,14 @@ export async function requestFcmToken(): Promise<string | null> {
   const messaging = await getMessagingIfSupported();
   if (!messaging) return null;
 
-  const registration = await navigator.serviceWorker.register(
-    "/firebase-messaging-sw.js",
-    { scope: "/" },
-  );
+  // Reuse the main PWA worker (/sw.js) — do not register a second SW at "/".
+  const registration =
+    (await navigator.serviceWorker.getRegistration("/")) ??
+    (await navigator.serviceWorker.register("/sw.js", {
+      scope: "/",
+      updateViaCache: "none",
+    }));
+  await navigator.serviceWorker.ready;
 
   const token = await getToken(messaging, {
     vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY!,

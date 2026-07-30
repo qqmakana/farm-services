@@ -30,6 +30,28 @@ declare global {
   }
 }
 
+/** Capture install prompt ASAP — it can fire before React mounts. */
+let deferredPrompt: BeforeInstallPromptEvent | null = null;
+const listeners = new Set<() => void>();
+
+function notifyInstallReady() {
+  listeners.forEach((fn) => fn());
+}
+
+function captureInstallPrompt(e: BeforeInstallPromptEvent) {
+  e.preventDefault();
+  deferredPrompt = e;
+  notifyInstallReady();
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", captureInstallPrompt);
+  window.addEventListener("appinstalled", () => {
+    deferredPrompt = null;
+    notifyInstallReady();
+  });
+}
+
 function isStandaloneDisplay() {
   if (typeof window === "undefined") return false;
   const iosStandalone =
@@ -40,8 +62,28 @@ function isStandaloneDisplay() {
 
 function isIosDevice() {
   if (typeof window === "undefined") return false;
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
+}
+
+/** WhatsApp / Instagram / Facebook / etc. — no native install prompt. */
+function isInAppBrowser() {
+  if (typeof window === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  return /FBAN|FBAV|FB_IAB|Instagram|Line\/|Twitter|TikTok|BytedanceWebview|Snapchat|WhatsApp|MicroMessenger|Pinterest|LinkedInApp|GSA\//i.test(
+    ua,
+  );
+}
+
+function inAppBrowserName() {
+  const ua = navigator.userAgent || "";
+  if (/WhatsApp/i.test(ua)) return "WhatsApp";
+  if (/Instagram/i.test(ua)) return "Instagram";
+  if (/FBAN|FBAV|FB_IAB/i.test(ua)) return "Facebook";
+  if (/TikTok|BytedanceWebview/i.test(ua)) return "TikTok";
+  return "this app";
 }
 
 async function shareAppLink() {
@@ -56,12 +98,14 @@ async function shareAppLink() {
   return "copied";
 }
 
-/** Keeps the deferred install event so any Install button can trigger it. */
-let deferredPrompt: BeforeInstallPromptEvent | null = null;
-const listeners = new Set<() => void>();
-
-function notifyInstallReady() {
-  listeners.forEach((fn) => fn());
+function openInSystemBrowser() {
+  const url = window.location.href;
+  if (/Android/i.test(navigator.userAgent)) {
+    const { host, pathname, search, hash } = window.location;
+    window.location.href = `intent://${host}${pathname}${search}${hash}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(url)};end`;
+    return;
+  }
+  void navigator.clipboard.writeText(url).catch(() => undefined);
 }
 
 function useDeferredInstall() {
@@ -69,21 +113,10 @@ function useDeferredInstall() {
   useEffect(() => {
     const refresh = () => bump((n) => n + 1);
     listeners.add(refresh);
-    const onBip = (e: BeforeInstallPromptEvent) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      notifyInstallReady();
-    };
-    const onInstalled = () => {
-      deferredPrompt = null;
-      notifyInstallReady();
-    };
-    window.addEventListener("beforeinstallprompt", onBip);
-    window.addEventListener("appinstalled", onInstalled);
+    // Sync if prompt already arrived before this hook mounted
+    if (deferredPrompt) refresh();
     return () => {
       listeners.delete(refresh);
-      window.removeEventListener("beforeinstallprompt", onBip);
-      window.removeEventListener("appinstalled", onInstalled);
     };
   }, []);
   return deferredPrompt;
@@ -93,24 +126,48 @@ export function useInstallActions() {
   const deferred = useDeferredInstall();
   const [standalone, setStandalone] = useState(false);
   const [ios, setIos] = useState(false);
+  const [inApp, setInApp] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
     setStandalone(isStandaloneDisplay());
     setIos(isIosDevice());
+    setInApp(isInAppBrowser());
   }, []);
 
   const install = useCallback(async () => {
+    if (isInAppBrowser()) {
+      setInApp(true);
+      setHelpOpen(true);
+      setNote(`Open in Chrome or Safari — Install does not work inside ${inAppBrowserName()}`);
+      setTimeout(() => setNote(null), 5000);
+      return;
+    }
+
     if (deferred) {
-      await deferred.prompt();
-      const { outcome } = await deferred.userChoice;
-      if (outcome === "accepted") {
-        deferredPrompt = null;
-        setStandalone(true);
+      setInstalling(true);
+      try {
+        await deferred.prompt();
+        const { outcome } = await deferred.userChoice;
+        if (outcome === "accepted") {
+          deferredPrompt = null;
+          setStandalone(true);
+          setNote("Installed — check your home screen");
+        } else {
+          setNote("Install cancelled — tap Install again when ready");
+          setTimeout(() => setNote(null), 4000);
+        }
+      } catch {
+        setHelpOpen(true);
+        setNote("Install popup blocked — follow the steps below");
+      } finally {
+        setInstalling(false);
       }
       return;
     }
+
     setHelpOpen(true);
   }, [deferred]);
 
@@ -131,9 +188,11 @@ export function useInstallActions() {
     deferred,
     standalone,
     ios,
+    inApp,
     helpOpen,
     setHelpOpen,
     note,
+    installing,
     install,
     share,
   };
@@ -141,42 +200,119 @@ export function useInstallActions() {
 
 function HelpPanel({
   ios,
+  inApp,
   onClose,
 }: {
   ios: boolean;
+  inApp: boolean;
   onClose: () => void;
 }) {
+  const appName = inApp ? inAppBrowserName() : "";
+
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-4 sm:items-center">
       <div className="w-full max-w-md rounded-2xl bg-white p-5 text-slate-900 shadow-2xl">
         <p className="font-[family-name:var(--font-display)] text-lg font-bold">
           Install {BRAND.appName}
         </p>
-        <p className="mt-2 text-sm text-slate-600">
-          This is a browser app (not Play Store / App Store). Add it to your home screen:
-        </p>
-        <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-800">
-          {ios ? (
-            <>
-              <li>Tap the <strong>Share</strong> button in Safari</li>
-              <li>Scroll and tap <strong>Add to Home Screen</strong></li>
-              <li>Tap <strong>Add</strong></li>
-            </>
-          ) : (
-            <>
-              <li>Open the browser menu (⋮ or ⋯)</li>
-              <li>Tap <strong>Install app</strong> or <strong>Add to Home screen</strong></li>
-              <li>Confirm Install</li>
-            </>
-          )}
-        </ol>
-        <p className="mt-3 text-xs text-slate-500">
-          Tip: use Chrome or Edge on Android for the easiest Install button.
-        </p>
+
+        {inApp ? (
+          <>
+            <p className="mt-2 text-sm text-slate-600">
+              You opened the link inside <strong>{appName}</strong>. Install only works in{" "}
+              <strong>Chrome</strong> or <strong>Safari</strong> — not inside another app.
+            </p>
+            <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-800">
+              {ios ? (
+                <>
+                  <li>
+                    Tap <strong>⋯</strong> or <strong>Share</strong> in {appName}
+                  </li>
+                  <li>
+                    Choose <strong>Open in Safari</strong> (or Chrome)
+                  </li>
+                  <li>
+                    In Safari: Share → <strong>Add to Home Screen</strong>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li>
+                    Tap the menu <strong>⋮</strong> in {appName}
+                  </li>
+                  <li>
+                    Choose <strong>Open in Chrome</strong> (or browser)
+                  </li>
+                  <li>
+                    In Chrome tap <strong>Install app</strong>
+                  </li>
+                </>
+              )}
+            </ol>
+            {!ios ? (
+              <button
+                type="button"
+                onClick={() => {
+                  openInSystemBrowser();
+                }}
+                className="mt-4 w-full rounded-xl bg-[var(--ru-brand)] py-3 text-sm font-bold text-white"
+              >
+                Open in Chrome
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard.writeText(window.location.href);
+                }}
+                className="mt-4 w-full rounded-xl bg-[var(--ru-brand)] py-3 text-sm font-bold text-white"
+              >
+                Copy link — open in Safari
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            <p className="mt-2 text-sm text-slate-600">
+              This is a browser app (not Play Store / App Store). Add it to your home screen:
+            </p>
+            <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-800">
+              {ios ? (
+                <>
+                  <li>
+                    Tap the <strong>Share</strong> button in Safari
+                  </li>
+                  <li>
+                    Scroll and tap <strong>Add to Home Screen</strong>
+                  </li>
+                  <li>
+                    Tap <strong>Add</strong>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li>Open the browser menu (⋮ or ⋯)</li>
+                  <li>
+                    Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>
+                  </li>
+                  <li>Confirm Install</li>
+                </>
+              )}
+            </ol>
+            <p className="mt-3 text-xs text-slate-500">
+              Tip: use Chrome or Edge on Android for the one-tap Install button.
+            </p>
+          </>
+        )}
+
         <button
           type="button"
           onClick={onClose}
-          className="mt-4 w-full rounded-xl bg-[var(--ru-brand)] py-3 text-sm font-bold text-white"
+          className={`w-full rounded-xl py-3 text-sm font-bold ${
+            inApp
+              ? "mt-2 border border-slate-200 bg-white text-slate-800"
+              : "mt-4 bg-[var(--ru-brand)] text-white"
+          }`}
         >
           Got it
         </button>
@@ -187,7 +323,7 @@ function HelpPanel({
 
 /** Always-visible Install + Share in the top nav. */
 export function NavInstallShare() {
-  const { standalone, ios, helpOpen, setHelpOpen, note, install, share, deferred } =
+  const { standalone, ios, inApp, helpOpen, setHelpOpen, note, installing, install, share } =
     useInstallActions();
 
   if (standalone) {
@@ -207,9 +343,10 @@ export function NavInstallShare() {
       <button
         type="button"
         onClick={install}
-        className="ml-1 rounded-lg bg-white px-2.5 py-1.5 text-sm font-bold text-[var(--ru-brand)]"
+        disabled={installing}
+        className="ml-1 rounded-lg bg-white px-2.5 py-1.5 text-sm font-bold text-[var(--ru-brand)] disabled:opacity-70"
       >
-        {deferred ? "Install" : "Install"}
+        {installing ? "…" : "Install"}
       </button>
       <button
         type="button"
@@ -219,11 +356,13 @@ export function NavInstallShare() {
         Share
       </button>
       {note ? (
-        <span className="absolute top-full right-4 mt-1 rounded bg-white px-2 py-1 text-[10px] font-medium text-slate-800 shadow">
+        <span className="absolute top-full right-4 z-[70] mt-1 max-w-[240px] rounded bg-white px-2 py-1 text-[10px] font-medium text-slate-800 shadow">
           {note}
         </span>
       ) : null}
-      {helpOpen ? <HelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
+      {helpOpen ? (
+        <HelpPanel ios={ios} inApp={inApp} onClose={() => setHelpOpen(false)} />
+      ) : null}
     </>
   );
 }
@@ -231,7 +370,7 @@ export function NavInstallShare() {
 /** Bottom banner — shown until installed or dismissed. */
 export function InstallShareBar() {
   const pathname = usePathname();
-  const { standalone, ios, helpOpen, setHelpOpen, note, install, share, deferred } =
+  const { standalone, ios, inApp, helpOpen, setHelpOpen, note, installing, install, share, deferred } =
     useInstallActions();
   const [minimized, setMinimized] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -275,11 +414,14 @@ export function InstallShareBar() {
         <button
           type="button"
           onClick={install}
-          className="rounded-full bg-black px-4 py-2.5 text-sm font-bold text-white shadow-lg"
+          disabled={installing}
+          className="rounded-full bg-black px-4 py-2.5 text-sm font-bold text-white shadow-lg disabled:opacity-70"
         >
           Install app
         </button>
-        {helpOpen ? <HelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
+        {helpOpen ? (
+          <HelpPanel ios={ios} inApp={inApp} onClose={() => setHelpOpen(false)} />
+        ) : null}
       </div>
     );
   }
@@ -300,19 +442,22 @@ export function InstallShareBar() {
             Install {BRAND.appName}
           </p>
           <p className="text-xs text-[var(--ru-muted)]">
-            {ios
-              ? "Add to Home Screen for the app feel"
-              : deferred
-                ? "Add to your home screen"
-                : "Install for faster access"}
+            {inApp
+              ? "Open in Chrome / Safari to install"
+              : ios
+                ? "Add to Home Screen for the app feel"
+                : deferred
+                  ? "Add to your home screen"
+                  : "Install for faster access"}
           </p>
         </div>
         <button
           type="button"
           onClick={install}
-          className="ru-btn ru-btn-brand !min-h-10 shrink-0 !px-4 !text-sm"
+          disabled={installing}
+          className="ru-btn ru-btn-brand !min-h-10 shrink-0 !px-4 !text-sm disabled:opacity-70"
         >
-          Install
+          {installing ? "…" : "Install"}
         </button>
         <button
           type="button"
@@ -332,18 +477,21 @@ export function InstallShareBar() {
         </button>
       </div>
       {note ? (
-        <p className="mx-auto mt-2 max-w-lg text-center text-xs text-[var(--ru-muted)]">
+        <p className="mx-auto mt-2 max-w-lg rounded-lg bg-black/80 px-3 py-2 text-center text-xs text-white">
           {note}
         </p>
       ) : null}
-      {helpOpen ? <HelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
+      {helpOpen ? (
+        <HelpPanel ios={ios} inApp={inApp} onClose={() => setHelpOpen(false)} />
+      ) : null}
     </div>
   );
 }
 
 /** Hero CTAs for the home page. */
 export function HomeInstallShareCtas() {
-  const { standalone, ios, helpOpen, setHelpOpen, note, install, share } = useInstallActions();
+  const { standalone, ios, inApp, helpOpen, setHelpOpen, note, installing, install, share } =
+    useInstallActions();
   if (standalone) {
     return (
       <div className="mt-6 flex flex-wrap gap-3">
@@ -358,9 +506,10 @@ export function HomeInstallShareCtas() {
       <button
         type="button"
         onClick={install}
-        className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-[var(--ru-brand)] shadow"
+        disabled={installing}
+        className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-[var(--ru-brand)] shadow disabled:opacity-70"
       >
-        Install app
+        {installing ? "Installing…" : "Install app"}
       </button>
       <button
         type="button"
@@ -370,7 +519,9 @@ export function HomeInstallShareCtas() {
         Share app
       </button>
       {note ? <p className="w-full text-sm text-sky-200">{note}</p> : null}
-      {helpOpen ? <HelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
+      {helpOpen ? (
+        <HelpPanel ios={ios} inApp={inApp} onClose={() => setHelpOpen(false)} />
+      ) : null}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: "/",
     name: `${BRAND.appName} by ${BRAND.company}`,
     short_name: BRAND.appName,
     description: BRAND_TAGLINE,
@@ -12,6 +13,7 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "portrait-primary",
     background_color: "#1A4D3A",
     theme_color: "#1A4D3A",
+    prefer_related_applications: false,
     categories: ["travel", "business", "shopping"],
     icons: [
       {
