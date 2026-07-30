@@ -51,13 +51,26 @@ export async function selectMockDriver(
 }
 
 export async function ensureDriverOnline(page: Page) {
-  const goOnline = page.getByRole("button", { name: "Go Online" });
+  // Dismiss one-time push prompt if it covers the online toggle.
+  const notNow = page.getByRole("button", { name: /Not now/i });
+  if (await notNow.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    await notNow.click();
+  }
+
+  const offline = page.getByRole("button", { name: /^OFFLINE$/i });
+  if (await offline.isVisible().catch(() => false)) {
+    await offline.click();
+  }
+
+  // Legacy label fallback
+  const goOnline = page.getByRole("button", { name: /Go Online/i });
   if (await goOnline.isVisible().catch(() => false)) {
     await goOnline.click();
   }
-  await expect(page.getByRole("button", { name: "Go Offline" })).toBeVisible({
-    timeout: 15_000,
-  });
+
+  await expect(
+    page.getByRole("button", { name: /^(ONLINE|Go Offline)$/i }),
+  ).toBeVisible({ timeout: 15_000 });
 }
 
 export function isProductionBase(baseURL?: string) {

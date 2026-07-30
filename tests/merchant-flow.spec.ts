@@ -21,11 +21,12 @@ test.describe("Merchant / partner flow", () => {
   test("signup form validates required fields", async ({ page }) => {
     await page.goto("/shop");
     await dismissCountryModalIfPresent(page);
-    const submit = page.getByRole("button", { name: /Create merchant account/i });
-    await expect(submit).toBeVisible();
-    // HTML5 required — empty submit should not navigate away
-    await submit.click();
+    await expect(page.getByLabel(/Business name/i)).toBeVisible();
+    await expect(page.getByText(/Step 1 of 3/i)).toBeVisible();
+    // Step 1 Continue without name/location must stay on /shop
+    await page.getByRole("button", { name: /^Continue$/i }).click();
     await expect(page).toHaveURL(/\/shop/);
+    await expect(page.getByText(/Business name and landmark are required/i)).toBeVisible();
   });
 
   test("dashboard loads with stats and onboarding checklist", async ({ page }) => {
