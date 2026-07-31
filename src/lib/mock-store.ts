@@ -434,6 +434,14 @@ const seedJobs: Job[] = [
   },
 ];
 
+type WearLog = {
+  description: string;
+  brand: string;
+  country: string;
+  job_id: string | null;
+  created_at: string;
+};
+
 type Store = {
   drivers: Driver[];
   jobs: Job[];
@@ -445,7 +453,23 @@ type Store = {
   groupParticipants: GroupTripParticipant[];
   communityLocations: CommunityLocation[];
   savedLocations: SavedLocation[];
+  wearLogs: WearLog[];
 };
+
+const seedWearLogs: WearLog[] = (() => {
+  const now = Date.now();
+  const hour = 60 * 60 * 1000;
+  return [
+    { description: "Nike tracksuit", brand: "Nike", country: "ZA", job_id: null, created_at: new Date(now - 1 * hour).toISOString() },
+    { description: "red Adidas hoodie", brand: "Adidas", country: "ZA", job_id: null, created_at: new Date(now - 2 * hour).toISOString() },
+    { description: "black Nike jacket", brand: "Nike", country: "ZA", job_id: null, created_at: new Date(now - 3 * hour).toISOString() },
+    { description: "Puma t-shirt blue", brand: "Puma", country: "KE", job_id: null, created_at: new Date(now - 5 * hour).toISOString() },
+    { description: "Nike tracksuit", brand: "Nike", country: "NG", job_id: null, created_at: new Date(now - 8 * hour).toISOString() },
+    { description: "green school jersey", brand: "Other", country: "ZA", job_id: null, created_at: new Date(now - 26 * hour).toISOString() },
+    { description: "Adidas shorts + white takkies", brand: "Adidas", country: "GH", job_id: null, created_at: new Date(now - 30 * hour).toISOString() },
+    { description: "Nike tracksuit", brand: "Nike", country: "ZA", job_id: null, created_at: new Date(now - 40 * hour).toISOString() },
+  ];
+})();
 
 declare global {
   // eslint-disable-next-line no-var
@@ -465,6 +489,7 @@ function store(): Store {
       groupParticipants: structuredClone(seedGroupParticipants),
       communityLocations: structuredClone(seedCommunityLocations),
       savedLocations: [],
+      wearLogs: structuredClone(seedWearLogs),
     };
   }
   const s = globalThis.__ruralMockStore;
@@ -472,6 +497,7 @@ function store(): Store {
   if (!s.products) s.products = structuredClone(seedProducts);
   if (!s.applications) s.applications = [];
   if (!s.ratings) s.ratings = [];
+  if (!s.wearLogs) s.wearLogs = structuredClone(seedWearLogs);
   if (!s.groupTrips) s.groupTrips = structuredClone(seedGroupTrips);
   if (!s.groupParticipants) {
     s.groupParticipants = structuredClone(seedGroupParticipants);
@@ -897,6 +923,31 @@ export const mockRepo = {
     store().jobs.unshift(job);
     mockRepo.broadcastOffers(job);
     return mockRepo.autoMatchIfPossible(job);
+  },
+
+  logWear(input: {
+    description: string;
+    brand: string;
+    country: string;
+    job_id?: string | null;
+    created_at?: string;
+  }) {
+    store().wearLogs.unshift({
+      description: input.description,
+      brand: input.brand,
+      country: input.country,
+      job_id: input.job_id ?? null,
+      created_at: input.created_at ?? new Date().toISOString(),
+    });
+  },
+
+  listWearLogs() {
+    return store().wearLogs.map((w) => ({
+      description: w.description,
+      brand: w.brand,
+      country: w.country,
+      created_at: w.created_at,
+    }));
   },
 
   setDriverOnline(
@@ -1537,6 +1588,7 @@ export const mockRepo = {
       location_id: input.location_id ?? null,
       is_home: Boolean(input.is_home),
       is_work: Boolean(input.is_work),
+      is_farm: Boolean(input.is_farm),
       country_code: input.country_code || DEFAULT_COUNTRY,
       created_at: new Date().toISOString(),
     };

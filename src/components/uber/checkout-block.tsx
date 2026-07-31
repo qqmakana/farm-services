@@ -32,7 +32,18 @@ function detailsFromDraft(d: Draft, locale: string): string {
   if (d.service_type === "ride") {
     const seats =
       "seats" in d.details ? Number(d.details.seats) || 1 : 1;
-    return `${seats} passenger${seats === 1 ? "" : "s"} · ${VEHICLE_LABELS[d.required_vehicle]} · ${when}`;
+    const wearing =
+      "wearing" in d.details && d.details.wearing
+        ? String(d.details.wearing)
+        : "";
+    return [
+      `${seats} passenger${seats === 1 ? "" : "s"}`,
+      VEHICLE_LABELS[d.required_vehicle],
+      when,
+      wearing && `wearing ${wearing}`,
+    ]
+      .filter(Boolean)
+      .join(" · ");
   }
 
   if (d.service_type === "delivery" || d.service_type === "courier") {
@@ -79,7 +90,7 @@ export function CheckoutBlock({
   fee: number;
   vehicle: VehicleType;
   ready: boolean;
-  draft: () => Draft;
+  draft: () => Draft | Promise<Draft>;
   buttonLabel?: string;
   description?: string;
   serviceType: ServiceType;
@@ -107,7 +118,7 @@ export function CheckoutBlock({
     }
     startTransition(async () => {
       try {
-        const d = draft();
+        const d = await draft();
         setGuestProfile({
           name: d.customer_name,
           phone: d.customer_phone,
@@ -131,24 +142,26 @@ export function CheckoutBlock({
       setFormError("Complete the form first.");
       return;
     }
-    const d = draft();
-    setGuestProfile({
-      name: d.customer_name,
-      phone: d.customer_phone,
-      country_code: countryCode,
-    });
-    const payload: BookingWhatsAppDraft = {
-      service_type: d.service_type,
-      pickup_landmark: d.pickup_landmark,
-      dropoff_landmark: d.dropoff_landmark,
-      customer_name: d.customer_name,
-      customer_phone: d.customer_phone,
-      detailsLine: detailsFromDraft(d, country.locale),
-      paymentLabel: payMethod === "cash" ? "Cash" : "Card",
-      estimateZar: fee,
-      currencySymbol: country.currencySymbol,
-    };
-    window.open(bookingWhatsAppHref(payload), "_blank", "noopener,noreferrer");
+    void (async () => {
+      const d = await draft();
+      setGuestProfile({
+        name: d.customer_name,
+        phone: d.customer_phone,
+        country_code: countryCode,
+      });
+      const payload: BookingWhatsAppDraft = {
+        service_type: d.service_type,
+        pickup_landmark: d.pickup_landmark,
+        dropoff_landmark: d.dropoff_landmark,
+        customer_name: d.customer_name,
+        customer_phone: d.customer_phone,
+        detailsLine: detailsFromDraft(d, country.locale),
+        paymentLabel: payMethod === "cash" ? "Cash" : "Card",
+        estimateZar: fee,
+        currencySymbol: country.currencySymbol,
+      };
+      window.open(bookingWhatsAppHref(payload), "_blank", "noopener,noreferrer");
+    })();
   }
 
   return (

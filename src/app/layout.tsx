@@ -8,6 +8,7 @@ import { InstallShareBar } from "@/components/install-share-bar";
 import { PwaRegister } from "@/components/pwa-register";
 import { WhatsAppFloat } from "@/components/whatsapp-float";
 import { OfflineBanner } from "@/components/offline-banner";
+import { FlushPendingPlaces } from "@/components/location/flush-pending-places";
 import { ErrorReporter } from "@/components/error-reporter";
 import { AnalyticsBeacon } from "@/components/analytics-beacon";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -97,6 +98,7 @@ export default function RootLayout({
             <ToastProvider>
               <PwaRegister />
               <OfflineBanner />
+              <FlushPendingPlaces />
               <ErrorReporter />
               <AnalyticsBeacon />
               <div className="flex-1">{children}</div>

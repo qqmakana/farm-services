@@ -39,7 +39,8 @@ const STATUSES: JobStatus[] = [
 function detailsSummary(job: JobWithDriver) {
   const d = job.details as Record<string, unknown>;
   if (job.service_type === "ride") {
-    return `${d.route_name ?? "Route"} · ${d.seats ?? "?"} seats · ${d.direction ?? ""}`;
+    const wear = d.wearing ? ` · wearing ${d.wearing}` : "";
+    return `${d.route_name ?? "Route"} · ${d.seats ?? "?"} seats · ${d.direction ?? ""}${wear}`;
   }
   if (job.service_type === "delivery") {
     return `${d.item_description ?? "Item"} · ${d.size ?? "?"} · helpers: ${d.needs_helpers ? "yes" : "no"}`;

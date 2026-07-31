@@ -232,21 +232,30 @@ export async function savePersonalLocation(
   }
 
   const admin = createAdminClient();
-  const { data, error } = await admin
+  const baseRow = {
+    guest_phone: phone,
+    name,
+    label,
+    latitude: lat,
+    longitude: lng,
+    location_id: input.location_id ?? null,
+    is_home: Boolean(input.is_home),
+    is_work: Boolean(input.is_work),
+    country_code: input.country_code || DEFAULT_COUNTRY,
+  };
+  let { data, error } = await admin
     .from("rr_saved_locations")
-    .insert({
-      guest_phone: phone,
-      name,
-      label,
-      latitude: lat,
-      longitude: lng,
-      location_id: input.location_id ?? null,
-      is_home: Boolean(input.is_home),
-      is_work: Boolean(input.is_work),
-      country_code: input.country_code || DEFAULT_COUNTRY,
-    })
+    .insert({ ...baseRow, is_farm: Boolean(input.is_farm) })
     .select("*")
     .single();
+  // Column may not exist until DESCRIBE_PLACE.sql is applied.
+  if (error && /is_farm/i.test(error.message)) {
+    ({ data, error } = await admin
+      .from("rr_saved_locations")
+      .insert(baseRow)
+      .select("*")
+      .single());
+  }
   if (error) throw new Error(error.message);
   revalidateLocations();
   return data as SavedLocation;

@@ -30,6 +30,7 @@ create table if not exists public.rr_saved_locations (
   location_id uuid references public.rr_locations (id) on delete set null,
   is_home boolean not null default false,
   is_work boolean not null default false,
+  is_farm boolean not null default false,
   country_code text not null default 'ZA',
   created_at timestamptz not null default now()
 );

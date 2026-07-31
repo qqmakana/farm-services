@@ -28,6 +28,7 @@ import {
   insertPaidJob,
   matchJobAfterCreate,
 } from "./matching";
+import { logRiderWear } from "./wear-stats";
 import { createAdminClient, hasServiceRole } from "./supabase/admin";
 import { paypalRefundCapture } from "./paypal-refund";
 import { createClient, isSupabaseConfigured } from "./supabase/server";
@@ -76,6 +77,7 @@ function revalidateAll() {
   revalidatePath("/shops");
   revalidatePath("/merchant/dashboard");
   revalidatePath("/trip", "layout");
+  revalidatePath("/wear-stats");
 }
 
 /** Production writes that RLS would block for anon. Also gates live vs local mock. */
@@ -1297,6 +1299,19 @@ export async function createJob(input: NewJobInput) {
       ...input,
       fee_amount: fare.fee_amount,
     });
+    const wearing =
+      input.service_type === "ride" &&
+      input.details &&
+      typeof (input.details as { wearing?: unknown }).wearing === "string"
+        ? String((input.details as { wearing?: string }).wearing).trim()
+        : "";
+    if (wearing) {
+      await logRiderWear({
+        description: wearing,
+        jobId: job.id,
+        country: countryCode,
+      });
+    }
     revalidateAll();
     return job;
   }
@@ -1355,6 +1370,19 @@ export async function createJob(input: NewJobInput) {
 
   try {
     const data = await insertPaidJob(row);
+    const wearing =
+      input.service_type === "ride" &&
+      input.details &&
+      typeof (input.details as { wearing?: unknown }).wearing === "string"
+        ? String((input.details as { wearing?: string }).wearing).trim()
+        : "";
+    if (wearing) {
+      await logRiderWear({
+        description: wearing,
+        jobId: data.id,
+        country: countryCode,
+      });
+    }
     revalidateAll();
     return data as JobWithDriver;
   } catch (err) {

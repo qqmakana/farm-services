@@ -11,11 +11,13 @@ import {
   startTrip,
 } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
+import { PickupDescribeCard } from "@/components/driver/pickup-describe-card";
 import {
   formatMoney,
   SERVICE_LABELS,
   STATUS_LABELS,
 } from "@/lib/format";
+import { pickupPhotoFromDetails } from "@/lib/pickup-photo";
 import type { JobStatus, JobWithDriver } from "@/lib/types";
 
 type Segment = "active" | "completed" | "cancelled";
@@ -114,11 +116,13 @@ export function DriverJobsView() {
             {SERVICE_LABELS[active.service_type]} ·{" "}
             {formatMoney(Number(active.fee_amount))}
           </p>
-          <p className="mt-2 text-sm text-black">
-            {active.pickup_landmark}
-            <span className="mx-1 text-[var(--ru-muted)]">→</span>
-            {active.dropoff_landmark}
-          </p>
+          <div className="mt-3">
+            <PickupDescribeCard
+              pickup={active.pickup_landmark}
+              dropoff={active.dropoff_landmark}
+              photoUrl={pickupPhotoFromDetails(active.details)}
+            />
+          </div>
           <div className="mt-4 flex flex-col gap-2">
             {(active.status === "assigned" ||
               active.status === "confirmed") && (

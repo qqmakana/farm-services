@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Briefcase, Home, MapPin } from "lucide-react";
+import { Briefcase, Home, MapPin, Sprout } from "lucide-react";
 import { listSavedLocations } from "@/lib/actions-locations";
 import { getGuestProfile } from "@/lib/guest-profile";
 import {
@@ -39,7 +39,13 @@ export function SavedPlacesChips({ onSelect }: Props) {
   return (
     <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {places.map((p) => {
-        const Icon = p.is_home ? Home : p.is_work ? Briefcase : MapPin;
+        const Icon = p.is_home
+          ? Home
+          : p.is_work
+            ? Briefcase
+            : p.is_farm
+              ? Sprout
+              : MapPin;
         return (
           <button
             key={p.id}

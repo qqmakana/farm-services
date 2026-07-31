@@ -5,6 +5,7 @@ import {
   PlacesAutocomplete,
   type PlaceValue,
 } from "@/components/uber/places-autocomplete";
+import { DescribePlaceExamples } from "@/components/location/describe-place-examples";
 import { SavedPlacesChips } from "@/components/location/saved-places-chips";
 
 export type Loc = {
@@ -33,6 +34,7 @@ export function LandmarkField({
   required = true,
   preferVillages = false,
   showSaved = true,
+  showExamples = false,
 }: {
   label: string;
   placeholder: string;
@@ -41,12 +43,24 @@ export function LandmarkField({
   required?: boolean;
   preferVillages?: boolean;
   showSaved?: boolean;
+  /** Show “Describe your place” example chips (best for pickup). */
+  showExamples?: boolean;
 }) {
   return (
     <div className="space-y-2">
       {showSaved ? (
         <SavedPlacesChips
           onSelect={(v) => onChange(placeToLoc(v))}
+        />
+      ) : null}
+      {showExamples ? (
+        <DescribePlaceExamples
+          onPick={(text) =>
+            onChange({
+              ...loc,
+              landmark: text,
+            })
+          }
         />
       ) : null}
       <PlacesAutocomplete
@@ -70,7 +84,7 @@ export function useGpsPin(
   function captureGps() {
     setGpsError(null);
     if (!navigator.geolocation) {
-      setGpsError("GPS not available — pick a village instead");
+      setGpsError("GPS not available — describe your place instead");
       return;
     }
     setLoading(true);
@@ -80,7 +94,7 @@ export function useGpsPin(
         setLoading(false);
       },
       () => {
-        setGpsError("GPS not available — pick a village instead");
+        setGpsError("GPS not available — describe your place instead");
         setLoading(false);
       },
       { enableHighAccuracy: true, timeout: 12000 },
@@ -105,7 +119,7 @@ export function GpsButton({
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#000000]/25 bg-[#f5f5f5] px-3 py-3 text-sm font-semibold text-[#000000] transition hover:bg-[#f5f5f5] active:scale-95 disabled:opacity-60"
       >
         <span aria-hidden>◎</span>
-        {loading ? "Getting location…" : "Use my current location"}
+        {loading ? "Getting location…" : "Use my current location (optional)"}
       </button>
       {gpsError ? (
         <p className="mt-1.5 text-xs text-amber-800">{gpsError}</p>
@@ -117,8 +131,8 @@ export function GpsButton({
 export function LandmarkHelperText() {
   return (
     <p className="text-xs text-slate-500">
-      Search towns &amp; landmarks — no street address needed. Map pin is
-      optional; a clear description works for drivers.
+      No street address needed. Describe your place in your own words — drivers
+      use landmarks, not GPS. Works when the network is weak.
     </p>
   );
 }

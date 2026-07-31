@@ -8,8 +8,11 @@ import {
   Home,
   MapPin,
   Plus,
+  Sprout,
   Trash2,
 } from "lucide-react";
+import { CopySocialCaption } from "@/components/wear/copy-social-caption";
+import { describePlaceSocialCaption } from "@/lib/brand";
 import {
   deleteSavedLocation,
   listSavedLocations,
@@ -19,6 +22,7 @@ import { LocationPinPicker } from "@/components/location/location-pin-picker";
 import { getGuestProfile } from "@/lib/guest-profile";
 import { useCountry } from "@/components/country/country-provider";
 import {
+  enqueuePendingPlaceSave,
   readSavedPlacesCache,
   removeSavedPlaceCache,
   writeSavedPlacesCache,
@@ -32,7 +36,7 @@ export default function SavedPlacesPage() {
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [directions, setDirections] = useState("");
-  const [kind, setKind] = useState<"home" | "work" | "custom">("custom");
+  const [kind, setKind] = useState<"home" | "work" | "farm" | "custom">("custom");
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(false);
@@ -75,12 +79,18 @@ export default function SavedPlacesPage() {
       try {
         const placeName =
           name.trim() ||
-          (kind === "home" ? "Home" : kind === "work" ? "Work" : "Place");
+          (kind === "home"
+            ? "Home"
+            : kind === "work"
+              ? "Work"
+              : kind === "farm"
+                ? "Farm"
+                : "Place");
         const label =
           directions.trim() ||
           name.trim() ||
           placeName;
-        const row = await savePersonalLocation({
+        const input = {
           guest_phone: guestPhone,
           name: placeName,
           label,
@@ -88,8 +98,19 @@ export default function SavedPlacesPage() {
           longitude: lng,
           is_home: kind === "home",
           is_work: kind === "work",
+          is_farm: kind === "farm",
           country_code: countryCode,
-        });
+        };
+        let row;
+        try {
+          if (typeof navigator !== "undefined" && navigator.onLine === false) {
+            row = enqueuePendingPlaceSave(input);
+          } else {
+            row = await savePersonalLocation(input);
+          }
+        } catch {
+          row = enqueuePendingPlaceSave(input);
+        }
         writeSavedPlacesCache(guestPhone, [
           row,
           ...readSavedPlacesCache(guestPhone).filter((p) => p.id !== row.id),
@@ -129,9 +150,17 @@ export default function SavedPlacesPage() {
         Saved Places
       </h1>
       <p className="mt-2 text-sm text-slate-500">
-        Home, Work, and landmarks — works offline once saved. Map pin is
-        optional.
+        Describe your places in your own words — Home, Work, Farm. Works
+        offline. Map pin is optional.
       </p>
+
+      <div className="mt-4 rounded-2xl bg-black px-4 py-4 text-white">
+        <p className="text-sm font-bold">Share: Describe Your Place</p>
+        <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-white/85">
+          {describePlaceSocialCaption()}
+        </p>
+        <CopySocialCaption caption={describePlaceSocialCaption()} />
+      </div>
 
       {!guestPhone ? (
         <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-950">
@@ -150,7 +179,13 @@ export default function SavedPlacesPage() {
           </li>
         ) : (
           places.map((p) => {
-            const Icon = p.is_home ? Home : p.is_work ? Briefcase : MapPin;
+            const Icon = p.is_home
+              ? Home
+              : p.is_work
+                ? Briefcase
+                : p.is_farm
+                  ? Sprout
+                  : MapPin;
             return (
               <li
                 key={p.id}
@@ -200,6 +235,7 @@ export default function SavedPlacesPage() {
               [
                 ["home", "Home"],
                 ["work", "Work"],
+                ["farm", "Farm"],
                 ["custom", "Custom"],
               ] as const
             ).map(([k, label]) => (
@@ -222,14 +258,16 @@ export default function SavedPlacesPage() {
                 ? "Name (e.g. Home)"
                 : kind === "work"
                   ? "Name (e.g. Work)"
-                  : "Name (e.g. Joe's House)"
+                  : kind === "farm"
+                    ? "Name (e.g. Farm)"
+                    : "Name (e.g. Joe's House)"
             }
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <input
             className="ru-input"
-            placeholder="How to find it (e.g. Clinic gate, Qunu)"
+            placeholder="Describe it (e.g. Green gate, next to mango tree)"
             value={directions}
             onChange={(e) => setDirections(e.target.value)}
           />

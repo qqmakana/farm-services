@@ -23,6 +23,9 @@ export type RideDetails = {
   seats: number;
   route_name: string;
   direction: "to_town" | "to_village";
+  /** Optional outfit cue so the driver can spot the rider. */
+  wearing?: string;
+  local_mode?: string;
 };
 
 export type DeliveryDetails = {
@@ -303,6 +306,8 @@ export type Job = {
   pickup_lat: number | null;
   pickup_lng: number | null;
   pickup_landmark: string;
+  /** Optional storage path / URL of a pickup-spot photo */
+  pickup_photo_url?: string | null;
   dropoff_lat: number | null;
   dropoff_lng: number | null;
   dropoff_landmark: string;
@@ -492,6 +497,7 @@ export type SavedLocation = {
   location_id: string | null;
   is_home: boolean;
   is_work: boolean;
+  is_farm?: boolean;
   country_code: string;
   created_at: string;
 };
@@ -506,5 +512,6 @@ export type SavePersonalLocationInput = {
   location_id?: string | null;
   is_home?: boolean;
   is_work?: boolean;
+  is_farm?: boolean;
   country_code?: string;
 };

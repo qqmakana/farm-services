@@ -85,6 +85,25 @@ export function whatsappTripShareHref(pickup: string, dropoff: string) {
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
 
+/** Ready-to-post caption for the Describe Your Place feature. */
+export function describePlaceSocialCaption(siteUrl = "https://village-ride.vercel.app") {
+  return [
+    "No street address? No problem.",
+    "",
+    `${BRAND.appName} lets you describe your location — "green gate, next to the mango tree" — so your driver finds you even without GPS.`,
+    "",
+    "Works offline. Works for villages.",
+    "",
+    `Try it: ${siteUrl}/ride`,
+    "",
+    "#VillageRide #RuralTech #OfflineFirst",
+  ].join("\n");
+}
+
+export function describePlaceWhatsAppHref(siteUrl?: string) {
+  return `https://wa.me/?text=${encodeURIComponent(describePlaceSocialCaption(siteUrl))}`;
+}
+
 /** SMS emergency alert to Sandton Streets support line. */
 export function emergencySmsHref(mapsUrl: string) {
   const body = `EMERGENCY: I need help. My current location is ${mapsUrl}`;

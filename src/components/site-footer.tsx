@@ -50,6 +50,23 @@ export function SiteFooter() {
               {BRAND.email}
             </a>
           </p>
+          <p className="pt-1 text-xs">
+            <a href="/privacy" className="underline hover:text-slate-900">
+              Privacy
+            </a>
+            <span className="text-slate-400"> · </span>
+            <a href="/terms" className="underline hover:text-slate-900">
+              Terms
+            </a>
+            <span className="text-slate-400"> · </span>
+            <a href="/help" className="underline hover:text-slate-900">
+              Help
+            </a>
+            <span className="text-slate-400"> · </span>
+            <a href="/wear-stats" className="underline hover:text-slate-900">
+              Wear stats
+            </a>
+          </p>
         </div>
       </div>
     </footer>

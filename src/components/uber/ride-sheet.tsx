@@ -10,7 +10,9 @@ import {
   LandmarkHelperText,
   type Loc,
 } from "@/components/uber/landmark-field";
+import { PickupPhotoField } from "@/components/location/pickup-photo-field";
 import { SaveLocationPrompt } from "@/components/location/save-location-prompt";
+import { compressPickupPhotoDataUrl } from "@/lib/pickup-photo";
 import {
   ScheduleWhen,
   defaultLaterLocal,
@@ -34,6 +36,8 @@ export function RideSheet({
   const [dropoff, setDropoff] = useState<Loc>(initial.dropoff);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [wearing, setWearing] = useState("");
+  const [pickupPhoto, setPickupPhoto] = useState<File | null>(null);
   const [passengers, setPassengers] = useState(1);
   const [vehicle, setVehicle] = useState<VehicleType>("sedan");
   const [localModeId, setLocalModeId] = useState<string | null>(null);
@@ -134,15 +138,24 @@ export function RideSheet({
       />
 
       <LandmarkField
-        label="Pickup (village or landmark)"
-        placeholder="e.g., Soweto · Main taxi rank"
+        label="Describe your pickup place"
+        placeholder="e.g., House with green gate, next to the mango tree"
         loc={pickup}
         onChange={setPickup}
         preferVillages
+        showExamples
       />
+      {pickup.landmark.trim() ? (
+        <SaveLocationPrompt
+          label={pickup.landmark}
+          lat={pickup.lat}
+          lng={pickup.lng}
+        />
+      ) : null}
+      <PickupPhotoField file={pickupPhoto} onChange={setPickupPhoto} />
       <LandmarkField
-        label="Dropoff (village or landmark)"
-        placeholder="e.g., Mthatha · Clinic"
+        label="Describe your dropoff place"
+        placeholder="e.g., Blue house after the church"
         loc={dropoff}
         onChange={setDropoff}
       />
@@ -176,6 +189,21 @@ export function RideSheet({
           />
         </label>
       </div>
+
+      <label className="block text-sm font-semibold text-[#000000]">
+        What are you wearing?{" "}
+        <span className="font-normal text-slate-500">(optional)</span>
+        <input
+          className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+          value={wearing}
+          onChange={(e) => setWearing(e.target.value)}
+          placeholder="e.g., Nike tracksuit, red jacket"
+          maxLength={120}
+        />
+        <span className="mt-1 block text-xs font-normal text-slate-500">
+          Helps your driver spot you at the landmark.
+        </span>
+      </label>
 
       <div>
         <p className="text-sm font-semibold text-[#000000]">Passengers</p>
@@ -266,30 +294,39 @@ export function RideSheet({
               vehicle
             : vehicle
         }${isNight ? " · Night" : ""}`}
-        draft={() => ({
-          service_type: "ride",
-          required_vehicle: vehicle,
-          customer_name: name.trim(),
-          customer_phone: phone.trim(),
-          pickup_lat: pickup.lat,
-          pickup_lng: pickup.lng,
-          pickup_landmark: pickup.landmark.trim(),
-          dropoff_lat: dropoff.lat,
-          dropoff_lng: dropoff.lng,
-          dropoff_landmark: dropoff.landmark.trim(),
-          scheduled_for: atIso,
-          country_code: countryCode,
-          dispatcher_notes: isNight
-            ? "Night Ride (Premium) — after-hours safety surcharge applied"
-            : null,
-          details: {
-            seats: passengers,
-            route_name: `${pickup.landmark} → ${dropoff.landmark}`,
-            direction: "to_village" as const,
-            ...(localModeId ? { local_mode: localModeId } : {}),
-          },
-          fee_amount: fee,
-        })}
+        draft={async () => {
+          const photoDataUrl = pickupPhoto
+            ? await compressPickupPhotoDataUrl(pickupPhoto)
+            : null;
+          return {
+            service_type: "ride" as const,
+            required_vehicle: vehicle,
+            customer_name: name.trim(),
+            customer_phone: phone.trim(),
+            pickup_lat: pickup.lat,
+            pickup_lng: pickup.lng,
+            pickup_landmark: pickup.landmark.trim(),
+            dropoff_lat: dropoff.lat,
+            dropoff_lng: dropoff.lng,
+            dropoff_landmark: dropoff.landmark.trim(),
+            scheduled_for: atIso,
+            country_code: countryCode,
+            dispatcher_notes: isNight
+              ? "Night Ride (Premium) — after-hours safety surcharge applied"
+              : null,
+            details: {
+              seats: passengers,
+              route_name: `${pickup.landmark} → ${dropoff.landmark}`,
+              direction: "to_village" as const,
+              ...(localModeId ? { local_mode: localModeId } : {}),
+              ...(wearing.trim() ? { wearing: wearing.trim() } : {}),
+              ...(photoDataUrl
+                ? { pickup_photo_data_url: photoDataUrl }
+                : {}),
+            },
+            fee_amount: fee,
+          };
+        }}
       />
     </div>
   );

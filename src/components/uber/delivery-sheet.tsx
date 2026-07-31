@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckoutBlock } from "@/components/uber/checkout-block";
+import { SaveLocationPrompt } from "@/components/location/save-location-prompt";
 import {
   GpsButton,
   LandmarkField,
@@ -166,11 +167,19 @@ export function DeliverySheet({
       />
 
       <LandmarkField
-        label="Pickup landmark"
-        placeholder="e.g., Town hardware store, Village main road, or Farm gate"
+        label="Describe pickup place"
+        placeholder="e.g., Farm gate next to the blue water tank"
         loc={pickup}
         onChange={setPickup}
+        showExamples
       />
+      {pickup.landmark.trim() ? (
+        <SaveLocationPrompt
+          label={pickup.landmark}
+          lat={pickup.lat}
+          lng={pickup.lng}
+        />
+      ) : null}
       <div className="grid grid-cols-2 gap-3">
         <label className="block text-sm font-semibold text-[#000000]">
           Sender name
@@ -191,11 +200,18 @@ export function DeliverySheet({
       </div>
 
       <LandmarkField
-        label="Dropoff landmark"
-        placeholder="e.g., Home address, Village landmark, or Town market"
+        label="Describe dropoff place"
+        placeholder="e.g., Blue house after the church"
         loc={dropoff}
         onChange={setDropoff}
       />
+      {dropoff.landmark.trim() ? (
+        <SaveLocationPrompt
+          label={dropoff.landmark}
+          lat={dropoff.lat}
+          lng={dropoff.lng}
+        />
+      ) : null}
       <div className="grid grid-cols-2 gap-3">
         <label className="block text-sm font-semibold text-[#000000]">
           Recipient name

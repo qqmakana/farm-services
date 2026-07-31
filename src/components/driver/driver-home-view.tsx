@@ -11,6 +11,7 @@ import {
   updateDriverLocation,
 } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
+import { PickupDescribeCard } from "@/components/driver/pickup-describe-card";
 import { DriverPushPrompt } from "@/components/driver-push-prompt";
 import {
   isFirebaseClientConfigured,
@@ -18,6 +19,7 @@ import {
 } from "@/lib/firebase/client";
 import { formatMoney, SERVICE_LABELS } from "@/lib/format";
 import { distanceKm } from "@/lib/geo";
+import { pickupPhotoFromDetails } from "@/lib/pickup-photo";
 import { useDriverOffersRealtime } from "@/lib/use-driver-offers-realtime";
 import type { JobApplication } from "@/lib/types";
 
@@ -267,13 +269,13 @@ export function DriverHomeView() {
                 <p className="text-xs font-semibold tracking-wide text-[var(--ru-muted)] uppercase">
                   {SERVICE_LABELS[job.service_type]} · {job.reference_code}
                 </p>
-                <p className="mt-1 text-sm font-semibold text-black">
-                  {job.pickup_landmark}
-                  <span className="mx-1 font-normal text-[var(--ru-muted)]">
-                    →
-                  </span>
-                  {job.dropoff_landmark}
-                </p>
+                <div className="mt-2">
+                  <PickupDescribeCard
+                    pickup={job.pickup_landmark}
+                    dropoff={job.dropoff_landmark}
+                    photoUrl={pickupPhotoFromDetails(job.details)}
+                  />
+                </div>
                 {job.service_type === "courier" ? (
                   <p className="mt-1 text-xs text-[var(--ru-muted)]">
                     Package:{" "}
@@ -299,6 +301,19 @@ export function DriverHomeView() {
                         }`
                       : ""}
                     {" · keep ~85%"}
+                  </p>
+                ) : null}
+                {job.service_type === "ride" &&
+                typeof (job.details as Record<string, unknown>).wearing ===
+                  "string" &&
+                String((job.details as Record<string, unknown>).wearing).trim() ? (
+                  <p className="mt-1 text-xs text-[var(--ru-muted)]">
+                    Wearing:{" "}
+                    <span className="font-semibold text-black">
+                      {String(
+                        (job.details as Record<string, unknown>).wearing,
+                      )}
+                    </span>
                   </p>
                 ) : null}
               </div>
