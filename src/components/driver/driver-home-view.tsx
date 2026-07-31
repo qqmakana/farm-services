@@ -11,6 +11,7 @@ import {
   updateDriverLocation,
 } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
+import { OutOfFuelPanel } from "@/components/driver/out-of-fuel-panel";
 import { PickupDescribeCard } from "@/components/driver/pickup-describe-card";
 import { DriverPushPrompt } from "@/components/driver-push-prompt";
 import {
@@ -250,6 +251,16 @@ export function DriverHomeView() {
           <p className="mb-2 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-800">
             {error}
           </p>
+        ) : null}
+
+        {driverId ? (
+          <div className="mb-3">
+            <OutOfFuelPanel
+              driverId={driverId}
+              coords={driverLoc}
+              countryCode={undefined}
+            />
+          </div>
         ) : null}
 
         {!driver?.is_online ? (

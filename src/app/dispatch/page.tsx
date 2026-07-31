@@ -1,6 +1,7 @@
 import { SiteNav } from "@/components/site-nav";
 import { ApplicationsPanel } from "@/components/applications-panel";
 import { DispatchBoard } from "@/components/dispatch-board";
+import { FuelOpsStrip } from "@/components/fuel-ops-strip";
 import { HireQueue } from "@/components/hire-queue";
 import {
   getDataSource,
@@ -69,6 +70,7 @@ export default async function DispatchPage() {
           </div>
         </div>
 
+        <FuelOpsStrip />
         <HireQueue drivers={allDrivers} />
         <ApplicationsPanel applications={applications} />
         <DispatchBoard jobs={jobs} drivers={drivers} />

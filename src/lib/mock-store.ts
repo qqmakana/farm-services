@@ -20,7 +20,10 @@ import type {
   SavePersonalLocationInput,
   Shop,
   ShopOrderInput,
+  CreateFuelRequestInput,
+  FuelRequest,
 } from "./types";
+import { distanceKm } from "./geo";
 import { isValidMobileForCountry } from "./phone";
 import { DEFAULT_COUNTRY, getCountry } from "./countries";
 import { rankDriversForJob } from "./dispatch-score";
@@ -454,6 +457,7 @@ type Store = {
   communityLocations: CommunityLocation[];
   savedLocations: SavedLocation[];
   wearLogs: WearLog[];
+  fuelRequests: FuelRequest[];
 };
 
 const seedWearLogs: WearLog[] = (() => {
@@ -490,6 +494,7 @@ function store(): Store {
       communityLocations: structuredClone(seedCommunityLocations),
       savedLocations: [],
       wearLogs: structuredClone(seedWearLogs),
+      fuelRequests: [],
     };
   }
   const s = globalThis.__ruralMockStore;
@@ -498,6 +503,7 @@ function store(): Store {
   if (!s.applications) s.applications = [];
   if (!s.ratings) s.ratings = [];
   if (!s.wearLogs) s.wearLogs = structuredClone(seedWearLogs);
+  if (!s.fuelRequests) s.fuelRequests = [];
   if (!s.groupTrips) s.groupTrips = structuredClone(seedGroupTrips);
   if (!s.groupParticipants) {
     s.groupParticipants = structuredClone(seedGroupParticipants);
@@ -1599,6 +1605,116 @@ export const mockRepo = {
   deleteSavedLocation(id: string, guestPhone: string) {
     store().savedLocations = store().savedLocations.filter(
       (s) => !(s.id === id && s.guest_phone === guestPhone),
+    );
+  },
+
+  createFuelRequest(input: CreateFuelRequestInput): FuelRequest {
+    const open = store().fuelRequests.find(
+      (r) =>
+        r.requester_driver_id === input.driver_id &&
+        (r.status === "pending" || r.status === "assigned"),
+    );
+    if (open) throw new Error("You already have an open fuel request.");
+    const now = new Date().toISOString();
+    const row: FuelRequest = {
+      id: uid(),
+      requester_driver_id: input.driver_id,
+      helper_driver_id: null,
+      location_lat: input.location_lat ?? null,
+      location_lng: input.location_lng ?? null,
+      location_landmark: input.location_landmark?.trim() || null,
+      fuel_amount: input.fuel_amount,
+      status: "pending",
+      payment_method: input.payment_method === "card" ? "card" : "cash",
+      payment_note: "Pay the helper in cash for fuel + small tip if agreed.",
+      country_code: input.country_code || DEFAULT_COUNTRY,
+      assigned_at: null,
+      delivered_at: null,
+      created_at: now,
+      updated_at: now,
+    };
+    store().fuelRequests.unshift(row);
+    return row;
+  },
+
+  listMyFuelRequest(driverId: string): FuelRequest | null {
+    return (
+      store().fuelRequests.find(
+        (r) =>
+          r.requester_driver_id === driverId &&
+          (r.status === "pending" || r.status === "assigned"),
+      ) ?? null
+    );
+  },
+
+  listNearbyFuelHelp(
+    helperDriverId: string,
+    lat?: number | null,
+    lng?: number | null,
+  ): FuelRequest[] {
+    const rows = store().fuelRequests.filter(
+      (r) =>
+        r.status === "pending" && r.requester_driver_id !== helperDriverId,
+    );
+    if (lat == null || lng == null) return rows.slice(0, 10);
+    const origin = { lat, lng };
+    return rows
+      .filter((r) => {
+        if (r.location_lat == null || r.location_lng == null) return true;
+        return (
+          distanceKm(origin, {
+            lat: r.location_lat,
+            lng: r.location_lng,
+          }) <= 25
+        );
+      })
+      .slice(0, 10);
+  },
+
+  acceptFuelHelp(requestId: string, helperDriverId: string): FuelRequest {
+    const row = store().fuelRequests.find((r) => r.id === requestId);
+    if (!row || row.status !== "pending") {
+      throw new Error("Request already taken or cancelled.");
+    }
+    const now = new Date().toISOString();
+    row.helper_driver_id = helperDriverId;
+    row.status = "assigned";
+    row.assigned_at = now;
+    row.updated_at = now;
+    return row;
+  },
+
+  markFuelDelivered(requestId: string, driverId: string): FuelRequest {
+    const row = store().fuelRequests.find((r) => r.id === requestId);
+    if (!row) throw new Error("Request not found.");
+    if (
+      row.requester_driver_id !== driverId &&
+      row.helper_driver_id !== driverId
+    ) {
+      throw new Error("Not your fuel request.");
+    }
+    if (row.status !== "assigned") throw new Error("Request is not in delivery.");
+    const now = new Date().toISOString();
+    row.status = "delivered";
+    row.delivered_at = now;
+    row.updated_at = now;
+    return row;
+  },
+
+  cancelFuelRequest(requestId: string, driverId: string) {
+    const row = store().fuelRequests.find((r) => r.id === requestId);
+    if (!row) throw new Error("Request not found.");
+    if (row.requester_driver_id !== driverId) {
+      throw new Error("Only the stranded driver can cancel.");
+    }
+    if (row.status === "delivered") throw new Error("Already delivered.");
+    row.status = "cancelled";
+    row.updated_at = new Date().toISOString();
+  },
+
+  listOpenFuelRequests(): FuelRequest[] {
+    return store().fuelRequests.filter(
+      (r) => r.status === "pending" || r.status === "assigned",
     );
   },
 };

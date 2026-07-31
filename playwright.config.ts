@@ -35,7 +35,8 @@ export default defineConfig({
     ? [
         {
           name: "production",
-          testMatch: /public-pages\.spec\.ts|performance\.spec\.ts|security\.spec\.ts/,
+          testMatch:
+            /public-pages\.spec\.ts|performance\.spec\.ts|security\.spec\.ts|onboarding\.spec\.ts|wear-stats\.spec\.ts|describe-place\.spec\.ts|full-feature-smoke\.spec\.ts/,
           use: { ...devices["Desktop Chrome"] },
         },
         {

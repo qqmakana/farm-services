@@ -515,3 +515,42 @@ export type SavePersonalLocationInput = {
   is_farm?: boolean;
   country_code?: string;
 };
+
+export type FuelAmount = "5L" | "10L" | "20L";
+
+export type FuelRequestStatus =
+  | "pending"
+  | "assigned"
+  | "delivered"
+  | "cancelled";
+
+export type FuelRequest = {
+  id: string;
+  requester_driver_id: string;
+  helper_driver_id: string | null;
+  location_lat: number | null;
+  location_lng: number | null;
+  location_landmark: string | null;
+  fuel_amount: FuelAmount;
+  status: FuelRequestStatus;
+  payment_method: "cash" | "card";
+  payment_note: string | null;
+  country_code: string;
+  assigned_at: string | null;
+  delivered_at: string | null;
+  created_at: string;
+  updated_at: string;
+  /** Joined for UI */
+  requester?: Pick<Driver, "id" | "full_name" | "phone"> | null;
+  helper?: Pick<Driver, "id" | "full_name" | "phone"> | null;
+};
+
+export type CreateFuelRequestInput = {
+  driver_id: string;
+  fuel_amount: FuelAmount;
+  location_lat?: number | null;
+  location_lng?: number | null;
+  location_landmark?: string | null;
+  country_code?: string;
+  payment_method?: "cash" | "card";
+};
