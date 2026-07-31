@@ -974,7 +974,7 @@ export async function submitDriverDocuments(
   const licenseFile = formData.get("license_doc");
 
   if (!licenseNumber) {
-    throw new Error("License / PDP number is required.");
+    throw new Error("Driver's license number is required.");
   }
 
   if (!useAdmin()) {

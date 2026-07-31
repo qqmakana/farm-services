@@ -6,7 +6,7 @@ Read the ID or driver's license image and extract structured fields.
 Return ONLY valid JSON with keys:
 - full_name (string|null)
 - id_number (SA ID number if visible, else null)
-- license_number (driver license / PDP number if visible, else null)
+- license_number (driver license number if visible, else null)
 - expiry_date (YYYY-MM-DD if visible, else null)
 - document_type (e.g. "smart_id", "green_id", "drivers_license", "unknown")
 - raw_text_snippet (short OCR text, max 400 chars)

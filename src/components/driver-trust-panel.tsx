@@ -134,7 +134,7 @@ export function DriverTrustPanel({ driver }: { driver: Driver }) {
           if they match your profile you get the green badge automatically.
         </p>
         <label className="block text-sm font-medium text-slate-800">
-          License / PDP number
+          Driver&apos;s license number
           <input
             required
             className="ru-input mt-1"
