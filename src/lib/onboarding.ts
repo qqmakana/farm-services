@@ -4,9 +4,10 @@
  * - Session skip → sessionStorage (Skip for now — returns next visit)
  */
 
-/** v2 = corrected tour (describe-when-maps-fail / wearing / fuel) — no shops slide. */
-const PERMANENT_KEY = "vr_feature_tour_seen_v2";
+/** v3 = full product tour (services + describe-when-maps-fail / wearing / fuel). */
+const PERMANENT_KEY = "vr_feature_tour_seen_v3";
 const LEGACY_PERMANENT_KEYS = [
+  "vr_feature_tour_seen_v2",
   "vr_feature_tour_seen_v1",
   "vr_onboarding_seen_v1",
 ] as const;

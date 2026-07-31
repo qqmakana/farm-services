@@ -1,4 +1,57 @@
-/** Illustrations for the unique-feature tour (black / white / grey). */
+/** Illustrations for the product + helpers tour (black / white / grey). */
+
+/** Ride · Delivery · Farm · Courier · Shops overview */
+export function ArtServices() {
+  const tiles = [
+    { x: 28, y: 48, label: "Ride" },
+    { x: 172, y: 48, label: "Delivery" },
+    { x: 28, y: 148, label: "Farm" },
+    { x: 172, y: 148, label: "Courier" },
+  ] as const;
+
+  return (
+    <svg viewBox="0 0 320 280" className="h-auto w-full" aria-hidden>
+      <rect width="320" height="280" rx="32" fill="#f5f5f5" />
+      {tiles.map((t) => (
+        <g key={t.label}>
+          <rect
+            x={t.x}
+            y={t.y}
+            width="120"
+            height="84"
+            rx="16"
+            fill="#fff"
+            stroke="#e5e5e5"
+            strokeWidth="2"
+          />
+          <circle cx={t.x + 60} cy={t.y + 32} r="14" fill="#000" />
+          <text
+            x={t.x + 60}
+            y={t.y + 64}
+            textAnchor="middle"
+            fill="#111"
+            fontSize="13"
+            fontFamily="system-ui,sans-serif"
+            fontWeight="700"
+          >
+            {t.label}
+          </text>
+        </g>
+      ))}
+      <text
+        x="160"
+        y="258"
+        textAnchor="middle"
+        fill="#6e6e6e"
+        fontSize="12"
+        fontFamily="system-ui,sans-serif"
+        fontWeight="600"
+      >
+        + Buy from local shops
+      </text>
+    </svg>
+  );
+}
 
 export function ArtDescribePlace() {
   return (

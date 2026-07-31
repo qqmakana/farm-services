@@ -9,6 +9,7 @@ test.describe("Feature tour", () => {
     await prepareBrowserContext(context);
     await context.addInitScript(() => {
       try {
+        localStorage.removeItem("vr_feature_tour_seen_v3");
         localStorage.removeItem("vr_feature_tour_seen_v2");
         localStorage.removeItem("vr_feature_tour_seen_v1");
         localStorage.removeItem("vr_onboarding_seen_v1");
@@ -23,10 +24,15 @@ test.describe("Feature tour", () => {
     await expect(page.getByRole("button", { name: /^Skip$/i })).toBeVisible({
       timeout: 20_000,
     });
-    await expect(page.getByText(/Describe your place/i).first()).toBeVisible();
     await expect(
-      page.getByText(/when the map/i).first(),
+      page.getByText(/Ride, delivery, farm|Courier/i).first(),
     ).toBeVisible();
+
+    await page.getByRole("button", { name: /^Next$/i }).click();
+    await expect(page.getByText(/Describe your place/i).first()).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page.getByText(/when the map/i).first()).toBeVisible();
 
     await page.getByRole("button", { name: /^Next$/i }).click();
     await expect(page.getByText(/wearing/i).first()).toBeVisible({

@@ -6,7 +6,7 @@ import { BRAND } from "@/lib/brand";
 export const metadata: Metadata = {
   title: `What makes ${BRAND.appName} special`,
   description:
-    "When maps fail, describe a landmark. Say what you’re wearing. Get roadside fuel help.",
+    "Ride, delivery, farm, courier, and shops — plus landmarks when maps fail, wearing tips, and roadside fuel help.",
   robots: { index: false, follow: false },
 };
 

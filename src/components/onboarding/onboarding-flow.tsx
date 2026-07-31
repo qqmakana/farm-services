@@ -16,11 +16,19 @@ import {
 import {
   ArtDescribePlace,
   ArtFuelHelp,
+  ArtServices,
   ArtWearing,
 } from "@/components/onboarding/feature-tour-art";
 
-/** New / distinctive features only — not long-standing core product. */
+/** Full product tour: core services + helpers that matter in villages. */
 const SLIDES: OnboardingSlideData[] = [
+  {
+    id: "services",
+    title: "Ride, delivery, farm & courier",
+    description:
+      "Book a ride, send a package, move farm goods, or get a delivery — plus order from local shops.",
+    art: <ArtServices />,
+  },
   {
     id: "describe",
     title: "Describe your place",
