@@ -10,6 +10,9 @@ export async function prepareBrowserContext(context: BrowserContext) {
     try {
       localStorage.setItem("village_ride_country", "ZA");
       localStorage.setItem("village_ride_country_picked", "1");
+      // Skip feature tour in general E2E — feature-tour.spec clears this.
+      localStorage.setItem("vr_feature_tour_seen_v1", "1");
+      localStorage.setItem("vr_onboarding_seen_v1", "1");
     } catch (e) {}
     try {
       Object.defineProperty(window.Notification, "permission", {

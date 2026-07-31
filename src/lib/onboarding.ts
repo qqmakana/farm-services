@@ -4,12 +4,16 @@
  * - Session skip → sessionStorage (Skip for now — returns next visit)
  */
 
-const PERMANENT_KEY = "vr_onboarding_seen_v1";
-const SESSION_SKIP_KEY = "vr_onboarding_skip_session";
+/** v2 = unique-feature tour (describe / wearing / shops / fuel). */
+const PERMANENT_KEY = "vr_feature_tour_seen_v1";
+const LEGACY_PERMANENT_KEY = "vr_onboarding_seen_v1";
+const SESSION_SKIP_KEY = "vr_feature_tour_skip_session";
+const LEGACY_SESSION_SKIP_KEY = "vr_onboarding_skip_session";
 
 export function hasPermanentlyDismissedOnboarding(): boolean {
   if (typeof window === "undefined") return true;
   try {
+    // New feature tour is a new first-run — only v1 flag counts as done.
     return localStorage.getItem(PERMANENT_KEY) === "1";
   } catch {
     return true;
@@ -24,7 +28,10 @@ export function hasSeenOnboarding(): boolean {
 export function hasSkippedOnboardingThisSession(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return sessionStorage.getItem(SESSION_SKIP_KEY) === "1";
+    return (
+      sessionStorage.getItem(SESSION_SKIP_KEY) === "1" ||
+      sessionStorage.getItem(LEGACY_SESSION_SKIP_KEY) === "1"
+    );
   } catch {
     return false;
   }
@@ -42,7 +49,9 @@ export function markOnboardingSeen(): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(PERMANENT_KEY, "1");
+    localStorage.setItem(LEGACY_PERMANENT_KEY, "1");
     sessionStorage.removeItem(SESSION_SKIP_KEY);
+    sessionStorage.removeItem(LEGACY_SESSION_SKIP_KEY);
   } catch {
     /* ignore */
   }
@@ -63,7 +72,9 @@ export function resetOnboardingForReplay(): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.removeItem(PERMANENT_KEY);
+    localStorage.removeItem(LEGACY_PERMANENT_KEY);
     sessionStorage.removeItem(SESSION_SKIP_KEY);
+    sessionStorage.removeItem(LEGACY_SESSION_SKIP_KEY);
   } catch {
     /* ignore */
   }

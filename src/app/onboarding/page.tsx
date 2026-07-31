@@ -4,8 +4,9 @@ import { OnboardingFlow } from "@/components/onboarding/onboarding-flow";
 import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: `How ${BRAND.appName} works`,
-  description: "Request. Connect. Get it done — rides, delivery, courier, and farm transport.",
+  title: `What makes ${BRAND.appName} special`,
+  description:
+    "Describe your place, say what you’re wearing, shop local, and get roadside fuel help.",
   robots: { index: false, follow: false },
 };
 

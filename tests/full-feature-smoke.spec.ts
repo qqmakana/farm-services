@@ -123,27 +123,26 @@ test.describe("Full feature smoke", () => {
     const example = page
       .getByRole("button", { name: /green gate|mango tree/i })
       .first();
-    if (await example.isVisible().catch(() => false)) {
-      await example.click();
-    }
+    await expect(example).toBeVisible({ timeout: 15_000 });
+    await example.click();
 
-    const pickupInput = page
-      .getByPlaceholder(/mango|green gate|Pickup|landmark|village/i)
-      .first();
-    if (await pickupInput.isVisible().catch(() => false)) {
-      const val = await pickupInput.inputValue();
-      if (!val.trim()) await pickupInput.fill(testLocations.pickup);
-    }
+    const pickup = page.getByPlaceholder(/mango tree/i).first();
+    await expect
+      .poll(async () => (await pickup.inputValue()).trim().length > 0, {
+        timeout: 8_000,
+      })
+      .toBe(true);
 
-    await page
-      .getByPlaceholder(/church|Dropoff|Clinic|landmark|village/i)
-      .first()
-      .fill(testLocations.dropoff);
+    const dropoff = page.getByPlaceholder(/Blue house after the church/i).first();
+    await dropoff.fill(testLocations.dropoff);
+    await dropoff.blur();
+
     await page.getByLabel(/Your name/i).fill(testUsers.rider.name);
     await page.getByLabel(/^Phone$/i).fill(testUsers.rider.phone);
     await page
       .getByPlaceholder(/Nike tracksuit|red jacket/i)
       .fill(testLocations.wearing);
+    await page.keyboard.press("Escape");
 
     const requestBtn = page.getByRole("button", { name: /Request Ride/i });
     await expect(requestBtn).toBeVisible({ timeout: 15_000 });

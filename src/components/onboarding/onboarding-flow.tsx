@@ -10,34 +10,45 @@ import {
 } from "@/lib/onboarding";
 import { OnboardingProgress } from "@/components/onboarding/onboarding-progress";
 import {
-  ArtConnect,
-  ArtDone,
-  ArtRequest,
   OnboardingSlide,
   type OnboardingSlideData,
 } from "@/components/onboarding/onboarding-slide";
+import {
+  ArtDescribePlace,
+  ArtFuelHelp,
+  ArtShopLocal,
+  ArtWearing,
+} from "@/components/onboarding/feature-tour-art";
 
+/** Unique Village Ride features — show, don’t tell. */
 const SLIDES: OnboardingSlideData[] = [
   {
-    id: "request",
-    title: "Request what you need",
+    id: "describe",
+    title: "Describe your place",
     description:
-      "Ride, delivery, or farm transport — tap and tell us where to pick up and drop off.",
-    art: <ArtRequest />,
+      "No street address needed. Just describe where you are — “green gate, next to the mango tree.”",
+    art: <ArtDescribePlace />,
   },
   {
-    id: "connect",
-    title: "We connect you",
+    id: "wearing",
+    title: "Say what you’re wearing",
     description:
-      "A nearby driver in your area accepts — the same simple match you’d expect from Uber.",
-    art: <ArtConnect />,
+      "Tell your driver — “Nike tracksuit”, “red jacket” — so they spot you faster at the landmark.",
+    art: <ArtWearing />,
   },
   {
-    id: "done",
-    title: "Service done",
+    id: "shops",
+    title: "Buy from local shops",
     description:
-      "Your ride, package, or farm goods arrive. Pay in cash or card, then leave a rating.",
-    art: <ArtDone />,
+      "Order groceries and essentials from spaza shops in your village — delivered to your place.",
+    art: <ArtShopLocal />,
+  },
+  {
+    id: "fuel",
+    title: "Fuel delivered to you",
+    description:
+      "Stuck on the road? Request fuel from nearby drivers — pay them in cash when it arrives.",
+    art: <ArtFuelHelp />,
   },
 ];
 
@@ -52,8 +63,9 @@ export function OnboardingFlow() {
   const last = SLIDES.length - 1;
 
   useEffect(() => {
-    // Permanent dismiss still blocks unless replaying from Account
-    if (!isReplay && hasPermanentlyDismissedOnboarding()) {
+    // Never bounce replay visits home — even if permanent flag is set.
+    if (isReplay) return;
+    if (hasPermanentlyDismissedOnboarding()) {
       router.replace("/");
     }
   }, [router, isReplay]);
@@ -112,7 +124,7 @@ export function OnboardingFlow() {
           onClick={skipForNow}
           className="rounded-full px-3 py-2 text-sm font-semibold text-[var(--ru-muted)] transition hover:bg-[#f5f5f5] hover:text-black"
         >
-          Skip for now
+          Skip
         </button>
       </header>
 
@@ -137,7 +149,7 @@ export function OnboardingFlow() {
             transform: `translate3d(calc(-${(index * 100) / SLIDES.length}% + ${dragX}px), 0, 0)`,
             transition: dragging
               ? "none"
-              : "transform 0.38s cubic-bezier(0.22, 1, 0.36, 1)",
+              : "transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         >
           {SLIDES.map((slide, i) => (
@@ -177,7 +189,7 @@ export function OnboardingFlow() {
           </button>
         ) : (
           <p className="text-center text-xs text-[var(--ru-muted)]">
-            Skip for now — you can replay anytime in Account
+            Swipe or tap Next — replay anytime in Account
           </p>
         )}
       </footer>

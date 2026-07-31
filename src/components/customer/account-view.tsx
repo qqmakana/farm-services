@@ -164,9 +164,9 @@ export function AccountView() {
               <PlayCircle className="h-5 w-5" />
             </span>
             <span className="flex-1 text-sm font-medium text-slate-900">
-              How Village Ride works
+              See features again
             </span>
-            <span className="text-xs text-slate-400">Replay</span>
+            <span className="text-xs text-slate-400">Tour</span>
             <ChevronRight className="h-4 w-4 text-gray-400" aria-hidden />
           </button>
         </li>
