@@ -24,7 +24,7 @@ test.describe("Describe Your Place", () => {
       }).first(),
     ).toBeVisible();
     await expect(
-      page.getByText(/No street address|works when the network is weak/i).first(),
+      page.getByText(/when the map|network is weak/i).first(),
     ).toBeVisible();
   });
 

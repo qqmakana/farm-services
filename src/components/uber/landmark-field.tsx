@@ -131,8 +131,8 @@ export function GpsButton({
 export function LandmarkHelperText() {
   return (
     <p className="text-xs text-slate-500">
-      No street address needed. Describe your place in your own words — drivers
-      use landmarks, not GPS. Works when the network is weak.
+      When the map doesn&apos;t work or your street isn&apos;t listed, describe a
+      landmark — drivers use that to find you. Also helps when the network is weak.
     </p>
   );
 }

@@ -88,11 +88,11 @@ export function whatsappTripShareHref(pickup: string, dropoff: string) {
 /** Ready-to-post caption for the Describe Your Place feature. */
 export function describePlaceSocialCaption(siteUrl = "https://village-ride.vercel.app") {
   return [
-    "No street address? No problem.",
+    "When the map doesn’t work, describe your place.",
     "",
-    `${BRAND.appName} lets you describe your location — "green gate, next to the mango tree" — so your driver finds you even without GPS.`,
+    `${BRAND.appName} lets you use landmarks — "green gate, next to the mango tree" — so your driver finds you where streets aren’t on the map.`,
     "",
-    "Works offline. Works for villages.",
+    "Built for villages. Works when signal is weak.",
     "",
     `Try it: ${siteUrl}/ride`,
     "",

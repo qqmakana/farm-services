@@ -29,25 +29,25 @@ export function ArtDescribePlace() {
       />
       <text
         x="160"
-        y="198"
+        y="192"
         textAnchor="middle"
-        fill="#111"
-        fontSize="13"
+        fill="#6e6e6e"
+        fontSize="11"
         fontFamily="system-ui,sans-serif"
-        fontWeight="700"
+        fontWeight="600"
       >
-        “House with green gate,
+        When the map doesn’t work
       </text>
       <text
         x="160"
-        y="218"
+        y="214"
         textAnchor="middle"
         fill="#111"
-        fontSize="13"
+        fontSize="12"
         fontFamily="system-ui,sans-serif"
         fontWeight="700"
       >
-        next to the mango tree”
+        “Green gate, mango tree”
       </text>
     </svg>
   );
@@ -94,42 +94,6 @@ export function ArtWearing() {
         fontFamily="system-ui,sans-serif"
       >
         Driver spots you faster
-      </text>
-    </svg>
-  );
-}
-
-export function ArtShopLocal() {
-  return (
-    <svg viewBox="0 0 320 280" className="h-auto w-full" aria-hidden>
-      <rect width="320" height="280" rx="32" fill="#f5f5f5" />
-      {/* Shop facade */}
-      <rect x="70" y="96" width="180" height="120" rx="12" fill="#fff" stroke="#e5e5e5" strokeWidth="2" />
-      <path d="M58 96h204l-18-36H76z" fill="#000" />
-      <rect x="96" y="128" width="48" height="56" rx="6" fill="#f0f0f0" />
-      <rect x="176" y="128" width="48" height="56" rx="6" fill="#f0f0f0" />
-      <rect x="136" y="168" width="48" height="48" rx="6" fill="#1a1a1a" />
-      {/* Bag */}
-      <g transform="translate(214 148)">
-        <rect x="0" y="12" width="40" height="36" rx="6" fill="#000" />
-        <path
-          d="M10 18v-6c0-8 6-12 10-12s10 4 10 12v6"
-          fill="none"
-          stroke="#000"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-      </g>
-      <text
-        x="160"
-        y="248"
-        textAnchor="middle"
-        fill="#6e6e6e"
-        fontSize="13"
-        fontFamily="system-ui,sans-serif"
-        fontWeight="600"
-      >
-        Order from Qunu Spaza
       </text>
     </svg>
   );

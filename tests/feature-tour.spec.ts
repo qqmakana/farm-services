@@ -9,6 +9,7 @@ test.describe("Feature tour", () => {
     await prepareBrowserContext(context);
     await context.addInitScript(() => {
       try {
+        localStorage.removeItem("vr_feature_tour_seen_v2");
         localStorage.removeItem("vr_feature_tour_seen_v1");
         localStorage.removeItem("vr_onboarding_seen_v1");
         sessionStorage.removeItem("vr_feature_tour_skip_session");
@@ -23,14 +24,12 @@ test.describe("Feature tour", () => {
       timeout: 20_000,
     });
     await expect(page.getByText(/Describe your place/i).first()).toBeVisible();
+    await expect(
+      page.getByText(/when the map/i).first(),
+    ).toBeVisible();
 
     await page.getByRole("button", { name: /^Next$/i }).click();
     await expect(page.getByText(/wearing/i).first()).toBeVisible({
-      timeout: 10_000,
-    });
-
-    await page.getByRole("button", { name: /^Next$/i }).click();
-    await expect(page.getByText(/local shops/i).first()).toBeVisible({
       timeout: 10_000,
     });
 

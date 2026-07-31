@@ -16,17 +16,16 @@ import {
 import {
   ArtDescribePlace,
   ArtFuelHelp,
-  ArtShopLocal,
   ArtWearing,
 } from "@/components/onboarding/feature-tour-art";
 
-/** Unique Village Ride features — show, don’t tell. */
+/** New / distinctive features only — not long-standing core product. */
 const SLIDES: OnboardingSlideData[] = [
   {
     id: "describe",
     title: "Describe your place",
     description:
-      "No street address needed. Just describe where you are — “green gate, next to the mango tree.”",
+      "When the map doesn’t work or your street isn’t listed, describe a landmark — “green gate, next to the mango tree.”",
     art: <ArtDescribePlace />,
   },
   {
@@ -35,13 +34,6 @@ const SLIDES: OnboardingSlideData[] = [
     description:
       "Tell your driver — “Nike tracksuit”, “red jacket” — so they spot you faster at the landmark.",
     art: <ArtWearing />,
-  },
-  {
-    id: "shops",
-    title: "Buy from local shops",
-    description:
-      "Order groceries and essentials from spaza shops in your village — delivered to your place.",
-    art: <ArtShopLocal />,
   },
   {
     id: "fuel",

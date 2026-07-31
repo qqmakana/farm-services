@@ -14,7 +14,7 @@ const FAQS = [
   },
   {
     q: "Does Village Ride require GPS or a street address?",
-    a: "No. Bookings work with landmark text alone — “Pick me up at the clinic”, “Deliver to Shoprite Mthatha”. Map and GPS are helpful when available, but never required. Saved Home/Work places also work offline from your phone cache.",
+    a: "Use the map when it works. When it doesn’t — or your street isn’t listed — describe a landmark instead (“green gate, next to the mango tree”). GPS helps when available, but landmark text is enough. Saved Home/Work places also work offline from your phone cache.",
   },
   {
     q: "How do I sign up as a business partner?",
