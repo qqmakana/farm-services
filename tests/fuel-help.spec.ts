@@ -7,6 +7,35 @@ import {
   selectMockDriver,
 } from "./helpers/auth-helper";
 
+async function dismissPushPrompt(page: import("@playwright/test").Page) {
+  const notNow = page.getByRole("button", { name: /Not now/i });
+  if (await notNow.isVisible({ timeout: 1_500 }).catch(() => false)) {
+    await notNow.click();
+  }
+}
+
+async function clearOpenFuelRequest(page: import("@playwright/test").Page) {
+  await dismissPushPrompt(page);
+  const cancel = page.getByRole("button", { name: /^Cancel$/i });
+  if (await cancel.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    await cancel.click();
+    await expect(page.getByText(/Your fuel request/i)).toHaveCount(0, {
+      timeout: 15_000,
+    });
+  }
+}
+
+async function openFuelForm(page: import("@playwright/test").Page) {
+  await dismissPushPrompt(page);
+  await clearOpenFuelRequest(page);
+  await page.getByRole("button", { name: /Out of fuel/i }).click();
+  const amount = page.getByRole("button", { name: /^10L$/ });
+  if (!(await amount.isVisible({ timeout: 3_000 }).catch(() => false))) {
+    await page.getByRole("button", { name: /Out of fuel/i }).click();
+  }
+  await expect(amount).toBeVisible({ timeout: 10_000 });
+}
+
 test.describe("Out of Fuel (driver emergency)", () => {
   test.beforeEach(async ({ context, page, baseURL }) => {
     test.skip(
@@ -28,11 +57,8 @@ test.describe("Out of Fuel (driver emergency)", () => {
   test("driver can open fuel form and request 10L", async ({ page }) => {
     await selectMockDriver(page);
     await ensureDriverOnline(page);
-
-    await page.getByRole("button", { name: /Out of fuel/i }).click();
-    await expect(page.getByText(/Request fuel help|How much/i).first()).toBeVisible({
-      timeout: 10_000,
-    });
+    await clearOpenFuelRequest(page);
+    await openFuelForm(page);
 
     await page.getByRole("button", { name: /^10L$/ }).click();
     await page
@@ -45,11 +71,7 @@ test.describe("Out of Fuel (driver emergency)", () => {
       page.getByText(/Your fuel request|pending|assigned/i).first(),
     ).toBeVisible({ timeout: 20_000 });
 
-    // Keep store clean for the next test
-    const cancel = page.getByRole("button", { name: /^Cancel$/i });
-    if (await cancel.isVisible().catch(() => false)) {
-      await cancel.click();
-    }
+    await clearOpenFuelRequest(page);
   });
 
   test("second mock driver can see nearby fuel help", async ({ browser }) => {
@@ -63,24 +85,10 @@ test.describe("Out of Fuel (driver emergency)", () => {
 
     await selectMockDriver(requester, "d1");
     await ensureDriverOnline(requester);
+    await clearOpenFuelRequest(requester);
+    await openFuelForm(requester);
 
-    // Clear leftover open request (card shows Cancel without expanding form)
-    const cancelExisting = requester.getByRole("button", { name: /^Cancel$/i });
-    if (await cancelExisting.isVisible({ timeout: 2_000 }).catch(() => false)) {
-      await cancelExisting.click();
-      await expect(requester.getByText(/Your fuel request/i)).toHaveCount(0, {
-        timeout: 15_000,
-      });
-    }
-
-    await requester.getByRole("button", { name: /Out of fuel/i }).click();
-    const amount5 = requester.getByRole("button", { name: /^5L$/ });
-    if (!(await amount5.isVisible({ timeout: 5_000 }).catch(() => false))) {
-      // Toggle may have closed an already-open panel — click again
-      await requester.getByRole("button", { name: /Out of fuel/i }).click();
-    }
-    await expect(amount5).toBeVisible({ timeout: 10_000 });
-    await amount5.click();
+    await requester.getByRole("button", { name: /^5L$/ }).click();
     await requester
       .getByPlaceholder(/clinic gate|where you are/i)
       .fill("Stuck near mango tree, Qunu");
