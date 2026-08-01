@@ -1091,6 +1091,113 @@ export async function getDriverDisplayPhotos(paths: {
   return { selfie, vehicle };
 }
 
+const RIDER_PHOTOS_BUCKET = "rider-photos";
+
+function normalizeRiderPhoneKey(phone: string) {
+  return phone.replace(/\D/g, "");
+}
+
+/**
+ * Upload rider face photo to private rider-photos bucket.
+ * Returns storage path (or mock:// path when offline). Client also keeps a
+ * data URL in guest localStorage for booking without Storage.
+ */
+export async function uploadRiderPhoto(formData: FormData): Promise<{
+  photo_url: string;
+}> {
+  const phone = String(formData.get("phone") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+  const country_code = String(formData.get("country_code") ?? DEFAULT_COUNTRY).trim();
+  const file = requireImageFile(formData, "photo", "Rider photo");
+  const phoneKey = normalizeRiderPhoneKey(phone);
+  if (!phoneKey) throw new Error("Phone is required to save your photo.");
+
+  if (!useAdmin()) {
+    const mockPath = `mock://rider-photos/${phoneKey}/${Date.now()}.jpg`;
+    return { photo_url: mockPath };
+  }
+
+  const admin = createAdminClient();
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `${phoneKey}/profile-${Date.now()}.${ext === "png" ? "png" : "jpg"}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const { error } = await admin.storage.from(RIDER_PHOTOS_BUCKET).upload(path, buffer, {
+    contentType: file.type || "image/jpeg",
+    upsert: true,
+  });
+  if (error) throw new Error(error.message);
+
+  await admin.from("rr_guest_profiles").upsert(
+    {
+      guest_phone: phoneKey,
+      name: name || null,
+      photo_url: path,
+      country_code,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "guest_phone" },
+  );
+
+  return { photo_url: path };
+}
+
+/** Remove rider photo from Storage + guest profile row (service role). */
+export async function deleteRiderPhoto(phone: string): Promise<void> {
+  const phoneKey = normalizeRiderPhoneKey(phone);
+  if (!phoneKey) return;
+  if (!useAdmin()) return;
+
+  const admin = createAdminClient();
+  const { data: row } = await admin
+    .from("rr_guest_profiles")
+    .select("photo_url")
+    .eq("guest_phone", phoneKey)
+    .maybeSingle();
+
+  const path = row?.photo_url as string | undefined;
+  if (path && !path.startsWith("mock://")) {
+    await admin.storage.from(RIDER_PHOTOS_BUCKET).remove([path]);
+  }
+  await admin
+    .from("rr_guest_profiles")
+    .update({ photo_url: null, updated_at: new Date().toISOString() })
+    .eq("guest_phone", phoneKey);
+}
+
+/**
+ * Signed URL for a rider photo path — only for drivers viewing a job they hold.
+ * Pass jobId + driverId; fails closed if the driver is not assigned / offered.
+ */
+export async function getRiderPhotoSignedUrlForDriver(opts: {
+  storagePath: string;
+  jobId: string;
+  driverId: string;
+}): Promise<string | null> {
+  const { storagePath, jobId, driverId } = opts;
+  if (!storagePath) return null;
+  if (storagePath.startsWith("data:image/")) return storagePath;
+  if (storagePath.startsWith("mock://")) return null;
+
+  if (!useAdmin()) return null;
+
+  const admin = createAdminClient();
+  const { data: job } = await admin
+    .from("rr_jobs")
+    .select("id, driver_id, offered_driver_id")
+    .eq("id", jobId)
+    .maybeSingle();
+  if (!job) return null;
+  const allowed =
+    job.driver_id === driverId || job.offered_driver_id === driverId;
+  if (!allowed) return null;
+
+  const { data, error } = await admin.storage
+    .from(RIDER_PHOTOS_BUCKET)
+    .createSignedUrl(storagePath, 3600);
+  if (error) return null;
+  return data.signedUrl;
+}
+
 export async function approveDriverHire(driverId: string) {
   if (!useAdmin()) {
     const driver = mockRepo.approveDriver(driverId);
@@ -1333,6 +1440,15 @@ export async function createJob(input: NewJobInput) {
   }
 
   const paidAt = isCash ? null : new Date().toISOString();
+  const riderPhotoPath =
+    input.details &&
+    typeof input.details === "object" &&
+    typeof (input.details as { rider_photo_url?: unknown }).rider_photo_url ===
+      "string"
+      ? String(
+          (input.details as { rider_photo_url: string }).rider_photo_url,
+        ).trim()
+      : "";
   const row = {
     reference_code: refCode(),
     status: "searching_driver",
@@ -1348,6 +1464,9 @@ export async function createJob(input: NewJobInput) {
     dropoff_landmark: input.dropoff_landmark.trim(),
     scheduled_for: input.scheduled_for || null,
     details: input.details,
+    ...(riderPhotoPath && !riderPhotoPath.startsWith("mock://")
+      ? { customer_photo_url: riderPhotoPath }
+      : {}),
     fee_amount: fare.fee_amount,
     platform_commission: fare.platform_commission,
     driver_payout: fare.driver_payout,

@@ -13,6 +13,7 @@ import {
 import { useDriverApp } from "@/components/driver/driver-app-provider";
 import { OutOfFuelPanel } from "@/components/driver/out-of-fuel-panel";
 import { PickupDescribeCard } from "@/components/driver/pickup-describe-card";
+import { RiderSpottingCard } from "@/components/driver/rider-spotting-card";
 import { DriverPushPrompt } from "@/components/driver-push-prompt";
 import {
   isFirebaseClientConfigured,
@@ -314,18 +315,13 @@ export function DriverHomeView() {
                     {" · keep ~85%"}
                   </p>
                 ) : null}
-                {job.service_type === "ride" &&
-                typeof (job.details as Record<string, unknown>).wearing ===
-                  "string" &&
-                String((job.details as Record<string, unknown>).wearing).trim() ? (
-                  <p className="mt-1 text-xs text-[var(--ru-muted)]">
-                    Wearing:{" "}
-                    <span className="font-semibold text-black">
-                      {String(
-                        (job.details as Record<string, unknown>).wearing,
-                      )}
-                    </span>
-                  </p>
+                {job.service_type === "ride" ? (
+                  <div className="mt-2">
+                    <RiderSpottingCard
+                      customerName={job.customer_name}
+                      details={job.details}
+                    />
+                  </div>
                 ) : null}
               </div>
               <p className="text-lg font-bold text-black">

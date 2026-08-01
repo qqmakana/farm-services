@@ -25,6 +25,10 @@ export type RideDetails = {
   direction: "to_town" | "to_village";
   /** Optional outfit cue so the driver can spot the rider. */
   wearing?: string;
+  /** Compressed rider face data URL (mock / offline spotting). */
+  rider_photo_data_url?: string;
+  /** Storage path or signed URL in rider-photos bucket. */
+  rider_photo_url?: string;
   local_mode?: string;
 };
 
@@ -308,6 +312,8 @@ export type Job = {
   pickup_landmark: string;
   /** Optional storage path / URL of a pickup-spot photo */
   pickup_photo_url?: string | null;
+  /** Optional path in rider-photos bucket for this booking */
+  customer_photo_url?: string | null;
   dropoff_lat: number | null;
   dropoff_lng: number | null;
   dropoff_landmark: string;

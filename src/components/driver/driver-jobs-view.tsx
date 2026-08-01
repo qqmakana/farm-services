@@ -12,6 +12,7 @@ import {
 } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
 import { PickupDescribeCard } from "@/components/driver/pickup-describe-card";
+import { RiderSpottingCard } from "@/components/driver/rider-spotting-card";
 import {
   formatMoney,
   SERVICE_LABELS,
@@ -123,6 +124,14 @@ export function DriverJobsView() {
               photoUrl={pickupPhotoFromDetails(active.details)}
             />
           </div>
+          {active.service_type === "ride" ? (
+            <div className="mt-3">
+              <RiderSpottingCard
+                customerName={active.customer_name}
+                details={active.details}
+              />
+            </div>
+          ) : null}
           <div className="mt-4 flex flex-col gap-2">
             {(active.status === "assigned" ||
               active.status === "confirmed") && (

@@ -11,8 +11,10 @@ import {
   type Loc,
 } from "@/components/uber/landmark-field";
 import { PickupPhotoField } from "@/components/location/pickup-photo-field";
+import { RiderPhotoField } from "@/components/rider/rider-photo-field";
 import { SaveLocationPrompt } from "@/components/location/save-location-prompt";
 import { compressPickupPhotoDataUrl } from "@/lib/pickup-photo";
+import { getGuestProfile } from "@/lib/guest-profile";
 import {
   ScheduleWhen,
   defaultLaterLocal,
@@ -38,6 +40,9 @@ export function RideSheet({
   const [phone, setPhone] = useState("");
   const [wearing, setWearing] = useState("");
   const [pickupPhoto, setPickupPhoto] = useState<File | null>(null);
+  const [riderPhotoPreview, setRiderPhotoPreview] = useState<string | null>(
+    null,
+  );
   const [passengers, setPassengers] = useState(1);
   const [vehicle, setVehicle] = useState<VehicleType>("sedan");
   const [localModeId, setLocalModeId] = useState<string | null>(null);
@@ -48,6 +53,13 @@ export function RideSheet({
   const [isNight, setIsNight] = useState(false);
   const [nightExtra, setNightExtra] = useState(0);
   const [currency, setCurrency] = useState(country.currency);
+
+  useEffect(() => {
+    const guest = getGuestProfile();
+    if (guest?.photo_data_url) setRiderPhotoPreview(guest.photo_data_url);
+    if (guest?.name) setName((n) => n || guest.name);
+    if (guest?.phone) setPhone((p) => p || guest.phone);
+  }, []);
 
   const atIso = useMemo(
     () =>
@@ -205,6 +217,15 @@ export function RideSheet({
         </span>
       </label>
 
+      <RiderPhotoField
+        compact
+        previewUrl={riderPhotoPreview}
+        name={name}
+        phone={phone}
+        countryCode={countryCode}
+        onChange={setRiderPhotoPreview}
+      />
+
       <div>
         <p className="text-sm font-semibold text-[#000000]">Passengers</p>
         <div className="mt-2 flex items-center gap-4">
@@ -298,6 +319,9 @@ export function RideSheet({
           const photoDataUrl = pickupPhoto
             ? await compressPickupPhotoDataUrl(pickupPhoto)
             : null;
+          const guestPhoto =
+            riderPhotoPreview || getGuestProfile()?.photo_data_url || null;
+          const guestPath = getGuestProfile()?.photo_url || null;
           return {
             service_type: "ride" as const,
             required_vehicle: vehicle,
@@ -322,6 +346,12 @@ export function RideSheet({
               ...(wearing.trim() ? { wearing: wearing.trim() } : {}),
               ...(photoDataUrl
                 ? { pickup_photo_data_url: photoDataUrl }
+                : {}),
+              ...(guestPhoto
+                ? { rider_photo_data_url: guestPhoto }
+                : {}),
+              ...(guestPath && !guestPath.startsWith("mock://")
+                ? { rider_photo_url: guestPath }
                 : {}),
             },
             fee_amount: fee,

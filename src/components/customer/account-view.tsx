@@ -24,6 +24,7 @@ import {
 } from "@/lib/guest-profile";
 import { resetOnboardingForReplay } from "@/lib/onboarding";
 import { t } from "@/lib/i18n";
+import { RiderPhotoField } from "@/components/rider/rider-photo-field";
 
 export function AccountView() {
   const router = useRouter();
@@ -34,13 +35,17 @@ export function AccountView() {
   const [phoneInput, setPhoneInput] = useState("");
   const [editing, setEditing] = useState(false);
 
-  useEffect(() => {
+  function refreshProfile() {
     const p = getGuestProfile();
     setProfile(p);
     if (p) {
       setNameInput(p.name);
       setPhoneInput(p.phone);
     }
+  }
+
+  useEffect(() => {
+    refreshProfile();
     setHydrated(true);
   }, []);
 
@@ -52,7 +57,7 @@ export function AccountView() {
       phone: phoneInput,
       country_code: countryCode,
     });
-    setProfile(getGuestProfile());
+    refreshProfile();
     setEditing(false);
   }
 
@@ -134,9 +139,18 @@ export function AccountView() {
           onClick={() => setEditing(true)}
           className="mt-4 flex w-full items-center gap-4 rounded-xl border border-gray-100 bg-white p-4 text-left shadow-sm transition active:scale-95"
         >
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#000000] text-2xl font-bold text-white">
-            {initial}
-          </span>
+          {profile?.photo_data_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profile.photo_data_url}
+              alt=""
+              className="h-16 w-16 rounded-full object-cover"
+            />
+          ) : (
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#000000] text-2xl font-bold text-white">
+              {initial}
+            </span>
+          )}
           <span className="min-w-0 flex-1">
             <span className="flex items-center gap-2 text-lg font-bold text-slate-900">
               <span aria-hidden>{flag}</span>
@@ -149,6 +163,18 @@ export function AccountView() {
           <User className="h-5 w-5 text-gray-400" aria-hidden />
         </button>
       )}
+
+      {profile?.phone ? (
+        <div className="mt-4">
+          <RiderPhotoField
+            previewUrl={profile.photo_data_url}
+            name={profile.name}
+            phone={profile.phone}
+            countryCode={profile.country_code || countryCode}
+            onChange={() => refreshProfile()}
+          />
+        </div>
+      ) : null}
 
       <ul className="mt-6 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
         <li>
