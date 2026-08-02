@@ -18,7 +18,7 @@ const services = [
   {
     href: "/ride",
     title: "Ride",
-    subtitle: "Village to town",
+    subtitle: "Village, town & city",
     Icon: Car,
   },
   {
@@ -70,7 +70,7 @@ export function ServiceHomeSheet() {
           Transport for everyone
         </h1>
         <p className="mt-1 text-[15px] text-[var(--ru-muted)]">
-          Rural rides worldwide — delivery, farm &amp; courier. Book in seconds.
+          Villages, towns &amp; cities — ride, delivery, farm &amp; courier.
         </p>
       </div>
 
@@ -85,17 +85,16 @@ export function ServiceHomeSheet() {
 
       <div className="space-y-1 rounded-2xl border border-[var(--ru-line)] bg-[#fafafa] px-3 py-2">
         <PlacesAutocomplete
-          label="Pickup"
-          placeholder="Village, area, or landmark"
+          label="Pickup location (address or landmark)"
+          placeholder="Search town, village, landmark, or address…"
           value={origin}
           onChange={setOrigin}
           showGps
-          preferVillages
         />
         <div className="mx-1 border-t border-[var(--ru-line)]" />
         <PlacesAutocomplete
-          label="Where to?"
-          placeholder="Search town, village or landmark…"
+          label="Dropoff location (address or landmark)"
+          placeholder="Search town, village, landmark, or address…"
           value={destination}
           onChange={setDestination}
         />

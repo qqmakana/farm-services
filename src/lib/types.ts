@@ -48,7 +48,7 @@ export type FarmDetails = {
 
 export type CourierWeight = "under_5" | "5_10" | "10_20";
 
-/** Person-to-person packages between villages (not shop furniture). */
+/** Person-to-person packages across villages, towns & cities (not shop furniture). */
 export type CourierDetails = {
   item_description: string;
   item_weight: CourierWeight;
@@ -460,14 +460,19 @@ export type LocationCategory =
   | "farm"
   | "landmark"
   | "home"
-  | "other";
+  | "other"
+  | "address";
 
 export type CommunityLocation = {
   id: string;
   name: string;
   category: LocationCategory;
   description: string | null;
+  /** Area label — village, town, suburb, or city district. */
   village: string;
+  address?: string | null;
+  town?: string | null;
+  city?: string | null;
   latitude: number | null;
   longitude: number | null;
   country_code: string;

@@ -155,9 +155,9 @@ export function CourierSheet({
       <div>
         <h1 className="text-xl font-bold text-[#000000]">Send a package</h1>
         <p className="text-sm text-slate-600">
-          Person-to-person courier between villages — keys, gifts, documents,
-          Marketplace items. Max ~20 kg, packaged &amp; sealed. No hazardous or
-          perishable food.
+          Person-to-person courier across villages, towns &amp; cities — keys,
+          gifts, documents, Marketplace items. Max ~20 kg, packaged &amp;
+          sealed. No hazardous or perishable food.
         </p>
       </div>
 
@@ -174,8 +174,8 @@ export function CourierSheet({
       />
 
       <LandmarkField
-        label="Pickup location"
-        placeholder="e.g., Shoprite Mthatha, home gate, taxi rank"
+        label="Pickup location (address or landmark)"
+        placeholder="e.g., Shoprite Mthatha, 12 Main Rd, or taxi rank"
         loc={pickup}
         onChange={setPickup}
       />
@@ -199,8 +199,8 @@ export function CourierSheet({
       </div>
 
       <LandmarkField
-        label="Dropoff location"
-        placeholder="e.g., Qunu Clinic, recipient home, school"
+        label="Dropoff location (address or landmark)"
+        placeholder="e.g., 45 Commissioner St — or Qunu Clinic, school gate"
         loc={dropoff}
         onChange={setDropoff}
       />

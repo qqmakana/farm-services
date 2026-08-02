@@ -349,7 +349,7 @@ export function DriverAccountView() {
             onChange={setHeavy}
           />
           <Toggle
-            label="Village routes"
+            label="Rural / landmark-heavy routes"
             checked={village}
             onChange={setVillage}
           />

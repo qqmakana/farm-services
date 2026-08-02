@@ -19,6 +19,7 @@ const CATEGORIES: { value: LocationCategory; label: string }[] = [
   { value: "shop", label: "Shop" },
   { value: "farm", label: "Farm" },
   { value: "landmark", label: "Landmark" },
+  { value: "address", label: "Street address" },
   { value: "home", label: "Home" },
   { value: "other", label: "Other" },
 ];
@@ -163,16 +164,17 @@ export function AddLocationModal({ initialName = "", onClose, onCreated }: Props
               required={lat == null || lng == null}
             />
             <span className="mt-1 block text-[11px] font-normal text-[var(--ru-muted)]">
-              Drivers use this when there is no map or street address.
+              Street address, building name, or landmark — whatever helps the
+              driver find it.
             </span>
           </label>
 
           <label className="block text-sm font-medium">
-            Village / town
+            Area / town / city
             <input
               required
               className="ru-input mt-1"
-              placeholder="e.g. Qunu"
+              placeholder="e.g. Qunu, Mthatha, or Johannesburg"
               value={village}
               onChange={(e) => setVillage(e.target.value)}
             />

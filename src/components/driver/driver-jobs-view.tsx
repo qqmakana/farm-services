@@ -122,6 +122,10 @@ export function DriverJobsView() {
               pickup={active.pickup_landmark}
               dropoff={active.dropoff_landmark}
               photoUrl={pickupPhotoFromDetails(active.details)}
+              pickupLat={active.pickup_lat}
+              pickupLng={active.pickup_lng}
+              dropoffLat={active.dropoff_lat}
+              dropoffLng={active.dropoff_lng}
             />
           </div>
           {active.service_type === "ride" ? (

@@ -286,6 +286,10 @@ export function DriverHomeView() {
                     pickup={job.pickup_landmark}
                     dropoff={job.dropoff_landmark}
                     photoUrl={pickupPhotoFromDetails(job.details)}
+                    pickupLat={job.pickup_lat}
+                    pickupLng={job.pickup_lng}
+                    dropoffLat={job.dropoff_lat}
+                    dropoffLng={job.dropoff_lng}
                   />
                 </div>
                 {job.service_type === "courier" ? (

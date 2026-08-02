@@ -92,7 +92,7 @@ export function describePlaceSocialCaption(siteUrl = "https://village-ride.verce
     "",
     `${BRAND.appName} lets you use landmarks — "green gate, next to the mango tree" — so your driver finds you where streets aren’t on the map.`,
     "",
-    "Built for villages. Works when signal is weak.",
+    "Works in villages, towns & cities — even when the map or signal fails.",
     "",
     `Try it: ${siteUrl}/ride`,
     "",

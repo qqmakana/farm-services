@@ -198,7 +198,7 @@ export default function SavedPlacesPage() {
                     {p.label || "Saved place"}
                     {p.latitude != null
                       ? ` · pin`
-                      : " · landmark only"}
+                      : " · description only"}
                   </p>
                 </div>
                 <button
@@ -267,7 +267,7 @@ export default function SavedPlacesPage() {
           />
           <input
             className="ru-input"
-            placeholder="Describe it (e.g. Green gate, next to mango tree)"
+            placeholder="Address or landmark (e.g. 12 Main Rd — or green gate by mango tree)"
             value={directions}
             onChange={(e) => setDirections(e.target.value)}
           />

@@ -15,7 +15,7 @@ type MsgKey =
   | "welcome_country";
 
 const EN: Record<MsgKey, string> = {
-  search_places: "Search town, village or landmark…",
+  search_places: "Search town, village, landmark, or address…",
   country_label: "Country",
   language_label: "Language",
   available_in: "Available in",

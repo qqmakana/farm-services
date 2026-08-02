@@ -81,8 +81,12 @@ function optInScore(
     score += DISPATCH_WEIGHTS.optInHeavy;
   }
   if (needs.village) {
-    if (driver.prefer_village_routes === false) return -Infinity;
-    score += DISPATCH_WEIGHTS.optInVillage;
+    // Soft preference only — never block city/town drivers from rural jobs
+    // (and never block rural-opt-out drivers from normal street bookings).
+    score +=
+      driver.prefer_village_routes === false
+        ? -DISPATCH_WEIGHTS.optInVillage * 0.35
+        : DISPATCH_WEIGHTS.optInVillage;
   }
   return score;
 }

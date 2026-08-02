@@ -215,8 +215,8 @@ export function PlacesAutocomplete({
         ) : null}
       </div>
       <p className="mt-1 text-xs text-slate-500">
-        {country.flag} {country.name} — landmark names work without GPS (e.g.
-        &ldquo;{hintExample}&rdquo;)
+        {country.flag} {country.name} — use a street address, landmark, or area
+        (e.g. &ldquo;{hintExample}&rdquo;). GPS optional.
       </p>
       {gpsError ? (
         <p className="mt-1 text-xs text-rose-600">{gpsError}</p>

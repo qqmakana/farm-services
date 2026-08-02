@@ -117,8 +117,8 @@ export function RideSheet({
       <div>
         <h1 className="text-xl font-bold text-[#000000]">Village Ride</h1>
         <p className="text-sm text-slate-600">
-          Direct village-to-village — when taxis stop or won&apos;t go. Night &amp;
-          scheduled rides welcome.
+          Villages, towns &amp; cities — book with a street address or a landmark.
+          Night &amp; scheduled rides welcome.
         </p>
       </div>
 
@@ -128,7 +128,7 @@ export function RideSheet({
       >
         Moving goods?{" "}
         <span className="font-bold underline">Switch to Village Delivery</span>{" "}
-        for unrestricted town &amp; village transport!
+        for town, village &amp; city transport.
       </Link>
 
       <ScheduleWhen
@@ -150,11 +150,10 @@ export function RideSheet({
       />
 
       <LandmarkField
-        label="Describe your pickup place"
-        placeholder="e.g., House with green gate, next to the mango tree"
+        label="Pickup location (address or landmark)"
+        placeholder="e.g., 12 Main Rd, Sandton — or green gate by the mango tree"
         loc={pickup}
         onChange={setPickup}
-        preferVillages
         showExamples
       />
       {pickup.landmark.trim() ? (
@@ -166,8 +165,8 @@ export function RideSheet({
       ) : null}
       <PickupPhotoField file={pickupPhoto} onChange={setPickupPhoto} />
       <LandmarkField
-        label="Describe your dropoff place"
-        placeholder="e.g., Blue house after the church"
+        label="Dropoff location (address or landmark)"
+        placeholder="e.g., Shoprite parking — or blue house after the church"
         loc={dropoff}
         onChange={setDropoff}
       />

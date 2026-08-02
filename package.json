@@ -13,7 +13,7 @@
     "test:prod": "node scripts/test-prod.mjs",
     "test:e2e": "playwright test",
     "test:e2e:uber": "playwright test tests/uber-flow.spec.ts",
-    "test:e2e:full": "playwright test tests/full-feature-smoke.spec.ts tests/onboarding.spec.ts tests/wear-stats.spec.ts tests/describe-place.spec.ts tests/fuel-help.spec.ts tests/feature-tour.spec.ts tests/rider-photo.spec.ts",
+    "test:e2e:full": "playwright test tests/full-feature-smoke.spec.ts tests/onboarding.spec.ts tests/wear-stats.spec.ts tests/describe-place.spec.ts tests/fuel-help.spec.ts tests/feature-tour.spec.ts tests/rider-photo.spec.ts tests/full-coverage.spec.ts",
     "test:e2e:prod": "playwright test -c playwright.prod.config.ts",
     "test:e2e:ui": "playwright test --ui",
     "test:all": "npm run test:logic && npm run test:e2e",

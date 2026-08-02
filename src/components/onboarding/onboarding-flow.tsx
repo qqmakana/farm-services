@@ -20,20 +20,20 @@ import {
   ArtWearing,
 } from "@/components/onboarding/feature-tour-art";
 
-/** Full product tour: core services + helpers that matter in villages. */
+/** Full product tour: services everywhere + helpers when maps fail. */
 const SLIDES: OnboardingSlideData[] = [
   {
     id: "services",
     title: "Ride, delivery, farm & courier",
     description:
-      "Book a ride, send a package, move farm goods, or get a delivery — plus order from local shops.",
+      "Villages, towns & cities — book a ride, send a package, move farm goods, get a delivery, or order from local shops.",
     art: <ArtServices />,
   },
   {
     id: "describe",
     title: "Describe your place",
     description:
-      "When the map doesn’t work or your street isn’t listed, describe a landmark — “green gate, next to the mango tree.”",
+      "Use a street address when you have one. When the map doesn’t work or your street isn’t listed, describe a landmark — “green gate, next to the mango tree.”",
     art: <ArtDescribePlace />,
   },
   {

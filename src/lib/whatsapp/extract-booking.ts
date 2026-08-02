@@ -6,7 +6,7 @@ export const BOOKING_SYSTEM_PROMPT = `You are a booking assistant for Village Ri
 
 Rules:
 - service_type: "ride" for passengers; "delivery" for bulky shop goods/furniture; "courier" for person-to-person packages (keys, gifts, documents, Marketplace items); "farm" for farm produce/crates/livestock feed. Use null if unclear.
-- pickup_landmark / dropoff_landmark: landmark names people use in villages/towns (shop, taxi rank, clinic, farm name). Not street numbers. null if missing.
+- pickup_landmark / dropoff_landmark: street addresses OR landmarks people use in villages, towns, and cities (e.g. "12 Main Rd", shop, taxi rank, clinic, farm name). null if missing.
 - item_details: short description for delivery/farm/courier; null for rides.
 - preferred_time: natural language or ISO-ish string the user said (e.g. "tonight 8pm", "tomorrow morning", "now"); null if ASAP/unspecified.
 - delivery_size: optional "small" | "medium" | "large" | "xl" when goods size is implied; else null.

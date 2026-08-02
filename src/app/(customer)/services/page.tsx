@@ -32,7 +32,7 @@ const cards = [
   {
     href: "/courier",
     title: "Courier",
-    subtitle: "Packages between villages",
+    subtitle: "Packages — village, town & city",
     Icon: Package,
     accent: "bg-violet-50 text-violet-800",
     iconBg: "bg-violet-100",

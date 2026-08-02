@@ -4,7 +4,9 @@ const EXAMPLES = [
   "House with green gate, next to the mango tree",
   "Blue house after the church",
   "Sipho's shop, opposite the clinic",
-  "Clinic gate, ask for Nomsa",
+  "12 Main Rd, Sandton — building with red gate",
+  "Shoprite parking, next to the red sign",
+  "Flat 3B, opposite Engen on Main Rd",
 ];
 
 export function DescribePlaceExamples({
