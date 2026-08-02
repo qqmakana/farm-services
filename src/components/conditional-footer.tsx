@@ -24,7 +24,8 @@ export function ConditionalFooter() {
   if (
     HIDE_FOOTER.has(pathname) ||
     pathname.startsWith("/account/") ||
-    pathname.startsWith("/driver/")
+    pathname.startsWith("/driver/") ||
+    pathname.startsWith("/trip/")
   ) {
     return null;
   }

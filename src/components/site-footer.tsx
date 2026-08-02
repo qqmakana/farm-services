@@ -50,6 +50,30 @@ export function SiteFooter() {
               {BRAND.email}
             </a>
           </p>
+          <p className="pt-2">
+            <a
+              href="/help"
+              className="font-semibold text-black underline hover:no-underline"
+            >
+              Help &amp; Support
+            </a>
+            <span className="text-slate-400"> · </span>
+            <a
+              href={BRAND_WHATSAPP_HREF}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-[var(--ru-brand)] hover:underline"
+            >
+              WhatsApp
+            </a>
+            <span className="text-slate-400"> · </span>
+            <a
+              href={`mailto:${BRAND.email}`}
+              className="font-medium text-[var(--ru-brand)] hover:underline"
+            >
+              Email
+            </a>
+          </p>
           <p className="pt-1 text-xs">
             <a href="/privacy" className="underline hover:text-slate-900">
               Privacy
@@ -57,14 +81,6 @@ export function SiteFooter() {
             <span className="text-slate-400"> · </span>
             <a href="/terms" className="underline hover:text-slate-900">
               Terms
-            </a>
-            <span className="text-slate-400"> · </span>
-            <a href="/help" className="underline hover:text-slate-900">
-              Help
-            </a>
-            <span className="text-slate-400"> · </span>
-            <a href="/wear-stats" className="underline hover:text-slate-900">
-              Wear stats
             </a>
           </p>
         </div>

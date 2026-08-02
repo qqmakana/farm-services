@@ -11,6 +11,8 @@ import {
 } from "./trust";
 import {
   buildCustomerConfirmPush,
+  buildCustomerTripCompletedPush,
+  buildCustomerTripStartedPush,
   expireStaleOffers,
   offerNextDriver,
 } from "./dispatch/offer-chain";
@@ -1505,6 +1507,29 @@ export async function createJob(input: NewJobInput) {
     revalidateAll();
     return data as JobWithDriver;
   } catch (err) {
+    // Older DBs may lack motorcycle enum — still create the booking as sedan.
+    const msg = err instanceof Error ? err.message : String(err);
+    if (
+      row.required_vehicle === "motorcycle" &&
+      /motorcycle|enum|invalid input|check constraint/i.test(msg)
+    ) {
+      try {
+        const fallback = await insertPaidJob({
+          ...row,
+          required_vehicle: "sedan",
+          dispatcher_notes: [
+            row.dispatcher_notes,
+            "Local bike/auto mode booked — assigned as car until motorcycle vehicle type is enabled",
+          ]
+            .filter(Boolean)
+            .join(" · "),
+        });
+        revalidateAll();
+        return fallback as JobWithDriver;
+      } catch {
+        /* fall through */
+      }
+    }
     if (onlinePayment) {
       try {
         await paypalRefundCapture(
@@ -2724,12 +2749,15 @@ export async function declineOffer(jobId: string, driverId: string) {
 export async function startTrip(jobId: string, driverId: string) {
   if (!useAdmin()) {
     const job = mockRepo.startTrip(jobId, driverId);
+    const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
+    if (driver && job.customer_fcm_token) {
+      await sendPushToToken(
+        job.customer_fcm_token,
+        buildCustomerTripStartedPush(job, driver),
+      );
+    }
     revalidateAll();
     return job;
-  }
-
-  if (!useAdmin()) {
-    throw new Error("Service role required to start trips.");
   }
 
   const admin = createAdminClient();
@@ -2758,13 +2786,29 @@ export async function startTrip(jobId: string, driverId: string) {
     .single();
 
   if (error) throw new Error(error.message);
+
+  const typed = data as JobWithDriver;
+  const driverRow = typed.drivers;
+  if (driverRow && (jobRow as Job).customer_fcm_token) {
+    await sendPushToToken(
+      (jobRow as Job).customer_fcm_token,
+      buildCustomerTripStartedPush(typed, driverRow),
+    );
+  }
+
   revalidateAll();
-  return data as JobWithDriver;
+  return typed;
 }
 
 export async function completeTrip(jobId: string, driverId: string) {
   if (!useAdmin()) {
     const job = mockRepo.completeTrip(jobId, driverId);
+    if (job.customer_fcm_token) {
+      await sendPushToToken(
+        job.customer_fcm_token,
+        buildCustomerTripCompletedPush(job),
+      );
+    }
     if (job.shop_id) {
       const { notifyPartnerForJob } = await import("./partner");
       const fee = Number(job.fee_amount) || 0;
@@ -2777,6 +2821,12 @@ export async function completeTrip(jobId: string, driverId: string) {
         "order_completed",
         `Platform commission R${commission} deducted from driver wallet.`,
       );
+    }
+    // Auto-claim weekly trip bonus when threshold met (mock).
+    try {
+      await claimWeeklyTripBonus(driverId);
+    } catch {
+      /* ignore — not eligible yet */
     }
     revalidateAll();
     return job;
@@ -2849,8 +2899,167 @@ export async function completeTrip(jobId: string, driverId: string) {
     );
   }
 
+  if ((jobRow as Job).customer_fcm_token) {
+    await sendPushToToken(
+      (jobRow as Job).customer_fcm_token,
+      buildCustomerTripCompletedPush(data as Job),
+    );
+  }
+
+  try {
+    await claimWeeklyTripBonus(driverId);
+  } catch {
+    /* not eligible yet */
+  }
+
   revalidateAll();
   return data as JobWithDriver;
+}
+
+function isoWeekKey(d = new Date()): string {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(
+    ((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7,
+  );
+  return `${date.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+}
+
+function startOfWeekLocal(d = new Date()) {
+  const x = new Date(d);
+  const day = x.getDay();
+  const diff = day === 0 ? 6 : day - 1;
+  x.setHours(0, 0, 0, 0);
+  x.setDate(x.getDate() - diff);
+  return x;
+}
+
+const WEEKLY_TRIP_BONUS = 100;
+const WEEKLY_TRIP_TARGET = 10;
+
+/**
+ * Complete 10 trips this week → R100 wallet bonus (once per ISO week).
+ */
+export async function claimWeeklyTripBonus(driverId: string): Promise<{
+  claimed: boolean;
+  trips: number;
+  target: number;
+  bonus: number;
+  periodKey: string;
+  message: string;
+}> {
+  const periodKey = isoWeekKey();
+  const from = startOfWeekLocal().toISOString();
+
+  if (!useAdmin()) {
+    const fromMs = startOfWeekLocal().getTime();
+    const trips = mockRepo
+      .listJobs()
+      .filter(
+        (j) =>
+          j.driver_id === driverId &&
+          j.status === "completed" &&
+          new Date(j.completed_at || j.created_at).getTime() >= fromMs,
+      ).length;
+    if (trips < WEEKLY_TRIP_TARGET) {
+      return {
+        claimed: false,
+        trips,
+        target: WEEKLY_TRIP_TARGET,
+        bonus: WEEKLY_TRIP_BONUS,
+        periodKey,
+        message: `${trips}/${WEEKLY_TRIP_TARGET} trips this week`,
+      };
+    }
+    const claimKey = `incentive:${periodKey}`;
+    const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
+    if (driver?.notes?.includes(claimKey)) {
+      return {
+        claimed: false,
+        trips,
+        target: WEEKLY_TRIP_TARGET,
+        bonus: WEEKLY_TRIP_BONUS,
+        periodKey,
+        message: "Bonus already claimed this week",
+      };
+    }
+    mockRepo.creditWallet(
+      driverId,
+      WEEKLY_TRIP_BONUS,
+      `${claimKey} Weekly trip bonus`,
+    );
+    revalidateAll();
+    return {
+      claimed: true,
+      trips,
+      target: WEEKLY_TRIP_TARGET,
+      bonus: WEEKLY_TRIP_BONUS,
+      periodKey,
+      message: `R${WEEKLY_TRIP_BONUS} bonus credited`,
+    };
+  }
+
+  const admin = createAdminClient();
+  const { data: existing } = await admin
+    .from("rr_driver_incentive_claims")
+    .select("driver_id")
+    .eq("driver_id", driverId)
+    .eq("period_key", periodKey)
+    .maybeSingle();
+  if (existing) {
+    return {
+      claimed: false,
+      trips: WEEKLY_TRIP_TARGET,
+      target: WEEKLY_TRIP_TARGET,
+      bonus: WEEKLY_TRIP_BONUS,
+      periodKey,
+      message: "Bonus already claimed this week",
+    };
+  }
+
+  const { count } = await admin
+    .from("rr_jobs")
+    .select("id", { count: "exact", head: true })
+    .eq("driver_id", driverId)
+    .eq("status", "completed")
+    .gte("completed_at", from);
+
+  const trips = count ?? 0;
+  if (trips < WEEKLY_TRIP_TARGET) {
+    return {
+      claimed: false,
+      trips,
+      target: WEEKLY_TRIP_TARGET,
+      bonus: WEEKLY_TRIP_BONUS,
+      periodKey,
+      message: `${trips}/${WEEKLY_TRIP_TARGET} trips this week`,
+    };
+  }
+
+  await creditDriverWallet(
+    driverId,
+    WEEKLY_TRIP_BONUS,
+    `Weekly trip bonus ${periodKey}`,
+  );
+  await admin.from("rr_driver_incentive_claims").insert({
+    driver_id: driverId,
+    period_key: periodKey,
+    bonus_amount: WEEKLY_TRIP_BONUS,
+    trips_required: WEEKLY_TRIP_TARGET,
+    trips_completed: trips,
+  });
+
+  revalidateAll();
+  return {
+    claimed: true,
+    trips,
+    target: WEEKLY_TRIP_TARGET,
+    bonus: WEEKLY_TRIP_BONUS,
+    periodKey,
+    message: `R${WEEKLY_TRIP_BONUS} bonus credited`,
+  };
 }
 
 /** Ops: credit a driver's wallet after EFT / eWallet top-up. */

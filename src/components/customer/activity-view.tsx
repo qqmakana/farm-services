@@ -15,6 +15,7 @@ import {
   type GuestProfile,
 } from "@/lib/guest-profile";
 import type { JobStatus, JobWithDriver } from "@/lib/types";
+import { TripReceipt } from "@/components/customer/trip-receipt";
 
 type Segment = "upcoming" | "past";
 
@@ -98,6 +99,7 @@ export function ActivityView() {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [hydrated, setHydrated] = useState(false);
+  const [receiptJob, setReceiptJob] = useState<JobWithDriver | null>(null);
 
   const loadTrips = useCallback((phone: string) => {
     startTransition(async () => {
@@ -245,15 +247,21 @@ export function ActivityView() {
       ) : (
         <ul className="mt-5 space-y-3">
           {filtered.map((job) => (
-            <li key={job.id}>
+            <li
+              key={job.id}
+              className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+            >
               <Link
                 href={`/trip/${job.reference_code}`}
-                className="block rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition active:scale-95"
+                className="block transition active:scale-[0.99]"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium text-slate-500">
                       {formatTripWhen(job.scheduled_for, job.created_at)}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Driver: {job.drivers?.full_name || "—"}
                     </p>
                     <p className="mt-2 flex items-start gap-1.5 text-sm font-semibold text-slate-900">
                       <MapPin
@@ -286,10 +294,23 @@ export function ActivityView() {
                   </p>
                 </div>
               </Link>
+              {job.status === "completed" ? (
+                <button
+                  type="button"
+                  onClick={() => setReceiptJob(job)}
+                  className="mt-3 w-full rounded-lg border border-slate-200 py-2 text-xs font-semibold text-black"
+                >
+                  View receipt
+                </button>
+              ) : null}
             </li>
           ))}
         </ul>
       )}
+
+      {receiptJob ? (
+        <TripReceipt job={receiptJob} onClose={() => setReceiptJob(null)} />
+      ) : null}
     </main>
   );
 }

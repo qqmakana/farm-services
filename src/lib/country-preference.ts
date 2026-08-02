@@ -85,6 +85,13 @@ export function formatPhonePlaceholder(countryCode?: string | null): string {
       return "11 91234 5678";
     case "MX":
       return "55 1234 5678";
+    case "US":
+    case "CA":
+      return "555 123 4567";
+    case "GB":
+      return "07123 456789";
+    case "AU":
+      return "0412 345 678";
     default:
       return `+${c.phonePrefix}…`;
   }

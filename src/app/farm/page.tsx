@@ -1,14 +1,19 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense } from "react";
 import { FarmSheet } from "@/components/uber/farm-sheet";
 import { UberShell } from "@/components/uber/uber-shell";
+import { useBookingMapPin } from "@/components/uber/use-booking-map-pin";
 
 function FarmInner() {
-  const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
+  const { pin, setPin, mapTapPin, mapTapToken, onMapPin } = useBookingMapPin();
   return (
-    <UberShell pin={pin} backHref="/" title="Farm Connect">
-      <FarmSheet onPinChange={setPin} />
+    <UberShell pin={pin} onMapPin={onMapPin} backHref="/" title="Farm Connect">
+      <FarmSheet
+        onPinChange={setPin}
+        mapTapPin={mapTapPin}
+        mapTapToken={mapTapToken}
+      />
     </UberShell>
   );
 }
@@ -18,7 +23,7 @@ export default function FarmPage() {
     <Suspense
       fallback={
         <div className="flex min-h-dvh items-center justify-center bg-[#F5F5F5] text-[#000000]">
-          Loading Farm Connect…
+          Loading farm…
         </div>
       }
     >

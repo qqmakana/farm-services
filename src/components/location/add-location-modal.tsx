@@ -103,7 +103,8 @@ export function AddLocationModal({ initialName = "", onClose, onCreated }: Props
               Add a missing location
             </h2>
             <p className="mt-0.5 text-xs text-[var(--ru-muted)]">
-              No GPS? No problem — a clear landmark description is enough.
+              Use the map pin when you can, and always add a clear landmark
+              description.
             </p>
           </div>
           <button
@@ -207,7 +208,7 @@ export function AddLocationModal({ initialName = "", onClose, onCreated }: Props
                 }}
                 className="text-xs font-semibold text-[var(--ru-muted)]"
               >
-                Skip map — description only
+                Continue with landmark only (map pin optional)
               </button>
             </div>
           )}

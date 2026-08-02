@@ -150,7 +150,7 @@ export function PlacesAutocomplete({
   function useGps() {
     setGpsError(null);
     if (!navigator.geolocation) {
-      setGpsError("GPS not available — pick a place below.");
+      setGpsError("GPS unavailable — tap the map or type a landmark.");
       setFocused(true);
       return;
     }
@@ -158,14 +158,14 @@ export function PlacesAutocomplete({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         onChange({
-          label: value.label.trim() || "Current location",
+          label: value.label.trim() || "Pinned GPS location",
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
         });
         setGpsLoading(false);
       },
       () => {
-        setGpsError("Could not get GPS — select a place or add one.");
+        setGpsError("Couldn’t get GPS — tap the map or type a landmark.");
         setGpsLoading(false);
         setFocused(true);
       },
@@ -189,7 +189,13 @@ export function PlacesAutocomplete({
           <input
             value={value.label}
             onChange={(e) =>
-              onChange({ label: e.target.value, lat: null, lng: null })
+              // Keep map pin while typing (Uber-style) — only a new place pick moves it
+              onChange({
+                label: e.target.value,
+                lat: value.lat,
+                lng: value.lng,
+                locationId: value.locationId,
+              })
             }
             onFocus={() => setFocused(true)}
             onBlur={onBlurCommit}
@@ -215,8 +221,9 @@ export function PlacesAutocomplete({
         ) : null}
       </div>
       <p className="mt-1 text-xs text-slate-500">
-        {country.flag} {country.name} — use a street address, landmark, or area
-        (e.g. &ldquo;{hintExample}&rdquo;). GPS optional.
+        {country.flag} {country.name} — type a landmark or address (e.g.
+        &ldquo;{hintExample}&rdquo;). Tap the map or GPS to pin — both stay
+        active.
       </p>
       {gpsError ? (
         <p className="mt-1 text-xs text-rose-600">{gpsError}</p>

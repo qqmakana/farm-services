@@ -15,6 +15,8 @@ export async function prepareBrowserContext(context: BrowserContext) {
       localStorage.setItem("vr_feature_tour_seen_v2", "1");
       localStorage.setItem("vr_feature_tour_seen_v1", "1");
       localStorage.setItem("vr_onboarding_seen_v1", "1");
+      // Skip driver first-login guide in general E2E.
+      localStorage.setItem("vr_driver_onboarding_seen_v1", "1");
     } catch (e) {}
     try {
       Object.defineProperty(window.Notification, "permission", {

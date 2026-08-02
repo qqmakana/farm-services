@@ -726,7 +726,7 @@ export const BLOCKED_COUNTRIES: readonly string[] = [];
 
 export const MARKET_REGIONS_LABEL = "every continent";
 
-export const UNSUPPORTED_MARKET_MESSAGE = `Village Ride is available in ${GLOBAL_COUNTRY_COUNT} countries worldwide. Landmark booking, cash & card, fair driver pay — built for villages and small towns everywhere.`;
+export const UNSUPPORTED_MARKET_MESSAGE = `Village Ride supports landmark booking across ${GLOBAL_COUNTRY_COUNT} markets. Pay your driver in cash. Built for villages, towns, and cities.`;
 
 export function isCountrySupported(countryCode: string): boolean {
   return isCountryCode(countryCode.toUpperCase());

@@ -11,7 +11,7 @@ import { BRAND } from "@/lib/brand";
 
 export const metadata = {
   title: `Available in ${GLOBAL_COUNTRY_COUNT} countries | ${BRAND.appName}`,
-  description: `Village Ride — rural transport across ${MARKET_REGIONS_LABEL}. Landmark booking, cash & card, fair driver earnings.`,
+  description: `Village Ride — rural transport across ${MARKET_REGIONS_LABEL}. Landmark booking, cash to driver, fair driver earnings.`,
 };
 
 export default function CountriesPage() {
@@ -30,9 +30,9 @@ export default function CountriesPage() {
             Village Ride — {GLOBAL_COUNTRY_COUNT} countries
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
-            A global platform for rural transport. Landmark booking, cash &amp;
-            card, and fair driver pay — from villages in South Africa to small
-            towns worldwide. Pick your country in the app to see local prices.
+            Landmark booking and cash payment to your driver — from villages in
+            South Africa to towns across {MARKET_REGIONS_LABEL}. Pick your
+            country in the app to see local prices.
           </p>
 
           <ul className="mt-6 flex flex-wrap gap-2 text-sm font-medium text-[#000000]">
@@ -40,7 +40,7 @@ export default function CountriesPage() {
               Landmark booking
             </li>
             <li className="rounded-full bg-[#f5f5f5] px-3 py-1">
-              Cash &amp; Card
+              Cash to driver
             </li>
             <li className="rounded-full bg-[#f5f5f5] px-3 py-1">
               Drivers keep ~85%

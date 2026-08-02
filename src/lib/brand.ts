@@ -3,8 +3,8 @@ export const BRAND = {
   appName: "Village Ride",
   company: "Sandton Streets",
   email: "ai@sandtonstreets.com",
-  /** Display format */
-  phone: "063 621 3590",
+  /** Display format (call / WhatsApp) */
+  phone: "+27 63 621 3590",
   /** Same number for WhatsApp / wa.me (SA → 27…) */
   phoneWhatsApp: "27636213590",
   street: "97 Perth Road",
@@ -17,7 +17,7 @@ export const BRAND = {
 export const BRAND_ADDRESS_LINE = `${BRAND.street}, ${BRAND.suburb}, ${BRAND.city}, ${BRAND.postalCode}`;
 
 export const BRAND_TAGLINE =
-  "Global rural transport — landmark booking, cash & card, fair driver pay. Available worldwide.";
+  "Rural transport with landmark booking — pay your driver in cash. Fair pay for drivers.";
 
 export const BRAND_FULL = `${BRAND.appName} by ${BRAND.company}`;
 
@@ -107,7 +107,7 @@ export function describePlaceWhatsAppHref(siteUrl?: string) {
 /** SMS emergency alert to Sandton Streets support line. */
 export function emergencySmsHref(mapsUrl: string) {
   const body = `EMERGENCY: I need help. My current location is ${mapsUrl}`;
-  return `sms:${BRAND.phone}?body=${encodeURIComponent(body)}`;
+  return `sms:+${BRAND.phoneWhatsApp}?body=${encodeURIComponent(body)}`;
 }
 
 export function emergencyMailtoHref(mapsUrl: string) {

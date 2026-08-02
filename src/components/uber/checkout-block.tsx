@@ -1,26 +1,34 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useCountry } from "@/components/country/country-provider";
 import {
   bookingWhatsAppHref,
   type BookingWhatsAppDraft,
 } from "@/lib/brand";
 import { createCashJob } from "@/lib/actions";
-import {
-  paymentHint,
-  paymentLabel,
-  type PaymentMethodId,
-} from "@/lib/countries";
 import { formatMoney } from "@/lib/format";
 import { setGuestProfile } from "@/lib/guest-profile";
 import { enqueuePendingBooking } from "@/lib/offline-booking-queue";
 import { driverOptInNote } from "@/lib/night-fare";
+import { getCapturedReferrer } from "@/lib/rider-referral";
 import type { NewJobInput, ServiceType, VehicleType } from "@/lib/types";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
 
 type Draft = Omit<NewJobInput, "payment">;
+
+function withReferralNote(d: Draft): Draft {
+  const ref = getCapturedReferrer();
+  if (!ref) return d;
+  const tag = `Rider referral: ${ref}`;
+  const existing = d.dispatcher_notes?.trim();
+  if (existing?.includes(tag)) return d;
+  return {
+    ...d,
+    dispatcher_notes: existing ? `${existing} · ${tag}` : tag,
+  };
+}
 
 function detailsFromDraft(d: Draft, locale: string): string {
   const when = d.scheduled_for
@@ -104,10 +112,8 @@ export function CheckoutBlock({
   const { country, countryCode } = useCountry();
   const [formError, setFormError] = useState<string | null>(null);
   const [queuedOffline, setQueuedOffline] = useState(false);
-  const [payMethod, setPayMethod] = useState<PaymentMethodId>("cash");
   const [pending, startTransition] = useTransition();
 
-  const methods = useMemo(() => country.payments, [country.payments]);
   const displayCurrency = currency || country.currency;
 
   const optIn = driverOptInNote(serviceType, isNightRide);
@@ -122,7 +128,7 @@ export function CheckoutBlock({
 
   function queueOffline(d: Draft) {
     enqueuePendingBooking({
-      ...d,
+      ...withReferralNote(d),
       country_code: d.country_code || countryCode,
     });
     setQueuedOffline(true);
@@ -138,7 +144,7 @@ export function CheckoutBlock({
     }
     startTransition(async () => {
       try {
-        const d = await draft();
+        const d = withReferralNote(await draft());
         saveGuest(d);
         if (typeof navigator !== "undefined" && navigator.onLine === false) {
           queueOffline(d);
@@ -158,7 +164,7 @@ export function CheckoutBlock({
           /fetch|network|failed to fetch|load failed|offline/i.test(msg);
         if (offline || looksNetwork) {
           try {
-            const d = await draft();
+            const d = withReferralNote(await draft());
             saveGuest(d);
             queueOffline(d);
             return;
@@ -191,7 +197,7 @@ export function CheckoutBlock({
         customer_name: d.customer_name,
         customer_phone: d.customer_phone,
         detailsLine: detailsFromDraft(d, country.locale),
-        paymentLabel: payMethod === "cash" ? "Cash" : "Card",
+        paymentLabel: "Cash",
         estimateZar: fee,
         currencySymbol: country.currencySymbol,
       };
@@ -233,45 +239,15 @@ export function CheckoutBlock({
         {optIn}
       </p>
 
-      <div>
+      <div className="rounded-xl border border-slate-200 bg-[#fafafa] px-3 py-3">
         <p className="text-sm font-semibold text-[#000000]">
-          How you&apos;ll pay the driver
+          Pay the driver in cash
         </p>
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          {methods.map((id) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setPayMethod(id)}
-              className={`rounded-xl border px-3 py-3 text-left transition ${
-                payMethod === id
-                  ? "border-[#000000] bg-[#f5f5f5] shadow-sm"
-                  : "border-slate-200 bg-white hover:bg-slate-50"
-              }`}
-            >
-              <span className="block text-sm font-bold text-[#000000]">
-                {paymentLabel(id)}
-              </span>
-              <span className="mt-0.5 block text-xs text-slate-500">
-                {id === "cash"
-                  ? "Pay driver in person (recommended)"
-                  : paymentHint(id)}
-              </span>
-            </button>
-          ))}
-        </div>
-        {payMethod !== "cash" ? (
-          <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-950">
-            In-app {paymentLabel(payMethod)} isn&apos;t live yet.{" "}
-            <strong>Request</strong> still books as cash to the driver — or use
-            WhatsApp below to ask for another payment option.
-          </p>
-        ) : (
-          <p className="mt-2 text-xs text-slate-500">
-            You pay the driver in cash. Village Ride takes ~15% from the
-            driver&apos;s prepaid wallet — not from you.
-          </p>
-        )}
+        <p className="mt-1 text-xs leading-relaxed text-slate-600">
+          At pickup or dropoff — simple and reliable. Village Ride takes ~15%
+          from the driver&apos;s prepaid wallet, not from you. Card and mobile
+          money are coming later.
+        </p>
       </div>
 
       {queuedOffline ? (

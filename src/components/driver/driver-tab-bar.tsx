@@ -40,6 +40,9 @@ const TABS = [
 export function DriverTabBar() {
   const pathname = usePathname() ?? "/driver/home";
 
+  // Full-screen first-login guide — hide chrome.
+  if (pathname.startsWith("/driver/guide")) return null;
+
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-[60] border-t border-gray-100 bg-white font-[system-ui,Segoe_UI,sans-serif]"

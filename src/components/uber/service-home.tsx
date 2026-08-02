@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Car, ChevronRight, Package, Tractor, Truck, Users } from "lucide-react";
 import {
   emptyPlaceValue,
@@ -10,7 +10,6 @@ import {
   type PlaceValue,
 } from "@/components/uber/places-autocomplete";
 import { Button } from "@/components/ui/button";
-import { DriverWantedBanner } from "@/components/driver-wanted-banner";
 import { OpenGroupTripsPreview } from "@/components/group/driver-group-trips-view";
 import { SavedPlacesChips } from "@/components/location/saved-places-chips";
 
@@ -53,10 +52,39 @@ function bookingHref(base: string, from: PlaceValue, to: PlaceValue) {
   return q ? `${base}?${q}` : base;
 }
 
-export function ServiceHomeSheet() {
+export function ServiceHomeSheet({
+  mapTapPin = null,
+  mapTapToken = 0,
+  onPinChange,
+}: {
+  mapTapPin?: { lat: number; lng: number } | null;
+  mapTapToken?: number;
+  onPinChange?: (pin: { lat: number; lng: number } | null) => void;
+} = {}) {
   const router = useRouter();
   const [origin, setOrigin] = useState<PlaceValue>(emptyPlaceValue());
   const [destination, setDestination] = useState<PlaceValue>(emptyPlaceValue());
+
+  useEffect(() => {
+    onPinChange?.(
+      origin.lat != null && origin.lng != null
+        ? { lat: origin.lat, lng: origin.lng }
+        : null,
+    );
+  }, [origin.lat, origin.lng, onPinChange]);
+
+  useEffect(() => {
+    if (!mapTapPin || !mapTapToken) return;
+    setOrigin((o) => {
+      if (mapTapToken === 1 && o.lat != null && o.lng != null) return o;
+      return {
+        ...o,
+        lat: mapTapPin.lat,
+        lng: mapTapPin.lng,
+        label: o.label.trim() || "Current location",
+      };
+    });
+  }, [mapTapPin, mapTapToken]);
 
   function goRide() {
     if (!destination.label.trim()) return;
@@ -70,11 +98,9 @@ export function ServiceHomeSheet() {
           Transport for everyone
         </h1>
         <p className="mt-1 text-[15px] text-[var(--ru-muted)]">
-          Villages, towns &amp; cities — ride, delivery, farm &amp; courier.
+          Map shows your location · type a landmark for the driver.
         </p>
       </div>
-
-      <DriverWantedBanner />
 
       <SavedPlacesChips
         onSelect={(place) => {

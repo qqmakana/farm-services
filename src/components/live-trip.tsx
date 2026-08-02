@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, useCallback } from "react";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
 import { DriverVehiclePhotos } from "@/components/driver-vehicle-photos";
+import { RiderSafetyTips } from "@/components/trip/rider-safety-tips";
 import { isDriverTrustVerified } from "@/lib/trust";
 import {
   getJobByReference,
@@ -12,6 +13,7 @@ import {
   saveCustomerFcmToken,
   triggerSos,
 } from "@/lib/actions";
+import { ContactSupportActions } from "@/components/support/contact-support";
 import {
   BRAND,
   BRAND_WHATSAPP_HREF,
@@ -391,28 +393,52 @@ export function LiveTrip({
                 {eta != null ? ` · ${eta} min away` : " · on the way"}
               </p>
               <div className="mt-1">
-                <DriverVerifiedBadge verified={job.drivers.id_verified} compact />
+                <DriverVerifiedBadge
+                  verified={isDriverTrustVerified(job.drivers)}
+                  compact
+                  hideUnverified
+                />
               </div>
             </div>
             <div className="flex shrink-0 flex-col gap-1.5">
-              <a
-                href={`tel:${job.drivers.phone}`}
-                className="ru-btn ru-btn-primary !min-h-10 !px-3 !text-xs"
-              >
-                Call
-              </a>
-              <a
-                href={`https://wa.me/${toWhatsAppNumber(job.drivers.phone)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="ru-btn ru-btn-secondary !min-h-10 !px-3 !text-xs"
-              >
-                Chat
-              </a>
+              {job.drivers.phone ? (
+                <a
+                  href={`tel:${job.drivers.phone}`}
+                  className="ru-btn ru-btn-primary !min-h-10 !px-3 !text-xs"
+                >
+                  Call driver
+                </a>
+              ) : null}
+              {job.drivers.phone ? (
+                <a
+                  href={`https://wa.me/${toWhatsAppNumber(job.drivers.phone)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="ru-btn ru-btn-secondary !min-h-10 !px-3 !text-xs"
+                >
+                  Chat driver
+                </a>
+              ) : null}
             </div>
           </div>
         </div>
       ) : null}
+
+      <section className="rounded-xl border border-slate-200 bg-[#fafafa] p-4">
+        <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+          Need help?
+        </p>
+        <p className="mt-1 text-sm text-slate-600">
+          Issues with this trip? Contact support on WhatsApp or email.
+        </p>
+        <ContactSupportActions
+          compact
+          className="mt-3"
+          whatsappPrefill={`Hi ${BRAND.appName} support — I need help with trip ${job.reference_code}`}
+        />
+      </section>
+
+      <RiderSafetyTips />
 
       {searching || confirmed ? (
         <a
@@ -550,14 +576,17 @@ export function LiveTrip({
               </p>
               <DriverVerifiedBadge
                 verified={isDriverTrustVerified(job.drivers)}
+                hideUnverified
               />
             </div>
-            <a
-              href={`tel:${job.drivers.phone}`}
-              className="mt-1 inline-block text-sm text-sky-700 underline"
-            >
-              Call driver
-            </a>
+            {job.drivers.phone ? (
+              <a
+                href={`tel:${job.drivers.phone}`}
+                className="mt-1 inline-block text-sm font-semibold text-black underline"
+              >
+                Call driver
+              </a>
+            ) : null}
           </div>
         )}
       </div>

@@ -1,0 +1,56 @@
+import { BRAND, BRAND_WHATSAPP_HREF } from "@/lib/brand";
+import { WhatsAppLinks } from "@/lib/whatsapp-links";
+
+type Props = {
+  /** Extra WhatsApp message context (e.g. trip ref). */
+  whatsappPrefill?: string;
+  /** Compact layout for trip / error surfaces. */
+  compact?: boolean;
+  className?: string;
+};
+
+export function supportEmailHref(subject?: string, body?: string) {
+  const params = new URLSearchParams();
+  params.set("subject", subject || `${BRAND.appName} support`);
+  if (body) params.set("body", body);
+  return `mailto:${BRAND.email}?${params.toString()}`;
+}
+
+/** WhatsApp + email CTAs using Sandton Streets support contacts. */
+export function ContactSupportActions({
+  whatsappPrefill,
+  compact = false,
+  className = "",
+}: Props) {
+  const wa = whatsappPrefill
+    ? `${BRAND_WHATSAPP_HREF}?text=${encodeURIComponent(whatsappPrefill)}`
+    : WhatsAppLinks.support();
+
+  return (
+    <div
+      className={`grid gap-2 ${compact ? "sm:grid-cols-2" : "sm:grid-cols-2"} ${className}`}
+    >
+      <a
+        href={wa}
+        target="_blank"
+        rel="noreferrer"
+        className={`rounded-xl bg-[#25D366] text-center font-bold text-white ${
+          compact ? "px-3 py-2.5 text-xs" : "px-4 py-3.5 text-sm"
+        }`}
+      >
+        WhatsApp {BRAND.phone}
+      </a>
+      <a
+        href={supportEmailHref(
+          `${BRAND.appName} support`,
+          `Hi ${BRAND.appName} support,\n\nI need help with:\n\n`,
+        )}
+        className={`rounded-xl border border-slate-200 bg-white text-center font-bold text-black ${
+          compact ? "px-3 py-2.5 text-xs" : "px-4 py-3.5 text-sm"
+        }`}
+      >
+        Email {BRAND.email}
+      </a>
+    </div>
+  );
+}

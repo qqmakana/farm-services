@@ -1,34 +1,45 @@
 import Link from "next/link";
-import { getPlatformTrustStats } from "@/lib/actions-ops";
+import { ShieldCheck, IdCard, Siren } from "lucide-react";
 
-/** Live trust strip — Uber-clean stats row. */
+/** Qualitative trust strip — no inflated stats. */
 export async function TrustBadges() {
-  const stats = await getPlatformTrustStats();
-
   const items = [
-    { label: "Deliveries", value: `${stats.deliveriesCompleted}+` },
-    { label: "Verified drivers", value: `${stats.verifiedDrivers}+` },
-    { label: "Avg rating", value: `${stats.avgRating}★` },
-  ];
+    {
+      label: "ID-checked drivers",
+      Icon: IdCard,
+    },
+    {
+      label: "Photos & plate shown",
+      Icon: ShieldCheck,
+    },
+    {
+      label: "In-trip SOS",
+      Icon: Siren,
+    },
+  ] as const;
 
   return (
     <section className="ru-card p-4">
       <div className="grid grid-cols-3 gap-2 text-center">
-        {items.map((item) => (
-          <div key={item.label}>
-            <p className="font-[family-name:var(--font-display)] text-xl font-bold tracking-tight text-black">
-              {item.value}
-            </p>
-            <p className="mt-0.5 text-[11px] font-medium text-[var(--ru-muted)]">
-              {item.label}
+        {items.map(({ label, Icon }) => (
+          <div key={label} className="flex flex-col items-center gap-1.5 px-1">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black text-white">
+              <Icon className="h-4 w-4" aria-hidden />
+            </span>
+            <p className="text-[11px] font-medium leading-snug text-[var(--ru-muted)]">
+              {label}
             </p>
           </div>
         ))}
       </div>
       <p className="mt-3 text-center text-[11px] text-[var(--ru-muted)]">
-        Cash &amp; card ·{" "}
+        Pay driver in cash ·{" "}
         <Link href="/pricing" className="font-semibold text-black underline">
           See pricing
+        </Link>
+        {" · "}
+        <Link href="/help" className="font-semibold text-black underline">
+          Safety tips
         </Link>
       </p>
     </section>

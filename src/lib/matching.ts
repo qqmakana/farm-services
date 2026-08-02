@@ -24,13 +24,18 @@ export async function getFareRule(
     .eq("country_code", countryCode)
     .maybeSingle();
   if (data) return data;
-  // Backward compatible: older rows without country filter
-  const { data: legacy } = await admin
-    .from("rr_fare_rules")
-    .select("*")
-    .eq("vehicle_type", vehicle)
-    .maybeSingle();
-  return legacy;
+
+  // Legacy rows often have no country_code — only reuse them for ZA so
+  // other markets fall through to country.pricing (not ZA rand amounts).
+  if (countryCode === "ZA") {
+    const { data: legacy } = await admin
+      .from("rr_fare_rules")
+      .select("*")
+      .eq("vehicle_type", vehicle)
+      .maybeSingle();
+    return legacy;
+  }
+  return null;
 }
 
 /**

@@ -1,10 +1,16 @@
-/** Trust badge — only “Verified” after ops manual approval. */
+/**
+ * Trust badge — only “Verified” after ops manual approval.
+ * `hideUnverified` (customer surfaces): render nothing instead of “Pending”.
+ */
 export function DriverVerifiedBadge({
   verified,
   compact = false,
+  hideUnverified = false,
 }: {
   verified: boolean;
   compact?: boolean;
+  /** Never show amber “Pending” to riders — omit badge instead. */
+  hideUnverified?: boolean;
 }) {
   if (verified) {
     return (
@@ -30,6 +36,8 @@ export function DriverVerifiedBadge({
       </span>
     );
   }
+
+  if (hideUnverified) return null;
 
   return (
     <span

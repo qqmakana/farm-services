@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { listDriverJobs } from "@/lib/actions";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { claimWeeklyTripBonus, listDriverJobs } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
 import { BRAND, BRAND_TEL_HREF, BRAND_WHATSAPP_HREF } from "@/lib/brand";
 import { formatMoney } from "@/lib/format";
 import type { JobWithDriver } from "@/lib/types";
+
+type Period = "today" | "week" | "month";
 
 type Tx = {
   id: string;
@@ -13,6 +15,12 @@ type Tx = {
   amount: number;
   at: string;
 };
+
+function startOfToday() {
+  const x = new Date();
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
 
 function startOfWeek(d = new Date()) {
   const x = new Date(d);
@@ -23,10 +31,23 @@ function startOfWeek(d = new Date()) {
   return x;
 }
 
+function startOfMonth(d = new Date()) {
+  return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
+}
+
+function periodStart(period: Period) {
+  if (period === "today") return startOfToday();
+  if (period === "month") return startOfMonth();
+  return startOfWeek();
+}
+
 export function DriverEarningsView() {
   const { driver, refresh } = useDriverApp();
   const [jobs, setJobs] = useState<JobWithDriver[]>([]);
   const [showTopUp, setShowTopUp] = useState(false);
+  const [period, setPeriod] = useState<Period>("week");
+  const [bonusMsg, setBonusMsg] = useState<string | null>(null);
+  const [pending, start] = useTransition();
 
   useEffect(() => {
     if (!driver?.id) return;
@@ -46,13 +67,13 @@ export function DriverEarningsView() {
     [jobs],
   );
 
-  const weekStats = useMemo(() => {
-    const from = startOfWeek().getTime();
-    const week = completed.filter(
+  const periodStats = useMemo(() => {
+    const from = periodStart(period).getTime();
+    const slice = completed.filter(
       (j) => new Date(j.completed_at || j.created_at).getTime() >= from,
     );
-    const gross = week.reduce((s, j) => s + Number(j.fee_amount || 0), 0);
-    const commission = week.reduce((s, j) => {
+    const gross = slice.reduce((s, j) => s + Number(j.fee_amount || 0), 0);
+    const commission = slice.reduce((s, j) => {
       const fee = Number(j.fee_amount) || 0;
       const c =
         Number(j.platform_commission) > 0
@@ -60,10 +81,17 @@ export function DriverEarningsView() {
           : Math.round((fee * 15) / 100);
       return s + c;
     }, 0);
-    const trips = week.length;
+    const trips = slice.length;
     const keep = Math.max(0, gross - commission);
     const avg = trips ? Math.round(keep / trips) : 0;
     return { gross, keep, commission, trips, avg };
+  }, [completed, period]);
+
+  const weekTrips = useMemo(() => {
+    const from = startOfWeek().getTime();
+    return completed.filter(
+      (j) => new Date(j.completed_at || j.created_at).getTime() >= from,
+    ).length;
   }, [completed]);
 
   const transactions = useMemo(() => {
@@ -92,6 +120,24 @@ export function DriverEarningsView() {
       (a, b) => new Date(b.at).getTime() - new Date(a.at).getTime(),
     );
   }, [completed]);
+
+  const target = 10;
+  const bonusProgress = Math.min(1, weekTrips / target);
+
+  function tryClaimBonus() {
+    if (!driver?.id) return;
+    setBonusMsg(null);
+    start(async () => {
+      try {
+        const res = await claimWeeklyTripBonus(driver.id);
+        setBonusMsg(res.message);
+        refresh();
+        void listDriverJobs(driver.id).then(setJobs);
+      } catch (e) {
+        setBonusMsg(e instanceof Error ? e.message : "Could not claim bonus");
+      }
+    });
+  }
 
   return (
     <main className="mx-auto min-h-dvh max-w-lg bg-white px-5 pb-24 pt-8 text-slate-900">
@@ -164,17 +210,65 @@ export function DriverEarningsView() {
         ) : null}
       </section>
 
-      <section className="mt-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-        <p className="text-xs font-semibold text-slate-500 uppercase">
-          This week
+      <section className="mt-4 rounded-xl border border-amber-100 bg-amber-50/70 p-4">
+        <p className="text-xs font-semibold tracking-wide text-amber-900 uppercase">
+          Weekly incentive
         </p>
-        <p className="mt-2 text-sm font-semibold text-slate-900">
-          You keep ~{formatMoney(weekStats.keep)} · Gross fares{" "}
-          {formatMoney(weekStats.gross)} · Trips {weekStats.trips} · Avg keep{" "}
-          {formatMoney(weekStats.avg)}/trip
+        <p className="mt-1 text-sm font-bold text-slate-900">
+          Complete {target} trips this week → get R100 bonus
+        </p>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-amber-100">
+          <div
+            className="h-full rounded-full bg-black transition-all"
+            style={{ width: `${bonusProgress * 100}%` }}
+          />
+        </div>
+        <p className="mt-2 text-xs text-slate-600">
+          {weekTrips}/{target} trips · {Math.max(0, target - weekTrips)} to go
+        </p>
+        <button
+          type="button"
+          disabled={pending || weekTrips < target}
+          onClick={tryClaimBonus}
+          className="mt-3 w-full rounded-xl bg-black py-2.5 text-xs font-bold text-white disabled:opacity-40"
+        >
+          {weekTrips < target ? "Keep going" : pending ? "Claiming…" : "Claim R100"}
+        </button>
+        {bonusMsg ? (
+          <p className="mt-2 text-xs font-medium text-slate-700">{bonusMsg}</p>
+        ) : null}
+      </section>
+
+      <section className="mt-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="flex gap-1 rounded-lg bg-gray-100 p-1">
+          {(
+            [
+              ["today", "Today"],
+              ["week", "This week"],
+              ["month", "This month"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setPeriod(key)}
+              className={`flex-1 rounded-md py-2 text-xs font-semibold transition ${
+                period === key
+                  ? "bg-white text-black shadow-sm"
+                  : "text-slate-500"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <p className="mt-3 text-sm font-semibold text-slate-900">
+          You keep ~{formatMoney(periodStats.keep)} · Gross{" "}
+          {formatMoney(periodStats.gross)} · Trips {periodStats.trips} · Avg{" "}
+          {formatMoney(periodStats.avg)}/trip
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Platform share this week ~{formatMoney(weekStats.commission)} (from
+          Platform commission ~{formatMoney(periodStats.commission)} (from
           wallet)
         </p>
       </section>

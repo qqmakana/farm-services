@@ -35,6 +35,7 @@ export function LandmarkField({
   preferVillages = false,
   showSaved = true,
   showExamples = false,
+  showGps = true,
 }: {
   label: string;
   placeholder: string;
@@ -45,6 +46,8 @@ export function LandmarkField({
   showSaved?: boolean;
   /** Show “Describe your place” example chips (best for pickup). */
   showExamples?: boolean;
+  /** GPS button next to search — map pin stays available too. */
+  showGps?: boolean;
 }) {
   return (
     <div className="space-y-2">
@@ -70,7 +73,13 @@ export function LandmarkField({
         onChange={(v) => onChange(placeToLoc(v))}
         required={required}
         preferVillages={preferVillages}
+        showGps={showGps}
       />
+      {loc.lat != null && loc.lng != null ? (
+        <p className="text-[11px] font-medium text-emerald-700">
+          Map pin set · keep refining the landmark name for your driver
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -84,7 +93,7 @@ export function useGpsPin(
   function captureGps() {
     setGpsError(null);
     if (!navigator.geolocation) {
-      setGpsError("GPS not available — describe your place instead");
+      setGpsError("GPS unavailable — you can still tap the map or type a landmark.");
       return;
     }
     setLoading(true);
@@ -94,7 +103,7 @@ export function useGpsPin(
         setLoading(false);
       },
       () => {
-        setGpsError("GPS not available — describe your place instead");
+        setGpsError("Couldn’t get GPS — tap the map or type a landmark.");
         setLoading(false);
       },
       { enableHighAccuracy: true, timeout: 12000 },
@@ -119,7 +128,7 @@ export function GpsButton({
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#000000]/25 bg-[#f5f5f5] px-3 py-3 text-sm font-semibold text-[#000000] transition hover:bg-[#f5f5f5] active:scale-95 disabled:opacity-60"
       >
         <span aria-hidden>◎</span>
-        {loading ? "Getting location…" : "Use my current location (optional)"}
+        {loading ? "Updating location…" : "Refresh my GPS location"}
       </button>
       {gpsError ? (
         <p className="mt-1.5 text-xs text-amber-800">{gpsError}</p>
@@ -131,8 +140,8 @@ export function GpsButton({
 export function LandmarkHelperText() {
   return (
     <p className="text-xs text-slate-500">
-      When the map doesn&apos;t work or your street isn&apos;t listed, describe a
-      landmark — drivers use that to find you. Also helps when the network is weak.
+      The map centers on you automatically (like Uber). Always add a landmark
+      name so drivers can find you if GPS is weak.
     </p>
   );
 }

@@ -24,6 +24,7 @@ import {
 import { quoteFareAction } from "@/lib/actions";
 import { locsFromSearchParams } from "@/lib/booking-query";
 import { useCountry } from "@/components/country/country-provider";
+import { formatPhonePlaceholder } from "@/lib/country-preference";
 import type { VehicleType } from "@/lib/types";
 import { suggestVehicle } from "@/lib/vehicles";
 
@@ -52,8 +53,12 @@ const ITEM_OPTIONS = [
 
 export function DeliverySheet({
   onPinChange,
+  mapTapPin = null,
+  mapTapToken = 0,
 }: {
   onPinChange?: (pin: { lat: number; lng: number } | null) => void;
+  mapTapPin?: { lat: number; lng: number } | null;
+  mapTapToken?: number;
 }) {
   const { countryCode, country } = useCountry();
   const searchParams = useSearchParams();
@@ -94,6 +99,19 @@ export function DeliverySheet({
         : null,
     );
   }, [pickup.lat, pickup.lng, onPinChange]);
+
+  useEffect(() => {
+    if (!mapTapPin || !mapTapToken) return;
+    setPickup((p) => {
+      if (mapTapToken === 1 && p.lat != null && p.lng != null) return p;
+      return {
+        ...p,
+        lat: mapTapPin.lat,
+        lng: mapTapPin.lng,
+        landmark: p.landmark.trim() || "Current location",
+      };
+    });
+  }, [mapTapPin, mapTapToken]);
 
   useEffect(() => {
     let cancelled = false;
@@ -195,6 +213,8 @@ export function DeliverySheet({
             className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
             value={senderPhone}
             onChange={(e) => setSenderPhone(e.target.value)}
+            placeholder={formatPhonePlaceholder(countryCode)}
+            inputMode="tel"
           />
         </label>
       </div>

@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
-import { BRAND } from "@/lib/brand";
+import { SiteFooter } from "@/components/site-footer";
+import { ContactSupportActions } from "@/components/support/contact-support";
+import { BRAND, BRAND_TEL_HREF, BRAND_WHATSAPP_HREF } from "@/lib/brand";
 
 export const metadata = {
   title: `Help & FAQ — ${BRAND.appName}`,
-  description: "Common questions about Village Ride partners, drivers, payments, and tracking.",
+  description:
+    "Contact Village Ride support on WhatsApp or email. Common questions about partners, drivers, payments, and tracking.",
 };
 
 const FAQS = [
@@ -14,7 +17,7 @@ const FAQS = [
   },
   {
     q: "Does Village Ride require GPS or a street address?",
-    a: "Use the map when it works. When it doesn’t — or your street isn’t listed — describe a landmark instead (“green gate, next to the mango tree”). GPS helps when available, but landmark text is enough. Saved Home/Work places also work offline from your phone cache.",
+    a: "Use both: tap the map (or GPS) to pin, and always describe a landmark (“green gate, next to the mango tree”). The map does not replace the landmark — drivers use both. Landmark text alone still works if GPS is weak. Saved Home/Work places also work offline from your phone cache.",
   },
   {
     q: "How do I sign up as a business partner?",
@@ -26,7 +29,7 @@ const FAQS = [
   },
   {
     q: "What if no drivers are online?",
-    a: "You’ll see a notice on the order. Keep the order open while we search, or schedule a delivery for later when more drivers are available.",
+    a: "You’ll see a notice on the order. Keep the order open while we search, or schedule a delivery for later when more drivers are available. Or WhatsApp support and we’ll help dispatch.",
   },
   {
     q: "How does my customer track the delivery?",
@@ -34,7 +37,7 @@ const FAQS = [
   },
   {
     q: "How do referrals work?",
-    a: "Each shop gets a code (first 4 letters of your name + 3 random characters). Share /shop?ref=YOURCODE — when they sign up, it counts toward your weekly report.",
+    a: "Riders: open Account → share your VR code — get R50 when a friend completes their first ride. Shops: share /shop?ref=YOURCODE for partner referrals (R50).",
   },
   {
     q: "Are drivers verified?",
@@ -42,24 +45,60 @@ const FAQS = [
   },
   {
     q: "Need human support?",
-    a: `Email ${BRAND.email} or call ${BRAND.phone}. For urgent dispatch issues, use Ops if you have access.`,
+    a: `WhatsApp ${BRAND.phone} or email ${BRAND.email}. We reply as soon as we can.`,
   },
 ];
 
 export default function HelpPage() {
   return (
     <>
-      <SiteNav />
+      <SiteNav active="help" />
       <main className="ru-force-light mx-auto min-h-dvh max-w-2xl bg-white px-4 py-10 pb-20">
         <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
           Support
         </p>
         <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold text-slate-900">
-          Help &amp; FAQ
+          Help &amp; Support
         </h1>
         <p className="mt-2 text-sm text-slate-600">
-          Quick answers for partners, drivers, and customers.
+          Chat on WhatsApp or email us — both go to the Sandton Streets team.
         </p>
+
+        <section className="mt-6 rounded-2xl border border-slate-100 bg-[#fafafa] p-4">
+          <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+            Contact us
+          </p>
+          <ul className="mt-2 space-y-1 text-sm text-slate-700">
+            <li>
+              WhatsApp:{" "}
+              <a
+                href={BRAND_WHATSAPP_HREF}
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-black underline"
+              >
+                {BRAND.phone}
+              </a>
+            </li>
+            <li>
+              Email:{" "}
+              <a
+                href={`mailto:${BRAND.email}`}
+                className="font-semibold text-black underline"
+              >
+                {BRAND.email}
+              </a>
+            </li>
+          </ul>
+          <ContactSupportActions className="mt-4" />
+          <a
+            href={BRAND_TEL_HREF}
+            className="mt-2 block rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-semibold text-black"
+          >
+            Call {BRAND.phone}
+          </a>
+        </section>
+
         <ul className="mt-8 space-y-4">
           {FAQS.map((item) => (
             <li
@@ -72,15 +111,22 @@ export default function HelpPage() {
           ))}
         </ul>
         <p className="mt-8 text-center text-sm">
-          <Link href="/partners" className="font-semibold text-[#000000] underline">
+          <Link
+            href="/partners"
+            className="font-semibold text-[#000000] underline"
+          >
             For businesses
           </Link>
           {" · "}
-          <Link href="/driver" className="font-semibold text-[#000000] underline">
+          <Link
+            href="/driver"
+            className="font-semibold text-[#000000] underline"
+          >
             Drive with us
           </Link>
         </p>
       </main>
+      <SiteFooter />
     </>
   );
 }

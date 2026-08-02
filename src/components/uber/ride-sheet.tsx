@@ -24,12 +24,18 @@ import {
 import { quoteFareAction } from "@/lib/actions";
 import { locsFromSearchParams } from "@/lib/booking-query";
 import { useCountry } from "@/components/country/country-provider";
+import { formatPhonePlaceholder } from "@/lib/country-preference";
 import type { VehicleType } from "@/lib/types";
 
 export function RideSheet({
   onPinChange,
+  mapTapPin = null,
+  mapTapToken = 0,
 }: {
   onPinChange?: (pin: { lat: number; lng: number } | null) => void;
+  /** Latest map tap — keeps landmark text; does not replace it. */
+  mapTapPin?: { lat: number; lng: number } | null;
+  mapTapToken?: number;
 }) {
   const { countryCode, country } = useCountry();
   const searchParams = useSearchParams();
@@ -75,6 +81,21 @@ export function RideSheet({
     );
   }, [pickup.lat, pickup.lng, onPinChange]);
 
+  // Auto-GPS or map tap → show pin on map; keep typed landmark text
+  useEffect(() => {
+    if (!mapTapPin || !mapTapToken) return;
+    setPickup((p) => {
+      // Deep-link / search already gave coords — don't jump away on first GPS
+      if (mapTapToken === 1 && p.lat != null && p.lng != null) return p;
+      return {
+        ...p,
+        lat: mapTapPin.lat,
+        lng: mapTapPin.lng,
+        landmark: p.landmark.trim() || "Current location",
+      };
+    });
+  }, [mapTapPin, mapTapToken]);
+
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -117,8 +138,8 @@ export function RideSheet({
       <div>
         <h1 className="text-xl font-bold text-[#000000]">Village Ride</h1>
         <p className="text-sm text-slate-600">
-          Villages, towns &amp; cities — book with a street address or a landmark.
-          Night &amp; scheduled rides welcome.
+          Map finds you automatically — add a landmark so the driver can spot
+          you. Night &amp; scheduled rides welcome.
         </p>
       </div>
 
@@ -195,7 +216,8 @@ export function RideSheet({
             className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            placeholder="06…"
+            placeholder={formatPhonePlaceholder(countryCode)}
+            inputMode="tel"
             required
           />
         </label>

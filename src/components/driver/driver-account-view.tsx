@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import {
   ChevronRight,
@@ -17,14 +18,15 @@ import { useCountry } from "@/components/country/country-provider";
 import { DriverTrustPanel } from "@/components/driver-trust-panel";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
 import { DriverVehiclePhotos } from "@/components/driver-vehicle-photos";
-import { BRAND, BRAND_WHATSAPP_HREF } from "@/lib/brand";
 import { vehicleDisplayLabel } from "@/lib/driver-display";
 import { getCountry, type CountryCode } from "@/lib/countries";
+import { resetDriverOnboardingForReplay } from "@/lib/driver-onboarding";
 import { isDriverTrustVerified } from "@/lib/trust";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
 import type { VehicleType } from "@/lib/types";
 
 export function DriverAccountView() {
+  const router = useRouter();
   const { driver, refresh, logout } = useDriverApp();
   const { setCountry, countryCode } = useCountry();
   const [editVehicle, setEditVehicle] = useState(false);
@@ -237,17 +239,15 @@ export function DriverAccountView() {
           </button>
         </li>
         <li>
-          <a
-            href={BRAND_WHATSAPP_HREF}
-            target="_blank"
-            rel="noreferrer"
+          <Link
+            href="/help"
             className="flex items-center gap-3 border-t border-gray-100 px-4 py-4 transition active:scale-[0.99] active:bg-gray-50"
           >
             <HelpCircle className="h-5 w-5 text-[#000000]" />
             <span className="flex-1 text-sm font-medium">Help &amp; Support</span>
-            <span className="text-xs text-slate-400">{BRAND.phone}</span>
+            <span className="text-xs text-slate-400">WhatsApp · Email</span>
             <ChevronRight className="h-4 w-4 text-gray-400" />
-          </a>
+          </Link>
         </li>
       </ul>
 
@@ -366,8 +366,19 @@ export function DriverAccountView() {
 
       <button
         type="button"
+        onClick={() => {
+          resetDriverOnboardingForReplay();
+          router.push("/driver/guide");
+        }}
+        className="mt-6 w-full rounded-xl border border-slate-200 py-3 text-sm font-semibold text-black"
+      >
+        Replay driver guide
+      </button>
+
+      <button
+        type="button"
         onClick={logout}
-        className="mt-8 flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold text-rose-600 transition active:scale-95"
+        className="mt-3 flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold text-rose-600 transition active:scale-95"
       >
         <LogOut className="h-4 w-4" />
         Log Out

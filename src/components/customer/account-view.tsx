@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { CountrySelector } from "@/components/country/country-selector";
 import { useCountry } from "@/components/country/country-provider";
-import { BRAND, BRAND_WHATSAPP_HREF } from "@/lib/brand";
 import { AVAILABLE_IN_FLAGS } from "@/lib/countries";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
 import {
@@ -25,6 +24,7 @@ import {
 import { resetOnboardingForReplay } from "@/lib/onboarding";
 import { t } from "@/lib/i18n";
 import { RiderPhotoField } from "@/components/rider/rider-photo-field";
+import { RiderReferralCard } from "@/components/referral/rider-referral-card";
 
 export function AccountView() {
   const router = useRouter();
@@ -176,6 +176,8 @@ export function AccountView() {
         </div>
       ) : null}
 
+      {profile?.phone ? <RiderReferralCard /> : null}
+
       <ul className="mt-6 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
         <li>
           <button
@@ -207,10 +209,8 @@ export function AccountView() {
           label="Saved Places"
         />
         <li>
-          <a
-            href={BRAND_WHATSAPP_HREF}
-            target="_blank"
-            rel="noreferrer"
+          <Link
+            href="/help"
             className="flex items-center gap-3 border-t border-gray-100 px-4 py-4 transition active:scale-[0.99] active:bg-gray-50"
           >
             <span className="text-[#000000]">
@@ -219,9 +219,9 @@ export function AccountView() {
             <span className="flex-1 text-sm font-medium text-slate-900">
               Help &amp; Support
             </span>
-            <span className="text-xs text-slate-400">{BRAND.phone}</span>
+            <span className="text-xs text-slate-400">WhatsApp · Email</span>
             <ChevronRight className="h-4 w-4 text-gray-400" aria-hidden />
-          </a>
+          </Link>
         </li>
       </ul>
 

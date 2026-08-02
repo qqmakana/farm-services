@@ -60,8 +60,14 @@ test.describe("Public pages", () => {
 
   test("nav includes Partners link", async ({ page }) => {
     await page.goto("/partners");
-    await expect(page.getByRole("link", { name: "Partners" }).first()).toBeVisible({
-      timeout: 15_000,
-    });
+    const partners = page.getByRole("link", { name: "Partners" });
+    // Mobile: Partners lives in the hamburger drawer
+    if (!(await partners.first().isVisible({ timeout: 2_000 }).catch(() => false))) {
+      const menu = page.getByRole("button", { name: /Open menu|Close menu/i });
+      await expect(menu).toBeVisible({ timeout: 10_000 });
+      await menu.click();
+    }
+    await expect(partners.first()).toBeVisible({ timeout: 15_000 });
   });
 });
+

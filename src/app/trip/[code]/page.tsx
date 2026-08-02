@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { SiteNav } from "@/components/site-nav";
 import { LiveTrip } from "@/components/live-trip";
+import { TripChrome } from "@/components/trip/trip-chrome";
 import { getJobByReference, getRatingForJob } from "@/lib/actions";
 import { isSearchingStatus } from "@/lib/job-status";
 
@@ -20,37 +20,35 @@ export default async function TripPage({
     isSearchingStatus(job.status) && !job.dispatch_exhausted;
 
   return (
-    <>
-      <SiteNav />
-      <main className="ru-force-light min-h-dvh bg-white text-slate-900">
-        <div className="mx-auto max-w-lg px-4 py-8 pb-16">
-          <LiveTrip initialJob={job} initialRating={rating} />
-          {!stillSearching ? (
-            <div className="mt-6 flex flex-col gap-2">
-              <Link
-                href={
-                  job.service_type === "delivery"
-                    ? "/delivery"
-                    : job.service_type === "farm"
-                      ? "/farm"
-                      : job.service_type === "courier"
-                        ? "/courier"
-                        : "/ride"
-                }
-                className="ru-btn ru-btn-primary w-full text-center"
-              >
-                Request another trip
-              </Link>
-              <Link
-                href="/"
-                className="text-center text-sm font-semibold text-[#000000]"
-              >
-                Back to home
-              </Link>
-            </div>
-          ) : null}
-        </div>
+    <div className="ru-force-light min-h-dvh bg-white text-slate-900">
+      <TripChrome referenceCode={job.reference_code} />
+      <main className="mx-auto max-w-lg px-4 py-6 pb-16">
+        <LiveTrip initialJob={job} initialRating={rating} />
+        {!stillSearching ? (
+          <div className="mt-6 flex flex-col gap-2">
+            <Link
+              href={
+                job.service_type === "delivery"
+                  ? "/delivery"
+                  : job.service_type === "farm"
+                    ? "/farm"
+                    : job.service_type === "courier"
+                      ? "/courier"
+                      : "/ride"
+              }
+              className="ru-btn ru-btn-primary w-full text-center"
+            >
+              Request another trip
+            </Link>
+            <Link
+              href="/"
+              className="text-center text-sm font-semibold text-[#000000]"
+            >
+              Back to home
+            </Link>
+          </div>
+        ) : null}
       </main>
-    </>
+    </div>
   );
 }

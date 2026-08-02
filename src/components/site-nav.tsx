@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Menu, X, User, Bell } from "lucide-react";
+import { HelpCircle, Menu, X, User, Bell } from "lucide-react";
 import { ShareAppButton } from "@/components/share-app-button";
 import { ThemeToggle } from "@/components/theme-provider";
 import { BRAND } from "@/lib/brand";
@@ -19,7 +19,7 @@ const links = [
   { href: "/countries", label: "Global", key: "countries" },
   { href: "/pricing", label: "Pricing", key: "pricing" },
   { href: "/shop", label: "Sell", key: "shop" },
-  { href: "/help", label: "Help", key: "help" },
+  { href: "/help", label: "Support", key: "help" },
   { href: "/dispatch", label: "Ops", key: "dispatch" },
   { href: "/admin/dashboard", label: "Admin", key: "admin" },
 ] as const;
@@ -114,6 +114,13 @@ export function SiteNav({
 
           <div className="flex items-center gap-1.5">
             <ThemeToggle />
+            <Link
+              href="/help"
+              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#f0f0f0]"
+              aria-label="Help"
+            >
+              <HelpCircle className="h-5 w-5 text-[var(--ru-muted)]" />
+            </Link>
             <Link
               href="/login"
               className="hidden h-10 w-10 items-center justify-center rounded-full hover:bg-[#f0f0f0] sm:flex"

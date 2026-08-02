@@ -338,7 +338,8 @@ export function searchPlaces(
   const pool = PLACES.filter((p) => (p.country ?? "ZA") === countryCode);
   const q = query.trim().toLowerCase();
   if (!q) {
-    const hubs = COUNTRY_HUBS[countryCode] ?? COUNTRY_HUBS.ZA;
+    // Only show hubs for countries that have seeded places — never borrow ZA.
+    const hubs = COUNTRY_HUBS[countryCode] ?? [];
     const listed = hubs
       .map((name) =>
         pool.find((p) => p.kind === "village" && p.village === name),
@@ -376,10 +377,10 @@ export function findPlaceByLabel(
   const q = label.trim().toLowerCase();
   if (!q) return null;
   const pool = PLACES.filter((p) => (p.country ?? "ZA") === countryCode);
+  // Stay in-country — free-text landmarks remain valid without a seed match.
   return (
     pool.find((p) => p.label.toLowerCase() === q) ??
     pool.find((p) => p.village.toLowerCase() === q) ??
-    PLACES.find((p) => p.label.toLowerCase() === q) ??
     null
   );
 }

@@ -44,6 +44,35 @@ export function buildCustomerConfirmPush(job: Job, driver: Driver) {
   };
 }
 
+export function buildCustomerTripStartedPush(job: Job, driver: Driver) {
+  const first = driver.full_name.split(" ")[0] || "Your driver";
+  return {
+    title: "🚗 Driver is heading to you",
+    body: `${first} started the trip. Look for them at: ${job.pickup_landmark}`,
+    data: {
+      booking_id: job.id,
+      jobId: job.id,
+      reference: job.reference_code,
+      url: `/trip/${job.reference_code}`,
+      type: "driver_arrived",
+    },
+  };
+}
+
+export function buildCustomerTripCompletedPush(job: Job) {
+  return {
+    title: "Trip completed",
+    body: `Thanks for riding with Village Ride. Ref ${job.reference_code}`,
+    data: {
+      booking_id: job.id,
+      jobId: job.id,
+      reference: job.reference_code,
+      url: `/trip/${job.reference_code}`,
+      type: "trip_completed",
+    },
+  };
+}
+
 async function markDispatchExhausted(jobId: string, notes: string | null) {
   const admin = createAdminClient();
   await admin
