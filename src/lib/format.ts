@@ -66,17 +66,8 @@ export function formatWhen(
   });
 }
 
-export function serviceBadgeClass(type: ServiceType) {
-  switch (type) {
-    case "ride":
-      return "bg-sky-100 text-sky-900";
-    case "delivery":
-      return "bg-amber-100 text-amber-950";
-    case "farm":
-      return "bg-emerald-100 text-emerald-950";
-    case "courier":
-      return "bg-violet-100 text-violet-950";
-  }
+export function serviceBadgeClass(_type: ServiceType) {
+  return "bg-[#eeeeee] text-black";
 }
 
 export function statusBadgeClass(status: JobStatus) {

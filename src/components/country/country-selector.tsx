@@ -35,14 +35,14 @@ export function CountrySelector({
         {t("country_label", { locale, country: countryCode })}
         {!compact ? (
           <input
-            className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-2.5 text-sm outline-none focus:border-[#000000]"
+            className="ru-soft-field mt-1 !min-h-11 text-sm"
             placeholder={`Search ${GLOBAL_COUNTRY_COUNT} countries…`}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
         ) : null}
         <select
-          className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 text-sm outline-none focus:border-[#000000]"
+          className="ru-soft-field mt-1 text-sm"
           value={countryCode}
           onChange={(e) => setCountry(e.target.value as CountryCode)}
         >
@@ -58,7 +58,7 @@ export function CountrySelector({
         <label className="block text-sm font-medium text-slate-700">
           {t("language_label", { locale, country: countryCode })}
           <select
-            className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 text-sm outline-none focus:border-[#000000]"
+            className="ru-soft-field mt-1 text-sm"
             value={locale}
             onChange={(e) =>
               setLocale(e.target.value as AppLocale | "en")
@@ -129,16 +129,16 @@ export function CountryWelcomeModal() {
         aria-label="Close"
         onClick={dismiss}
       />
-      <div className="relative flex max-h-[85vh] w-full max-w-md flex-col rounded-2xl bg-white p-5 shadow-xl">
+      <div className="ru-card relative flex max-h-[85vh] w-full max-w-md flex-col p-5 !shadow-[0_16px_48px_rgba(0,0,0,0.18)]">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p
               id="country-welcome-title"
-              className="text-lg font-bold text-[#000000]"
+              className="font-[family-name:var(--font-display)] text-xl font-bold tracking-tight text-[var(--ru-ink)]"
             >
               {t("select_country", { locale, country: countryCode })}
             </p>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-[var(--ru-muted)]">
               {t("welcome_country", { locale, country: countryCode })}{" "}
               ({GLOBAL_COUNTRY_COUNT} countries)
             </p>
@@ -146,14 +146,14 @@ export function CountryWelcomeModal() {
           <button
             type="button"
             onClick={dismiss}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-2xl leading-none text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-2xl leading-none text-[var(--ru-muted)] hover:bg-[var(--ru-elevated)] hover:text-[var(--ru-ink)]"
             aria-label="Close without changing"
           >
             ×
           </button>
         </div>
         <input
-          className="mt-3 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-2.5 text-sm outline-none focus:border-[#000000]"
+          className="ru-soft-field mt-3 text-sm"
           placeholder="Search country…"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
@@ -164,17 +164,17 @@ export function CountryWelcomeModal() {
               key={c.code}
               type="button"
               onClick={() => setCountry(c.code)}
-              className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm font-semibold transition active:scale-[0.99] ${
+              className={`flex min-h-12 items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition active:scale-[0.99] ${
                 countryCode === c.code
-                  ? "border-[#000000] bg-[#f5f5f5] text-[#000000]"
-                  : "border-gray-200 bg-white text-slate-800"
+                  ? "border-[var(--ru-ink)] bg-[var(--ru-elevated)] text-[var(--ru-ink)]"
+                  : "border-[var(--ru-line)] bg-white text-[var(--ru-ink)]"
               }`}
             >
               <span className="text-xl" aria-hidden>
                 {c.flag}
               </span>
               <span className="flex-1">{c.name}</span>
-              <span className="text-xs font-medium text-slate-500">
+              <span className="text-xs font-medium text-[var(--ru-muted)]">
                 {c.currencySymbol}
               </span>
             </button>
@@ -183,14 +183,14 @@ export function CountryWelcomeModal() {
         <button
           type="button"
           onClick={() => setCountry(countryCode)}
-          className="mt-4 w-full rounded-xl bg-[#000000] py-3 text-sm font-bold text-white transition active:scale-95"
+          className="ru-btn ru-btn-primary ru-btn-block mt-4"
         >
           Continue
         </button>
         <button
           type="button"
           onClick={dismiss}
-          className="mt-2 w-full py-2.5 text-sm font-semibold text-slate-500 hover:text-slate-800"
+          className="ru-btn ru-btn-ghost ru-btn-block mt-1"
         >
           Not now
         </button>

@@ -211,7 +211,7 @@ export function LiveTrip({
       job.status === "completed");
 
   return (
-    <div className="ru-page-enter relative space-y-4 text-slate-900">
+    <div className="ru-page-enter relative space-y-4 text-black">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold tracking-[0.16em] text-[var(--ru-muted)] uppercase">
@@ -305,12 +305,12 @@ export function LiveTrip({
       </div>
 
       {searching ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-[#000000]/20 bg-[#f5f5f5] px-4 py-8 text-center">
-          <span className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-[#000000] border-t-transparent" />
-          <p className="text-base font-bold text-[#000000]">
+        <div className="ru-card flex flex-col items-center gap-3 px-4 py-8 text-center">
+          <span className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-black border-t-transparent" />
+          <p className="text-base font-bold text-black">
             Finding your driver...
           </p>
-          <p className="max-w-sm text-sm text-slate-600">
+          <p className="max-w-sm text-sm text-[var(--ru-muted)]">
             Offering to the best-matched online driver
             {job.dispatch_attempts
               ? ` (attempt ${job.dispatch_attempts}/3)`
@@ -320,7 +320,7 @@ export function LiveTrip({
           <div className="mt-1 flex flex-wrap justify-center gap-2">
             <a
               href="/"
-              className="rounded-xl border border-[#000000]/30 bg-white px-4 py-2.5 text-sm font-semibold text-[#000000]"
+              className="ru-btn ru-btn-secondary !min-h-11 !px-4 !text-sm"
             >
               Back to home
             </a>
@@ -330,7 +330,7 @@ export function LiveTrip({
               )}`}
               target="_blank"
               rel="noreferrer"
-              className="rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-bold text-white"
+              className="ru-btn !min-h-11 !bg-[#25D366] !px-4 !text-sm text-white hover:!bg-[#1ebe57]"
             >
               WhatsApp dispatch
             </a>
@@ -339,18 +339,18 @@ export function LiveTrip({
       ) : null}
 
       {noDrivers ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-6 text-center">
-          <p className="text-base font-bold text-amber-950">
+        <div className="ru-card border-[var(--ru-error)]/30 bg-[color-mix(in_srgb,var(--ru-error)_8%,white)] px-4 py-6 text-center">
+          <p className="text-base font-bold text-black">
             No drivers available right now
           </p>
-          <p className="mt-2 text-sm text-amber-900/80">
+          <p className="mt-2 text-sm text-[var(--ru-muted)]">
             Three drivers were offered and none accepted. Book again, schedule
             for later, or WhatsApp dispatch on {BRAND.phone}.
           </p>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
             <a
               href={bookAgainHref}
-              className="inline-flex justify-center rounded-xl bg-[#000000] px-4 py-2.5 text-sm font-bold text-white"
+              className="ru-btn ru-btn-primary !min-h-11 !px-4 !text-sm"
             >
               Book again
             </a>
@@ -360,13 +360,13 @@ export function LiveTrip({
               )}`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex justify-center rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-bold text-white"
+              className="ru-btn !min-h-11 !bg-[#25D366] !px-4 !text-sm text-white hover:!bg-[#1ebe57]"
             >
               WhatsApp dispatch
             </a>
             <a
               href="/"
-              className="inline-flex justify-center rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-sm font-semibold text-amber-950"
+              className="ru-btn ru-btn-secondary !min-h-11 !px-4 !text-sm"
             >
               Home
             </a>
@@ -414,7 +414,7 @@ export function LiveTrip({
                   href={`https://wa.me/${toWhatsAppNumber(job.drivers.phone)}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="ru-btn ru-btn-secondary !min-h-10 !px-3 !text-xs"
+                  className="ru-btn !min-h-10 !bg-[#25D366] !px-3 !text-xs text-white hover:!bg-[#1ebe57]"
                 >
                   Chat driver
                 </a>
@@ -424,11 +424,9 @@ export function LiveTrip({
         </div>
       ) : null}
 
-      <section className="rounded-xl border border-slate-200 bg-[#fafafa] p-4">
-        <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-          Need help?
-        </p>
-        <p className="mt-1 text-sm text-slate-600">
+      <section className="ru-card p-4">
+        <p className="ru-section-label">Need help?</p>
+        <p className="mt-1 text-sm text-[var(--ru-muted)]">
           Issues with this trip? Contact support on WhatsApp or email.
         </p>
         <ContactSupportActions
@@ -448,7 +446,7 @@ export function LiveTrip({
           )}
           target="_blank"
           rel="noreferrer"
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3.5 text-sm font-bold text-white shadow-sm hover:bg-[#1ebe57]"
+          className="ru-btn ru-btn-block !bg-[#25D366] text-white hover:!bg-[#1ebe57]"
         >
           <span aria-hidden>WhatsApp</span>
           Share trip details via WhatsApp
@@ -462,7 +460,7 @@ export function LiveTrip({
             className="h-64 w-full border-0"
             src={osmEmbedUrl(mapLat, mapLng)}
           />
-          <p className="px-3 py-2 text-xs text-slate-500">
+          <p className="px-3 py-2 text-xs text-[var(--ru-muted)]">
             {job.driver_lat != null
               ? "Live driver location (updates every few seconds)"
               : "Pickup area — driver GPS appears when assigned"}
@@ -474,7 +472,7 @@ export function LiveTrip({
         {isActiveTrip ? (
           <button
             type="button"
-            className="ru-btn bg-rose-600 text-white hover:bg-rose-500"
+            className="ru-btn bg-[var(--ru-error)] text-white hover:opacity-90"
             disabled={pending}
             onClick={runSos}
           >
@@ -488,13 +486,13 @@ export function LiveTrip({
           )}
           target="_blank"
           rel="noreferrer"
-          className="ru-btn bg-[#25D366] text-white hover:bg-[#1ebe57]"
+          className="ru-btn !bg-[#25D366] text-white hover:!bg-[#1ebe57]"
         >
           WhatsApp trip
         </a>
         <button
           type="button"
-          className="ru-btn border border-slate-200 bg-white text-slate-800"
+          className="ru-btn ru-btn-secondary"
           onClick={() => {
             const url = `${window.location.origin}/trip/${job.reference_code}`;
             void navigator.clipboard?.writeText(url);
@@ -507,16 +505,16 @@ export function LiveTrip({
 
       <div className="ru-card space-y-3 p-5 text-sm">
         <div className="flex justify-between gap-3">
-          <span className="text-slate-500">Fare</span>
-          <span className="font-semibold">
+          <span className="text-[var(--ru-muted)]">Fare</span>
+          <span className="font-semibold text-black">
             {formatMoney(Number(job.fee_amount))}
-            <span className="ml-2 text-xs font-medium text-emerald-700">
+            <span className="ru-chip ml-2 !normal-case">
               {paymentLabel}
             </span>
           </span>
         </div>
         {showCashReminder ? (
-          <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-950">
+          <p className="rounded-xl bg-[var(--ru-elevated)] px-3 py-2 text-xs font-medium text-black">
             Pay the driver {formatMoney(Number(job.fee_amount))} in cash
             {job.status === "completed"
               ? " now if you haven't already."
@@ -524,30 +522,26 @@ export function LiveTrip({
           </p>
         ) : null}
         <div>
-          <p className="text-xs font-semibold text-slate-500 uppercase">
-            Pickup
-          </p>
-          <p className="mt-1">{job.pickup_landmark}</p>
+          <p className="ru-section-label">Pickup</p>
+          <p className="mt-1 text-black">{job.pickup_landmark}</p>
         </div>
         <div>
-          <p className="text-xs font-semibold text-slate-500 uppercase">
-            Dropoff
-          </p>
-          <p className="mt-1">{job.dropoff_landmark}</p>
+          <p className="ru-section-label">Dropoff</p>
+          <p className="mt-1 text-black">{job.dropoff_landmark}</p>
         </div>
         {job.service_type === "courier" || job.service_type === "delivery" ? (
-          <div className="rounded-xl bg-violet-50 px-3 py-3">
-            <p className="text-xs font-semibold text-violet-800 uppercase">
+          <div className="rounded-xl bg-[var(--ru-elevated)] px-3 py-3">
+            <p className="ru-section-label">
               {job.service_type === "courier" ? "Package" : "Goods"}
             </p>
-            <p className="mt-1 font-medium text-slate-900">
+            <p className="mt-1 font-medium text-black">
               {String(
                 (job.details as Record<string, unknown>).item_description ??
                   "—",
               )}
             </p>
             {job.service_type === "courier" ? (
-              <p className="mt-1 text-xs text-slate-600">
+              <p className="mt-1 text-xs text-[var(--ru-muted)]">
                 Weight:{" "}
                 {(() => {
                   const w = (job.details as Record<string, unknown>)
@@ -565,12 +559,10 @@ export function LiveTrip({
           </div>
         ) : null}
         {job.drivers && (
-          <div className="rounded-xl bg-slate-50 px-3 py-3">
-            <p className="text-xs font-semibold text-slate-500 uppercase">
-              Your driver
-            </p>
+          <div className="rounded-xl bg-[var(--ru-elevated)] px-3 py-3">
+            <p className="ru-section-label">Your driver</p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
-              <p className="font-semibold">
+              <p className="font-semibold text-black">
                 {job.drivers.full_name} · ★{job.drivers.rating_avg.toFixed(1)} (
                 {job.drivers.rating_count})
               </p>
@@ -593,8 +585,8 @@ export function LiveTrip({
 
       {job.status === "completed" && !rating && (
         <div className="ru-card space-y-3 p-5">
-          <h2 className="font-semibold">Rate your driver</h2>
-          <p className="text-xs text-slate-500">
+          <h2 className="font-semibold text-black">Rate your driver</h2>
+          <p className="text-xs text-[var(--ru-muted)]">
             Honest ratings keep Village Ride safe for everyone.
           </p>
           <div className="flex gap-2">
@@ -605,8 +597,8 @@ export function LiveTrip({
                 onClick={() => setStars(n)}
                 className={`h-10 w-10 rounded-full text-sm font-bold ${
                   stars >= n
-                    ? "bg-amber-400 text-white"
-                    : "bg-slate-200 text-slate-600"
+                    ? "bg-black text-white"
+                    : "bg-[var(--ru-elevated)] text-[var(--ru-muted)]"
                 }`}
               >
                 {n}
@@ -614,7 +606,7 @@ export function LiveTrip({
             ))}
           </div>
           <input
-            className="ru-input"
+            className="ru-soft-field"
             placeholder="Optional comment"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
@@ -623,7 +615,7 @@ export function LiveTrip({
             type="button"
             disabled={pending}
             onClick={submitRating}
-            className="ru-btn ru-btn-primary w-full"
+            className="ru-btn ru-btn-primary ru-btn-block"
           >
             Submit rating
           </button>
@@ -631,20 +623,20 @@ export function LiveTrip({
       )}
 
       {rating && (
-        <div className="space-y-3 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+        <div className="ru-card space-y-3 px-4 py-3 text-sm text-black">
           <p>
             You rated ★{rating.stars}
             {rating.comment ? ` — “${rating.comment}”` : ""}
           </p>
           <a
             href={bookAgainHref}
-            className="inline-flex rounded-xl bg-[#000000] px-4 py-2.5 text-sm font-bold text-white"
+            className="ru-btn ru-btn-primary !min-h-11 !px-4 !text-sm"
           >
             Request another
           </a>
         </div>
       )}
-      {msg && <p className="text-sm text-slate-600">{msg}</p>}
+      {msg && <p className="text-sm text-[var(--ru-muted)]">{msg}</p>}
     </div>
   );
 }

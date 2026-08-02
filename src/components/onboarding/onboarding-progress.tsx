@@ -27,7 +27,7 @@ export function OnboardingProgress({
             onClick={() => onSelect(i)}
             className={`h-2 rounded-full transition-all duration-300 ${
               active
-                ? "w-7 bg-[var(--ru-brand)]"
+                ? "w-7 bg-[var(--ru-accent)]"
                 : "w-2 bg-[#d1d1d1] hover:bg-[#b0b0b0]"
             }`}
           />

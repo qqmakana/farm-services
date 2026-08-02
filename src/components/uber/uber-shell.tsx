@@ -44,7 +44,7 @@ export function UberShell({
 
   return (
     <div
-      className="ru-force-light fixed inset-x-0 top-0 z-[45] flex flex-col bg-[#F9FAFB] font-[family-name:var(--font-sans)] text-slate-900"
+      className="ru-force-light fixed inset-x-0 top-0 z-[45] flex flex-col bg-[var(--ru-canvas)] font-[family-name:var(--font-sans)] text-[var(--ru-ink)]"
       style={{ bottom: bottomInset }}
     >
       {/* Top ~55%: interactive map */}
@@ -113,8 +113,8 @@ export function UberShell({
       </div>
 
       {/* Bottom ~45%: floating sheet */}
-      <div className="relative z-[500] -mt-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-t-3xl bg-white text-slate-900 shadow-[0_-4px_20px_rgba(0,0,0,0.12)]">
-        <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-gray-200" />
+      <div className="ru-sheet relative z-[500] -mt-4 flex min-h-0 flex-1 flex-col overflow-hidden text-[var(--ru-ink)]">
+        <div className="ru-sheet-handle shrink-0" />
         <div
           className={`min-h-0 flex-1 overflow-y-auto px-4 pt-3 ${
             showTabBar

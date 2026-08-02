@@ -9,28 +9,25 @@ export function DriverGate({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="flex min-h-dvh items-center justify-center pb-24">
-        <p className="text-sm text-slate-500">Loading driver app…</p>
+        <p className="text-sm text-[var(--ru-muted)]">Loading driver app…</p>
       </div>
     );
   }
 
   if (!driver) {
     return (
-      <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-5 pb-24">
-        <h1 className="text-2xl font-bold text-slate-900">Driver sign-in</h1>
-        <p className="mt-2 text-sm text-slate-600">
+      <div className="ru-page flex flex-col justify-center">
+        <h1 className="ru-page-title">Driver sign-in</h1>
+        <p className="ru-page-sub">
           Select your approved driver profile or sign in with a linked driver
           account to use the app.
         </p>
-        <Link
-          href="/driver"
-          className="mt-6 rounded-xl bg-[#000000] py-3.5 text-center text-sm font-bold text-white transition active:scale-95"
-        >
+        <Link href="/driver" className="ru-btn ru-btn-primary ru-btn-block mt-6">
           Choose driver / Apply
         </Link>
         <Link
           href="/login?next=/driver/home"
-          className="mt-3 text-center text-sm font-semibold text-[#000000] transition active:scale-95"
+          className="ru-btn ru-btn-ghost ru-btn-block mt-1"
         >
           Sign in with email
         </Link>

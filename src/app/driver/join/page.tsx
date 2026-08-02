@@ -26,7 +26,7 @@ const SERVICES = [
   {
     Icon: Package,
     title: "Courier",
-    blurb: "Person-to-person packages — keys, gifts, documents, Marketplace items",
+    blurb: "Person-to-person packages — keys, gifts, documents",
   },
 ] as const;
 
@@ -34,67 +34,52 @@ export default function DriverJoinPage() {
   return (
     <>
       <SiteNav active="driver" />
-      {/* Always light — form text must stay dark & readable regardless of app theme */}
-      <main className="ru-force-light min-h-dvh bg-white text-slate-900">
+      <main className="ru-force-light min-h-dvh bg-[var(--ru-canvas)] text-[var(--ru-ink)]">
         <div className="mx-auto max-w-lg px-4 py-10 pb-24">
-          <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-            Drive with {BRAND.appName}
-          </p>
-          <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-slate-900">
+          <p className="ru-section-label">Drive with {BRAND.appName}</p>
+          <h1 className="ru-page-title mt-2 !text-[1.85rem]">
             Earn with your car, bakkie, or truck
           </h1>
-          <p className="mt-3 text-base leading-relaxed text-slate-700">
-            Keep <strong className="font-bold text-slate-900">85%</strong> of
-            every job. Village Ride needs drivers for{" "}
-            <strong className="font-bold text-slate-900">all four services</strong>{" "}
-            — not rides only.
+          <p className="ru-page-sub">
+            Keep <strong className="text-[var(--ru-ink)]">85%</strong> of every
+            job. Drivers for all four services — not rides only.
           </p>
 
-          <ul className="mt-5 space-y-3">
+          <div className="mt-6 grid grid-cols-2 gap-2">
             {SERVICES.map(({ Icon, title, blurb }) => (
-              <li
-                key={title}
-                className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5"
-              >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#000000] text-white">
+              <div key={title} className="ru-card flex flex-col items-start p-4">
+                <span className="ru-icon-circle">
                   <Icon className="h-5 w-5" aria-hidden />
                 </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-bold text-slate-900">
-                    {title}
-                  </span>
-                  <span className="mt-0.5 block text-xs leading-snug text-slate-600">
-                    {blurb}
-                  </span>
-                </span>
-              </li>
+                <p className="mt-3 text-sm font-bold text-[var(--ru-ink)]">
+                  {title}
+                </p>
+                <p className="mt-1 text-xs leading-snug text-[var(--ru-muted)]">
+                  {blurb}
+                </p>
+              </div>
             ))}
-          </ul>
+          </div>
 
-          <ul className="mt-5 space-y-2 text-sm font-medium text-slate-700">
-            <li>✓ Photo of you + vehicle (plate visible) on every job</li>
-            <li>
-              ✓ Apply once — get offered rides, deliveries, farm &amp; courier
-            </li>
+          <ul className="ru-card mt-5 space-y-2 p-4 text-sm font-medium text-[var(--ru-ink)]">
+            <li>✓ 85% earnings · cash to you</li>
             <li>✓ Flexible hours · go online when you want</li>
+            <li>✓ Photo of you + vehicle on every job</li>
           </ul>
 
-          <div className="mt-6">
+          <div className="ru-card mt-6 p-5">
             <DriverApplyForm compactTitle="Apply now — photos required" />
           </div>
 
-          <p className="mt-4 text-center text-xs text-slate-500">
+          <p className="mt-4 text-center text-xs text-[var(--ru-muted)]">
             Already applied?{" "}
-            <Link
-              href="/driver"
-              className="font-semibold text-[#000000] underline"
-            >
+            <Link href="/driver" className="font-semibold text-black underline">
               Open driver app
             </Link>
           </p>
           <a
             href={WhatsAppLinks.chatUs()}
-            className="mt-4 flex w-full items-center justify-center rounded-xl bg-[#25D366] px-4 py-3 text-sm font-bold text-white"
+            className="ru-btn ru-btn-block mt-4 !bg-[#25D366] !text-white hover:!bg-[#1ebe57]"
           >
             Chat with us on WhatsApp
           </a>

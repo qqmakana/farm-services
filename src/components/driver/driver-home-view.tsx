@@ -219,8 +219,8 @@ export function DriverHomeView() {
         ) : null}
       </div>
 
-      <div className="z-[500] shrink-0 rounded-t-3xl border-t border-[var(--ru-line)] bg-white px-4 pb-4 pt-3 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-gray-200" />
+      <div className="ru-sheet z-[500] shrink-0 border-t border-[var(--ru-line)] px-4 pb-4 pt-3">
+        <div className="ru-sheet-handle mb-3" />
         {driver ? (
           <div className="mb-3 space-y-2">
             <div className="flex items-center justify-between gap-3 text-xs text-[var(--ru-muted)]">
@@ -249,7 +249,7 @@ export function DriverHomeView() {
           </div>
         ) : null}
         {error ? (
-          <p className="mb-2 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-800">
+          <p className="mb-2 rounded-2xl bg-[#fdecea] px-3 py-2 text-sm text-[#b01000]">
             {error}
           </p>
         ) : null}

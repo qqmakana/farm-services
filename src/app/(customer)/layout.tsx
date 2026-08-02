@@ -6,7 +6,7 @@ export default function CustomerLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="ru-force-light min-h-dvh bg-[#F9FAFB] font-[system-ui,Segoe_UI,sans-serif] text-slate-900">
+    <div className="ru-force-light min-h-dvh bg-[var(--ru-canvas)] font-[family-name:var(--font-sans)] text-[var(--ru-ink)]">
       {children}
       <CustomerTabBar />
     </div>

@@ -248,7 +248,7 @@ export function InstallShareBar() {
           type="button"
           onClick={install}
           disabled={installing}
-          className="rounded-full bg-black px-4 py-2.5 text-sm font-bold text-white shadow-lg disabled:opacity-70"
+          className="ru-btn ru-btn-primary !min-h-10 shadow-lg !text-sm"
         >
           Install app
         </button>

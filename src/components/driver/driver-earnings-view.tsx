@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { claimWeeklyTripBonus, listDriverJobs } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
+import { PageShell } from "@/components/ui/page-shell";
 import { BRAND, BRAND_TEL_HREF, BRAND_WHATSAPP_HREF } from "@/lib/brand";
 import { formatMoney } from "@/lib/format";
 import type { JobWithDriver } from "@/lib/types";
@@ -140,31 +141,26 @@ export function DriverEarningsView() {
   }
 
   return (
-    <main className="mx-auto min-h-dvh max-w-lg bg-white px-5 pb-24 pt-8 text-slate-900">
-      <h1 className="text-2xl font-bold text-slate-900">Earnings</h1>
-      <p className="mt-1 text-sm text-slate-600">
-        Customers pay you cash. You keep ~85%; ~15% comes from this prepaid
-        wallet.
-      </p>
-
-      <section className="mt-6 rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-        <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-          Commission wallet
-        </p>
+    <PageShell
+      title="Earnings"
+      subtitle="Customers pay you cash. You keep ~85%; ~15% comes from this prepaid wallet."
+    >
+      <section className="ru-card p-5">
+        <p className="ru-section-label">Commission wallet</p>
         <p
-          className={`mt-1 text-4xl font-bold ${
-            wallet < 0 ? "text-rose-600" : "text-[#000000]"
+          className={`mt-1 font-[family-name:var(--font-display)] text-4xl font-bold ${
+            wallet < 0 ? "text-[var(--ru-error)]" : "text-black"
           }`}
         >
           {formatMoney(wallet)}
         </p>
         {owed > 0 || wallet < 0 ? (
-          <p className="mt-2 text-sm font-semibold text-orange-700">
+          <p className="mt-2 text-sm font-semibold text-black">
             Top up needed: {formatMoney(owed || Math.abs(Math.min(0, wallet)))}
             . Low wallet can pause new job offers.
           </p>
         ) : (
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-[var(--ru-muted)]">
             Wallet healthy — you can accept rides, deliveries &amp; farm jobs.
           </p>
         )}
@@ -172,18 +168,18 @@ export function DriverEarningsView() {
         <button
           type="button"
           onClick={() => setShowTopUp((v) => !v)}
-          className="mt-4 w-full rounded-xl bg-[#000000] py-3.5 text-sm font-bold text-white transition active:scale-95"
+          className="ru-btn ru-btn-primary ru-btn-block mt-4"
         >
           Top up wallet
         </button>
 
         {showTopUp ? (
-          <div className="mt-3 space-y-3 rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm text-slate-700">
-            <p className="font-semibold text-slate-900">How to top up</p>
-            <ol className="list-inside list-decimal space-y-1">
+          <div className="mt-3 space-y-3 rounded-[var(--ru-radius)] border border-[var(--ru-line)] bg-[var(--ru-elevated)] px-4 py-3 text-sm text-[var(--ru-ink)]">
+            <p className="font-semibold text-black">How to top up</p>
+            <ol className="list-inside list-decimal space-y-1 text-[var(--ru-muted)]">
               <li>
                 Send eWallet / Send-iMali / EFT to{" "}
-                <strong>{BRAND.phone}</strong>
+                <strong className="text-black">{BRAND.phone}</strong>
               </li>
               <li>Use your name + phone as the payment reference</li>
               <li>WhatsApp proof of payment — ops will credit your wallet</li>
@@ -195,13 +191,13 @@ export function DriverEarningsView() {
                 )}`}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-xl bg-[#25D366] px-4 py-2.5 text-xs font-bold text-white"
+                className="ru-btn !min-h-10 !bg-[#25D366] !px-4 !text-xs !text-white"
               >
                 WhatsApp proof
               </a>
               <a
                 href={BRAND_TEL_HREF}
-                className="rounded-xl border border-[#000000]/30 bg-white px-4 py-2.5 text-xs font-semibold text-[#000000]"
+                className="ru-btn ru-btn-secondary !min-h-10 !px-4 !text-xs"
               >
                 Call ops
               </a>
@@ -210,37 +206,40 @@ export function DriverEarningsView() {
         ) : null}
       </section>
 
-      <section className="mt-4 rounded-xl border border-amber-100 bg-amber-50/70 p-4">
-        <p className="text-xs font-semibold tracking-wide text-amber-900 uppercase">
-          Weekly incentive
-        </p>
-        <p className="mt-1 text-sm font-bold text-slate-900">
+      <section className="ru-card mt-4 p-4">
+        <p className="ru-section-label">Weekly incentive</p>
+        <p className="mt-1 text-sm font-bold text-black">
           Complete {target} trips this week → get R100 bonus
         </p>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-amber-100">
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--ru-elevated)]">
           <div
             className="h-full rounded-full bg-black transition-all"
             style={{ width: `${bonusProgress * 100}%` }}
           />
         </div>
-        <p className="mt-2 text-xs text-slate-600">
+        <p className="mt-2 text-xs text-[var(--ru-muted)]">
           {weekTrips}/{target} trips · {Math.max(0, target - weekTrips)} to go
         </p>
         <button
           type="button"
           disabled={pending || weekTrips < target}
           onClick={tryClaimBonus}
-          className="mt-3 w-full rounded-xl bg-black py-2.5 text-xs font-bold text-white disabled:opacity-40"
+          className="ru-btn ru-btn-primary ru-btn-block mt-3 !min-h-10 !text-xs"
         >
           {weekTrips < target ? "Keep going" : pending ? "Claiming…" : "Claim R100"}
         </button>
         {bonusMsg ? (
-          <p className="mt-2 text-xs font-medium text-slate-700">{bonusMsg}</p>
+          <p className="mt-2 text-xs font-medium text-[var(--ru-muted)]">
+            {bonusMsg}
+          </p>
         ) : null}
       </section>
 
-      <section className="mt-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-        <div className="flex gap-1 rounded-lg bg-gray-100 p-1">
+      <section className="ru-card mt-4 p-4">
+        <div
+          className="ru-segment"
+          style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}
+        >
           {(
             [
               ["today", "Today"],
@@ -252,43 +251,39 @@ export function DriverEarningsView() {
               key={key}
               type="button"
               onClick={() => setPeriod(key)}
-              className={`flex-1 rounded-md py-2 text-xs font-semibold transition ${
-                period === key
-                  ? "bg-white text-black shadow-sm"
-                  : "text-slate-500"
-              }`}
+              aria-selected={period === key}
+              className="!text-xs"
             >
               {label}
             </button>
           ))}
         </div>
-        <p className="mt-3 text-sm font-semibold text-slate-900">
+        <p className="mt-3 text-sm font-semibold text-black">
           You keep ~{formatMoney(periodStats.keep)} · Gross{" "}
           {formatMoney(periodStats.gross)} · Trips {periodStats.trips} · Avg{" "}
           {formatMoney(periodStats.avg)}/trip
         </p>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-[var(--ru-muted)]">
           Platform commission ~{formatMoney(periodStats.commission)} (from
           wallet)
         </p>
       </section>
 
       <section className="mt-6">
-        <h2 className="text-base font-bold text-slate-900">Recent activity</h2>
+        <h2 className="font-[family-name:var(--font-display)] text-base font-bold text-black">
+          Recent activity
+        </h2>
         {transactions.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">
+          <p className="mt-3 text-sm text-[var(--ru-muted)]">
             Complete trips to see cash received and ~15% wallet deductions here.
           </p>
         ) : (
-          <ul className="mt-3 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+          <ul className="ru-list mt-3">
             {transactions.map((tx) => (
-              <li
-                key={tx.id}
-                className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
-              >
-                <div>
-                  <p className="font-medium text-slate-900">{tx.label}</p>
-                  <p className="text-xs text-slate-400">
+              <li key={tx.id} className="ru-row justify-between gap-3 !min-h-0 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-black">{tx.label}</p>
+                  <p className="text-xs text-[var(--ru-muted)]">
                     {new Date(tx.at).toLocaleString("en-ZA", {
                       day: "numeric",
                       month: "short",
@@ -300,8 +295,8 @@ export function DriverEarningsView() {
                 <span
                   className={
                     tx.amount >= 0
-                      ? "font-bold text-emerald-700"
-                      : "font-bold text-orange-700"
+                      ? "shrink-0 text-sm font-bold text-black"
+                      : "shrink-0 text-sm font-bold text-[var(--ru-muted)]"
                   }
                 >
                   {tx.amount >= 0 ? "+" : ""}
@@ -312,6 +307,6 @@ export function DriverEarningsView() {
           </ul>
         )}
       </section>
-    </main>
+    </PageShell>
   );
 }

@@ -16,7 +16,7 @@ export function RiderSafetyTips() {
   const [open, setOpen] = useState(true);
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-[#fafafa]">
+    <section className="ru-card">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -27,14 +27,17 @@ export function RiderSafetyTips() {
           Rider safety tips
         </span>
         <ChevronDown
-          className={`h-4 w-4 text-slate-500 transition ${open ? "rotate-180" : ""}`}
+          className={`h-4 w-4 text-[var(--ru-muted)] transition ${open ? "rotate-180" : ""}`}
           aria-hidden
         />
       </button>
       {open ? (
-        <ul className="space-y-2 border-t border-slate-200 px-4 py-3">
+        <ul className="space-y-2 border-t border-[var(--ru-line)] px-4 py-3">
           {TIPS.map((tip) => (
-            <li key={tip} className="flex gap-2 text-xs leading-relaxed text-slate-700">
+            <li
+              key={tip}
+              className="flex gap-2 text-xs leading-relaxed text-[var(--ru-muted)]"
+            >
               <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
               {tip}
             </li>

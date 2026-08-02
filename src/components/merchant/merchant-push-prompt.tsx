@@ -13,7 +13,7 @@ export function MerchantPushPrompt() {
   if (!push.showPrompt) {
     if (!push.status) return null;
     return (
-      <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+      <p className="ru-card mt-3 px-3 py-2 text-xs text-black">
         {push.status}
       </p>
     );

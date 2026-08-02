@@ -94,10 +94,10 @@ export function ServiceHomeSheet({
   return (
     <div className="ru-page-enter space-y-6 pb-2">
       <div>
-        <h1 className="font-[family-name:var(--font-display)] text-[28px] leading-tight font-bold tracking-tight text-black">
-          Transport for everyone
+        <h1 className="ru-page-title !text-[1.75rem]">
+          Where to?
         </h1>
-        <p className="mt-1 text-[15px] text-[var(--ru-muted)]">
+        <p className="ru-page-sub">
           Map shows your location · type a landmark for the driver.
         </p>
       </div>
@@ -109,7 +109,7 @@ export function ServiceHomeSheet({
         }}
       />
 
-      <div className="space-y-1 rounded-2xl border border-[var(--ru-line)] bg-[#fafafa] px-3 py-2">
+      <div className="space-y-1 rounded-2xl border border-[var(--ru-line)] bg-[var(--ru-elevated)] px-3 py-2">
         <PlacesAutocomplete
           label="Pickup location (address or landmark)"
           placeholder="Search town, village, landmark, or address…"
@@ -197,6 +197,13 @@ export function ServiceHomeSheet({
           </span>
         </span>
         <ChevronRight className="h-5 w-5 text-[var(--ru-muted)]" />
+      </Link>
+
+      <Link
+        href="/driver/join"
+        className="ru-btn ru-btn-secondary ru-btn-block"
+      >
+        Drive with us
       </Link>
     </div>
   );

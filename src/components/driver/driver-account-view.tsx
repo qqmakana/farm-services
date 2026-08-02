@@ -9,6 +9,7 @@ import {
   IdCard,
   LogOut,
   Pencil,
+  Settings,
   ShieldCheck,
 } from "lucide-react";
 import { updateDriverCountry, updateDriverPreferences, updateDriverVehicle } from "@/lib/actions";
@@ -18,6 +19,7 @@ import { useCountry } from "@/components/country/country-provider";
 import { DriverTrustPanel } from "@/components/driver-trust-panel";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
 import { DriverVehiclePhotos } from "@/components/driver-vehicle-photos";
+import { PageShell } from "@/components/ui/page-shell";
 import { vehicleDisplayLabel } from "@/lib/driver-display";
 import { getCountry, type CountryCode } from "@/lib/countries";
 import { resetDriverOnboardingForReplay } from "@/lib/driver-onboarding";
@@ -119,12 +121,8 @@ export function DriverAccountView() {
   }
 
   return (
-    <main className="ru-page-enter mx-auto min-h-dvh max-w-lg px-5 pb-24 pt-8">
-      <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-black">
-        Account
-      </h1>
-
-      <div className="ru-card mt-6 space-y-4 p-5">
+    <PageShell title="Account">
+      <div className="ru-card space-y-4 p-5">
         <DriverVehiclePhotos driver={driver} variant="profile" />
         <div className="flex items-center justify-between gap-2 border-t border-[var(--ru-line)] pt-3">
           <div className="min-w-0">
@@ -146,9 +144,7 @@ export function DriverAccountView() {
       </div>
 
       <section className="ru-card mt-4 p-4">
-        <p className="mb-2 text-xs font-semibold tracking-wide text-[var(--ru-muted)] uppercase">
-          Operating country
-        </p>
+        <p className="ru-section-label mb-2">Operating country</p>
         <CountrySelector
           showLanguage={false}
           compact
@@ -166,22 +162,18 @@ export function DriverAccountView() {
         </p>
       </section>
 
-      <section className="mt-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      <section className="ru-card mt-4 p-4">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-            Vehicle
-          </p>
+          <p className="ru-section-label">Vehicle</p>
           {isDriverTrustVerified(driver) ? (
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
-              <ShieldCheck className="h-3.5 w-3.5" /> ✓ Verified
+            <span className="ru-chip inline-flex items-center gap-1">
+              <ShieldCheck className="h-3.5 w-3.5" /> Verified
             </span>
           ) : (
-            <span className="text-xs font-semibold text-amber-700">
-              Pending Verification
-            </span>
+            <span className="ru-chip">Pending</span>
           )}
         </div>
-        <p className="mt-2 text-sm font-semibold text-slate-900">
+        <p className="mt-2 text-sm font-semibold text-black">
           {vehicleDisplayLabel(driver)}
           {driver.vehicle_registration
             ? ` · ${driver.vehicle_registration}`
@@ -191,21 +183,25 @@ export function DriverAccountView() {
       </section>
 
       {error ? (
-        <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800">
+        <p className="mt-3 rounded-[var(--ru-radius)] bg-[var(--ru-elevated)] px-3 py-2 text-sm text-[var(--ru-error)]">
           {error}
         </p>
       ) : null}
 
-      <ul className="mt-6 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+      <ul className="ru-list mt-6">
         <li>
           <button
             type="button"
             onClick={() => setEditVehicle((v) => !v)}
-            className="flex w-full items-center gap-3 px-4 py-4 text-left transition active:scale-[0.99] active:bg-gray-50"
+            className="ru-row w-full"
           >
-            <Pencil className="h-5 w-5 text-[#000000]" />
-            <span className="flex-1 text-sm font-medium">Edit Vehicle Details</span>
-            <ChevronRight className="h-4 w-4 text-gray-400" />
+            <span className="text-black">
+              <Pencil className="h-5 w-5" />
+            </span>
+            <span className="flex-1 text-sm font-semibold text-black">
+              Edit Vehicle Details
+            </span>
+            <ChevronRight className="h-4 w-4 text-[var(--ru-muted)]" aria-hidden />
           </button>
         </li>
         {!isDriverTrustVerified(driver) ? (
@@ -213,13 +209,15 @@ export function DriverAccountView() {
             <button
               type="button"
               onClick={() => setShowDocs((v) => !v)}
-              className="flex w-full items-center gap-3 border-t border-gray-100 px-4 py-4 text-left transition active:scale-[0.99] active:bg-gray-50"
+              className="ru-row w-full"
             >
-              <IdCard className="h-5 w-5 text-[#000000]" />
-              <span className="flex-1 text-sm font-medium">
+              <span className="text-black">
+                <IdCard className="h-5 w-5" />
+              </span>
+              <span className="flex-1 text-sm font-semibold text-black">
                 Upload License/ID
               </span>
-              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <ChevronRight className="h-4 w-4 text-[var(--ru-muted)]" aria-hidden />
             </button>
           </li>
         ) : null}
@@ -227,26 +225,27 @@ export function DriverAccountView() {
           <button
             type="button"
             onClick={() => setShowNotifs((v) => !v)}
-            className="flex w-full items-center gap-3 border-t border-gray-100 px-4 py-4 text-left transition active:scale-[0.99] active:bg-gray-50"
+            className="ru-row w-full"
           >
-            <span className="flex h-5 w-5 items-center justify-center text-[#000000]">
-              ⚙
+            <span className="text-black">
+              <Settings className="h-5 w-5" />
             </span>
-            <span className="flex-1 text-sm font-medium">
+            <span className="flex-1 text-sm font-semibold text-black">
               Notification Settings
             </span>
-            <ChevronRight className="h-4 w-4 text-gray-400" />
+            <ChevronRight className="h-4 w-4 text-[var(--ru-muted)]" aria-hidden />
           </button>
         </li>
         <li>
-          <Link
-            href="/help"
-            className="flex items-center gap-3 border-t border-gray-100 px-4 py-4 transition active:scale-[0.99] active:bg-gray-50"
-          >
-            <HelpCircle className="h-5 w-5 text-[#000000]" />
-            <span className="flex-1 text-sm font-medium">Help &amp; Support</span>
-            <span className="text-xs text-slate-400">WhatsApp · Email</span>
-            <ChevronRight className="h-4 w-4 text-gray-400" />
+          <Link href="/help" className="ru-row w-full">
+            <span className="text-black">
+              <HelpCircle className="h-5 w-5" />
+            </span>
+            <span className="flex-1 text-sm font-semibold text-black">
+              Help &amp; Support
+            </span>
+            <span className="text-xs text-[var(--ru-muted)]">WhatsApp · Email</span>
+            <ChevronRight className="h-4 w-4 text-[var(--ru-muted)]" aria-hidden />
           </Link>
         </li>
       </ul>
@@ -254,12 +253,12 @@ export function DriverAccountView() {
       {editVehicle ? (
         <form
           onSubmit={saveVehicle}
-          className="mt-4 space-y-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+          className="ru-card mt-4 space-y-3 p-4"
         >
-          <label className="block text-sm font-medium">
+          <label className="block text-sm font-semibold text-black">
             Vehicle type
             <select
-              className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3"
+              className="ru-soft-field mt-1"
               value={vehicleType}
               onChange={(e) => setVehicleType(e.target.value as VehicleType)}
             >
@@ -270,29 +269,29 @@ export function DriverAccountView() {
               ))}
             </select>
           </label>
-          <label className="block text-sm font-medium">
+          <label className="block text-sm font-semibold text-black">
             Registration
             <input
-              className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3"
+              className="ru-soft-field mt-1"
               value={reg}
               onChange={(e) => setReg(e.target.value)}
               placeholder="e.g. HX 12 EC"
             />
           </label>
           <div className="grid grid-cols-2 gap-2">
-            <label className="block text-sm font-medium">
+            <label className="block text-sm font-semibold text-black">
               Make
               <input
-                className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3"
+                className="ru-soft-field mt-1"
                 value={make}
                 onChange={(e) => setMake(e.target.value)}
                 placeholder="Toyota"
               />
             </label>
-            <label className="block text-sm font-medium">
+            <label className="block text-sm font-semibold text-black">
               Model
               <input
-                className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3"
+                className="ru-soft-field mt-1"
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 placeholder="Hilux"
@@ -300,19 +299,19 @@ export function DriverAccountView() {
             </label>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <label className="block text-sm font-medium">
+            <label className="block text-sm font-semibold text-black">
               Color
               <input
-                className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3"
+                className="ru-soft-field mt-1"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
                 placeholder="White"
               />
             </label>
-            <label className="block text-sm font-medium">
+            <label className="block text-sm font-semibold text-black">
               Year
               <input
-                className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3"
+                className="ru-soft-field mt-1"
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
                 inputMode="numeric"
@@ -323,7 +322,7 @@ export function DriverAccountView() {
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded-xl bg-[#000000] py-3 text-sm font-bold text-white transition active:scale-95"
+            className="ru-btn ru-btn-primary ru-btn-block"
           >
             Save vehicle
           </button>
@@ -337,7 +336,7 @@ export function DriverAccountView() {
       ) : null}
 
       {showNotifs ? (
-        <div className="mt-4 space-y-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="ru-card mt-4 space-y-3 p-4">
           <Toggle
             label="Night shifts"
             checked={night}
@@ -357,7 +356,7 @@ export function DriverAccountView() {
             type="button"
             disabled={pending}
             onClick={savePrefs}
-            className="w-full rounded-xl bg-[#000000] py-3 text-sm font-bold text-white transition active:scale-95"
+            className="ru-btn ru-btn-primary ru-btn-block"
           >
             Save preferences
           </button>
@@ -370,7 +369,7 @@ export function DriverAccountView() {
           resetDriverOnboardingForReplay();
           router.push("/driver/guide");
         }}
-        className="mt-6 w-full rounded-xl border border-slate-200 py-3 text-sm font-semibold text-black"
+        className="ru-btn ru-btn-secondary ru-btn-block mt-6"
       >
         Replay driver guide
       </button>
@@ -378,18 +377,18 @@ export function DriverAccountView() {
       <button
         type="button"
         onClick={logout}
-        className="mt-3 flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold text-rose-600 transition active:scale-95"
+        className="ru-btn ru-btn-ghost ru-btn-block mt-3 !text-[var(--ru-error)]"
       >
         <LogOut className="h-4 w-4" />
         Log Out
       </button>
 
-      <p className="mt-4 text-center text-xs text-slate-400">
+      <p className="mt-4 text-center text-xs text-[var(--ru-muted)]">
         <Link href="/driver" className="underline">
           Back to apply / switch driver
         </Link>
       </p>
-    </main>
+    </PageShell>
   );
 }
 
@@ -403,7 +402,7 @@ function Toggle({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between gap-3 text-sm font-medium text-slate-800">
+    <label className="flex items-center justify-between gap-3 text-sm font-medium text-black">
       {label}
       <button
         type="button"
@@ -411,7 +410,7 @@ function Toggle({
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={`relative h-7 w-12 rounded-full transition active:scale-95 ${
-          checked ? "bg-[#000000]" : "bg-gray-300"
+          checked ? "bg-black" : "bg-[var(--ru-elevated)]"
         }`}
       >
         <span

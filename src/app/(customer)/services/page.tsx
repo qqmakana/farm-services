@@ -1,8 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { Car, CircleDot, Package, Tractor, Truck, Users } from "lucide-react";
-import { DriverWantedPromoCard } from "@/components/driver-wanted-promo-card";
+import { useRouter } from "next/navigation";
+import {
+  ArrowUpRight,
+  Car,
+  CircleDot,
+  Download,
+  Package,
+  Tractor,
+  Truck,
+  Users,
+} from "lucide-react";
+import { OnboardingGate } from "@/components/onboarding/onboarding-gate";
+import { useInstallActions } from "@/components/install-share-bar";
+import { PageShell } from "@/components/ui/page-shell";
+import { resetOnboardingForReplay } from "@/lib/onboarding";
 
 const cards = [
   {
@@ -10,89 +23,112 @@ const cards = [
     title: "Village Ride",
     subtitle: "Night rides & village trips",
     Icon: Car,
-    accent: "bg-sky-50 text-sky-700",
-    iconBg: "bg-sky-100",
   },
   {
     href: "/delivery",
     title: "Village Delivery",
     subtitle: "Goods, furniture & materials",
     Icon: Truck,
-    accent: "bg-emerald-50 text-emerald-800",
-    iconBg: "bg-emerald-100",
   },
   {
     href: "/farm",
     title: "Farm Connect",
     subtitle: "Produce, livestock & equipment",
     Icon: Tractor,
-    accent: "bg-orange-50 text-orange-800",
-    iconBg: "bg-orange-100",
   },
   {
     href: "/courier",
     title: "Courier",
     subtitle: "Packages — village, town & city",
     Icon: Package,
-    accent: "bg-violet-50 text-violet-800",
-    iconBg: "bg-violet-100",
   },
   {
     href: "/group",
     title: "Group Rides",
     subtitle: "Split the fare · shared loads",
     Icon: Users,
-    accent: "bg-indigo-50 text-indigo-800",
-    iconBg: "bg-indigo-100",
   },
   {
     href: "/driver/join",
     title: "Become a Driver",
     subtitle: "Earn with Village Ride",
     Icon: CircleDot,
-    accent: "bg-gray-50 text-gray-800",
-    iconBg: "bg-gray-200",
   },
 ] as const;
 
-export default function ServicesPage() {
-  return (
-    <main className="mx-auto min-h-dvh max-w-lg bg-white px-5 pb-24 pt-8">
-      <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-        What do you need today?
-      </h1>
-      <p className="mt-1 text-sm text-slate-500">
-        Choose a service to get started
-      </p>
+function ServicesContent() {
+  const router = useRouter();
+  const { standalone, installing, install } = useInstallActions();
 
-      <div className="mt-8 grid grid-cols-2 gap-3">
+  function openTour() {
+    resetOnboardingForReplay();
+    router.push("/onboarding?replay=1");
+  }
+
+  return (
+    <PageShell
+      title="What do you need today?"
+      subtitle="Choose a service. Cash to the driver. Same app for ride, delivery, farm & courier."
+    >
+      <div className="flex flex-col gap-2 sm:flex-row">
+        {!standalone ? (
+          <button
+            type="button"
+            onClick={install}
+            disabled={installing}
+            className="ru-btn ru-btn-primary ru-btn-block"
+          >
+            <Download className="h-4 w-4" strokeWidth={2.25} aria-hidden />
+            {installing ? "Starting…" : "Install app"}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={openTour}
+          className="ru-btn ru-btn-secondary ru-btn-block"
+        >
+          See feature tour
+          <ArrowUpRight className="h-4 w-4" strokeWidth={2.25} aria-hidden />
+        </button>
+      </div>
+
+      <div className="ru-list mt-6">
         {cards.map((card) => {
           const Icon = card.Icon;
           return (
-            <Link
-              key={card.href}
-              href={card.href}
-              className={`flex min-h-[148px] flex-col rounded-xl border border-gray-100 p-4 shadow-sm transition active:scale-95 ${card.accent}`}
-            >
-              <span
-                className={`flex h-11 w-11 items-center justify-center rounded-xl ${card.iconBg}`}
-              >
-                <Icon className="h-6 w-6" strokeWidth={2} aria-hidden />
+            <Link key={card.href} href={card.href} className="ru-row w-full">
+              <span className="ru-icon-circle">
+                <Icon className="h-5 w-5" strokeWidth={2} aria-hidden />
               </span>
-              <span className="mt-auto pt-4">
-                <span className="block text-sm font-bold leading-snug">
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-bold tracking-tight text-black">
                   {card.title}
                 </span>
-                <span className="mt-1 block text-xs opacity-80">
+                <span className="mt-0.5 block text-xs text-[var(--ru-muted)]">
                   {card.subtitle}
                 </span>
               </span>
+              <ArrowUpRight
+                className="h-4 w-4 shrink-0 text-[var(--ru-muted)]"
+                strokeWidth={2}
+                aria-hidden
+              />
             </Link>
           );
         })}
       </div>
 
-      <DriverWantedPromoCard />
-    </main>
+      <p className="mt-8 text-center text-[11px] tracking-wide text-[var(--ru-muted)]">
+        Google Play coming soon · Install now from this page
+      </p>
+    </PageShell>
+  );
+}
+
+export default function ServicesPage() {
+  return (
+    <OnboardingGate>
+      <ServicesContent />
+    </OnboardingGate>
   );
 }

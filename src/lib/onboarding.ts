@@ -4,9 +4,10 @@
  * - Session skip → sessionStorage (Skip for now — returns next visit)
  */
 
-/** v3 = full product tour (services + describe-when-maps-fail / wearing / fuel). */
-const PERMANENT_KEY = "vr_feature_tour_seen_v3";
+/** v4 = same product tour; bump so earlier dismissals still see Install/Services path once. */
+const PERMANENT_KEY = "vr_feature_tour_seen_v4";
 const LEGACY_PERMANENT_KEYS = [
+  "vr_feature_tour_seen_v3",
   "vr_feature_tour_seen_v2",
   "vr_feature_tour_seen_v1",
   "vr_onboarding_seen_v1",

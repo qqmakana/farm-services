@@ -239,11 +239,9 @@ export function CheckoutBlock({
         {optIn}
       </p>
 
-      <div className="rounded-xl border border-slate-200 bg-[#fafafa] px-3 py-3">
-        <p className="text-sm font-semibold text-[#000000]">
-          Pay the driver in cash
-        </p>
-        <p className="mt-1 text-xs leading-relaxed text-slate-600">
+      <div className="rounded-2xl border border-[var(--ru-line)] bg-[var(--ru-elevated)] px-3 py-3">
+        <p className="text-sm font-semibold text-black">Pay the driver in cash</p>
+        <p className="mt-1 text-xs leading-relaxed text-[var(--ru-muted)]">
           At pickup or dropoff — simple and reliable. Village Ride takes ~15%
           from the driver&apos;s prepaid wallet, not from you. Card and mobile
           money are coming later.
@@ -251,9 +249,9 @@ export function CheckoutBlock({
       </div>
 
       {queuedOffline ? (
-        <div className="space-y-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-950">
+        <div className="space-y-2 rounded-2xl border border-[var(--ru-line)] bg-[var(--ru-elevated)] px-3 py-3 text-sm text-black">
           <p className="font-semibold">Saved on this phone (offline)</p>
-          <p className="text-xs leading-relaxed">
+          <p className="text-xs leading-relaxed text-[var(--ru-muted)]">
             Your landmark booking is stored here and will send automatically
             when you have signal — GPS not required.
           </p>
@@ -268,7 +266,7 @@ export function CheckoutBlock({
       ) : null}
 
       {formError ? (
-        <div className="space-y-2 rounded-xl bg-rose-50 px-3 py-3 text-sm text-rose-800">
+        <div className="space-y-2 rounded-2xl bg-[#fdecea] px-3 py-3 text-sm text-[#b01000]">
           <p>{formError}</p>
           <button
             type="button"
@@ -280,7 +278,7 @@ export function CheckoutBlock({
         </div>
       ) : null}
 
-      <p className="rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-2.5 text-xs leading-relaxed text-slate-700">
+      <p className="rounded-2xl border border-[var(--ru-line)] bg-[var(--ru-elevated)] px-3 py-2.5 text-xs leading-relaxed text-[var(--ru-muted)]">
         We&apos;ll find the best available driver and ping them. You&apos;ll see
         live updates — photos, plate, and status — on the next screen.
       </p>
@@ -289,7 +287,7 @@ export function CheckoutBlock({
         type="button"
         disabled={!ready || pending}
         onClick={requestJob}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#000000] px-4 py-4 text-base font-bold text-white shadow-sm transition hover:bg-[#1a1a1a] disabled:opacity-50"
+        className="ru-btn ru-btn-primary ru-btn-block"
       >
         {pending ? (
           <>
@@ -305,7 +303,7 @@ export function CheckoutBlock({
         type="button"
         disabled={!ready || pending}
         onClick={openWhatsAppBooking}
-        className="w-full rounded-xl border border-[#000000]/30 bg-white px-4 py-3 text-sm font-semibold text-[#000000] disabled:opacity-50"
+        className="ru-btn ru-btn-secondary ru-btn-block"
       >
         Or send booking via WhatsApp
       </button>

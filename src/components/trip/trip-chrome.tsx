@@ -5,7 +5,7 @@ import { BRAND } from "@/lib/brand";
 /** Focused trip-tracking header — no marketing mega-nav. */
 export function TripChrome({ referenceCode }: { referenceCode?: string }) {
   return (
-    <header className="ru-force-light sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
+    <header className="ru-force-light sticky top-0 z-40 border-b border-[var(--ru-line)] bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-lg items-center justify-between gap-3 px-4 py-3">
         <Link href="/" className="flex min-w-0 items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -21,11 +21,11 @@ export function TripChrome({ referenceCode }: { referenceCode?: string }) {
               {BRAND.appName}
             </span>
             {referenceCode ? (
-              <span className="block truncate text-[11px] font-medium text-slate-500">
+              <span className="block truncate text-[11px] font-medium text-[var(--ru-muted)]">
                 Trip {referenceCode}
               </span>
             ) : (
-              <span className="block text-[11px] font-medium text-slate-500">
+              <span className="block text-[11px] font-medium text-[var(--ru-muted)]">
                 Live tracking
               </span>
             )}
@@ -34,14 +34,14 @@ export function TripChrome({ referenceCode }: { referenceCode?: string }) {
         <div className="flex shrink-0 items-center gap-1">
           <Link
             href="/help"
-            className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#f0f0f0]"
+            className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--ru-elevated)]"
             aria-label="Help & support"
           >
-            <HelpCircle className="h-5 w-5 text-slate-600" />
+            <HelpCircle className="h-5 w-5 text-[var(--ru-muted)]" />
           </Link>
           <Link
             href="/"
-            className="rounded-full px-3 py-2 text-sm font-semibold text-black hover:bg-[#f0f0f0]"
+            className="ru-btn ru-btn-ghost !min-h-10 !px-3 !text-sm font-semibold text-black"
           >
             Home
           </Link>

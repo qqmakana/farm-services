@@ -53,22 +53,16 @@ export default function HelpPage() {
   return (
     <>
       <SiteNav active="help" />
-      <main className="ru-force-light mx-auto min-h-dvh max-w-2xl bg-white px-4 py-10 pb-20">
-        <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-          Support
-        </p>
-        <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold text-slate-900">
-          Help &amp; Support
-        </h1>
-        <p className="mt-2 text-sm text-slate-600">
+      <main className="ru-force-light ru-page max-w-2xl">
+        <p className="ru-section-label">Support</p>
+        <h1 className="ru-page-title mt-1">Help &amp; Support</h1>
+        <p className="ru-page-sub">
           Chat on WhatsApp or email us — both go to the Sandton Streets team.
         </p>
 
-        <section className="mt-6 rounded-2xl border border-slate-100 bg-[#fafafa] p-4">
-          <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-            Contact us
-          </p>
-          <ul className="mt-2 space-y-1 text-sm text-slate-700">
+        <section className="ru-card mt-6 p-4">
+          <p className="ru-section-label">Contact us</p>
+          <ul className="mt-2 space-y-1 text-sm text-[var(--ru-muted)]">
             <li>
               WhatsApp:{" "}
               <a
@@ -93,35 +87,29 @@ export default function HelpPage() {
           <ContactSupportActions className="mt-4" />
           <a
             href={BRAND_TEL_HREF}
-            className="mt-2 block rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-semibold text-black"
+            className="ru-btn ru-btn-secondary ru-btn-block mt-2"
           >
             Call {BRAND.phone}
           </a>
         </section>
 
-        <ul className="mt-8 space-y-4">
+        <ul className="ru-list mt-8">
           {FAQS.map((item) => (
-            <li
-              key={item.q}
-              className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
-            >
-              <h2 className="font-bold text-slate-900">{item.q}</h2>
-              <p className="mt-2 text-sm text-slate-600">{item.a}</p>
+            <li key={item.q} className="ru-row !min-h-0 flex-col !items-start gap-2 py-4">
+              <h2 className="font-bold text-black">{item.q}</h2>
+              <p className="text-sm text-[var(--ru-muted)]">{item.a}</p>
             </li>
           ))}
         </ul>
         <p className="mt-8 text-center text-sm">
           <Link
             href="/partners"
-            className="font-semibold text-[#000000] underline"
+            className="font-semibold text-black underline"
           >
             For businesses
           </Link>
           {" · "}
-          <Link
-            href="/driver"
-            className="font-semibold text-[#000000] underline"
-          >
+          <Link href="/driver" className="font-semibold text-black underline">
             Drive with us
           </Link>
         </p>

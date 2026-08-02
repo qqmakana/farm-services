@@ -49,17 +49,17 @@ function activityStatusClass(status: JobStatus): string {
   switch (status) {
     case "new":
     case "searching_driver":
-      return "bg-amber-100 text-amber-900";
+      return "bg-[#eeeeee] text-black";
     case "assigned":
     case "confirmed":
     case "in_progress":
-      return "bg-emerald-100 text-emerald-900";
+      return "bg-black text-white";
     case "completed":
-      return "bg-gray-100 text-gray-700";
+      return "bg-[#f0f0f0] text-[#5a5a5a]";
     case "cancelled":
-      return "bg-rose-100 text-rose-800";
+      return "bg-[#fdecea] text-[#b01000]";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "bg-[#f0f0f0] text-[#5a5a5a]";
   }
 }
 
@@ -145,49 +145,47 @@ export function ActivityView() {
 
   if (!hydrated) {
     return (
-      <main className="mx-auto min-h-dvh max-w-lg px-5 pb-24 pt-8">
-        <p className="text-sm text-slate-500">Loading…</p>
+      <main className="ru-page ru-force-light">
+        <p className="text-sm text-[var(--ru-muted)]">Loading…</p>
       </main>
     );
   }
 
   if (!profile?.phone) {
     return (
-      <main className="mx-auto min-h-dvh max-w-lg px-5 pb-24 pt-8">
-        <h1 className="text-2xl font-bold text-slate-900">Activity</h1>
-        <p className="mt-1 text-sm text-slate-500">
+      <main className="ru-page ru-page-enter ru-force-light">
+        <h1 className="ru-page-title">Activity</h1>
+        <p className="ru-page-sub">
           Enter your phone number to view your trips.
         </p>
-        <form
-          onSubmit={savePhone}
-          className="mt-8 space-y-3 rounded-xl border border-gray-100 bg-white p-5 shadow-sm"
-        >
-          <label className="block text-sm font-medium text-slate-700">
+        <form onSubmit={savePhone} className="ru-card mt-8 space-y-3 p-5">
+          <label className="block text-sm font-semibold text-black">
             Phone number
             <input
-              className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 text-base outline-none focus:border-[#000000]"
+              className="ru-soft-field mt-1"
               placeholder="063 621 3590"
               inputMode="tel"
               value={phoneInput}
               onChange={(e) => setPhoneInput(e.target.value)}
             />
           </label>
-          <label className="block text-sm font-medium text-slate-700">
-            Name <span className="font-normal text-slate-400">(optional)</span>
+          <label className="block text-sm font-semibold text-black">
+            Name{" "}
+            <span className="font-normal text-[var(--ru-muted)]">(optional)</span>
             <input
-              className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 text-base outline-none focus:border-[#000000]"
+              className="ru-soft-field mt-1"
               placeholder="Your name"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
             />
           </label>
           {error ? (
-            <p className="text-sm text-rose-700">{error}</p>
+            <p className="text-sm text-[var(--ru-error)]">{error}</p>
           ) : null}
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded-xl bg-[#000000] py-3.5 text-sm font-bold text-white transition active:scale-95 disabled:opacity-60"
+            className="ru-btn ru-btn-primary ru-btn-block"
           >
             {pending ? "Loading…" : "View my trips"}
           </button>
@@ -197,21 +195,18 @@ export function ActivityView() {
   }
 
   return (
-    <main className="mx-auto min-h-dvh max-w-lg px-5 pb-24 pt-8">
-      <h1 className="text-2xl font-bold text-slate-900">Activity</h1>
-      <p className="mt-1 text-sm text-slate-500">Trips for {profile.phone}</p>
+    <main className="ru-page ru-page-enter ru-force-light">
+      <h1 className="ru-page-title">Activity</h1>
+      <p className="ru-page-sub">Trips for {profile.phone}</p>
 
-      <div className="mt-5 flex rounded-xl bg-gray-100 p-1">
+      <div className="ru-segment mt-5">
         {(["upcoming", "past"] as const).map((key) => (
           <button
             key={key}
             type="button"
             onClick={() => setSegment(key)}
-            className={`flex-1 rounded-lg py-2.5 text-sm capitalize transition active:scale-95 ${
-              segment === key
-                ? "bg-white font-bold text-[#000000] shadow-sm"
-                : "font-normal text-[#6B7280]"
-            }`}
+            aria-selected={segment === key}
+            className="capitalize"
           >
             {key}
           </button>
@@ -237,20 +232,14 @@ export function ActivityView() {
           <p className="mt-1 max-w-xs text-sm text-slate-500">
             Book a ride, delivery, farm, or courier trip and it will show up here.
           </p>
-          <Link
-            href="/"
-            className="mt-6 rounded-xl bg-[#000000] px-6 py-3 text-sm font-bold text-white transition active:scale-95"
-          >
+          <Link href="/" className="ru-btn ru-btn-primary mt-6">
             Book your first trip
           </Link>
         </div>
       ) : (
         <ul className="mt-5 space-y-3">
           {filtered.map((job) => (
-            <li
-              key={job.id}
-              className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
-            >
+            <li key={job.id} className="ru-card p-4">
               <Link
                 href={`/trip/${job.reference_code}`}
                 className="block transition active:scale-[0.99]"
@@ -298,7 +287,7 @@ export function ActivityView() {
                 <button
                   type="button"
                   onClick={() => setReceiptJob(job)}
-                  className="mt-3 w-full rounded-lg border border-slate-200 py-2 text-xs font-semibold text-black"
+                  className="ru-btn ru-btn-secondary ru-btn-block mt-3 !min-h-10 !text-xs"
                 >
                   View receipt
                 </button>

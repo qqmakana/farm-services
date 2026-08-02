@@ -34,8 +34,8 @@ export function ContactSupportActions({
         href={wa}
         target="_blank"
         rel="noreferrer"
-        className={`rounded-xl bg-[#25D366] text-center font-bold text-white ${
-          compact ? "px-3 py-2.5 text-xs" : "px-4 py-3.5 text-sm"
+        className={`ru-btn !bg-[#25D366] text-center text-white hover:!bg-[#1ebe57] ${
+          compact ? "!min-h-10 !px-3 !text-xs" : ""
         }`}
       >
         WhatsApp {BRAND.phone}
@@ -45,8 +45,8 @@ export function ContactSupportActions({
           `${BRAND.appName} support`,
           `Hi ${BRAND.appName} support,\n\nI need help with:\n\n`,
         )}
-        className={`rounded-xl border border-slate-200 bg-white text-center font-bold text-black ${
-          compact ? "px-3 py-2.5 text-xs" : "px-4 py-3.5 text-sm"
+        className={`ru-btn ru-btn-secondary text-center ${
+          compact ? "!min-h-10 !px-3 !text-xs" : ""
         }`}
       >
         Email {BRAND.email}

@@ -191,14 +191,14 @@ export function MerchantDashboard({
 
   if (!shop) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="text-2xl font-bold text-slate-900">Partner dashboard</h1>
-        <p className="mt-2 text-sm text-slate-600">
+      <main className="ru-page max-w-3xl">
+        <h1 className="ru-page-title">Partner dashboard</h1>
+        <p className="ru-page-sub">
           Signed in as {email ?? "merchant"}, but no shop is linked yet.
         </p>
         <Link
           href="/shop"
-          className="mt-6 inline-block rounded-xl bg-[#000000] px-5 py-3 text-sm font-bold text-white transition active:scale-95"
+          className="ru-btn ru-btn-primary mt-6 !inline-flex"
         >
           Register your business
         </Link>
@@ -301,7 +301,7 @@ export function MerchantDashboard({
   }
 
   return (
-    <main className="ru-page-enter mx-auto max-w-3xl px-4 py-8 pb-20">
+    <main className="ru-page-enter mx-auto max-w-3xl px-4 py-8 pb-20 text-black">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold tracking-wide text-[var(--ru-muted)] uppercase">
@@ -342,12 +342,12 @@ export function MerchantDashboard({
       <MerchantPushPrompt />
 
       {message && (
-        <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+        <p className="ru-card mt-4 px-3 py-2 text-sm text-black">
           {message}
         </p>
       )}
       {error && (
-        <p className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800">
+        <p className="mt-4 rounded-[var(--ru-radius)] border border-[var(--ru-error)]/30 bg-[color-mix(in_srgb,var(--ru-error)_8%,white)] px-3 py-2 text-sm text-[var(--ru-error)]">
           {error}
         </p>
       )}
@@ -619,50 +619,49 @@ export function MerchantDashboard({
 
       <section className="mt-8">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-bold text-slate-900">Weekly reports</h2>
+          <h2 className="text-lg font-bold text-black">Weekly reports</h2>
           <button
             type="button"
             disabled={pending}
             onClick={runWeekly}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold"
+            className="ru-btn ru-btn-secondary !min-h-10 !px-3 !text-xs"
           >
             Generate this week
           </button>
         </div>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-[var(--ru-muted)]">
           Auto-generated summaries. Open a report to email yourself with mailto.
         </p>
         {reports.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">
+          <p className="mt-3 text-sm text-[var(--ru-muted)]">
             No reports yet — tap Generate, or wait for the Monday cron.
           </p>
         ) : (
           <ul className="mt-3 space-y-3">
             {reports.map((r) => (
-              <li
-                key={r.id}
-                className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
-              >
+              <li key={r.id} className="ru-card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <p className="font-mono text-sm font-bold">{r.week_key}</p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="font-mono text-sm font-bold text-black">
+                      {r.week_key}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--ru-muted)]">
                       {r.week_start} → {r.week_end}
                     </p>
                   </div>
                   <a
                     href={`mailto:${email ?? ""}?subject=Village Ride ${r.week_key}&body=${encodeURIComponent(r.summary_text)}`}
-                    className="text-xs font-semibold text-[#000000] underline"
+                    className="text-xs font-semibold text-black underline"
                   >
                     Email me
                   </a>
                 </div>
-                <p className="mt-2 text-sm text-slate-700">
+                <p className="mt-2 text-sm text-black">
                   {r.orders_completed}/{r.orders_total} completed ·{" "}
                   {formatMoney(Number(r.revenue_total))} fees ·{" "}
                   {r.referral_signups} referrals
                 </p>
-                <pre className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-50 p-2 text-[11px] text-slate-600">
+                <pre className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap rounded-xl bg-[var(--ru-elevated)] p-2 text-[11px] text-[var(--ru-muted)]">
                   {r.summary_text}
                 </pre>
               </li>
@@ -709,9 +708,9 @@ export function MerchantDashboard({
               return (
                 <li key={job.id} className="ru-card p-4">
                   {exhausted ? (
-                    <div className="mb-3 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-950">
+                    <div className="mb-3 rounded-xl border border-[var(--ru-error)]/30 bg-[color-mix(in_srgb,var(--ru-error)_8%,white)] px-3 py-2 text-xs text-black">
                       <p className="font-semibold">No drivers available right now</p>
-                      <p className="mt-0.5">
+                      <p className="mt-0.5 text-[var(--ru-muted)]">
                         Schedule for later when more drivers are online.
                       </p>
                       <button
@@ -830,7 +829,7 @@ export function MerchantDashboard({
                           <button
                             type="button"
                             disabled={pending}
-                            className="text-xs font-semibold text-rose-700 underline"
+                            className="text-xs font-semibold text-[var(--ru-error)] underline"
                             onClick={() => {
                               const reason = window.prompt(
                                 "Cancel reason: customer_changed_mind | wrong_items | no_drivers | other",

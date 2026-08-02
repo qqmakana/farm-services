@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Bell,
   ChevronRight,
   CreditCard,
   HelpCircle,
@@ -25,6 +26,8 @@ import { resetOnboardingForReplay } from "@/lib/onboarding";
 import { t } from "@/lib/i18n";
 import { RiderPhotoField } from "@/components/rider/rider-photo-field";
 import { RiderReferralCard } from "@/components/referral/rider-referral-card";
+import { PageShell } from "@/components/ui/page-shell";
+import { DashboardSkeleton } from "@/components/ui/skeleton";
 
 export function AccountView() {
   const router = useRouter();
@@ -71,9 +74,9 @@ export function AccountView() {
 
   if (!hydrated) {
     return (
-      <main className="mx-auto min-h-dvh max-w-lg px-5 pb-24 pt-8">
-        <p className="text-sm text-slate-500">Loading…</p>
-      </main>
+      <PageShell title="Account">
+        <DashboardSkeleton />
+      </PageShell>
     );
   }
 
@@ -82,34 +85,29 @@ export function AccountView() {
   const flag = country.flag;
 
   return (
-    <main className="mx-auto min-h-dvh max-w-lg px-5 pb-24 pt-8">
-      <h1 className="text-2xl font-bold text-slate-900">Account</h1>
-
-      <div className="mt-6 rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+    <PageShell title="Account" subtitle="Profile, places, and support">
+      <div className="ru-card p-5">
         <CountrySelector />
       </div>
 
       {showForm ? (
-        <form
-          onSubmit={saveDetails}
-          className="mt-4 space-y-3 rounded-xl border border-gray-100 bg-white p-5 shadow-sm"
-        >
-          <p className="text-sm text-slate-600">
+        <form onSubmit={saveDetails} className="ru-card mt-4 space-y-3 p-5">
+          <p className="text-sm text-[var(--ru-muted)]">
             Add your details so we can show your trips and keep in touch.
           </p>
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-semibold text-black">
             Name
             <input
-              className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 outline-none focus:border-[#000000]"
+              className="ru-soft-field mt-1"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
               placeholder="Your name"
             />
           </label>
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-semibold text-black">
             Phone
             <input
-              className="mt-1 w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-3 outline-none focus:border-[#000000]"
+              className="ru-soft-field mt-1"
               value={phoneInput}
               onChange={(e) => setPhoneInput(e.target.value)}
               placeholder={formatPhonePlaceholder(countryCode)}
@@ -117,17 +115,14 @@ export function AccountView() {
               required
             />
           </label>
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-[#000000] py-3 text-sm font-bold text-white transition active:scale-95"
-          >
+          <button type="submit" className="ru-btn ru-btn-primary ru-btn-block">
             Save profile
           </button>
           {editing && profile?.phone ? (
             <button
               type="button"
               onClick={() => setEditing(false)}
-              className="w-full py-2 text-sm text-slate-500 transition active:scale-95"
+              className="ru-btn ru-btn-ghost ru-btn-block"
             >
               Cancel
             </button>
@@ -137,30 +132,30 @@ export function AccountView() {
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="mt-4 flex w-full items-center gap-4 rounded-xl border border-gray-100 bg-white p-4 text-left shadow-sm transition active:scale-95"
+          className="ru-card ru-row mt-4 w-full !border-0"
         >
           {profile?.photo_data_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={profile.photo_data_url}
               alt=""
-              className="h-16 w-16 rounded-full object-cover"
+              className="h-14 w-14 rounded-full object-cover"
             />
           ) : (
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#000000] text-2xl font-bold text-white">
+            <span className="ru-icon-circle !h-14 !w-14 text-xl font-bold">
               {initial}
             </span>
           )}
           <span className="min-w-0 flex-1">
-            <span className="flex items-center gap-2 text-lg font-bold text-slate-900">
+            <span className="flex items-center gap-2 text-lg font-bold text-black">
               <span aria-hidden>{flag}</span>
               {profile?.name || "Guest"}
             </span>
-            <span className="mt-0.5 block text-sm text-slate-500">
+            <span className="mt-0.5 block text-sm text-[var(--ru-muted)]">
               {profile?.phone} · {country.name}
             </span>
           </span>
-          <User className="h-5 w-5 text-gray-400" aria-hidden />
+          <User className="h-5 w-5 text-[var(--ru-muted)]" aria-hidden />
         </button>
       )}
 
@@ -178,26 +173,29 @@ export function AccountView() {
 
       {profile?.phone ? <RiderReferralCard /> : null}
 
-      <ul className="mt-6 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-        <li>
-          <button
-            type="button"
-            onClick={() => {
-              resetOnboardingForReplay();
-              router.push("/onboarding?replay=1");
-            }}
-            className="flex w-full items-center gap-3 px-4 py-4 text-left transition active:scale-[0.99] active:bg-gray-50"
-          >
-            <span className="text-[#000000]">
-              <PlayCircle className="h-5 w-5" />
-            </span>
-            <span className="flex-1 text-sm font-medium text-slate-900">
-              See features again
-            </span>
-            <span className="text-xs text-slate-400">Tour</span>
-            <ChevronRight className="h-4 w-4 text-gray-400" aria-hidden />
-          </button>
-        </li>
+      <div className="ru-list mt-6">
+        <button
+          type="button"
+          onClick={() => {
+            resetOnboardingForReplay();
+            router.push("/onboarding?replay=1");
+          }}
+          className="ru-row w-full"
+        >
+          <span className="text-black">
+            <PlayCircle className="h-5 w-5" />
+          </span>
+          <span className="flex-1 text-sm font-semibold text-black">
+            See features again
+          </span>
+          <span className="ru-chip">Tour</span>
+          <ChevronRight className="h-4 w-4 text-[var(--ru-muted)]" aria-hidden />
+        </button>
+        <MenuRow
+          href="/notifications"
+          icon={<Bell className="h-5 w-5" />}
+          label="Notifications"
+        />
         <MenuRow
           href="/account/payment"
           icon={<CreditCard className="h-5 w-5" />}
@@ -208,24 +206,19 @@ export function AccountView() {
           icon={<MapPinned className="h-5 w-5" />}
           label="Saved Places"
         />
-        <li>
-          <Link
-            href="/help"
-            className="flex items-center gap-3 border-t border-gray-100 px-4 py-4 transition active:scale-[0.99] active:bg-gray-50"
-          >
-            <span className="text-[#000000]">
-              <HelpCircle className="h-5 w-5" />
-            </span>
-            <span className="flex-1 text-sm font-medium text-slate-900">
-              Help &amp; Support
-            </span>
-            <span className="text-xs text-slate-400">WhatsApp · Email</span>
-            <ChevronRight className="h-4 w-4 text-gray-400" aria-hidden />
-          </Link>
-        </li>
-      </ul>
+        <Link href="/help" className="ru-row w-full">
+          <span className="text-black">
+            <HelpCircle className="h-5 w-5" />
+          </span>
+          <span className="flex-1 text-sm font-semibold text-black">
+            Help &amp; Support
+          </span>
+          <span className="text-xs text-[var(--ru-muted)]">WhatsApp · Email</span>
+          <ChevronRight className="h-4 w-4 text-[var(--ru-muted)]" aria-hidden />
+        </Link>
+      </div>
 
-      <p className="mt-6 text-center text-xs text-slate-400">
+      <p className="mt-6 text-center text-xs text-[var(--ru-muted)]">
         {t("available_in", { locale, country: countryCode })}:{" "}
         {AVAILABLE_IN_FLAGS}
       </p>
@@ -234,12 +227,12 @@ export function AccountView() {
         <button
           type="button"
           onClick={logout}
-          className="mt-4 w-full py-3 text-center text-sm font-semibold text-rose-600 transition active:scale-95"
+          className="ru-btn ru-btn-ghost ru-btn-block mt-2 !text-[var(--ru-error)]"
         >
           Log Out / Clear Profile
         </button>
       ) : null}
-    </main>
+    </PageShell>
   );
 }
 
@@ -253,17 +246,10 @@ function MenuRow({
   label: string;
 }) {
   return (
-    <li>
-      <Link
-        href={href}
-        className="flex items-center gap-3 border-t border-gray-100 px-4 py-4 first:border-t-0 transition active:scale-[0.99] active:bg-gray-50"
-      >
-        <span className="text-[#000000]">{icon}</span>
-        <span className="flex-1 text-sm font-medium text-slate-900">
-          {label}
-        </span>
-        <ChevronRight className="h-4 w-4 text-gray-400" aria-hidden />
-      </Link>
-    </li>
+    <Link href={href} className="ru-row w-full">
+      <span className="text-black">{icon}</span>
+      <span className="flex-1 text-sm font-semibold text-black">{label}</span>
+      <ChevronRight className="h-4 w-4 text-[var(--ru-muted)]" aria-hidden />
+    </Link>
   );
 }

@@ -31,7 +31,7 @@ export function CustomerTabBar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-[60] h-16 border-t border-gray-100 bg-white pb-[env(safe-area-inset-bottom)] font-[system-ui,Segoe_UI,sans-serif]"
+      className="fixed inset-x-0 bottom-0 z-[60] border-t border-[var(--ru-line)] bg-white/95 pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-sans)] backdrop-blur"
       style={{ height: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}
       aria-label="Main"
     >
@@ -45,8 +45,8 @@ export function CustomerTabBar() {
                 href={tab.href}
                 className={`flex flex-1 flex-col items-center justify-center gap-0.5 transition active:scale-95 ${
                   active
-                    ? "font-bold text-[#000000]"
-                    : "font-normal text-[#6B7280]"
+                    ? "font-bold text-black"
+                    : "font-medium text-[var(--ru-muted)]"
                 }`}
               >
                 <Icon

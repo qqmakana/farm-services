@@ -13,6 +13,7 @@ import {
 import { useDriverApp } from "@/components/driver/driver-app-provider";
 import { PickupDescribeCard } from "@/components/driver/pickup-describe-card";
 import { RiderSpottingCard } from "@/components/driver/rider-spotting-card";
+import { PageShell } from "@/components/ui/page-shell";
 import {
   formatMoney,
   SERVICE_LABELS,
@@ -76,23 +77,18 @@ export function DriverJobsView() {
   }
 
   return (
-    <main className="ru-page-enter mx-auto min-h-dvh max-w-lg px-5 pb-24 pt-8">
-      <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-black">
-        Jobs
-      </h1>
-      <p className="mt-1 text-sm text-[var(--ru-muted)]">Active trips and history</p>
-
-      <div className="mt-5 flex gap-4 border-b border-[var(--ru-line)]">
+    <PageShell title="Jobs" subtitle="Active trips and history">
+      <div
+        className="ru-segment"
+        style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}
+      >
         {(["active", "completed", "cancelled"] as const).map((key) => (
           <button
             key={key}
             type="button"
             onClick={() => setSegment(key)}
-            className={`-mb-px border-b-2 pb-2 text-sm font-semibold capitalize transition ${
-              segment === key
-                ? "border-black text-black"
-                : "border-transparent text-[var(--ru-muted)]"
-            }`}
+            aria-selected={segment === key}
+            className="capitalize"
           >
             {key}
           </button>
@@ -100,17 +96,15 @@ export function DriverJobsView() {
       </div>
 
       {error ? (
-        <p className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800">
+        <p className="mt-4 rounded-[var(--ru-radius)] bg-[var(--ru-elevated)] px-3 py-2 text-sm text-[var(--ru-error)]">
           {error}
         </p>
       ) : null}
 
       {segment === "active" && active ? (
         <section className="ru-card mt-5 p-4">
-          <p className="text-xs font-semibold tracking-wide text-[var(--ru-muted)] uppercase">
-            Current job
-          </p>
-          <h2 className="mt-1 text-lg font-bold text-black">
+          <p className="ru-section-label">Current job</p>
+          <h2 className="mt-1 font-[family-name:var(--font-display)] text-lg font-bold text-black">
             {active.reference_code} · {STATUS_LABELS[active.status]}
           </h2>
           <p className="mt-2 text-sm text-[var(--ru-muted)]">
@@ -144,7 +138,7 @@ export function DriverJobsView() {
               <button
                 type="button"
                 disabled={pending}
-                className="ru-btn ru-btn-brand ru-btn-block"
+                className="ru-btn ru-btn-primary ru-btn-block"
                 onClick={() => run(() => startTrip(active.id, driverId!))}
               >
                 START TRIP
@@ -172,10 +166,10 @@ export function DriverJobsView() {
 
       {list.length === 0 ? (
         <div className="mt-12 text-center">
-          <p className="text-base font-semibold text-slate-900">
+          <p className="font-[family-name:var(--font-display)] text-base font-semibold text-black">
             {segment === "active" ? "No active jobs" : `No ${segment} jobs`}
           </p>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-[var(--ru-muted)]">
             {segment === "active"
               ? "No active jobs. Wait for requests on the Home tab."
               : "Completed trips will show here after you finish them."}
@@ -183,7 +177,7 @@ export function DriverJobsView() {
           {segment === "active" ? (
             <Link
               href="/driver/home"
-              className="mt-6 inline-block rounded-xl bg-[#000000] px-6 py-3 text-sm font-bold text-white transition active:scale-95"
+              className="ru-btn ru-btn-primary mt-6"
             >
               Open Home map
             </Link>
@@ -198,13 +192,10 @@ export function DriverJobsView() {
                 ? Math.round(Number(job.platform_commission))
                 : Math.round((fee * 15) / 100);
             return (
-              <li
-                key={job.id}
-                className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
-              >
+              <li key={job.id} className="ru-card p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-[var(--ru-muted)]">
                       {new Date(job.completed_at || job.created_at).toLocaleString(
                         "en-ZA",
                         {
@@ -215,21 +206,21 @@ export function DriverJobsView() {
                         },
                       )}
                     </p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">
+                    <p className="mt-1 text-sm font-semibold text-black">
                       {job.pickup_landmark} → {job.dropoff_landmark}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-[var(--ru-muted)]">
                       {SERVICE_LABELS[job.service_type]} · {job.reference_code}
                     </p>
                     {job.status === "completed" ? (
-                      <p className="mt-1 text-xs text-amber-800">
+                      <p className="mt-1 text-xs text-[var(--ru-muted)]">
                         Commission deducted: {formatMoney(commission)}
                       </p>
                     ) : null}
                     {job.status === "completed" &&
                     !job.customer_rating_stars ? (
-                      <div className="mt-3 space-y-2 rounded-lg bg-slate-50 p-3 dark:bg-[#2a2a2a]">
-                        <p className="text-xs font-semibold text-slate-700 dark:text-white">
+                      <div className="mt-3 space-y-2 rounded-[var(--ru-radius)] bg-[var(--ru-elevated)] p-3">
+                        <p className="text-xs font-semibold text-black">
                           Rate this customer
                         </p>
                         <div className="flex gap-1">
@@ -244,8 +235,8 @@ export function DriverJobsView() {
                               }}
                               className={`h-8 w-8 rounded-full text-xs font-bold ${
                                 (ratingJobId === job.id ? rateStars : 5) >= n
-                                  ? "bg-amber-400 text-white"
-                                  : "bg-white text-slate-500"
+                                  ? "bg-black text-white"
+                                  : "bg-white text-[var(--ru-muted)]"
                               }`}
                             >
                               {n}
@@ -255,7 +246,7 @@ export function DriverJobsView() {
                         <button
                           type="button"
                           disabled={pending}
-                          className="rounded-lg bg-black px-3 py-1.5 text-xs font-bold text-white"
+                          className="ru-btn ru-btn-primary !min-h-9 !px-3 !text-xs"
                           onClick={() =>
                             run(async () => {
                               await rateCustomerByDriver(
@@ -274,7 +265,7 @@ export function DriverJobsView() {
                       </div>
                     ) : null}
                     {job.customer_rating_stars ? (
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="mt-1 text-xs text-[var(--ru-muted)]">
                         You rated customer ★{job.customer_rating_stars}
                       </p>
                     ) : null}
@@ -282,7 +273,7 @@ export function DriverJobsView() {
                       <button
                         type="button"
                         disabled={pending}
-                        className="mt-2 text-xs font-semibold text-black underline dark:text-white"
+                        className="mt-2 text-xs font-semibold text-black underline"
                         onClick={() => {
                           const raw = window.prompt(
                             "Rate this merchant 1–5 stars",
@@ -302,7 +293,7 @@ export function DriverJobsView() {
                       </button>
                     ) : null}
                   </div>
-                  <p className="text-base font-bold text-slate-900">
+                  <p className="text-base font-bold text-black">
                     {formatMoney(fee)}
                   </p>
                 </div>
@@ -311,6 +302,6 @@ export function DriverJobsView() {
           })}
         </ul>
       )}
-    </main>
+    </PageShell>
   );
 }

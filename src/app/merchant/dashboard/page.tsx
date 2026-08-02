@@ -12,14 +12,14 @@ export default async function MerchantDashboardPage() {
     return (
       <>
         <SiteNav active="shop" />
-        <main className="mx-auto max-w-lg px-4 py-12 text-center">
-          <h1 className="text-2xl font-bold">Merchant sign-in required</h1>
-          <p className="mt-2 text-sm text-slate-600">
+        <main className="ru-page max-w-lg text-center">
+          <h1 className="ru-page-title">Merchant sign-in required</h1>
+          <p className="ru-page-sub">
             Sign in with your business email to open the dashboard.
           </p>
           <Link
             href="/login?next=/merchant/dashboard"
-            className="mt-6 inline-block rounded-xl bg-[#000000] px-5 py-3 text-sm font-bold text-white"
+            className="ru-btn ru-btn-primary mt-6 !inline-flex"
           >
             Sign in
           </Link>
@@ -37,16 +37,19 @@ export default async function MerchantDashboardPage() {
     return (
       <>
         <SiteNav active="shop" />
-        <main className="mx-auto max-w-lg px-4 py-12 text-center">
-          <h1 className="text-2xl font-bold">Merchant access required</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            This account is <strong>{data.role}</strong>, not a merchant. Register
-            a shop from the Sell page, or ask ops to set{" "}
-            <code className="rounded bg-slate-100 px-1">role=merchant</code>.
+        <main className="ru-page max-w-lg text-center">
+          <h1 className="ru-page-title">Merchant access required</h1>
+          <p className="ru-page-sub">
+            This account is <strong className="text-black">{data.role}</strong>,
+            not a merchant. Register a shop from the Sell page, or ask ops to set{" "}
+            <code className="rounded bg-[var(--ru-elevated)] px-1">
+              role=merchant
+            </code>
+            .
           </p>
           <Link
             href="/shop"
-            className="mt-6 inline-block rounded-xl bg-[#000000] px-5 py-3 text-sm font-bold text-white"
+            className="ru-btn ru-btn-primary mt-6 !inline-flex"
           >
             Go to Sell / Register
           </Link>

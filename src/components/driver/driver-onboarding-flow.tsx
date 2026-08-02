@@ -49,26 +49,28 @@ export function DriverOnboardingFlow() {
   }, [router]);
 
   return (
-    <div className="relative flex min-h-dvh flex-col bg-white text-black">
+    <div className="relative flex min-h-dvh flex-col bg-white font-[family-name:var(--font-sans)] text-black">
       <header className="flex items-center justify-between gap-3 px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-2">
-        <p className="text-sm font-bold tracking-tight">{BRAND.appName} Driver</p>
+        <p className="font-[family-name:var(--font-display)] text-sm font-bold tracking-tight">
+          {BRAND.appName} Driver
+        </p>
         <button
           type="button"
           onClick={skip}
-          className="rounded-full px-3 py-2 text-sm font-semibold text-slate-500"
+          className="ru-btn ru-btn-ghost !min-h-9 !px-3 !text-sm !text-[var(--ru-muted)]"
         >
           Skip
         </button>
       </header>
 
       <div className="flex flex-1 flex-col justify-center px-6 pb-4">
-        <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+        <p className="ru-section-label">
           Step {index + 1} of {SLIDES.length}
         </p>
-        <h1 className="mt-2 font-[family-name:var(--font-display)] text-[28px] font-bold tracking-tight">
+        <h1 className="mt-2 font-[family-name:var(--font-display)] text-[28px] font-bold tracking-tight text-black">
           {SLIDES[index].title}
         </h1>
-        <p className="mt-3 text-base leading-relaxed text-slate-600">
+        <p className="mt-3 text-base leading-relaxed text-[var(--ru-muted)]">
           {SLIDES[index].body}
         </p>
       </div>
@@ -85,7 +87,7 @@ export function DriverOnboardingFlow() {
             if (isLast) finish();
             else setIndex((i) => Math.min(last, i + 1));
           }}
-          className="ru-btn ru-btn-primary ru-btn-block !rounded-full"
+          className="ru-btn ru-btn-primary ru-btn-block"
         >
           {isLast ? "Start driving" : "Next"}
         </button>

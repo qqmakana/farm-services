@@ -1,21 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  /* Uber-inspired neutrals + Village Ride accent */
-  --ru-ink: #000000;
+  /* Uber-style Village Ride — prompt palette */
+  --ru-ink: #1a1a1a;
   --ru-muted: #6e6e6e;
   --ru-line: #eaeaea;
   --ru-surface: #ffffff;
-  --ru-canvas: #f6f6f6;
-  --ru-brand: #000000;
-  --ru-brand-2: #1a1a1a;
-  --ru-black: #000000;
+  --ru-canvas: #f8f8f8;
+  --ru-elevated: #eeeeee;
+  --ru-brand: #1a1a1a;
+  --ru-brand-2: #000000;
+  --ru-black: #1a1a1a;
+  --ru-accent: #0ecb81;
   --ru-success: #0ecb81;
   --ru-warning: #ff6b00;
   --ru-error: #e11900;
-  --ru-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+  --ru-shadow: 0 1px 2px rgb(0 0 0 / 6%), 0 4px 12px rgb(0 0 0 / 4%);
+  --ru-shadow-sheet: 0 -8px 32px rgb(0 0 0 / 12%);
   --ru-radius: 16px;
+  --ru-radius-lg: 24px;
   --ru-radius-pill: 9999px;
+  --ru-touch: 48px;
   --background: var(--ru-canvas);
   --foreground: var(--ru-ink);
 }
@@ -26,10 +31,15 @@ html[data-theme="dark"] {
   --ru-line: #2a2a2a;
   --ru-surface: #1e1e1e;
   --ru-canvas: #121212;
+  --ru-elevated: #2a2a2a;
   --ru-black: #ffffff;
+  --ru-brand: #ffffff;
+  --ru-brand-2: #e5e5e5;
+  --ru-accent: #0ecb81;
   --background: var(--ru-canvas);
   --foreground: var(--ru-ink);
   --ru-shadow: 0 2px 12px rgb(0 0 0 / 40%);
+  --ru-shadow-sheet: 0 -8px 32px rgb(0 0 0 / 45%);
   color-scheme: dark;
 }
 
@@ -57,11 +67,167 @@ body {
 
 /* ——— Uber-style primitives ——— */
 
+.ru-page {
+  margin-left: auto;
+  margin-right: auto;
+  min-height: 100dvh;
+  max-width: 32rem;
+  background: var(--ru-canvas);
+  padding: 1.75rem 1.25rem calc(6rem + env(safe-area-inset-bottom, 0px));
+  color: var(--ru-ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+.ru-page-title {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--ru-ink);
+}
+
+.ru-page-sub {
+  margin-top: 0.35rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--ru-muted);
+}
+
+.ru-section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ru-muted);
+}
+
 .ru-card {
   background: var(--ru-surface);
   border: 1px solid var(--ru-line);
   border-radius: var(--ru-radius);
   box-shadow: var(--ru-shadow);
+}
+
+.ru-list {
+  overflow: hidden;
+  border: 1px solid var(--ru-line);
+  border-radius: var(--ru-radius);
+  background: var(--ru-surface);
+  box-shadow: var(--ru-shadow);
+}
+
+.ru-row {
+  display: flex;
+  min-height: var(--ru-touch);
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  text-align: left;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.ru-row + .ru-row,
+.ru-list > * + * {
+  border-top: 1px solid var(--ru-line);
+}
+
+.ru-row:active {
+  background: var(--ru-canvas);
+  transform: scale(0.995);
+}
+
+.ru-icon-circle {
+  display: inline-flex;
+  height: 2.75rem;
+  width: 2.75rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ru-radius-pill);
+  background: var(--ru-black);
+  color: white;
+}
+
+.ru-soft-field {
+  width: 100%;
+  min-height: var(--ru-touch);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--ru-elevated);
+  padding: 0.75rem 0.9rem;
+  font-size: 1rem;
+  color: var(--ru-ink);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.ru-soft-field:focus {
+  outline: none;
+  border-color: var(--ru-black);
+  background: var(--ru-surface);
+}
+
+.ru-soft-field::placeholder {
+  color: #9a9a9a;
+}
+
+.ru-sheet {
+  border-radius: var(--ru-radius-lg) var(--ru-radius-lg) 0 0;
+  background: var(--ru-surface);
+  box-shadow: var(--ru-shadow-sheet);
+}
+
+.ru-sheet-handle {
+  margin: 0.5rem auto 0;
+  height: 0.25rem;
+  width: 2.5rem;
+  border-radius: var(--ru-radius-pill);
+  background: #d4d4d4;
+}
+
+.ru-segment {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem;
+  border-radius: var(--ru-radius-pill);
+  background: var(--ru-elevated);
+  padding: 0.25rem;
+}
+
+.ru-segment button {
+  min-height: 2.5rem;
+  border-radius: var(--ru-radius-pill);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--ru-muted);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.ru-segment button[aria-selected="true"],
+.ru-segment button.ru-segment-active {
+  background: var(--ru-surface);
+  color: var(--ru-ink);
+  box-shadow: var(--ru-shadow);
+}
+
+.ru-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--ru-radius-pill);
+  background: var(--ru-elevated);
+  padding: 0.2rem 0.65rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ru-ink);
+  text-transform: uppercase;
 }
 
 .ru-btn {
@@ -97,7 +263,7 @@ body {
 }
 
 .ru-btn-primary:hover {
-  background: #1a1a1a;
+  background: #000000;
 }
 
 .ru-btn-brand {
@@ -296,13 +462,13 @@ html[data-theme="dark"] :where(.text-slate-500, .text-gray-500) {
 }
 
 .ru-badge-success {
-  background: #e8faf2;
-  color: #067a4c;
+  background: #111111;
+  color: #ffffff;
 }
 
 .ru-badge-warn {
-  background: #fff4e8;
-  color: #b34a00;
+  background: #eeeeee;
+  color: #111111;
 }
 
 .ru-badge-muted {
@@ -313,6 +479,11 @@ html[data-theme="dark"] :where(.text-slate-500, .text-gray-500) {
 .ru-badge-danger {
   background: #fdecea;
   color: #b01000;
+}
+
+/* Prefer token buttons over one-off black rectangles */
+a.ru-btn {
+  text-decoration: none;
 }
 
 .ru-skeleton {

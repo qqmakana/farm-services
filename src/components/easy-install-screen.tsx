@@ -56,24 +56,24 @@ export function EasyInstallScreen() {
 
   if (standalone) {
     return (
-      <main className="flex min-h-dvh flex-col items-center justify-center bg-[var(--ru-brand)] px-6 text-center text-white">
+      <main className="ru-force-light flex min-h-dvh flex-col items-center justify-center bg-[var(--ru-canvas)] px-6 text-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/icons/icon-192.png"
           alt=""
           width={80}
           height={80}
-          className="h-20 w-20 rounded-[1.25rem] shadow-lg"
+          className="h-20 w-20 rounded-[1.25rem] shadow-[var(--ru-shadow)]"
         />
-        <h1 className="mt-8 font-[family-name:var(--font-display)] text-3xl font-bold">
+        <h1 className="ru-page-title mt-8">
           {BRAND.appName} is ready
         </h1>
-        <p className="mt-3 max-w-xs text-base text-white/85">
-          Open it from your home screen — look for the green icon.
+        <p className="ru-page-sub max-w-xs">
+          Open it from your home screen — look for the app icon.
         </p>
         <Link
           href="/"
-          className="mt-10 w-full max-w-sm rounded-2xl bg-white py-4 text-lg font-bold text-[var(--ru-brand)]"
+          className="ru-btn ru-btn-primary ru-btn-block mt-10 max-w-sm"
         >
           Open Village Ride
         </Link>
@@ -82,15 +82,7 @@ export function EasyInstallScreen() {
   }
 
   return (
-    <main className="relative flex min-h-dvh flex-col bg-[var(--ru-brand)] text-white">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-30"
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 50% at 50% -10%, #404040, transparent), radial-gradient(ellipse 60% 40% at 100% 100%, #1a1a1a, transparent)",
-        }}
-      />
-
+    <main className="ru-force-light relative flex min-h-dvh flex-col bg-[var(--ru-canvas)] text-black">
       <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-10 pt-16 text-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -98,15 +90,13 @@ export function EasyInstallScreen() {
           alt=""
           width={96}
           height={96}
-          className="h-24 w-24 rounded-[1.5rem] shadow-xl ring-4 ring-white/20"
+          className="h-24 w-24 rounded-[1.5rem] shadow-[var(--ru-shadow)] ring-1 ring-[var(--ru-line)]"
         />
-        <p className="mt-8 text-sm font-semibold tracking-[0.2em] text-white/70 uppercase">
-          {BRAND.company}
-        </p>
-        <h1 className="mt-2 font-[family-name:var(--font-display)] text-4xl font-bold tracking-tight sm:text-5xl">
+        <p className="ru-section-label mt-8">{BRAND.company}</p>
+        <h1 className="ru-page-title mt-2 !text-4xl sm:!text-5xl">
           {BRAND.appName}
         </h1>
-        <p className="mt-4 max-w-sm text-lg text-white/90">
+        <p className="ru-page-sub mt-4 max-w-sm !text-lg">
           {android
             ? "Tap once to download the app — works right here, no menus."
             : ios
@@ -118,56 +108,60 @@ export function EasyInstallScreen() {
           type="button"
           onClick={onInstall}
           disabled={downloading}
-          className="mt-12 w-full max-w-sm rounded-2xl bg-white py-5 text-xl font-bold text-[var(--ru-brand)] shadow-lg active:scale-[0.98] disabled:opacity-70"
+          className="ru-btn ru-btn-primary ru-btn-block mt-12 max-w-sm !min-h-14 !text-xl"
         >
           {downloading ? "Downloading…" : android ? "Download app" : "Install app"}
         </button>
 
         {iosHint ? (
-          <div className="mt-8 w-full max-w-sm rounded-2xl bg-white/10 p-4 text-left text-sm leading-relaxed text-white">
+          <div className="ru-card mt-8 w-full max-w-sm p-4 text-left text-sm leading-relaxed text-black">
             {inApp ? (
               <>
                 <p className="font-bold">First, leave {inAppBrowserName()}:</p>
-                <p className="mt-2">
-                  1. Tap <strong>⋯</strong> or <strong>Share</strong> at the bottom of the
-                  screen
+                <p className="mt-2 text-[var(--ru-muted)]">
+                  1. Tap <strong className="text-black">⋯</strong> or{" "}
+                  <strong className="text-black">Share</strong> at the bottom of
+                  the screen
                 </p>
-                <p>
-                  2. Tap <strong>Open in Safari</strong>
+                <p className="text-[var(--ru-muted)]">
+                  2. Tap <strong className="text-black">Open in Safari</strong>
                 </p>
                 <p className="mt-3 font-bold">Then in Safari:</p>
-                <p className="mt-2">3. Tap the Share button</p>
-                <p>4. Tap Add to Home Screen</p>
-                <p>5. Tap Add</p>
+                <p className="mt-2 text-[var(--ru-muted)]">3. Tap the Share button</p>
+                <p className="text-[var(--ru-muted)]">4. Tap Add to Home Screen</p>
+                <p className="text-[var(--ru-muted)]">5. Tap Add</p>
               </>
             ) : (
               <>
                 <p className="font-bold">On iPhone (Safari only):</p>
-                <p className="mt-2">1. Tap the Share button</p>
-                <p>2. Tap Add to Home Screen</p>
-                <p>3. Tap Add</p>
+                <p className="mt-2 text-[var(--ru-muted)]">1. Tap the Share button</p>
+                <p className="text-[var(--ru-muted)]">2. Tap Add to Home Screen</p>
+                <p className="text-[var(--ru-muted)]">3. Tap Add</p>
               </>
             )}
           </div>
         ) : downloadStarted ? (
-          <div className="mt-8 w-full max-w-sm rounded-2xl bg-white/10 p-4 text-left text-sm leading-relaxed text-white">
+          <div className="ru-card mt-8 w-full max-w-sm p-4 text-left text-sm leading-relaxed text-black">
             <p className="font-bold">Almost there</p>
-            <p className="mt-2">1. Open the downloaded file (check notifications)</p>
-            <p>2. Tap Install</p>
-            <p>
-              3. If Android warns about the source, tap <strong>Settings</strong> →{" "}
-              <strong>Allow</strong>, then Install again
+            <p className="mt-2 text-[var(--ru-muted)]">
+              1. Open the downloaded file (check notifications)
+            </p>
+            <p className="text-[var(--ru-muted)]">2. Tap Install</p>
+            <p className="text-[var(--ru-muted)]">
+              3. If Android warns about the source, tap{" "}
+              <strong className="text-black">Settings</strong> →{" "}
+              <strong className="text-black">Allow</strong>, then Install again
             </p>
             <button
               type="button"
               onClick={onInstall}
-              className="mt-4 w-full rounded-xl bg-white py-3 text-base font-bold text-[var(--ru-brand)]"
+              className="ru-btn ru-btn-primary ru-btn-block mt-4"
             >
               Download again
             </button>
           </div>
         ) : (
-          <p className="mt-6 max-w-xs text-sm text-white/65">
+          <p className="mt-6 max-w-xs text-sm text-[var(--ru-muted)]">
             {android
               ? "Free · Works from WhatsApp, Chrome, or any browser"
               : "Free · No Play Store needed"}
@@ -175,9 +169,9 @@ export function EasyInstallScreen() {
         )}
       </div>
 
-      <p className="relative z-10 pb-8 text-center text-xs text-white/50">
+      <p className="relative z-10 pb-8 text-center text-xs text-[var(--ru-muted)]">
         Already installed?{" "}
-        <Link href="/" className="underline underline-offset-2">
+        <Link href="/" className="font-semibold text-black underline underline-offset-2">
           Open the app
         </Link>
       </p>
