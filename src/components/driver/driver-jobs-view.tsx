@@ -126,6 +126,8 @@ export function DriverJobsView() {
               pickupLng={active.pickup_lng}
               dropoffLat={active.dropoff_lat}
               dropoffLng={active.dropoff_lng}
+              customerPhone={active.customer_phone}
+              customerName={active.customer_name}
             />
           </div>
           {active.service_type === "ride" ? (

@@ -15,6 +15,7 @@ import {
 } from "@/lib/countries";
 import { formatMoney } from "@/lib/format";
 import { setGuestProfile } from "@/lib/guest-profile";
+import { enqueuePendingBooking } from "@/lib/offline-booking-queue";
 import { driverOptInNote } from "@/lib/night-fare";
 import type { NewJobInput, ServiceType, VehicleType } from "@/lib/types";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
@@ -102,6 +103,7 @@ export function CheckoutBlock({
   const router = useRouter();
   const { country, countryCode } = useCountry();
   const [formError, setFormError] = useState<string | null>(null);
+  const [queuedOffline, setQueuedOffline] = useState(false);
   const [payMethod, setPayMethod] = useState<PaymentMethodId>("cash");
   const [pending, startTransition] = useTransition();
 
@@ -110,8 +112,26 @@ export function CheckoutBlock({
 
   const optIn = driverOptInNote(serviceType, isNightRide);
 
+  function saveGuest(d: Draft) {
+    setGuestProfile({
+      name: d.customer_name,
+      phone: d.customer_phone,
+      country_code: countryCode,
+    });
+  }
+
+  function queueOffline(d: Draft) {
+    enqueuePendingBooking({
+      ...d,
+      country_code: d.country_code || countryCode,
+    });
+    setQueuedOffline(true);
+    setFormError(null);
+  }
+
   function requestJob() {
     setFormError(null);
+    setQueuedOffline(false);
     if (!ready) {
       setFormError("Complete the form first.");
       return;
@@ -119,11 +139,11 @@ export function CheckoutBlock({
     startTransition(async () => {
       try {
         const d = await draft();
-        setGuestProfile({
-          name: d.customer_name,
-          phone: d.customer_phone,
-          country_code: countryCode,
-        });
+        saveGuest(d);
+        if (typeof navigator !== "undefined" && navigator.onLine === false) {
+          queueOffline(d);
+          return;
+        }
         const job = await createCashJob({
           ...d,
           country_code: d.country_code || countryCode,
@@ -131,7 +151,22 @@ export function CheckoutBlock({
         router.push(`/trip/${job.reference_code}`);
         router.refresh();
       } catch (err) {
-        setFormError(err instanceof Error ? err.message : "Could not book");
+        const offline =
+          typeof navigator !== "undefined" && navigator.onLine === false;
+        const msg = err instanceof Error ? err.message : "Could not book";
+        const looksNetwork =
+          /fetch|network|failed to fetch|load failed|offline/i.test(msg);
+        if (offline || looksNetwork) {
+          try {
+            const d = await draft();
+            saveGuest(d);
+            queueOffline(d);
+            return;
+          } catch {
+            /* fall through */
+          }
+        }
+        setFormError(msg);
       }
     });
   }
@@ -238,6 +273,23 @@ export function CheckoutBlock({
           </p>
         )}
       </div>
+
+      {queuedOffline ? (
+        <div className="space-y-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-950">
+          <p className="font-semibold">Saved on this phone (offline)</p>
+          <p className="text-xs leading-relaxed">
+            Your landmark booking is stored here and will send automatically
+            when you have signal — GPS not required.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push("/activity")}
+            className="text-xs font-semibold underline"
+          >
+            View activity
+          </button>
+        </div>
+      ) : null}
 
       {formError ? (
         <div className="space-y-2 rounded-xl bg-rose-50 px-3 py-3 text-sm text-rose-800">

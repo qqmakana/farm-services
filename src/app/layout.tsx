@@ -7,6 +7,7 @@ import { UnsupportedMarketNotice } from "@/components/country/unsupported-market
 import { InstallShareBar } from "@/components/install-share-bar";
 import { PwaRegister } from "@/components/pwa-register";
 import { WhatsAppFloat } from "@/components/whatsapp-float";
+import { FlushPendingBookings } from "@/components/booking/flush-pending-bookings";
 import { OfflineBanner } from "@/components/offline-banner";
 import { FlushPendingPlaces } from "@/components/location/flush-pending-places";
 import { ErrorReporter } from "@/components/error-reporter";
@@ -99,6 +100,7 @@ export default function RootLayout({
               <PwaRegister />
               <OfflineBanner />
               <FlushPendingPlaces />
+              <FlushPendingBookings />
               <ErrorReporter />
               <AnalyticsBeacon />
               <div className="flex-1">{children}</div>

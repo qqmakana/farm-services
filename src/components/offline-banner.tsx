@@ -114,7 +114,7 @@ export function OfflineBanner() {
     >
       {online
         ? syncedMsg
-        : "You're offline — some features are unavailable until you reconnect."}
+        : "You're offline — landmark booking & saved places still work on this phone."}
     </div>
   );
 }

@@ -290,6 +290,8 @@ export function DriverHomeView() {
                     pickupLng={job.pickup_lng}
                     dropoffLat={job.dropoff_lat}
                     dropoffLng={job.dropoff_lng}
+                    customerPhone={job.customer_phone}
+                    customerName={job.customer_name}
                   />
                 </div>
                 {job.service_type === "courier" ? (
