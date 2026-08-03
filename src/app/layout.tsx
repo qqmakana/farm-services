@@ -12,6 +12,7 @@ import { OfflineBanner } from "@/components/offline-banner";
 import { FlushPendingPlaces } from "@/components/location/flush-pending-places";
 import { ErrorReporter } from "@/components/error-reporter";
 import { AnalyticsBeacon } from "@/components/analytics-beacon";
+import { PhoneFrame } from "@/components/layout/phone-frame";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
@@ -92,22 +93,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en-ZA" className={`${sans.variable} ${display.variable} h-full`}>
-      <body className="flex min-h-full flex-col bg-[var(--ru-canvas)] font-[family-name:var(--font-sans)] text-[var(--ru-ink)] antialiased">
+      <body className="min-h-full bg-gray-100 font-[family-name:var(--font-sans)] text-[var(--ru-ink)] antialiased">
         <CountryProvider>
           <ThemeProvider>
             <ToastProvider>
-              <PwaRegister />
-              <OfflineBanner />
-              <FlushPendingPlaces />
-              <FlushPendingBookings />
-              <ErrorReporter />
-              <AnalyticsBeacon />
-              <div className="flex-1">{children}</div>
-              <ConditionalFooter />
-              <InstallShareBar />
-              <WhatsAppFloat />
-              <CountryWelcomeModal />
-              <UnsupportedMarketNotice />
+              <PhoneFrame>
+                <PwaRegister />
+                <OfflineBanner />
+                <FlushPendingPlaces />
+                <FlushPendingBookings />
+                <ErrorReporter />
+                <AnalyticsBeacon />
+                <div className="flex min-h-dvh flex-1 flex-col">
+                  <div className="flex-1">{children}</div>
+                  <ConditionalFooter />
+                </div>
+                <InstallShareBar />
+                <WhatsAppFloat />
+                <CountryWelcomeModal />
+                <UnsupportedMarketNotice />
+              </PhoneFrame>
             </ToastProvider>
           </ThemeProvider>
         </CountryProvider>

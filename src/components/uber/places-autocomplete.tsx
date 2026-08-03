@@ -218,7 +218,7 @@ export function PlacesAutocomplete({
             required={required}
             className={
               compact
-                ? "w-full rounded-lg bg-transparent py-2.5 text-sm font-medium text-[var(--ru-ink)] outline-none placeholder:text-gray-400 focus:ring-0"
+                ? "w-full border-0 bg-transparent p-0 text-sm font-medium text-[var(--ru-ink)] outline-none ring-0 placeholder:text-gray-400 focus:border-0 focus:outline-none focus:ring-0"
                 : "w-full rounded-xl border border-gray-200 bg-[#F9FAFB] py-3 pr-3 pl-10 text-sm outline-none focus:border-[#000000]"
             }
             autoComplete="off"
@@ -229,7 +229,11 @@ export function PlacesAutocomplete({
             type="button"
             onClick={useGps}
             disabled={gpsLoading}
-            className="flex shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white px-3 text-[#000000] transition active:scale-[0.98] disabled:opacity-50"
+            className={
+              compact
+                ? "flex shrink-0 items-center justify-center rounded-lg bg-gray-100 px-2.5 text-[#000000] transition active:scale-[0.98] disabled:opacity-50"
+                : "flex shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white px-3 text-[#000000] transition active:scale-[0.98] disabled:opacity-50"
+            }
             aria-label="Use GPS"
           >
             <LocateFixed className="h-5 w-5" />

@@ -63,7 +63,7 @@ export default function DriverJoinPage() {
 
           <ul className="ru-card mt-5 space-y-2 p-4 text-sm font-medium text-[var(--ru-ink)]">
             <li>✓ 85% earnings · cash to you</li>
-            <li>✓ Flexible hours · go online when you want</li>
+            <li>✓ Browse jobs right away — verify before your first paid trip</li>
             <li>✓ Photo of you + vehicle on every job</li>
           </ul>
 

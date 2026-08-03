@@ -1,52 +1,50 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { Lock } from "lucide-react";
 import { useCountry } from "@/components/country/country-provider";
 import type { AppLocale, CountryCode } from "@/lib/countries";
-import { GLOBAL_COUNTRY_COUNT } from "@/lib/countries";
 import { t } from "@/lib/i18n";
 
 export function CountrySelector({
   compact = false,
   showLanguage = true,
+  locked = false,
 }: {
   compact?: boolean;
   showLanguage?: boolean;
+  /** Show “Country: South Africa” with lock — no picker. */
+  locked?: boolean;
 }) {
   const { country, countryCode, locale, setCountry, setLocale, countries } =
     useCountry();
-  const [filter, setFilter] = useState("");
 
-  const filtered = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    if (!q) return countries;
-    return countries.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.code.toLowerCase().includes(q) ||
-        c.currencySymbol.toLowerCase().includes(q),
+  if (locked) {
+    return (
+      <div
+        data-testid="country-locked"
+        className="flex items-center gap-2 rounded-xl bg-gray-100 px-3 py-2.5 text-sm font-medium text-slate-800"
+      >
+        <Lock className="h-4 w-4 shrink-0 text-slate-500" aria-hidden />
+        <span>
+          Country: {country.flag} {country.name}
+        </span>
+      </div>
     );
-  }, [countries, filter]);
+  }
 
   return (
     <div className={compact ? "space-y-2" : "space-y-3"}>
       <label className="block text-sm font-medium text-slate-700">
         {t("country_label", { locale, country: countryCode })}
-        {!compact ? (
-          <input
-            className="ru-soft-field mt-1 !min-h-11 text-sm"
-            placeholder={`Search ${GLOBAL_COUNTRY_COUNT} countries…`}
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          />
-        ) : null}
         <select
+          data-testid="country-select"
           className="ru-soft-field mt-1 text-sm"
           value={countryCode}
           onChange={(e) => setCountry(e.target.value as CountryCode)}
         >
-          {(filter.trim() ? filtered : countries).map((c) => (
+          {countries.map((c) => (
             <option key={c.code} value={c.code}>
               {c.flag} {c.name} — {c.currencySymbol}
             </option>
@@ -76,7 +74,7 @@ export function CountrySelector({
   );
 }
 
-/** First-open modal — confirm country (defaults to ZA if dismissed). */
+/** First-open modal — confirm among operating markets only (defaults to ZA). */
 export function CountryWelcomeModal() {
   const pathname = usePathname() ?? "";
   const {
@@ -87,17 +85,6 @@ export function CountryWelcomeModal() {
     setCountry,
     countries,
   } = useCountry();
-  const [filter, setFilter] = useState("");
-
-  const filtered = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    if (!q) return countries;
-    return countries.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.code.toLowerCase().includes(q),
-    );
-  }, [countries, filter]);
 
   useEffect(() => {
     if (!ready || !needsCountryPick) return;
@@ -139,19 +126,8 @@ export function CountryWelcomeModal() {
               {t("select_country", { locale, country: countryCode })}
             </p>
             <p className="mt-1 text-sm text-[var(--ru-muted)]">
-              Detected from your device — confirm to lock currency, phone
-              prefix, map &amp; pricing. Change later in Account. (
-              {GLOBAL_COUNTRY_COUNT} countries)
-            </p>
-            <p className="mt-2 rounded-xl bg-[var(--ru-elevated)] px-3 py-2 text-xs text-[var(--ru-ink)]">
-              Suggested:{" "}
-              <strong>
-                {countries.find((c) => c.code === countryCode)?.flag}{" "}
-                {countries.find((c) => c.code === countryCode)?.name ||
-                  countryCode}
-              </strong>{" "}
-              · {countries.find((c) => c.code === countryCode)?.currencySymbol}
-              {countries.find((c) => c.code === countryCode)?.currency}
+              We operate in South Africa, Nigeria, and Kenya. Confirm your
+              market for currency, phone prefix, map &amp; pricing.
             </p>
           </div>
           <button
@@ -163,14 +139,8 @@ export function CountryWelcomeModal() {
             ×
           </button>
         </div>
-        <input
-          className="ru-soft-field mt-3 text-sm"
-          placeholder="Search country…"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        />
-        <div className="mt-3 grid max-h-[45vh] gap-2 overflow-y-auto pr-1">
-          {filtered.map((c) => (
+        <div className="mt-4 grid gap-2">
+          {countries.map((c) => (
             <button
               key={c.code}
               type="button"

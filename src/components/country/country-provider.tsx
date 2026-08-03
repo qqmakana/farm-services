@@ -10,8 +10,10 @@ import {
   type ReactNode,
 } from "react";
 import {
-  enabledCountries,
+  DEFAULT_COUNTRY,
   getCountry,
+  isOperatingCountry,
+  operatingCountries,
   type AppLocale,
   type CountryCode,
   type CountryConfig,
@@ -49,12 +51,17 @@ export function CountryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const picked = hasPickedCountry();
     if (picked) {
-      setCountryCodeState(getStoredCountryCode());
+      const stored = getStoredCountryCode();
+      setCountryCodeState(
+        isOperatingCountry(stored) ? stored : DEFAULT_COUNTRY,
+      );
       setNeedsPick(false);
     } else {
-      // Auto-detect once, then lock via welcome modal / Continue
+      // Auto-detect among operating markets only; default ZA
       const detected = detectCountryFromBrowser();
-      setCountryCodeState(detected);
+      setCountryCodeState(
+        isOperatingCountry(detected) ? detected : DEFAULT_COUNTRY,
+      );
       setNeedsPick(true);
     }
     setLocaleState(getStoredLocale());
@@ -62,12 +69,13 @@ export function CountryProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setCountry = useCallback((code: CountryCode) => {
-    setStoredCountryCode(code);
-    setCountryCodeState(code);
+    const next = isOperatingCountry(code) ? code : DEFAULT_COUNTRY;
+    setStoredCountryCode(next);
+    setCountryCodeState(next);
     setNeedsPick(false);
     const existing = getGuestProfile();
     if (existing?.phone) {
-      setGuestProfile({ ...existing, country_code: code });
+      setGuestProfile({ ...existing, country_code: next });
     }
   }, []);
 
@@ -85,7 +93,7 @@ export function CountryProvider({ children }: { children: ReactNode }) {
       needsCountryPick,
       setCountry,
       setLocale,
-      countries: enabledCountries(),
+      countries: operatingCountries(),
     }),
     [countryCode, locale, ready, needsCountryPick, setCountry, setLocale],
   );
@@ -107,7 +115,7 @@ export function useCountry() {
       needsCountryPick: false,
       setCountry: (_: CountryCode) => {},
       setLocale: (_: AppLocale | "en") => {},
-      countries: enabledCountries(),
+      countries: operatingCountries(),
     };
   }
   return ctx;

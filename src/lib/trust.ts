@@ -69,8 +69,7 @@ export function driverCanGoOnline(driver: Driver): {
     }
     return {
       ok: false,
-      reason:
-        "Pending ID verification — Village Ride must approve your photos before you go online.",
+      reason: "Please complete your verification to accept paid trips.",
     };
   }
   return { ok: true };

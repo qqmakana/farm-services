@@ -7,6 +7,7 @@ import {
   COUNTRIES,
   DEFAULT_COUNTRY,
   isCountryCode,
+  isOperatingCountry,
   type CountryCode,
 } from "./countries";
 
@@ -136,9 +137,9 @@ export function detectCountryFromBrowser(): CountryCode {
   const tz = getBrowserTimeZone();
   if (tz) {
     const fromTz = countryFromTimezone(tz);
-    if (fromTz) return fromTz;
+    if (fromTz && isOperatingCountry(fromTz)) return fromTz;
   }
   const fromLang = countryFromNavigatorLanguage();
-  if (fromLang) return fromLang;
+  if (fromLang && isOperatingCountry(fromLang)) return fromLang;
   return DEFAULT_COUNTRY;
 }

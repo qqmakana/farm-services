@@ -57,7 +57,7 @@ export function UberShell({
 
   return (
     <div
-      className="ru-force-light fixed inset-x-0 top-0 z-[45] overflow-hidden bg-[#F3F3F3] font-[family-name:var(--font-sans)] text-[var(--ru-ink)]"
+      className="ru-force-light fixed top-0 left-1/2 z-[45] w-full max-w-md -translate-x-1/2 overflow-hidden bg-[#F3F3F3] font-[family-name:var(--font-sans)] text-[var(--ru-ink)]"
       style={{ bottom: bottomInset }}
     >
       {/* Full-screen map foundation */}

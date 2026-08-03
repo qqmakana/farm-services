@@ -4,18 +4,18 @@ import type { ReactNode } from "react";
 
 /**
  * Classic Uber "Where to?" — black circle (pickup) + black square (dropoff)
- * with a vertical connector. Use floating over the map or inside the sheet.
+ * with a vertical connector. Floating white card over the map / in the sheet.
  */
 export function WhereToBar({
   pickupSlot,
   dropoffSlot,
   className = "",
-  floating = false,
+  floating = true,
 }: {
   pickupSlot: ReactNode;
   dropoffSlot: ReactNode;
   className?: string;
-  /** White floating card over the map */
+  /** White floating card (default on for native look) */
   floating?: boolean;
 }) {
   return (
@@ -23,12 +23,12 @@ export function WhereToBar({
       data-testid="search-bar"
       className={`${
         floating
-          ? "rounded-2xl bg-white p-3 shadow-[0_4px_24px_rgba(0,0,0,0.08)]"
-          : "rounded-2xl border border-[var(--ru-line)] bg-white p-3"
+          ? "rounded-2xl bg-white p-4 shadow-lg"
+          : "rounded-2xl bg-white p-4 shadow-lg"
       } ${className}`}
     >
       <div className="flex gap-3">
-        <div className="flex w-3 shrink-0 flex-col items-center pt-3.5 pb-3.5">
+        <div className="flex w-3 shrink-0 flex-col items-center pt-4 pb-4">
           <span
             className="h-2 w-2 shrink-0 rounded-full bg-[var(--ru-ink)]"
             aria-hidden
@@ -42,10 +42,13 @@ export function WhereToBar({
             aria-hidden
           />
         </div>
-        <div className="min-w-0 flex-1 space-y-1">
-          <div className="min-h-11">{pickupSlot}</div>
-          <div className="border-t border-gray-100" />
-          <div className="min-h-11">{dropoffSlot}</div>
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="min-h-11 overflow-hidden rounded-lg bg-gray-100 p-3">
+            {pickupSlot}
+          </div>
+          <div className="min-h-11 overflow-hidden rounded-lg bg-gray-100 p-3">
+            {dropoffSlot}
+          </div>
         </div>
       </div>
     </div>

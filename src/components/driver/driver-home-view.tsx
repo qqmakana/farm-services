@@ -33,6 +33,10 @@ import {
   isApproachingCreditLimit,
   walletCreditFloor,
 } from "@/lib/wallet";
+import {
+  getDriverVerificationUiStatus,
+  VERIFICATION_BLOCK_MESSAGE,
+} from "@/components/driver/driver-verification-status-chip";
 import type { JobApplication } from "@/lib/types";
 
 const DriverJobsMap = dynamic(
@@ -156,6 +160,10 @@ export function DriverHomeView() {
   function toggleOnline() {
     if (!driverId || !driver) return;
     const next = !driver.is_online;
+    if (next && getDriverVerificationUiStatus(driver) !== "verified") {
+      setError(VERIFICATION_BLOCK_MESSAGE);
+      return;
+    }
     run(async () => {
       let lat = coords?.lat;
       let lng = coords?.lng;
@@ -187,10 +195,12 @@ export function DriverHomeView() {
   }
 
   const job = selected?.jobs;
+  const verificationBlocked =
+    Boolean(driver) && getDriverVerificationUiStatus(driver!) !== "verified";
 
   return (
     <div
-      className="fixed inset-x-0 top-0 z-[45] flex flex-col bg-[#F9FAFB]"
+      className="fixed top-0 left-1/2 z-[45] flex w-full max-w-md -translate-x-1/2 flex-col bg-[#F9FAFB]"
       style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}
     >
       {driverId ? <DriverPushPrompt driverId={driverId} /> : null}
@@ -207,10 +217,18 @@ export function DriverHomeView() {
           disabled={pending}
           onClick={toggleOnline}
           aria-pressed={Boolean(driver?.is_online)}
+          aria-disabled={verificationBlocked && !driver?.is_online}
+          title={
+            verificationBlocked && !driver?.is_online
+              ? VERIFICATION_BLOCK_MESSAGE
+              : undefined
+          }
           className={`absolute top-4 left-1/2 z-[500] flex min-h-12 min-w-[200px] -translate-x-1/2 items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-bold shadow-lg transition active:scale-95 disabled:opacity-60 ${
             driver?.is_online
               ? "bg-[var(--ru-success)] text-white"
-              : "bg-black text-white"
+              : verificationBlocked
+                ? "bg-black/50 text-white"
+                : "bg-black text-white"
           }`}
         >
           <span
@@ -224,7 +242,9 @@ export function DriverHomeView() {
 
         {!driver?.is_online ? (
           <p className="absolute bottom-28 left-4 right-4 z-[500] rounded-2xl bg-white/95 px-3 py-2.5 text-center text-xs text-[var(--ru-muted)] shadow-sm">
-            Go online to receive job requests nearby
+            {verificationBlocked
+              ? VERIFICATION_BLOCK_MESSAGE
+              : "Go online to receive job requests nearby"}
           </p>
         ) : null}
       </div>
@@ -381,8 +401,22 @@ export function DriverHomeView() {
               <button
                 type="button"
                 disabled={pending}
-                onClick={() => run(() => acceptOffer(job.id, driverId!))}
-                className="ru-btn ru-btn-brand !rounded-full py-3.5 text-sm font-bold"
+                aria-disabled={verificationBlocked}
+                title={
+                  verificationBlocked
+                    ? VERIFICATION_BLOCK_MESSAGE
+                    : undefined
+                }
+                onClick={() => {
+                  if (verificationBlocked) {
+                    setError(VERIFICATION_BLOCK_MESSAGE);
+                    return;
+                  }
+                  run(() => acceptOffer(job.id, driverId!));
+                }}
+                className={`ru-btn ru-btn-brand !rounded-full py-3.5 text-sm font-bold ${
+                  verificationBlocked ? "opacity-50" : ""
+                }`}
               >
                 ACCEPT
               </button>

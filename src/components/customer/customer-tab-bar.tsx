@@ -39,12 +39,12 @@ export function CustomerTabBar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-[60] border-t border-[var(--ru-line)] bg-white/95 pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-sans)] backdrop-blur"
+      className="fixed bottom-0 left-1/2 z-[60] w-full max-w-md -translate-x-1/2 border-t border-[var(--ru-line)] bg-white/95 pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-sans)] backdrop-blur"
       style={{ height: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}
       aria-label="Main"
       data-testid="customer-tab-bar"
     >
-      <ul className="mx-auto flex h-16 max-w-lg items-stretch justify-around px-1">
+      <ul className="mx-auto flex h-16 w-full items-stretch justify-around px-1">
         {TABS.map((tab) => {
           const active = tab.match(pathname);
           const Icon = tab.icon;

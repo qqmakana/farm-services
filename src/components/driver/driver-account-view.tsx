@@ -11,7 +11,6 @@ import {
   LogOut,
   Pencil,
   Settings,
-  ShieldCheck,
   Users,
 } from "lucide-react";
 import { updateDriverCountry, updateDriverPreferences, updateDriverVehicle } from "@/lib/actions";
@@ -19,7 +18,7 @@ import { useDriverApp } from "@/components/driver/driver-app-provider";
 import { CountrySelector } from "@/components/country/country-selector";
 import { useCountry } from "@/components/country/country-provider";
 import { DriverTrustPanel } from "@/components/driver-trust-panel";
-import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
+import { DriverVerificationStatusChip } from "@/components/driver/driver-verification-status-chip";
 import { DriverVehiclePhotos } from "@/components/driver-vehicle-photos";
 import { PageShell } from "@/components/ui/page-shell";
 import { vehicleDisplayLabel } from "@/lib/driver-display";
@@ -135,10 +134,7 @@ export function DriverAccountView() {
               {driver.phone}
             </p>
             <div className="mt-1">
-              <DriverVerifiedBadge
-                verified={isDriverTrustVerified(driver)}
-                compact
-              />
+              <DriverVerificationStatusChip driver={driver} />
             </div>
           </div>
           <ChevronRight className="h-5 w-5 text-[var(--ru-muted)]" aria-hidden />
@@ -165,16 +161,7 @@ export function DriverAccountView() {
       </section>
 
       <section className="ru-card mt-4 p-4">
-        <div className="flex items-center justify-between gap-2">
-          <p className="ru-section-label">Vehicle</p>
-          {isDriverTrustVerified(driver) ? (
-            <span className="ru-chip inline-flex items-center gap-1">
-              <ShieldCheck className="h-3.5 w-3.5" /> Verified
-            </span>
-          ) : (
-            <span className="ru-chip">Pending</span>
-          )}
-        </div>
+        <p className="ru-section-label">Vehicle</p>
         <p className="mt-2 text-sm font-semibold text-black">
           {vehicleDisplayLabel(driver)}
           {driver.vehicle_registration

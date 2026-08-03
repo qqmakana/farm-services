@@ -90,8 +90,11 @@ test.describe("Phase 2 — Driver join & status", () => {
     await page.goto("/driver/account");
     await dismissCountryModalIfPresent(page);
     // Mock seed drivers are typically verified; chip must exist either way
-    const status = page.getByText(/Verified|Pending/i).first();
+    const status = page.getByTestId("driver-verification-status");
     await expect(status).toBeVisible({ timeout: 15_000 });
+    await expect(
+      status.getByText(/Verified & Active|Pending Verification|Action Required/i),
+    ).toBeVisible();
   });
 });
 

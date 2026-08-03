@@ -98,6 +98,16 @@ export type CountryConfig = {
 
 export const DEFAULT_COUNTRY: CountryCode = "ZA";
 
+/** Markets the app actually operates in — never show the full world list in pickers. */
+export const OPERATING_COUNTRY_CODES = ["ZA", "NG", "KE"] as const;
+
+export function isOperatingCountry(code: string | null | undefined): boolean {
+  return (
+    typeof code === "string" &&
+    (OPERATING_COUNTRY_CODES as readonly string[]).includes(code)
+  );
+}
+
 const RURAL_HINTS = [
   "Main taxi rank / bus stage",
   "Clinic / hospital",
@@ -626,6 +636,13 @@ export function enabledCountries(): CountryConfig[] {
     });
 }
 
+/** App pickers only — ZA, NG, KE. */
+export function operatingCountries(): CountryConfig[] {
+  return OPERATING_COUNTRY_CODES.map((code) => COUNTRIES[code]).filter(
+    Boolean,
+  );
+}
+
 /** Featured launch markets (shown first in some UIs). */
 export const FEATURED_COUNTRY_CODES = Object.keys(FEATURED);
 
@@ -727,7 +744,8 @@ export const BLOCKED_COUNTRIES: readonly string[] = [];
 
 export const MARKET_REGIONS_LABEL = "every continent";
 
-export const UNSUPPORTED_MARKET_MESSAGE = `Village Ride supports landmark booking across ${GLOBAL_COUNTRY_COUNT} markets. Pay your driver in cash. Built for villages, towns, and cities.`;
+export const UNSUPPORTED_MARKET_MESSAGE =
+  "Village Ride operates in South Africa, Nigeria, and Kenya. Pay your driver in cash. Built for villages, towns, and cities.";
 
 export function isCountrySupported(countryCode: string): boolean {
   return isCountryCode(countryCode.toUpperCase());

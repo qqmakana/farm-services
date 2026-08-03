@@ -26,8 +26,8 @@ export function UnsupportedMarketNotice() {
   if (!show) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-20 z-[70] px-4 sm:bottom-6">
-      <div className="mx-auto flex max-w-lg items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-lg">
+    <div className="fixed bottom-20 left-1/2 z-[70] w-full max-w-md -translate-x-1/2 px-4 sm:bottom-6">
+      <div className="mx-auto flex w-full items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-lg">
         <p className="flex-1 text-xs leading-relaxed text-amber-950">
           {UNSUPPORTED_MARKET_MESSAGE}
         </p>

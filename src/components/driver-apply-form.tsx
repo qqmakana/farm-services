@@ -6,7 +6,7 @@ import { useState, useTransition } from "react";
 import { useCountry } from "@/components/country/country-provider";
 import { PhotoUploadField } from "@/components/photo-upload-field";
 import { applyToDriveWithTrust } from "@/lib/actions";
-import { enabledCountries, type CountryCode } from "@/lib/countries";
+import { operatingCountries, type CountryCode } from "@/lib/countries";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
 import type { VehicleType } from "@/lib/types";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
@@ -42,7 +42,7 @@ export function DriverApplyForm({
       try {
         await applyToDriveWithTrust(fd);
         setMessage(
-          "Application received. Village Ride will verify your ID & photos — you cannot go online until you see ✓ Verified.",
+          "Upload your documents to get started. You can start browsing jobs immediately. A human will verify your ID before your first paid trip.",
         );
         form.reset();
         setConduct(false);
@@ -65,6 +65,10 @@ export function DriverApplyForm({
         <strong className="text-slate-900">Courier</strong> in one go. Upload a
         clear photo of yourself and your vehicle (plate visible).
       </p>
+      <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm leading-relaxed text-amber-950">
+        Upload your documents to get started. You can start browsing jobs
+        immediately. A human will verify your ID before your first paid trip.
+      </p>
 
       <form onSubmit={onSubmit} className="mt-5 grid gap-4 sm:grid-cols-2">
         <label className="block sm:col-span-2">
@@ -74,7 +78,7 @@ export function DriverApplyForm({
             value={countryCode}
             onChange={(e) => setCountry(e.target.value as CountryCode)}
           >
-            {enabledCountries().map((c) => (
+            {operatingCountries().map((c) => (
               <option key={c.code} value={c.code}>
                 {c.flag} {c.name}
               </option>
