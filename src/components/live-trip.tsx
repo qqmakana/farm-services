@@ -193,19 +193,22 @@ export function LiveTrip({
           : "/ride";
 
   const paymentLabel =
-    job.payment_method === "cash"
+    job.payment_method === "cash" || !job.payment_method
       ? job.payment_status === "cash_collected"
-        ? "Cash collected"
-        : "Cash — pay driver"
+        ? "Cash · paid to driver"
+        : job.cash_collected_confirmed === false
+          ? "Cash · ops review"
+          : "Cash — pay driver"
       : job.payment_status === "paid_online"
         ? job.payment_method === "card"
-          ? "Paid · Card"
+          ? "Paid · Card (PayPal)"
           : "Paid · PayPal"
         : "Payment pending";
 
   const showCashReminder =
-    job.payment_method === "cash" &&
+    (job.payment_method === "cash" || !job.payment_method) &&
     job.payment_status === "unpaid" &&
+    job.cash_collected_confirmed !== false &&
     (confirmed ||
       job.status === "in_progress" ||
       job.status === "completed");
@@ -411,7 +414,7 @@ export function LiveTrip({
               ) : null}
               {job.drivers.phone ? (
                 <a
-                  href={`https://wa.me/${toWhatsAppNumber(job.drivers.phone)}`}
+                  href={`https://wa.me/${toWhatsAppNumber(job.drivers.phone, job.country_code)}`}
                   target="_blank"
                   rel="noreferrer"
                   className="ru-btn !min-h-10 !bg-[#25D366] !px-3 !text-xs text-white hover:!bg-[#1ebe57]"

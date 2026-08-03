@@ -23,33 +23,14 @@ import {
 } from "@/components/uber/sender-type-field";
 import { quoteFareAction } from "@/lib/actions";
 import { locsFromSearchParams } from "@/lib/booking-query";
+import { getGuestProfile } from "@/lib/guest-profile";
 import { useCountry } from "@/components/country/country-provider";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
-import type { VehicleType } from "@/lib/types";
+import type { VehicleType, WeightCategory } from "@/lib/types";
+import { WEIGHT_CATEGORIES } from "@/lib/pricing";
 import { suggestVehicle } from "@/lib/vehicles";
-
-const ITEM_OPTIONS = [
-  {
-    id: "small" as const,
-    label: "Small item (TV, microwave, boxes)",
-    from: 80,
-  },
-  {
-    id: "medium" as const,
-    label: "Medium item (Fridge, washing machine)",
-    from: 150,
-  },
-  {
-    id: "large" as const,
-    label: "Large item (Couch, bed, stove)",
-    from: 250,
-  },
-  {
-    id: "xl" as const,
-    label: "Building materials (cement, roof sheets)",
-    from: 200,
-  },
-] as const;
+import { WeightCategoryField } from "@/components/uber/weight-category-field";
+import { FareBreakdownCard } from "@/components/uber/fare-breakdown-card";
 
 export function DeliverySheet({
   onPinChange,
@@ -70,14 +51,17 @@ export function DeliverySheet({
   const [senderPhone, setSenderPhone] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [recipientPhone, setRecipientPhone] = useState("");
-  const [size, setSize] =
-    useState<(typeof ITEM_OPTIONS)[number]["id"]>("medium");
+  const [weight, setWeight] = useState<WeightCategory>("medium");
   const [notes, setNotes] = useState("");
   const [vehicle, setVehicle] = useState<VehicleType>("bakkie");
   const [whenMode, setWhenMode] = useState<WhenMode>("now");
   const [scheduledLocal, setScheduledLocal] = useState(defaultLaterLocal);
   const [fee, setFee] = useState(country.pricing.delivery.base);
   const [baseFee, setBaseFee] = useState(country.pricing.delivery.base);
+  const [distanceFare, setDistanceFare] = useState(0);
+  const [distanceKm, setDistanceKm] = useState(0);
+  const [bookingFee, setBookingFee] = useState(5);
+  const [villagePass, setVillagePass] = useState(false);
   const [isNight, setIsNight] = useState(false);
   const [nightExtra, setNightExtra] = useState(0);
   const [currency, setCurrency] = useState(country.currency);
@@ -89,8 +73,10 @@ export function DeliverySheet({
   );
 
   useEffect(() => {
-    setVehicle(suggestVehicle({ service_type: "delivery", delivery_size: size }));
-  }, [size]);
+    setVehicle(
+      suggestVehicle({ service_type: "delivery", weight_category: weight }),
+    );
+  }, [weight]);
 
   useEffect(() => {
     onPinChange?.(
@@ -126,19 +112,18 @@ export function DeliverySheet({
           dropoff_lat: dropoff.lat,
           dropoff_lng: dropoff.lng,
           at: atIso,
+          customer_phone: senderPhone || getGuestProfile()?.phone || null,
+          weight_category: weight,
         });
         if (!cancelled) {
-          const floor =
-            ITEM_OPTIONS.find((o) => o.id === size)?.from ??
-            country.pricing.delivery.base;
-          const base = Math.max(fare.base_fee_amount, floor);
-          const surcharge = fare.is_night_ride
-            ? Math.round((base * fare.night_surcharge_pct) / 100)
-            : 0;
-          setBaseFee(base);
-          setNightExtra(surcharge);
+          setBaseFee(fare.base_fee_amount);
+          setDistanceFare(fare.distance_fare);
+          setDistanceKm(fare.distance_km);
+          setBookingFee(fare.booking_fee);
+          setVillagePass(fare.village_pass);
+          setNightExtra(fare.night_surcharge_amount);
           setIsNight(fare.is_night_ride);
-          setFee(base + surcharge);
+          setFee(fare.fee_amount);
           setCurrency(fare.currency);
         }
       } catch {
@@ -148,10 +133,10 @@ export function DeliverySheet({
     return () => {
       cancelled = true;
     };
-  }, [vehicle, size, pickup.lat, pickup.lng, dropoff.lat, dropoff.lng, atIso, countryCode, country.pricing.delivery.base]);
+  }, [vehicle, weight, pickup.lat, pickup.lng, dropoff.lat, dropoff.lng, atIso, countryCode, senderPhone]);
 
   const itemLabel =
-    ITEM_OPTIONS.find((o) => o.id === size)?.label ?? "Goods";
+    WEIGHT_CATEGORIES.find((o) => o.id === weight)?.label ?? "Goods";
 
   const ready =
     Boolean(senderName.trim()) &&
@@ -254,22 +239,11 @@ export function DeliverySheet({
       </div>
       <LandmarkHelperText />
 
-      <label className="block text-sm font-semibold text-[#000000]">
-        What are you sending?
-        <select
-          className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
-          value={size}
-          onChange={(e) =>
-            setSize(e.target.value as (typeof ITEM_OPTIONS)[number]["id"])
-          }
-        >
-          {ITEM_OPTIONS.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.label} — from R{o.from}
-            </option>
-          ))}
-        </select>
-      </label>
+      <WeightCategoryField
+        value={weight}
+        onChange={setWeight}
+        serviceLabel="delivery"
+      />
 
       <label className="block text-sm font-semibold text-[#000000]">
         Special notes
@@ -281,6 +255,16 @@ export function DeliverySheet({
           onChange={(e) => setNotes(e.target.value)}
         />
       </label>
+
+      <FareBreakdownCard
+        baseFare={baseFee}
+        distanceFare={distanceFare + nightExtra}
+        platformFee={bookingFee}
+        total={fee}
+        currency={currency}
+        villagePass={villagePass}
+        distanceKm={distanceKm}
+      />
 
       <CheckoutBlock
         fee={fee}
@@ -309,6 +293,7 @@ export function DeliverySheet({
           dispatcher_notes:
             [
               `Sender type: ${senderTypeLabel(senderType)}`,
+              `Weight: ${weight}`,
               isNight && "Night Ride (Premium) — after-hours safety surcharge",
               recipientName.trim() && `Recipient: ${recipientName.trim()}`,
               recipientPhone.trim() && `Recipient phone: ${recipientPhone.trim()}`,
@@ -318,8 +303,16 @@ export function DeliverySheet({
               .join(" · ") || null,
           details: {
             item_description: itemLabel,
-            size,
-            needs_helpers: size === "large" || size === "xl",
+            weight_category: weight,
+            size:
+              weight === "light"
+                ? "small"
+                : weight === "medium"
+                  ? "medium"
+                  : weight === "heavy"
+                    ? "large"
+                    : "xl",
+            needs_helpers: weight === "heavy" || weight === "extra_heavy",
             sender_type: senderType,
           },
           fee_amount: fee,

@@ -41,6 +41,8 @@ export function PlacesAutocomplete({
   showGps = false,
   preferVillages = false,
   allowAddMissing = true,
+  /** Borderless Uber-style field (Where to? bar) */
+  compact = false,
 }: {
   label?: string;
   placeholder: string;
@@ -50,6 +52,7 @@ export function PlacesAutocomplete({
   showGps?: boolean;
   preferVillages?: boolean;
   allowAddMissing?: boolean;
+  compact?: boolean;
 }) {
   const { country, countryCode, locale } = useCountry();
   const [focused, setFocused] = useState(false);
@@ -177,7 +180,7 @@ export function PlacesAutocomplete({
 
   return (
     <div className="relative">
-      {label ? (
+      {label && !compact ? (
         <label className="mb-1 block text-sm font-semibold text-[#000000]">
           {label}
           {required ? " *" : ""}
@@ -185,8 +188,17 @@ export function PlacesAutocomplete({
       ) : null}
       <div className="flex gap-2">
         <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          {!compact ? (
+            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          ) : null}
           <input
+            data-testid={
+              /where to|dropoff|destination/i.test(placeholder || "")
+                ? "dropoff-input"
+                : /current location|pickup/i.test(placeholder || label || "")
+                  ? "pickup-input"
+                  : undefined
+            }
             value={value.label}
             onChange={(e) =>
               // Keep map pin while typing (Uber-style) — only a new place pick moves it
@@ -204,7 +216,11 @@ export function PlacesAutocomplete({
               t("search_places", { locale, country: countryCode })
             }
             required={required}
-            className="w-full rounded-xl border border-gray-200 bg-[#F9FAFB] py-3 pr-3 pl-10 text-sm outline-none focus:border-[#000000]"
+            className={
+              compact
+                ? "w-full rounded-lg bg-transparent py-2.5 text-sm font-medium text-[var(--ru-ink)] outline-none placeholder:text-gray-400 focus:ring-0"
+                : "w-full rounded-xl border border-gray-200 bg-[#F9FAFB] py-3 pr-3 pl-10 text-sm outline-none focus:border-[#000000]"
+            }
             autoComplete="off"
           />
         </div>
@@ -213,18 +229,20 @@ export function PlacesAutocomplete({
             type="button"
             onClick={useGps}
             disabled={gpsLoading}
-            className="flex shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white px-3 text-[#000000] transition active:scale-95 disabled:opacity-50"
+            className="flex shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white px-3 text-[#000000] transition active:scale-[0.98] disabled:opacity-50"
             aria-label="Use GPS"
           >
             <LocateFixed className="h-5 w-5" />
           </button>
         ) : null}
       </div>
-      <p className="mt-1 text-xs text-slate-500">
-        {country.flag} {country.name} — type a landmark or address (e.g.
-        &ldquo;{hintExample}&rdquo;). Tap the map or GPS to pin — both stay
-        active.
-      </p>
+      {!compact ? (
+        <p className="mt-1 text-xs text-slate-500">
+          {country.flag} {country.name} — type a landmark or address (e.g.
+          &ldquo;{hintExample}&rdquo;). Tap the map or GPS to pin — both stay
+          active.
+        </p>
+      ) : null}
       {gpsError ? (
         <p className="mt-1 text-xs text-rose-600">{gpsError}</p>
       ) : null}

@@ -18,7 +18,16 @@ import {
 } from "./dispatch/offer-chain";
 import { sendPushToToken } from "./firebase/admin";
 import { isConfirmedStatus, isSearchingStatus } from "./job-status";
-import { applyCommissionToWallet } from "./wallet";
+import {
+  applyCommissionToWallet,
+  cashPlatformRemittance,
+  cardDriverPayout,
+  creditLimitBlockMessage,
+  creditPayoutToWallet,
+  driverEligibleForDispatch,
+  isCardPaymentMethod,
+  isCashPaymentMethod,
+} from "./wallet";
 import {
   decisionToDriverPatch,
   runDriverKyc,
@@ -87,6 +96,17 @@ function useAdmin() {
   return isSupabaseConfigured() && hasServiceRole();
 }
 
+function weightFromDetails(
+  details: unknown,
+): string | null {
+  if (!details || typeof details !== "object") return null;
+  const d = details as Record<string, unknown>;
+  if (typeof d.weight_category === "string") return d.weight_category;
+  if (typeof d.size === "string") return d.size;
+  if (typeof d.item_weight === "string") return d.item_weight;
+  return null;
+}
+
 async function resolveFare(params: {
   vehicle: VehicleType;
   service_type?: ServiceType | null;
@@ -97,20 +117,29 @@ async function resolveFare(params: {
   dropoff_lng?: number | null;
   /** ISO datetime — night surcharge uses this (or now). */
   at?: string | null;
+  customer_phone?: string | null;
+  is_subscribed?: boolean | null;
+  weight_category?: string | null;
+  details?: unknown;
 }): Promise<FareBreakdown> {
   const countryCode = params.country_code || DEFAULT_COUNTRY;
-  let rules = null;
-  if (useAdmin()) {
-    const row = await getFareRule(params.vehicle, countryCode);
-    if (row) {
-      rules = {
-        base_fare: Number(row.base_fare),
-        per_km: Number(row.per_km),
-        platform_commission_pct: Number(row.platform_commission_pct),
-        currency: getCountry(countryCode).currency,
-      };
-    }
+
+  let isSubscribed = Boolean(params.is_subscribed);
+  if (!isSubscribed && params.customer_phone) {
+    const { getSubscriptionStatus } = await import("./subscription");
+    const status = await getSubscriptionStatus({
+      phone: params.customer_phone,
+      countryCode,
+    });
+    isSubscribed = status.isSubscribed;
   }
+
+  const weight =
+    params.weight_category ||
+    weightFromDetails(params.details) ||
+    null;
+
+  // Unified pricing (src/lib/pricing.ts) — ignore legacy rr_fare_rules % model
   return calculateFare({
     vehicle: params.vehicle,
     serviceType: params.service_type,
@@ -124,7 +153,8 @@ async function resolveFare(params: {
         ? { lat: params.dropoff_lat, lng: params.dropoff_lng }
         : null,
     at: params.at ?? null,
-    rules,
+    isSubscribed,
+    weightCategory: weight,
   });
 }
 
@@ -137,6 +167,8 @@ export async function quoteFareAction(params: {
   dropoff_lat?: number | null;
   dropoff_lng?: number | null;
   at?: string | null;
+  customer_phone?: string | null;
+  weight_category?: string | null;
 }): Promise<FareBreakdown> {
   return resolveFare(params);
 }
@@ -1329,6 +1361,9 @@ export async function createPayPalOrderAction(params: {
   dropoff_lat?: number | null;
   dropoff_lng?: number | null;
   at?: string | null;
+  customer_phone?: string | null;
+  country_code?: string | null;
+  service_type?: ServiceType | null;
 }) {
   if (!isPayPalConfigured()) {
     throw new Error(
@@ -1340,11 +1375,14 @@ export async function createPayPalOrderAction(params: {
   if (params.vehicle) {
     const fare = await resolveFare({
       vehicle: params.vehicle,
+      service_type: params.service_type,
+      country_code: params.country_code,
       pickup_lat: params.pickup_lat,
       pickup_lng: params.pickup_lng,
       dropoff_lat: params.dropoff_lat,
       dropoff_lng: params.dropoff_lng,
       at: params.at ?? null,
+      customer_phone: params.customer_phone,
     });
     amountZar = fare.fee_amount;
   }
@@ -1391,6 +1429,7 @@ export async function createJob(input: NewJobInput) {
   }
 
   // Never trust client fee_amount for charging (includes night surcharge).
+  // Driver rate is sacred. Village Pass only waives platform booking fee.
   const countryCode = input.country_code || DEFAULT_COUNTRY;
   const fare = await resolveFare({
     vehicle: input.required_vehicle,
@@ -1401,6 +1440,8 @@ export async function createJob(input: NewJobInput) {
     dropoff_lat: input.dropoff_lat,
     dropoff_lng: input.dropoff_lng,
     at: input.scheduled_for ?? null,
+    customer_phone: input.customer_phone,
+    details: input.details,
   });
 
   if (!useAdmin()) {
@@ -1408,6 +1449,18 @@ export async function createJob(input: NewJobInput) {
       ...input,
       fee_amount: fare.fee_amount,
     });
+    job.platform_commission = fare.platform_commission;
+    job.driver_payout = fare.driver_payout;
+    job.fee_currency = fare.currency;
+    job.currency = fare.currency;
+    job.booking_fee = fare.booking_fee;
+    job.priority_score = fare.village_pass ? 1 : 0;
+    job.village_pass = fare.village_pass;
+    job.weight_category = fare.weight_category;
+    job.base_fare = fare.base_fee_amount;
+    job.distance_fare = fare.distance_fare;
+    job.distance_km = fare.distance_km;
+    job.total_fare = fare.fee_amount;
     const wearing =
       input.service_type === "ride" &&
       input.details &&
@@ -1472,6 +1525,14 @@ export async function createJob(input: NewJobInput) {
     fee_amount: fare.fee_amount,
     platform_commission: fare.platform_commission,
     driver_payout: fare.driver_payout,
+    booking_fee: fare.booking_fee,
+    priority_score: fare.village_pass ? 1 : 0,
+    village_pass: fare.village_pass,
+    weight_category: fare.weight_category,
+    base_fare: fare.base_fee_amount,
+    distance_fare: fare.distance_fare,
+    distance_km: fare.distance_km,
+    total_fare: fare.fee_amount,
     fee_currency: fare.currency,
     country_code: countryCode,
     currency: fare.currency,
@@ -1575,6 +1636,7 @@ export async function capturePayPalAndCreateJob(
     dropoff_lat: draft.dropoff_lat,
     dropoff_lng: draft.dropoff_lng,
     at: draft.scheduled_for ?? null,
+    customer_phone: draft.customer_phone,
   });
 
   return createJob({
@@ -1599,6 +1661,7 @@ export async function createCashJob(draft: Omit<NewJobInput, "payment">) {
     dropoff_lat: draft.dropoff_lat,
     dropoff_lng: draft.dropoff_lng,
     at: draft.scheduled_for ?? null,
+    customer_phone: draft.customer_phone,
   });
   return createJob({
     ...draft,
@@ -2429,6 +2492,81 @@ export async function updateJobStatus(jobId: string, status: JobStatus) {
   return data as JobWithDriver;
 }
 
+/**
+ * Rider cancel — free for Village Pass (no cancellation fee charged).
+ * Allowed while still searching / not yet in progress.
+ */
+export async function cancelRiderJobAction(params: {
+  jobId: string;
+  customerPhone: string;
+}) {
+  const phoneDigits = params.customerPhone.replace(/\D/g, "");
+  if (phoneDigits.length < 9) throw new Error("Phone required to cancel.");
+
+  if (!useAdmin()) {
+    const job = mockRepo.listJobs().find((j) => j.id === params.jobId);
+    if (!job) throw new Error("Trip not found.");
+    const jobPhone = String(job.customer_phone || "").replace(/\D/g, "");
+    if (!jobPhone.endsWith(phoneDigits.slice(-9))) {
+      throw new Error("Phone does not match this trip.");
+    }
+    if (
+      job.status !== "new" &&
+      job.status !== "searching_driver" &&
+      job.status !== "assigned" &&
+      job.status !== "confirmed"
+    ) {
+      throw new Error("This trip can no longer be cancelled in-app.");
+    }
+    // Village Pass perk: free cancellations (no fee applied either way today)
+    const updated = mockRepo.updateStatus(params.jobId, "cancelled");
+    revalidateAll();
+    return { job: updated, freeCancel: Boolean(job.village_pass) };
+  }
+
+  const admin = createAdminClient();
+  const { data: job, error: fetchErr } = await admin
+    .from("rr_jobs")
+    .select("*")
+    .eq("id", params.jobId)
+    .maybeSingle();
+  if (fetchErr) throw new Error(fetchErr.message);
+  if (!job) throw new Error("Trip not found.");
+
+  const jobPhone = String(job.customer_phone || "").replace(/\D/g, "");
+  if (!jobPhone.endsWith(phoneDigits.slice(-9))) {
+    throw new Error("Phone does not match this trip.");
+  }
+  if (
+    !["new", "searching_driver", "assigned", "confirmed"].includes(job.status)
+  ) {
+    throw new Error("This trip can no longer be cancelled in-app.");
+  }
+
+  const { data, error } = await admin
+    .from("rr_jobs")
+    .update({
+      status: "cancelled",
+      offered_driver_id: null,
+      offer_expires_at: null,
+      dispatcher_notes: [
+        job.dispatcher_notes,
+        job.village_pass
+          ? "Cancelled by rider (Village Pass — free cancel)"
+          : "Cancelled by rider",
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    })
+    .eq("id", params.jobId)
+    .select(JOB_WITH_RELATIONS)
+    .single();
+
+  if (error) throw new Error(error.message);
+  revalidateAll();
+  return { job: data as JobWithDriver, freeCancel: Boolean(job.village_pass) };
+}
+
 /* Uber-style driver realtime ops */
 
 export async function setDriverOnline(
@@ -2446,6 +2584,9 @@ export async function setDriverOnline(
     if (online) {
       const gate = driverCanGoOnline(allowed);
       if (!gate.ok) throw new Error(gate.reason || "Cannot go online.");
+      if (!driverEligibleForDispatch(allowed)) {
+        throw new Error(creditLimitBlockMessage(allowed.country_code));
+      }
     }
     const driver = mockRepo.setDriverOnline(driverId, online, lat, lng);
     revalidateAll();
@@ -2470,6 +2611,11 @@ export async function setDriverOnline(
   if (online) {
     const gate = driverCanGoOnline(existing as Driver);
     if (!gate.ok) throw new Error(gate.reason || "Cannot go online.");
+    if (!driverEligibleForDispatch(existing as Driver)) {
+      throw new Error(
+        creditLimitBlockMessage((existing as Driver).country_code),
+      );
+    }
   }
 
   const now = new Date().toISOString();
@@ -2606,6 +2752,9 @@ export async function acceptOffer(jobId: string, driverId: string) {
 
   if (!jobRow || !driverRow) throw new Error("Job or driver not found");
   if (!isSearchingStatus(jobRow.status)) throw new Error("Offer already taken");
+  if (!driverEligibleForDispatch(driverRow as Driver)) {
+    throw new Error(creditLimitBlockMessage((driverRow as Driver).country_code));
+  }
   if (!vehicleFitsJob(driverRow.vehicle_type, jobRow.required_vehicle)) {
     throw new Error(
       `This job needs a ${jobRow.required_vehicle}. You drive a ${driverRow.vehicle_type}.`,
@@ -2800,9 +2949,25 @@ export async function startTrip(jobId: string, driverId: string) {
   return typed;
 }
 
-export async function completeTrip(jobId: string, driverId: string) {
+export type CompleteTripOptions = {
+  /** Required for cash trips: true = rider paid; false = flag ops, skip fee. */
+  cashCollected?: boolean;
+};
+
+/**
+ * Complete a trip and settle the wallet:
+ * A) Cash + confirmed: deduct platform_fee (booking_fee) from driver prepaid wallet
+ * A') Cash + not collected: complete + flag ops, no wallet change
+ * B) Card/PayPal: credit driver's (total − platform_fee) — stored driver_payout
+ * C) Village Pass: platform_fee was 0 at booking — cash deducts 0; card credits full driver fare
+ */
+export async function completeTrip(
+  jobId: string,
+  driverId: string,
+  options?: CompleteTripOptions,
+) {
   if (!useAdmin()) {
-    const job = mockRepo.completeTrip(jobId, driverId);
+    const job = mockRepo.completeTrip(jobId, driverId, options);
     if (job.customer_fcm_token) {
       await sendPushToToken(
         job.customer_fcm_token,
@@ -2811,18 +2976,15 @@ export async function completeTrip(jobId: string, driverId: string) {
     }
     if (job.shop_id) {
       const { notifyPartnerForJob } = await import("./partner");
-      const fee = Number(job.fee_amount) || 0;
-      const commission =
-        Number(job.platform_commission) > 0
-          ? Math.round(Number(job.platform_commission))
-          : Math.round((fee * 15) / 100);
-      await notifyPartnerForJob(
-        job,
-        "order_completed",
-        `Platform commission R${commission} deducted from driver wallet.`,
-      );
+      const remit = cashPlatformRemittance(job);
+      const payout = cardDriverPayout(job);
+      const note = isCardPaymentMethod(job.payment_method)
+        ? `Card trip — driver payout R${payout} credited; platform kept R${remit}.`
+        : job.cash_collected_confirmed === false
+          ? "Cash not confirmed — flagged for ops (no fee deducted)."
+          : `Platform fee R${remit} deducted from driver wallet.`;
+      await notifyPartnerForJob(job, "order_completed", note);
     }
-    // Auto-claim weekly trip bonus when threshold met (mock).
     try {
       await claimWeeklyTripBonus(driverId);
     } catch {
@@ -2849,13 +3011,44 @@ export async function completeTrip(jobId: string, driverId: string) {
     throw new Error("Job cannot be completed from this status");
   }
 
+  const method = String(jobRow.payment_method ?? "cash");
+  const cashTrip = isCashPaymentMethod(method);
+  if (cashTrip && options?.cashCollected === undefined) {
+    throw new Error("Confirm whether the rider paid cash before completing.");
+  }
+
+  const remit = cashPlatformRemittance(jobRow);
+  const payout = cardDriverPayout(jobRow);
+
   const now = new Date().toISOString();
+  const cashCollected = cashTrip ? Boolean(options?.cashCollected) : null;
+  const cashDenied = cashTrip && options?.cashCollected === false;
+
+  const jobPatch: Record<string, unknown> = {
+    status: "completed",
+    completed_at: now,
+  };
+
+  if (cashTrip) {
+    jobPatch.cash_collected_confirmed = cashCollected;
+    jobPatch.cash_confirmed_at = now;
+    if (cashCollected) {
+      jobPatch.payment_status = "cash_collected";
+      jobPatch.paid_at = now;
+    } else {
+      jobPatch.payment_status = "unpaid";
+      jobPatch.dispatcher_notes = [
+        jobRow.dispatcher_notes,
+        "CASH NOT COLLECTED — driver flagged for ops review",
+      ]
+        .filter(Boolean)
+        .join(" · ");
+    }
+  }
+
   const { data, error } = await admin
     .from("rr_jobs")
-    .update({
-      status: "completed",
-      completed_at: now,
-    })
+    .update(jobPatch)
     .eq("id", jobId)
     .eq("driver_id", driverId)
     .select(JOB_WITH_RELATIONS)
@@ -2863,23 +3056,33 @@ export async function completeTrip(jobId: string, driverId: string) {
 
   if (error) throw new Error(error.message);
 
-  // Customer paid the driver; deduct platform commission from driver wallet
-  const fee = Number(jobRow.fee_amount) || 0;
-  const commission =
-    Number(jobRow.platform_commission) > 0
-      ? Math.round(Number(jobRow.platform_commission))
-      : Math.round((fee * 15) / 100);
-
   const { data: driverRow } = await admin
     .from("rr_drivers")
     .select("wallet_balance")
     .eq("id", driverId)
     .maybeSingle();
 
-  const walletUpdate = applyCommissionToWallet({
-    walletBalance: Number(driverRow?.wallet_balance ?? 0),
-    commission,
-  });
+  const bal = Number(driverRow?.wallet_balance ?? 0);
+  let walletUpdate = {
+    wallet_balance: bal,
+    commission_owed: bal < 0 ? Math.abs(bal) : 0,
+  };
+
+  if (cashTrip && cashCollected) {
+    // Scenario A (CASH): rider paid total to driver; deduct platform_fee from wallet
+    walletUpdate = applyCommissionToWallet({
+      walletBalance: bal,
+      commission: remit,
+    });
+  } else if (isCardPaymentMethod(method) && !cashDenied) {
+    // Scenario B (CARD): // TODO: Integrate PayPal API here (capture already elsewhere)
+    // Credit driver (total − platform_fee) = stored driver_payout
+    walletUpdate = creditPayoutToWallet({
+      walletBalance: bal,
+      payout,
+    });
+  }
+  // Scenario C (Village Pass): remit is 0 / payout is full driver fare — handled above
 
   await admin
     .from("rr_drivers")
@@ -2892,11 +3095,12 @@ export async function completeTrip(jobId: string, driverId: string) {
 
   if ((data as Job).shop_id) {
     const { notifyPartnerForJob } = await import("./partner");
-    await notifyPartnerForJob(
-      data as Job,
-      "order_completed",
-      `Platform commission R${commission} deducted from driver wallet.`,
-    );
+    const note = isCardPaymentMethod(method)
+      ? `Card trip — driver payout R${payout} credited; platform kept R${remit}.`
+      : cashDenied
+        ? "Cash not confirmed — flagged for ops (no fee deducted)."
+        : `Platform fee R${remit} deducted from driver wallet.`;
+    await notifyPartnerForJob(data as Job, "order_completed", note);
   }
 
   if ((jobRow as Job).customer_fcm_token) {

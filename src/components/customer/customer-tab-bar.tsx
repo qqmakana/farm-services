@@ -2,15 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clock, Home, LayoutGrid, User } from "lucide-react";
+import { Clock, MapPin, User } from "lucide-react";
 
 const TABS = [
-  { href: "/", label: "Home", icon: Home, match: (p: string) => p === "/" },
   {
-    href: "/services",
-    label: "Services",
-    icon: LayoutGrid,
-    match: (p: string) => p.startsWith("/services"),
+    href: "/",
+    label: "Home",
+    icon: MapPin,
+    match: (p: string) =>
+      p === "/" ||
+      p.startsWith("/ride") ||
+      p.startsWith("/delivery") ||
+      p.startsWith("/courier") ||
+      p.startsWith("/farm") ||
+      p.startsWith("/shops") ||
+      p.startsWith("/shop") ||
+      p.startsWith("/group") ||
+      p.startsWith("/services"),
   },
   {
     href: "/activity",
@@ -34,6 +42,7 @@ export function CustomerTabBar() {
       className="fixed inset-x-0 bottom-0 z-[60] border-t border-[var(--ru-line)] bg-white/95 pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-sans)] backdrop-blur"
       style={{ height: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}
       aria-label="Main"
+      data-testid="customer-tab-bar"
     >
       <ul className="mx-auto flex h-16 max-w-lg items-stretch justify-around px-1">
         {TABS.map((tab) => {
@@ -43,6 +52,7 @@ export function CustomerTabBar() {
             <li key={tab.href} className="flex flex-1">
               <Link
                 href={tab.href}
+                data-testid={`customer-tab-${tab.label.toLowerCase()}`}
                 className={`flex flex-1 flex-col items-center justify-center gap-0.5 transition active:scale-95 ${
                   active
                     ? "font-bold text-black"

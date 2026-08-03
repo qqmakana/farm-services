@@ -6,7 +6,7 @@
   --ru-muted: #6e6e6e;
   --ru-line: #eaeaea;
   --ru-surface: #ffffff;
-  --ru-canvas: #f8f8f8;
+  --ru-canvas: #f3f3f3;
   --ru-elevated: #eeeeee;
   --ru-brand: #1a1a1a;
   --ru-brand-2: #000000;
@@ -15,8 +15,8 @@
   --ru-success: #0ecb81;
   --ru-warning: #ff6b00;
   --ru-error: #e11900;
-  --ru-shadow: 0 1px 2px rgb(0 0 0 / 6%), 0 4px 12px rgb(0 0 0 / 4%);
-  --ru-shadow-sheet: 0 -8px 32px rgb(0 0 0 / 12%);
+  --ru-shadow: 0 4px 24px rgb(0 0 0 / 8%);
+  --ru-shadow-sheet: 0 -4px 24px rgb(0 0 0 / 10%);
   --ru-radius: 16px;
   --ru-radius-lg: 24px;
   --ru-radius-pill: 9999px;
@@ -167,8 +167,9 @@ body {
 
 .ru-soft-field:focus {
   outline: none;
-  border-color: var(--ru-black);
-  background: var(--ru-surface);
+  border-color: transparent;
+  background: #f3f3f3;
+  box-shadow: 0 0 0 2px rgb(0 0 0 / 10%);
 }
 
 .ru-soft-field::placeholder {
@@ -264,6 +265,40 @@ body {
 
 .ru-btn-primary:hover {
   background: #000000;
+}
+
+/* Sticky Book CTA — brand green only for primary positive actions */
+.ru-btn-book {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 3.25rem;
+  border-radius: 0.75rem;
+  background: var(--ru-accent);
+  padding: 1rem 1.25rem;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.ru-btn-book:hover {
+  background: #0bb56f;
+}
+
+.ru-btn-book:active {
+  transform: scale(0.98);
+}
+
+.ru-btn-book:disabled {
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 .ru-btn-brand {

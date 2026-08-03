@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import {
+  Briefcase,
   ChevronRight,
   HelpCircle,
   IdCard,
@@ -11,6 +12,7 @@ import {
   Pencil,
   Settings,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 import { updateDriverCountry, updateDriverPreferences, updateDriverVehicle } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
@@ -235,6 +237,29 @@ export function DriverAccountView() {
             </span>
             <ChevronRight className="h-4 w-4 text-[var(--ru-muted)]" aria-hidden />
           </button>
+        </li>
+        <li>
+          <Link href="/driver/group" className="ru-row w-full">
+            <span className="text-black">
+              <Users className="h-5 w-5" />
+            </span>
+            <span className="flex-1 text-sm font-semibold text-black">
+              Group Rides
+            </span>
+            <span className="text-xs text-[var(--ru-muted)]">Shared loads</span>
+            <ChevronRight className="h-4 w-4 text-[var(--ru-muted)]" aria-hidden />
+          </Link>
+        </li>
+        <li>
+          <Link href="/driver/jobs" className="ru-row w-full">
+            <span className="text-black">
+              <Briefcase className="h-5 w-5" />
+            </span>
+            <span className="flex-1 text-sm font-semibold text-black">
+              Trip history
+            </span>
+            <ChevronRight className="h-4 w-4 text-[var(--ru-muted)]" aria-hidden />
+          </Link>
         </li>
         <li>
           <Link href="/help" className="ru-row w-full">

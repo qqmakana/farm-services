@@ -72,8 +72,29 @@ export function TripReceipt({ job, onClose }: Props) {
           </div>
           <div className="flex justify-between gap-3">
             <dt className="text-slate-500">Payment</dt>
-            <dd className="font-medium text-black">
-              {job.payment_method === "cash" ? "Cash to driver" : job.payment_method || "—"}
+            <dd className="text-right font-medium text-black">
+              {job.payment_method === "cash" || !job.payment_method ? (
+                <>
+                  Cash to driver
+                  <span className="mt-0.5 block text-xs font-normal text-slate-500">
+                    {job.payment_status === "cash_collected"
+                      ? "Paid to driver"
+                      : job.cash_collected_confirmed === false
+                        ? "Cash disputed — ops review"
+                        : "Pay driver in cash"}
+                  </span>
+                </>
+              ) : (
+                <>
+                  Card via PayPal
+                  <span className="mt-0.5 block text-xs font-normal text-slate-500">
+                    Paid via PayPal
+                    {job.paypal_capture_id
+                      ? ` · ${job.paypal_capture_id.slice(0, 12)}…`
+                      : ""}
+                  </span>
+                </>
+              )}
             </dd>
           </div>
           <div className="border-t border-slate-100 pt-2">

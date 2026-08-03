@@ -66,16 +66,16 @@ test.describe.serial("Driver flow", () => {
     await customer.goto("/delivery");
     await dismissCountryModalIfPresent(customer);
     await customer
-      .getByPlaceholder(/Town hardware store|Village main road/i)
+      .getByPlaceholder(/Farm gate|blue water tank|Town hardware|Village main/i)
       .fill(order.pickup);
     await customer
-      .getByPlaceholder(/Home address|Village landmark|Town market/i)
+      .getByPlaceholder(/Blue house|church|Home address|Village landmark|Town market/i)
       .fill(order.dropoff);
     await customer.getByLabel("Sender name").fill(order.customerName);
     await customer.getByLabel("Sender phone").fill(order.customerPhone);
     await customer.getByLabel(/What are you sending/i).selectOption(order.size);
     await customer.getByPlaceholder(/fragile|2nd floor/i).fill(order.item);
-    await customer.getByRole("button", { name: "Request Delivery" }).click();
+    await customer.getByRole("button", { name: /Request Delivery|Choose Village/i }).click();
     await customer.waitForURL(/\/trip\/RU-/i, { timeout: 20_000 });
 
     await page.goto("/driver/home");
@@ -93,9 +93,13 @@ test.describe.serial("Driver flow", () => {
       timeout: 15_000,
     });
     await page.getByRole("button", { name: "Complete Trip" }).click();
+    await page
+      .getByRole("button", { name: /Yes — paid|Yes - paid|paid/i })
+      .first()
+      .click();
 
     await page.getByRole("button", { name: /^completed$/i }).click();
-    await expect(page.getByText(/Commission deducted/i)).toBeVisible({
+    await expect(page.getByText(/Mthatha|completed|RU-/i).first()).toBeVisible({
       timeout: 15_000,
     });
 

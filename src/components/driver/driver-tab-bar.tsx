@@ -2,30 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, Home, Users, User, Wallet } from "lucide-react";
+import { MapPin, User, Wallet } from "lucide-react";
 
 const TABS = [
   {
     href: "/driver/home",
-    label: "Home",
-    icon: Home,
-    match: (p: string) => p === "/driver/home" || p === "/driver/home/",
-  },
-  {
-    href: "/driver/jobs",
     label: "Jobs",
-    icon: Briefcase,
-    match: (p: string) => p.startsWith("/driver/jobs"),
-  },
-  {
-    href: "/driver/group",
-    label: "Groups",
-    icon: Users,
-    match: (p: string) => p.startsWith("/driver/group"),
+    icon: MapPin,
+    match: (p: string) =>
+      p.startsWith("/driver/home") ||
+      p.startsWith("/driver/jobs") ||
+      p.startsWith("/driver/group"),
   },
   {
     href: "/driver/earnings",
-    label: "Earn",
+    label: "Earnings",
     icon: Wallet,
     match: (p: string) => p.startsWith("/driver/earnings"),
   },
@@ -47,6 +38,7 @@ export function DriverTabBar() {
       className="fixed inset-x-0 bottom-0 z-[60] border-t border-[var(--ru-line)] bg-white/95 font-[family-name:var(--font-sans)] backdrop-blur"
       style={{ height: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}
       aria-label="Driver"
+      data-testid="driver-tab-bar"
     >
       <ul className="mx-auto flex h-16 max-w-lg items-stretch justify-around px-1">
         {TABS.map((tab) => {
@@ -56,6 +48,7 @@ export function DriverTabBar() {
             <li key={tab.href} className="flex flex-1">
               <Link
                 href={tab.href}
+                data-testid={`driver-tab-${tab.label.toLowerCase()}`}
                 className={`flex flex-1 flex-col items-center justify-center gap-0.5 transition active:scale-95 ${
                   active
                     ? "font-bold text-black"

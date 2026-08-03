@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { MapPin } from "lucide-react";
-import { listJobsByCustomerPhone } from "@/lib/actions";
+import { listJobsByCustomerPhone, cancelRiderJobAction } from "@/lib/actions";
 import {
   formatMoney,
   SERVICE_LABELS,
@@ -276,6 +276,12 @@ export function ActivityView() {
                       >
                         {activityStatusLabel(job.status)}
                       </span>
+                      <span className="rounded-full bg-[#eeeeee] px-2 py-0.5 text-[11px] font-semibold text-black">
+                        {job.payment_method === "card" ||
+                        job.payment_method === "paypal"
+                          ? "Card"
+                          : "Cash"}
+                      </span>
                     </div>
                   </div>
                   <p className="shrink-0 text-base font-bold text-slate-900">
@@ -290,6 +296,41 @@ export function ActivityView() {
                   className="ru-btn ru-btn-secondary ru-btn-block mt-3 !min-h-10 !text-xs"
                 >
                   View receipt
+                </button>
+              ) : null}
+              {profile &&
+              ["new", "searching_driver", "assigned", "confirmed"].includes(
+                job.status,
+              ) ? (
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => {
+                    startTransition(async () => {
+                      try {
+                        await cancelRiderJobAction({
+                          jobId: job.id,
+                          customerPhone: profile.phone,
+                        });
+                        setJobs((prev) =>
+                          prev.map((j) =>
+                            j.id === job.id
+                              ? { ...j, status: "cancelled" }
+                              : j,
+                          ),
+                        );
+                      } catch (e) {
+                        setError(
+                          e instanceof Error ? e.message : "Could not cancel",
+                        );
+                      }
+                    });
+                  }}
+                  className="ru-btn ru-btn-secondary ru-btn-block mt-3 !min-h-10 !text-xs"
+                >
+                  {job.village_pass
+                    ? "Cancel free (Village Pass)"
+                    : "Cancel trip"}
                 </button>
               ) : null}
             </li>

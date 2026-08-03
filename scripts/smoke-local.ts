@@ -51,7 +51,7 @@ assert(active.status === "assigned", `expected assigned, got ${active.status}`);
 active = mockRepo.startTrip(active.id, sedan.id);
 assert(active.status === "in_progress", "start trip failed");
 
-active = mockRepo.completeTrip(active.id, sedan.id);
+active = mockRepo.completeTrip(active.id, sedan.id, { cashCollected: true });
 assert(active.status === "completed", "complete trip failed");
 
 const rating = mockRepo.rateTrip(active.id, 5, "smoke ok");

@@ -42,15 +42,18 @@ export function PayPalCheckout({
 
   if (!paypalReady()) {
     return (
-      <section className="rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-950">
-        <p className="font-semibold">Local test mode (PayPal not connected yet)</p>
-        <p className="mt-2 leading-relaxed">
-          PayPal keys are empty — you can still click through the full flow with a
-          local test payment. Add live keys later in{" "}
-          <code className="rounded bg-amber-100 px-1">.env.local</code>.
+      <section className="rounded-2xl border border-[var(--ru-line)] bg-[var(--ru-elevated)] p-5 text-sm text-[var(--ru-ink)]">
+        <p className="font-semibold">Card (local test mode)</p>
+        <p className="mt-2 text-xs leading-relaxed text-[var(--ru-muted)]">
+          PayPal keys are empty — this books a paid card trip for local testing.
+          Add{" "}
+          <code className="rounded bg-white px-1">NEXT_PUBLIC_PAYPAL_CLIENT_ID</code>{" "}
+          and{" "}
+          <code className="rounded bg-white px-1">PAYPAL_CLIENT_SECRET</code> for
+          live PayPal.
         </p>
         {error && (
-          <p className="mt-3 rounded-xl bg-rose-100 px-3 py-2 text-sm text-rose-800">
+          <p className="mt-3 rounded-xl bg-[#fdecea] px-3 py-2 text-sm text-[#b01000]">
             {error}
           </p>
         )}
@@ -68,7 +71,7 @@ export function PayPalCheckout({
               }
             });
           }}
-          className="mt-4 w-full rounded-xl bg-[#000000] px-4 py-3.5 text-sm font-bold text-white disabled:opacity-50"
+          className="ru-btn-book ru-btn-block mt-2"
         >
           {pending
             ? "Creating trip…"
@@ -78,10 +81,6 @@ export function PayPalCheckout({
                 ? `${submitLabel} · ${formatMoney(amount)}`
                 : `Pay ${formatMoney(amount)} (local test)`}
         </button>
-        <p className="mt-3 text-xs text-amber-900/80">
-          When you add PayPal Client ID + Secret, this becomes the real PayPal
-          button.
-        </p>
       </section>
     );
   }

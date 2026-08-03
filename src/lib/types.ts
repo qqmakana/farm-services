@@ -32,9 +32,18 @@ export type RideDetails = {
   local_mode?: string;
 };
 
+/** Delivery / Farm load band — self-selected, no scale. */
+export type WeightCategory =
+  | "light"
+  | "medium"
+  | "heavy"
+  | "extra_heavy";
+
 export type DeliveryDetails = {
   item_description: string;
-  size: "small" | "medium" | "large" | "xl";
+  /** @deprecated Prefer weight_category — kept for older jobs */
+  size?: "small" | "medium" | "large" | "xl";
+  weight_category?: WeightCategory;
   needs_helpers: boolean;
   /** Who is sending — individual vs local store (ops analytics). */
   sender_type?: "individual" | "business";
@@ -43,6 +52,7 @@ export type DeliveryDetails = {
 export type FarmDetails = {
   items: Array<{ name: string; qty: number; price: number }>;
   notes?: string;
+  weight_category?: WeightCategory;
   sender_type?: "individual" | "business";
 };
 
@@ -322,6 +332,17 @@ export type Job = {
   fee_amount: number;
   platform_commission?: number;
   driver_payout?: number;
+  /** Platform booking fee (R5). 0 with Village Pass. */
+  booking_fee?: number;
+  /** Delivery/Farm weight band */
+  weight_category?: WeightCategory | string | null;
+  base_fare?: number | null;
+  distance_fare?: number | null;
+  distance_km?: number | null;
+  total_fare?: number | null;
+  /** 1 = Village Pass priority matching */
+  priority_score?: number;
+  village_pass?: boolean;
   fee_currency: string;
   /** ISO-like country (ZA, KE, …) — drivers matched within country */
   country_code?: string | null;
@@ -333,6 +354,9 @@ export type Job = {
   paypal_order_id: string | null;
   paypal_capture_id: string | null;
   paid_at: string | null;
+  /** Driver confirmed cash was collected at complete (cash trips only). */
+  cash_collected_confirmed?: boolean | null;
+  cash_confirmed_at?: string | null;
   driver_id: string | null;
   assigned_at: string | null;
   dispatcher_notes: string | null;

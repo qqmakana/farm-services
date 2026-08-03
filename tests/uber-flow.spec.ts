@@ -256,6 +256,10 @@ test.describe.serial("Uber-style Village Ride E2E", () => {
 
   test("4) Trip completion & wallet commission", async () => {
     await driverPage.getByRole("button", { name: "Complete Trip" }).click();
+    await driverPage
+      .getByRole("button", { name: /Yes — paid|Yes - paid|paid/i })
+      .first()
+      .click();
 
     await driverPage.getByRole("button", { name: /^completed$/i }).click();
     await expect(driverPage.getByText(/Mthatha Taxi Rank/i).first()).toBeVisible({

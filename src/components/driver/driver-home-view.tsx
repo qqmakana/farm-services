@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import {
   acceptOffer,
@@ -19,10 +20,19 @@ import {
   isFirebaseClientConfigured,
   requestFcmToken,
 } from "@/lib/firebase/client";
+import { BRAND } from "@/lib/brand";
 import { formatMoney, SERVICE_LABELS } from "@/lib/format";
 import { distanceKm } from "@/lib/geo";
 import { pickupPhotoFromDetails } from "@/lib/pickup-photo";
 import { useDriverOffersRealtime } from "@/lib/use-driver-offers-realtime";
+import {
+  buildSimpleWalletTopUpMessage,
+  walletTopUpWhatsAppHref,
+} from "@/lib/whatsapp";
+import {
+  isApproachingCreditLimit,
+  walletCreditFloor,
+} from "@/lib/wallet";
 import type { JobApplication } from "@/lib/types";
 
 const DriverJobsMap = dynamic(
@@ -226,7 +236,14 @@ export function DriverHomeView() {
             <div className="flex items-center justify-between gap-3 text-xs text-[var(--ru-muted)]">
               <span>
                 Wallet{" "}
-                <strong className="text-black">
+                <strong
+                  data-testid="wallet-balance"
+                  className={
+                    Number(driver.wallet_balance ?? 0) < 0
+                      ? "text-[var(--ru-error)]"
+                      : "text-black"
+                  }
+                >
                   {formatMoney(Number(driver.wallet_balance ?? 0))}
                 </strong>
               </span>
@@ -237,13 +254,39 @@ export function DriverHomeView() {
                 </strong>
               </span>
             </div>
-            {Number(driver.wallet_balance ?? 0) < 0 ||
-            Number(driver.commission_owed ?? 0) > 0 ? (
+            {Number(driver.wallet_balance ?? 0) <
+              walletCreditFloor(driver.country_code) ? (
+              <div
+                data-testid="wallet-warning"
+                className="space-y-2 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2.5"
+              >
+                <p className="text-xs font-semibold text-rose-900">
+                  Credit limit reached — top up to go online again.
+                </p>
+                <a
+                  href={walletTopUpWhatsAppHref(
+                    BRAND.phoneWhatsApp,
+                    buildSimpleWalletTopUpMessage(driver.id),
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  data-testid="top-up-wallet-button"
+                  className="block rounded-xl bg-[#25D366] px-3 py-2 text-center text-xs font-bold text-white"
+                >
+                  Top Up Wallet on WhatsApp
+                </a>
+              </div>
+            ) : isApproachingCreditLimit(
+                Number(driver.wallet_balance ?? 0),
+                driver.country_code,
+              ) ? (
               <a
                 href="/driver/earnings"
-                className="block rounded-xl bg-rose-50 px-3 py-2 text-center text-xs font-semibold text-rose-800"
+                data-testid="wallet-warning"
+                className="block rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-center text-xs font-semibold text-amber-950"
               >
-                Top up wallet to keep receiving offers →
+                Approaching {formatMoney(walletCreditFloor(driver.country_code))}{" "}
+                credit limit — top up soon →
               </a>
             ) : null}
           </div>
@@ -354,6 +397,21 @@ export function DriverHomeView() {
             </div>
           </div>
         )}
+        <p className="mt-3 text-center text-xs text-[var(--ru-muted)]">
+          <Link
+            href="/driver/group"
+            className="font-semibold text-black underline underline-offset-2"
+          >
+            Group rides
+          </Link>
+          {" · "}
+          <Link
+            href="/driver/jobs"
+            className="font-semibold text-black underline underline-offset-2"
+          >
+            Trip history
+          </Link>
+        </p>
       </div>
     </div>
   );

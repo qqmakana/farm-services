@@ -27,33 +27,31 @@ test.describe("Multi-country cash booking", () => {
       await page.goto("/ride");
       await dismissCountryModalIfPresent(page);
 
-      await expect(
-        page.getByRole("heading", { name: /Village Ride|Ride/i }).first(),
-      ).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId("search-bar")).toBeVisible({
+        timeout: 15_000,
+      });
 
-      // Free-text landmarks must work even without seeded places
-      await page
-        .getByPlaceholder("e.g., 12 Main Rd, Sandton — or green gate by the mango tree")
-        .fill("Village clinic gate");
-      await page
-        .getByPlaceholder("e.g., Shoprite parking — or blue house after the church")
-        .fill("Town market main entrance");
-
+      await page.getByTestId("pickup-input").fill("Village clinic gate");
+      await page.getByTestId("dropoff-input").fill("Town market main entrance");
       await page.getByLabel(/Your name/i).fill(market.name);
       await page.getByLabel(/^Phone$/i).fill(market.phone);
 
-      // Dismiss place suggestions / save-place prompts that can block the CTA
       await page.keyboard.press("Escape");
-      await page.locator("body").click({ position: { x: 8, y: 8 } }).catch(() => undefined);
+      await page
+        .locator("body")
+        .click({ position: { x: 8, y: 8 } })
+        .catch(() => undefined);
 
-      const requestBtn = page.getByRole("button", { name: /Request Ride/i });
+      const requestBtn = page.getByTestId("book-button");
       await expect(requestBtn).toBeEnabled({ timeout: 15_000 });
       await requestBtn.scrollIntoViewIfNeeded();
       await requestBtn.click({ force: true });
 
       await page.waitForURL(/\/trip\/RU-/i, { timeout: 30_000 });
       await expect(
-        page.getByText(/Finding your driver|Confirmed|Searching|On the way/i).first(),
+        page
+          .getByText(/Finding your driver|Confirmed|Searching|On the way/i)
+          .first(),
       ).toBeVisible({ timeout: 15_000 });
     });
   }

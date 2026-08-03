@@ -5,12 +5,19 @@
 import { mockRepo } from "../src/lib/mock-store";
 import {
   applyCommissionToWallet,
+  cashPlatformRemittance,
+  creditLimitBlockMessage,
   driverEligibleForDispatch,
+  WALLET_ONLINE_FLOOR,
+  walletCreditFloor,
 } from "../src/lib/wallet";
 import {
   generateReferralCode,
   generateShopWeeklyReport,
 } from "../src/lib/partner";
+import { calculateFare } from "../src/lib/fares";
+import { getCountry } from "../src/lib/countries";
+import { VILLAGE_PASS_BOOKING_FEE_ZAR } from "../src/lib/village-pass";
 
 let passed = 0;
 let failed = 0;
@@ -54,12 +61,25 @@ test("wallet: positive balance clears commission_owed", () => {
   assert(r.commission_owed === 0, `owed ${r.commission_owed}`);
 });
 
-test("dispatch: negative wallet blocks eligibility", () => {
+test("dispatch: post-paid credit limit -R100", () => {
+  assert(WALLET_ONLINE_FLOOR === -100, "ZA floor constant");
+  assert(walletCreditFloor("ZA") === -100, "ZA floor");
   assert(driverEligibleForDispatch({ wallet_balance: 0 }) === true, "zero ok");
-  assert(driverEligibleForDispatch({ wallet_balance: 50 }) === true, "pos ok");
   assert(
-    driverEligibleForDispatch({ wallet_balance: -1 }) === false,
-    "neg blocked",
+    driverEligibleForDispatch({ wallet_balance: -99 }) === true,
+    "within credit",
+  );
+  assert(
+    driverEligibleForDispatch({ wallet_balance: -100 }) === true,
+    "floor edge ok",
+  );
+  assert(
+    driverEligibleForDispatch({ wallet_balance: -101 }) === false,
+    "below floor blocked",
+  );
+  assert(
+    creditLimitBlockMessage("ZA").includes("R100"),
+    "block message mentions limit",
   );
 });
 
@@ -90,7 +110,7 @@ test("mock: complete trip deducts 15% commission from wallet", () => {
     dropoff_lng: 28.79,
     dropoff_landmark: "Clinic",
     details: { seats: 1, route_name: "Test", direction: "to_town" },
-    fee_amount: 200,
+    fee_amount: 400,
     payment: { method: "cash" },
   });
 
@@ -106,17 +126,34 @@ test("mock: complete trip deducts 15% commission from wallet", () => {
   active = mockRepo.startTrip(active.id, driver.id);
   assert(active.status === "in_progress", "start failed");
 
-  active = mockRepo.completeTrip(active.id, driver.id);
+  active = mockRepo.completeTrip(active.id, driver.id, {
+    cashCollected: true,
+  });
   assert(active.status === "completed", "complete failed");
 
   const after = mockRepo.listDrivers().find((d) => d.id === driver.id)!;
-  // 15% of 200 = 30
-  assert(after.wallet_balance === -30, `wallet ${after.wallet_balance}`);
-  assert(after.commission_owed === 30, `owed ${after.commission_owed}`);
+  // Legacy 15% of 400 = 60 — still within −R100 credit limit
+  assert(after.wallet_balance === -60, `wallet ${after.wallet_balance}`);
+  assert(after.commission_owed === 60, `owed ${after.commission_owed}`);
   assert(
-    driverEligibleForDispatch(after) === false,
-    "should block dispatch after debt",
+    driverEligibleForDispatch(after) === true,
+    "−R60 still within −R100 credit",
   );
+});
+
+test("mock: credit limit blocks go-online below -R100", () => {
+  const drivers = mockRepo.listDrivers();
+  const driver = drivers.find((d) => d.vehicle_type === "sedan") ?? drivers[0];
+  driver.wallet_balance = -101;
+  driver.commission_owed = 101;
+  let msg = "";
+  try {
+    mockRepo.setDriverOnline(driver.id, true, -31.588, 28.784);
+  } catch (e) {
+    msg = e instanceof Error ? e.message : String(e);
+  }
+  assert(/credit limit/i.test(msg), `expected credit limit error, got: ${msg}`);
+  assert(driverEligibleForDispatch(driver) === false, "ineligible");
 });
 
 test("mock: credit wallet clears debt", () => {
@@ -180,6 +217,138 @@ test("referral: code formula is 4-letter prefix + 3 random", () => {
   const code = generateReferralCode("Village Mart");
   assert(code.startsWith("VILL"), `prefix ${code}`);
   assert(code.length === 7, `length ${code.length}`);
+});
+
+test("fares: ZA base + booking fee; Pass waives fee only", () => {
+  const za = getCountry("ZA");
+  const open = calculateFare({
+    vehicle: "sedan",
+    serviceType: "ride",
+    countryCode: "ZA",
+    isSubscribed: false,
+  });
+  // 0km quote: base R15, min fare R25 → driver gets minimum
+  assert(open.base_fee_amount === za.pricing.ride.base, "base component");
+  assert(open.driver_fare_amount === 25, "minimum fare R25");
+  assert(open.booking_fee === VILLAGE_PASS_BOOKING_FEE_ZAR, "R5 fee");
+  assert(
+    open.fee_amount === open.driver_fare_amount + open.booking_fee,
+    "total = driver + fee",
+  );
+
+  const pass = calculateFare({
+    vehicle: "sedan",
+    serviceType: "ride",
+    countryCode: "ZA",
+    isSubscribed: true,
+  });
+  assert(pass.booking_fee === 0, "Pass fee waived");
+  assert(
+    pass.driver_fare_amount === open.driver_fare_amount,
+    "driver fare sacred",
+  );
+});
+
+test("fares: NG / KE / IN / BR scale from ZA bands", () => {
+  for (const code of ["NG", "KE", "IN", "BR"] as const) {
+    const c = getCountry(code);
+    const f = calculateFare({
+      vehicle: "sedan",
+      serviceType: "ride",
+      countryCode: code,
+      isSubscribed: false,
+    });
+    // Local ride.base scales ZA R15; min fare scales ZA R25
+    assert(
+      f.base_fee_amount === c.pricing.ride.base,
+      `${code} base ${f.base_fee_amount} != ${c.pricing.ride.base}`,
+    );
+    assert(
+      f.driver_fare_amount >= f.base_fee_amount,
+      `${code} min fare enforced`,
+    );
+    assert(f.currency === c.currency, `${code} currency`);
+    assert(f.booking_fee > 0, `${code} has platform fee`);
+  }
+});
+
+test("fares: 10km ZA includes km + fee", () => {
+  const f = calculateFare({
+    vehicle: "sedan",
+    serviceType: "ride",
+    countryCode: "ZA",
+    pickup: { lat: -26.2, lng: 28.0 },
+    dropoff: { lat: -26.2, lng: 28.1 }, // ~10km-ish depending on geo
+    isSubscribed: false,
+  });
+  assert(f.driver_fare_amount >= 15, "at least base");
+  assert(f.fee_amount === f.driver_fare_amount + f.booking_fee, "sum");
+  assert(f.platform_commission === 0, "flat fee model — no % commission");
+});
+
+test("fares: delivery weight bands (10km ZA)", () => {
+  const light = calculateFare({
+    vehicle: "bakkie",
+    serviceType: "delivery",
+    countryCode: "ZA",
+    pickup: { lat: -26.2, lng: 28.0 },
+    dropoff: { lat: -26.2, lng: 28.1 },
+    weightCategory: "light",
+    isSubscribed: false,
+  });
+  const heavy = calculateFare({
+    vehicle: "truck",
+    serviceType: "delivery",
+    countryCode: "ZA",
+    pickup: { lat: -26.2, lng: 28.0 },
+    dropoff: { lat: -26.2, lng: 28.1 },
+    weightCategory: "heavy",
+    isSubscribed: false,
+  });
+  assert(light.base_fee_amount === 20, `light base ${light.base_fee_amount}`);
+  assert(heavy.base_fee_amount === 60, `heavy base ${heavy.base_fee_amount}`);
+  assert(heavy.fee_amount > light.fee_amount, "heavy costs more");
+  assert(light.weight_category === "light", "weight stored");
+});
+
+test("fares: farm weight + Pass waives platform fee only", () => {
+  const open = calculateFare({
+    vehicle: "bakkie",
+    serviceType: "farm",
+    countryCode: "ZA",
+    weightCategory: "medium",
+    isSubscribed: false,
+  });
+  assert(open.base_fee_amount === 40, "farm medium base");
+  assert(open.booking_fee === VILLAGE_PASS_BOOKING_FEE_ZAR, "fee");
+  const pass = calculateFare({
+    vehicle: "bakkie",
+    serviceType: "farm",
+    countryCode: "ZA",
+    weightCategory: "medium",
+    isSubscribed: true,
+  });
+  assert(pass.booking_fee === 0, "Pass waived");
+  assert(pass.driver_fare_amount === open.driver_fare_amount, "driver sacred");
+});
+
+test("wallet: flat-fee cash remittance uses booking_fee not 15%", () => {
+  const remit = cashPlatformRemittance({
+    fee_amount: 145,
+    booking_fee: 5,
+    platform_commission: 0,
+    driver_payout: 140,
+    base_fare: 20,
+  });
+  assert(remit === 5, `remit ${remit}`);
+  const passRemit = cashPlatformRemittance({
+    fee_amount: 140,
+    booking_fee: 0,
+    platform_commission: 0,
+    driver_payout: 140,
+    village_pass: true,
+  });
+  assert(passRemit === 0, "Pass cash deducts 0");
 });
 
 async function runAsync() {

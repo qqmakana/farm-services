@@ -3,9 +3,21 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { claimWeeklyTripBonus, listDriverJobs } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
+import { useCountry } from "@/components/country/country-provider";
 import { PageShell } from "@/components/ui/page-shell";
-import { BRAND, BRAND_TEL_HREF, BRAND_WHATSAPP_HREF } from "@/lib/brand";
+import { BRAND, BRAND_TEL_HREF } from "@/lib/brand";
+import { getCountry } from "@/lib/countries";
 import { formatMoney } from "@/lib/format";
+import {
+  buildSimpleWalletTopUpMessage,
+  buildWalletTopUpMessage,
+  walletTopUpWhatsAppHref,
+} from "@/lib/whatsapp";
+import {
+  isApproachingCreditLimit,
+  walletCreditFloor,
+  walletCreditLimitAmount,
+} from "@/lib/wallet";
 import type { JobWithDriver } from "@/lib/types";
 
 type Period = "today" | "week" | "month";
@@ -44,8 +56,11 @@ function periodStart(period: Period) {
 
 export function DriverEarningsView() {
   const { driver, refresh } = useDriverApp();
+  const { country: uiCountry } = useCountry();
+  const country = getCountry(driver?.country_code || uiCountry.code);
   const [jobs, setJobs] = useState<JobWithDriver[]>([]);
   const [showTopUp, setShowTopUp] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState("");
   const [period, setPeriod] = useState<Period>("week");
   const [bonusMsg, setBonusMsg] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -103,19 +118,41 @@ export function DriverEarningsView() {
         Number(j.platform_commission) > 0
           ? Math.round(Number(j.platform_commission))
           : Math.round((fee * 15) / 100);
+      const payout =
+        Number(j.driver_payout) > 0
+          ? Math.round(Number(j.driver_payout))
+          : Math.max(0, fee - commission);
       const at = j.completed_at || j.created_at;
-      rows.push({
-        id: `${j.id}-earn`,
-        label: `Cash from customer · ${j.reference_code}`,
-        amount: fee,
-        at,
-      });
-      rows.push({
-        id: `${j.id}-comm`,
-        label: `Platform ~15% · ${j.reference_code}`,
-        amount: -commission,
-        at,
-      });
+      const card =
+        j.payment_method === "card" || j.payment_method === "paypal";
+      if (card) {
+        rows.push({
+          id: `${j.id}-credit`,
+          label: `Card payout ~85% · ${j.reference_code}`,
+          amount: payout,
+          at,
+        });
+      } else if (j.cash_collected_confirmed === false) {
+        rows.push({
+          id: `${j.id}-flag`,
+          label: `Cash not confirmed · ${j.reference_code}`,
+          amount: 0,
+          at,
+        });
+      } else {
+        rows.push({
+          id: `${j.id}-earn`,
+          label: `Cash from customer · ${j.reference_code}`,
+          amount: fee,
+          at,
+        });
+        rows.push({
+          id: `${j.id}-comm`,
+          label: `Platform ~15% (wallet) · ${j.reference_code}`,
+          amount: -commission,
+          at,
+        });
+      }
     }
     return rows.sort(
       (a, b) => new Date(b.at).getTime() - new Date(a.at).getTime(),
@@ -140,37 +177,70 @@ export function DriverEarningsView() {
     });
   }
 
+  const creditFloor = walletCreditFloor(driver?.country_code);
+  const creditLimit = walletCreditLimitAmount(driver?.country_code);
+  const atLimit = wallet < creditFloor;
+  const approaching = isApproachingCreditLimit(wallet, driver?.country_code);
+
   return (
     <PageShell
       title="Earnings"
-      subtitle="Customers pay you cash. You keep ~85%; ~15% comes from this prepaid wallet."
+      subtitle="Post-paid: start at R0. Cash trips deduct the platform fee. Credit limit stops new jobs."
     >
       <section className="ru-card p-5">
-        <p className="ru-section-label">Commission wallet</p>
+        <p className="ru-section-label">Driver wallet</p>
         <p
+          data-testid="wallet-balance"
           className={`mt-1 font-[family-name:var(--font-display)] text-4xl font-bold ${
             wallet < 0 ? "text-[var(--ru-error)]" : "text-black"
           }`}
         >
           {formatMoney(wallet)}
         </p>
-        {owed > 0 || wallet < 0 ? (
-          <p className="mt-2 text-sm font-semibold text-black">
-            Top up needed: {formatMoney(owed || Math.abs(Math.min(0, wallet)))}
-            . Low wallet can pause new job offers.
+        {atLimit ? (
+          <p
+            data-testid="wallet-warning"
+            className="mt-2 rounded-xl bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-900"
+          >
+            You have reached your {formatMoney(creditLimit)} credit limit. Top
+            up via WhatsApp to continue receiving jobs.
+          </p>
+        ) : approaching || wallet < 0 ? (
+          <p
+            data-testid="wallet-warning"
+            className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-950"
+          >
+            Balance{" "}
+            {formatMoney(wallet)} — credit limit is{" "}
+            {formatMoney(creditFloor)}. Owed:{" "}
+            {formatMoney(owed || Math.abs(Math.min(0, wallet)))}.
           </p>
         ) : (
           <p className="mt-2 text-sm text-[var(--ru-muted)]">
-            Wallet healthy — you can accept rides, deliveries &amp; farm jobs.
+            Earn first, pay later. You can go online at R0. Jobs pause only if
+            you hit {formatMoney(creditFloor)}.
           </p>
         )}
+
+        <a
+          href={walletTopUpWhatsAppHref(
+            BRAND.phoneWhatsApp,
+            buildSimpleWalletTopUpMessage(driver?.id || "unknown"),
+          )}
+          target="_blank"
+          rel="noreferrer"
+          data-testid="top-up-wallet-button"
+          className="ru-btn ru-btn-block mt-4 !bg-[#25D366] !text-white"
+        >
+          Top Up Wallet
+        </a>
 
         <button
           type="button"
           onClick={() => setShowTopUp((v) => !v)}
-          className="ru-btn ru-btn-primary ru-btn-block mt-4"
+          className="ru-btn ru-btn-secondary ru-btn-block mt-2"
         >
-          Top up wallet
+          {showTopUp ? "Hide top-up details" : "Top-up details & amount"}
         </button>
 
         {showTopUp ? (
@@ -178,30 +248,64 @@ export function DriverEarningsView() {
             <p className="font-semibold text-black">How to top up</p>
             <ol className="list-inside list-decimal space-y-1 text-[var(--ru-muted)]">
               <li>
-                Send eWallet / Send-iMali / EFT to{" "}
+                Pay ops via local cash / eWallet / EFT to{" "}
                 <strong className="text-black">{BRAND.phone}</strong>
               </li>
-              <li>Use your name + phone as the payment reference</li>
-              <li>WhatsApp proof of payment — ops will credit your wallet</li>
+              <li>
+                Enter the amount below ({country.currency}) — use this exact
+                WhatsApp template so we credit the right wallet
+              </li>
+              <li>Send proof of payment in the same chat</li>
             </ol>
-            <div className="flex flex-wrap gap-2">
-              <a
-                href={`${BRAND_WHATSAPP_HREF}?text=${encodeURIComponent(
-                  `Hi — wallet top-up proof for driver ${driver?.full_name ?? ""} ${driver?.phone ?? ""}`,
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-                className="ru-btn !min-h-10 !bg-[#25D366] !px-4 !text-xs !text-white"
-              >
-                WhatsApp proof
-              </a>
-              <a
-                href={BRAND_TEL_HREF}
-                className="ru-btn ru-btn-secondary !min-h-10 !px-4 !text-xs"
-              >
-                Call ops
-              </a>
-            </div>
+            <label className="block text-xs font-semibold text-black">
+              Amount ({country.currency})
+              <input
+                type="number"
+                min={1}
+                inputMode="numeric"
+                className="ru-soft-field mt-1 w-full text-sm"
+                placeholder={`e.g. ${Math.max(100, Math.round(country.pricing.ride.base * 20))}`}
+                value={topUpAmount}
+                onChange={(e) => setTopUpAmount(e.target.value)}
+              />
+            </label>
+            {(() => {
+              const amount = Math.round(Number(topUpAmount) || 0);
+              const msg = buildWalletTopUpMessage({
+                driverName: driver?.full_name || "Driver",
+                driverId: driver?.id || "unknown",
+                phone: driver?.phone || "",
+                amount: amount || 0,
+                currency: country.currency,
+                countryName: country.name,
+                countryCode: country.code,
+              });
+              return (
+                <>
+                  <pre className="overflow-x-auto whitespace-pre-wrap rounded-xl bg-white px-3 py-2 font-mono text-[11px] text-black">
+                    {msg}
+                  </pre>
+                  <div className="flex flex-wrap gap-2">
+                    <a
+                      href={walletTopUpWhatsAppHref(BRAND.phoneWhatsApp, msg)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`ru-btn !min-h-10 !bg-[#25D366] !px-4 !text-xs !text-white ${
+                        amount <= 0 ? "pointer-events-none opacity-50" : ""
+                      }`}
+                    >
+                      WhatsApp top-up
+                    </a>
+                    <a
+                      href={BRAND_TEL_HREF}
+                      className="ru-btn ru-btn-secondary !min-h-10 !px-4 !text-xs"
+                    >
+                      Call ops
+                    </a>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         ) : null}
       </section>

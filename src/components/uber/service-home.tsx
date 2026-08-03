@@ -3,42 +3,15 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Car, ChevronRight, Package, Tractor, Truck, Users } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import {
   emptyPlaceValue,
   PlacesAutocomplete,
   type PlaceValue,
 } from "@/components/uber/places-autocomplete";
-import { Button } from "@/components/ui/button";
+import { WhereToBar } from "@/components/uber/where-to-bar";
 import { OpenGroupTripsPreview } from "@/components/group/driver-group-trips-view";
 import { SavedPlacesChips } from "@/components/location/saved-places-chips";
-
-const services = [
-  {
-    href: "/ride",
-    title: "Ride",
-    subtitle: "Village, town & city",
-    Icon: Car,
-  },
-  {
-    href: "/delivery",
-    title: "Delivery",
-    subtitle: "Store to door",
-    Icon: Truck,
-  },
-  {
-    href: "/farm",
-    title: "Farm",
-    subtitle: "Produce & livestock",
-    Icon: Tractor,
-  },
-  {
-    href: "/courier",
-    title: "Courier",
-    subtitle: "Send a package",
-    Icon: Package,
-  },
-] as const;
 
 function bookingHref(base: string, from: PlaceValue, to: PlaceValue) {
   const params = new URLSearchParams();
@@ -56,10 +29,12 @@ export function ServiceHomeSheet({
   mapTapPin = null,
   mapTapToken = 0,
   onPinChange,
+  onDropoffPinChange,
 }: {
   mapTapPin?: { lat: number; lng: number } | null;
   mapTapToken?: number;
   onPinChange?: (pin: { lat: number; lng: number } | null) => void;
+  onDropoffPinChange?: (pin: { lat: number; lng: number } | null) => void;
 } = {}) {
   const router = useRouter();
   const [origin, setOrigin] = useState<PlaceValue>(emptyPlaceValue());
@@ -72,6 +47,14 @@ export function ServiceHomeSheet({
         : null,
     );
   }, [origin.lat, origin.lng, onPinChange]);
+
+  useEffect(() => {
+    onDropoffPinChange?.(
+      destination.lat != null && destination.lng != null
+        ? { lat: destination.lat, lng: destination.lng }
+        : null,
+    );
+  }, [destination.lat, destination.lng, onDropoffPinChange]);
 
   useEffect(() => {
     if (!mapTapPin || !mapTapToken) return;
@@ -92,15 +75,35 @@ export function ServiceHomeSheet({
   }
 
   return (
-    <div className="ru-page-enter space-y-6 pb-2">
+    <div className="space-y-5 pb-2">
       <div>
-        <h1 className="ru-page-title !text-[1.75rem]">
+        <h1 className="text-2xl font-bold tracking-tight text-[var(--ru-ink)]">
           Where to?
         </h1>
-        <p className="ru-page-sub">
-          Map shows your location · type a landmark for the driver.
+        <p className="mt-1 text-sm text-gray-500">
+          Map shows your pin · landmark helps the driver find you.
         </p>
       </div>
+
+      <WhereToBar
+        pickupSlot={
+          <PlacesAutocomplete
+            compact
+            showGps
+            placeholder="Current location"
+            value={origin}
+            onChange={setOrigin}
+          />
+        }
+        dropoffSlot={
+          <PlacesAutocomplete
+            compact
+            placeholder="Where to?"
+            value={destination}
+            onChange={setDestination}
+          />
+        }
+      />
 
       <SavedPlacesChips
         onSelect={(place) => {
@@ -109,99 +112,53 @@ export function ServiceHomeSheet({
         }}
       />
 
-      <div className="space-y-1 rounded-2xl border border-[var(--ru-line)] bg-[var(--ru-elevated)] px-3 py-2">
-        <PlacesAutocomplete
-          label="Pickup location (address or landmark)"
-          placeholder="Search town, village, landmark, or address…"
-          value={origin}
-          onChange={setOrigin}
-          showGps
-        />
-        <div className="mx-1 border-t border-[var(--ru-line)]" />
-        <PlacesAutocomplete
-          label="Dropoff location (address or landmark)"
-          placeholder="Search town, village, landmark, or address…"
-          value={destination}
-          onChange={setDestination}
-        />
-      </div>
-
       {destination.label.trim() ? (
-        <Button block onClick={goRide}>
-          Continue
-        </Button>
+        <button
+          type="button"
+          data-testid="book-button"
+          onClick={goRide}
+          className="ru-btn-book ru-btn-block"
+        >
+          Choose Village Ride
+        </button>
       ) : (
         <div className="grid grid-cols-2 gap-2">
-          <Link href="/ride" className="ru-btn ru-btn-primary text-center">
+          <Link
+            href="/ride"
+            data-testid="book-button"
+            className="ru-btn-book text-center text-base"
+          >
             Ride now
           </Link>
-          <Link href="/group" className="ru-btn ru-btn-secondary text-center">
-            Join a group ride
+          <Link
+            href="/group"
+            className="ru-btn ru-btn-secondary text-center !rounded-xl"
+          >
+            Group ride
           </Link>
         </div>
       )}
 
       <OpenGroupTripsPreview limit={2} />
 
-      <div>
-        <h2 className="text-sm font-bold tracking-wide text-[var(--ru-muted)] uppercase">
-          Services
-        </h2>
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {services.map((s) => {
-            const Icon = s.Icon;
-            return (
-              <Link
-                key={s.href}
-                href={bookingHref(s.href, origin, destination)}
-                className="flex flex-col items-center rounded-2xl border border-[var(--ru-line)] bg-white p-3 text-center shadow-[var(--ru-shadow)] transition active:scale-95"
-              >
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black text-white">
-                  <Icon className="h-5 w-5" />
-                </span>
-                <span className="mt-2 text-sm font-bold text-black">{s.title}</span>
-                <span className="mt-0.5 text-[11px] text-[var(--ru-muted)]">
-                  {s.subtitle}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-        <Link
-          href="/group"
-          className="mt-2 flex items-center gap-3 rounded-2xl border border-[var(--ru-line)] bg-white px-4 py-3 shadow-[var(--ru-shadow)] transition active:scale-[0.99]"
-        >
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#000000] text-white">
-            <Users className="h-5 w-5" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-bold text-black">Group rides</span>
-            <span className="block text-xs text-[var(--ru-muted)]">
-              Split the fare · shared loads too
-            </span>
-          </span>
-          <ChevronRight className="h-5 w-5 text-[var(--ru-muted)]" />
-        </Link>
-      </div>
-
       <Link
         href="/partners"
-        className="flex items-center justify-between rounded-2xl border border-[var(--ru-line)] bg-white px-4 py-3.5 shadow-[var(--ru-shadow)] transition active:scale-[0.99]"
+        className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white px-4 py-3.5 transition active:scale-[0.99]"
       >
         <span>
-          <span className="block text-sm font-bold text-black">
+          <span className="block text-sm font-bold text-[var(--ru-ink)]">
             For businesses
           </span>
-          <span className="block text-xs text-[var(--ru-muted)]">
+          <span className="block text-xs text-gray-500">
             Free signup · self-serve deliveries
           </span>
         </span>
-        <ChevronRight className="h-5 w-5 text-[var(--ru-muted)]" />
+        <ChevronRight className="h-5 w-5 text-gray-400" />
       </Link>
 
       <Link
         href="/driver/join"
-        className="ru-btn ru-btn-secondary ru-btn-block"
+        className="ru-btn ru-btn-secondary ru-btn-block !rounded-xl"
       >
         Drive with us
       </Link>

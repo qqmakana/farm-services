@@ -11,6 +11,7 @@ import {
   startTrip,
 } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
+import { CashCollectModal } from "@/components/driver/cash-collect-modal";
 import { PickupDescribeCard } from "@/components/driver/pickup-describe-card";
 import { RiderSpottingCard } from "@/components/driver/rider-spotting-card";
 import { PageShell } from "@/components/ui/page-shell";
@@ -20,6 +21,7 @@ import {
   STATUS_LABELS,
 } from "@/lib/format";
 import { pickupPhotoFromDetails } from "@/lib/pickup-photo";
+import { isCashPaymentMethod } from "@/lib/wallet";
 import type { JobStatus, JobWithDriver } from "@/lib/types";
 
 type Segment = "active" | "completed" | "cancelled";
@@ -36,6 +38,9 @@ export function DriverJobsView() {
   const [rateStars, setRateStars] = useState(5);
   const [rateComment, setRateComment] = useState("");
   const [ratingJobId, setRatingJobId] = useState<string | null>(null);
+  const [cashPromptJob, setCashPromptJob] = useState<JobWithDriver | null>(
+    null,
+  );
 
   const load = useCallback(async () => {
     if (!driverId) return;
@@ -109,7 +114,10 @@ export function DriverJobsView() {
           </h2>
           <p className="mt-2 text-sm text-[var(--ru-muted)]">
             {SERVICE_LABELS[active.service_type]} ·{" "}
-            {formatMoney(Number(active.fee_amount))}
+            {formatMoney(Number(active.fee_amount))} ·{" "}
+            {isCashPaymentMethod(active.payment_method)
+              ? "Cash"
+              : "Card / PayPal"}
           </p>
           <div className="mt-3">
             <PickupDescribeCard
@@ -149,7 +157,17 @@ export function DriverJobsView() {
                 type="button"
                 disabled={pending}
                 className="ru-btn ru-btn-primary ru-btn-block"
-                onClick={() => run(() => completeTrip(active.id, driverId!))}
+                onClick={() => {
+                  if (isCashPaymentMethod(active.payment_method)) {
+                    setCashPromptJob(active);
+                    return;
+                  }
+                  run(() =>
+                    completeTrip(active.id, driverId!, {
+                      cashCollected: undefined,
+                    }),
+                  );
+                }}
               >
                 COMPLETE TRIP
               </button>
@@ -164,6 +182,26 @@ export function DriverJobsView() {
         </section>
       ) : null}
 
+      {cashPromptJob && driverId ? (
+        <CashCollectModal
+          amount={Number(cashPromptJob.fee_amount) || 0}
+          currency={cashPromptJob.fee_currency}
+          countryCode={cashPromptJob.country_code}
+          pending={pending}
+          onCancel={() => setCashPromptJob(null)}
+          onYes={() => {
+            const id = cashPromptJob.id;
+            setCashPromptJob(null);
+            run(() => completeTrip(id, driverId, { cashCollected: true }));
+          }}
+          onNo={() => {
+            const id = cashPromptJob.id;
+            setCashPromptJob(null);
+            run(() => completeTrip(id, driverId, { cashCollected: false }));
+          }}
+        />
+      ) : null}
+
       {list.length === 0 ? (
         <div className="mt-12 text-center">
           <p className="font-[family-name:var(--font-display)] text-base font-semibold text-black">
@@ -171,7 +209,7 @@ export function DriverJobsView() {
           </p>
           <p className="mt-1 text-sm text-[var(--ru-muted)]">
             {segment === "active"
-              ? "No active jobs. Wait for requests on the Home tab."
+              ? "No active jobs. Wait for requests on the Jobs map."
               : "Completed trips will show here after you finish them."}
           </p>
           {segment === "active" ? (
@@ -179,7 +217,7 @@ export function DriverJobsView() {
               href="/driver/home"
               className="ru-btn ru-btn-primary mt-6"
             >
-              Open Home map
+              Open Jobs map
             </Link>
           ) : null}
         </div>

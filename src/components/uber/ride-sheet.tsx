@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Car, Check, Truck, User, Motorbike } from "lucide-react";
 import { CheckoutBlock } from "@/components/uber/checkout-block";
 import {
   GpsButton,
@@ -10,6 +11,7 @@ import {
   LandmarkHelperText,
   type Loc,
 } from "@/components/uber/landmark-field";
+import { WhereToBar } from "@/components/uber/where-to-bar";
 import { PickupPhotoField } from "@/components/location/pickup-photo-field";
 import { RiderPhotoField } from "@/components/rider/rider-photo-field";
 import { SaveLocationPrompt } from "@/components/location/save-location-prompt";
@@ -25,14 +27,18 @@ import { quoteFareAction } from "@/lib/actions";
 import { locsFromSearchParams } from "@/lib/booking-query";
 import { useCountry } from "@/components/country/country-provider";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
+import { formatMoney } from "@/lib/format";
 import type { VehicleType } from "@/lib/types";
+import { FareBreakdownCard } from "@/components/uber/fare-breakdown-card";
 
 export function RideSheet({
   onPinChange,
+  onDropoffPinChange,
   mapTapPin = null,
   mapTapToken = 0,
 }: {
   onPinChange?: (pin: { lat: number; lng: number } | null) => void;
+  onDropoffPinChange?: (pin: { lat: number; lng: number } | null) => void;
   /** Latest map tap — keeps landmark text; does not replace it. */
   mapTapPin?: { lat: number; lng: number } | null;
   mapTapToken?: number;
@@ -56,6 +62,10 @@ export function RideSheet({
   const [scheduledLocal, setScheduledLocal] = useState(defaultLaterLocal);
   const [fee, setFee] = useState(country.pricing.ride.base);
   const [baseFee, setBaseFee] = useState(country.pricing.ride.base);
+  const [distanceFare, setDistanceFare] = useState(0);
+  const [distanceKm, setDistanceKm] = useState(0);
+  const [bookingFee, setBookingFee] = useState(5);
+  const [villagePass, setVillagePass] = useState(false);
   const [isNight, setIsNight] = useState(false);
   const [nightExtra, setNightExtra] = useState(0);
   const [currency, setCurrency] = useState(country.currency);
@@ -80,6 +90,14 @@ export function RideSheet({
         : null,
     );
   }, [pickup.lat, pickup.lng, onPinChange]);
+
+  useEffect(() => {
+    onDropoffPinChange?.(
+      dropoff.lat != null && dropoff.lng != null
+        ? { lat: dropoff.lat, lng: dropoff.lng }
+        : null,
+    );
+  }, [dropoff.lat, dropoff.lng, onDropoffPinChange]);
 
   // Auto-GPS or map tap → show pin on map; keep typed landmark text
   useEffect(() => {
@@ -109,10 +127,15 @@ export function RideSheet({
           dropoff_lat: dropoff.lat,
           dropoff_lng: dropoff.lng,
           at: atIso,
+          customer_phone: phone || getGuestProfile()?.phone || null,
         });
         if (!cancelled) {
           setFee(fare.fee_amount);
           setBaseFee(fare.base_fee_amount);
+          setDistanceFare(fare.distance_fare);
+          setDistanceKm(fare.distance_km);
+          setBookingFee(fare.booking_fee);
+          setVillagePass(fare.village_pass);
           setIsNight(fare.is_night_ride);
           setNightExtra(fare.night_surcharge_amount);
           setCurrency(fare.currency);
@@ -124,7 +147,7 @@ export function RideSheet({
     return () => {
       cancelled = true;
     };
-  }, [vehicle, pickup.lat, pickup.lng, dropoff.lat, dropoff.lng, atIso, countryCode]);
+  }, [vehicle, pickup.lat, pickup.lng, dropoff.lat, dropoff.lng, atIso, countryCode, phone]);
 
   const ready =
     Boolean(name.trim()) &&
@@ -133,24 +156,81 @@ export function RideSheet({
     Boolean(dropoff.landmark.trim()) &&
     (whenMode === "now" || Boolean(atIso));
 
+  const vehicleOptions = (
+    [
+      {
+        id: "sedan" as VehicleType,
+        label: "Village Ride",
+        capacity: 4,
+        from: country.pricing.ride.base,
+        modeId: null as string | null,
+        Icon: Car,
+        eta: "Few min",
+      },
+      {
+        id: "bakkie" as VehicleType,
+        label: "Bakkie / pickup",
+        capacity: 6,
+        from: country.pricing.delivery.base,
+        modeId: null as string | null,
+        Icon: Truck,
+        eta: "Few min",
+      },
+      ...country.localRideModes.map((m) => ({
+        id: "motorcycle" as VehicleType,
+        label: m.label,
+        capacity: 1,
+        from: country.pricing.motorcycle.base,
+        modeId: m.id as string,
+        Icon: Motorbike,
+        eta: "Quick",
+      })),
+    ]
+  );
+
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold text-[#000000]">Village Ride</h1>
-        <p className="text-sm text-slate-600">
-          Map finds you automatically — add a landmark so the driver can spot
-          you. Night &amp; scheduled rides welcome.
-        </p>
-      </div>
+      <WhereToBar
+        pickupSlot={
+          <LandmarkField
+            compact
+            showSaved={false}
+            label="Pickup"
+            placeholder="Current location"
+            loc={pickup}
+            onChange={setPickup}
+          />
+        }
+        dropoffSlot={
+          <LandmarkField
+            compact
+            showSaved={false}
+            showGps={false}
+            label="Dropoff"
+            placeholder="Where to?"
+            loc={dropoff}
+            onChange={setDropoff}
+          />
+        }
+      />
 
-      <Link
-        href="/delivery"
-        className="block rounded-xl border border-[#000000]/20 bg-[#f5f5f5] px-3 py-2.5 text-sm text-[#000000] transition hover:bg-[#f5f5f5]"
-      >
-        Moving goods?{" "}
-        <span className="font-bold underline">Switch to Village Delivery</span>{" "}
-        for town, village &amp; city transport.
-      </Link>
+      <div className="flex flex-wrap items-center gap-2">
+        <GpsButton
+          onPin={(coords) =>
+            setPickup((p) => ({
+              ...p,
+              ...coords,
+              landmark: p.landmark.trim() || "Current location",
+            }))
+          }
+        />
+        <Link
+          href="/delivery"
+          className="text-xs font-semibold text-gray-500 underline underline-offset-2"
+        >
+          Moving goods? Delivery
+        </Link>
+      </div>
 
       <ScheduleWhen
         mode={whenMode}
@@ -160,23 +240,6 @@ export function RideSheet({
         nowLabel="Ride Now"
       />
 
-      <GpsButton
-        onPin={(coords) =>
-          setPickup((p) => ({
-            ...p,
-            ...coords,
-            landmark: p.landmark.trim() || "Current location",
-          }))
-        }
-      />
-
-      <LandmarkField
-        label="Pickup location (address or landmark)"
-        placeholder="e.g., 12 Main Rd, Sandton — or green gate by the mango tree"
-        loc={pickup}
-        onChange={setPickup}
-        showExamples
-      />
       {pickup.landmark.trim() ? (
         <SaveLocationPrompt
           label={pickup.landmark}
@@ -185,12 +248,6 @@ export function RideSheet({
         />
       ) : null}
       <PickupPhotoField file={pickupPhoto} onChange={setPickupPhoto} />
-      <LandmarkField
-        label="Dropoff location (address or landmark)"
-        placeholder="e.g., Shoprite parking — or blue house after the church"
-        loc={dropoff}
-        onChange={setDropoff}
-      />
       {dropoff.landmark.trim() ? (
         <SaveLocationPrompt
           label={dropoff.landmark}
@@ -201,19 +258,19 @@ export function RideSheet({
       <LandmarkHelperText />
 
       <div className="grid grid-cols-2 gap-3">
-        <label className="block text-sm font-semibold text-[#000000]">
+        <label className="block text-sm font-semibold text-[var(--ru-ink)]">
           Your name
           <input
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+            className="ru-soft-field mt-1.5 text-sm"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
           />
         </label>
-        <label className="block text-sm font-semibold text-[#000000]">
+        <label className="block text-sm font-semibold text-[var(--ru-ink)]">
           Phone
           <input
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+            className="ru-soft-field mt-1.5 text-sm"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder={formatPhonePlaceholder(countryCode)}
@@ -223,19 +280,16 @@ export function RideSheet({
         </label>
       </div>
 
-      <label className="block text-sm font-semibold text-[#000000]">
+      <label className="block text-sm font-semibold text-[var(--ru-ink)]">
         What are you wearing?{" "}
-        <span className="font-normal text-slate-500">(optional)</span>
+        <span className="font-normal text-gray-500">(optional)</span>
         <input
-          className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+          className="ru-soft-field mt-1.5 text-sm"
           value={wearing}
           onChange={(e) => setWearing(e.target.value)}
           placeholder="e.g., Nike tracksuit, red jacket"
           maxLength={120}
         />
-        <span className="mt-1 block text-xs font-normal text-slate-500">
-          Helps your driver spot you at the landmark.
-        </span>
       </label>
 
       <RiderPhotoField
@@ -248,21 +302,21 @@ export function RideSheet({
       />
 
       <div>
-        <p className="text-sm font-semibold text-[#000000]">Passengers</p>
+        <p className="text-sm font-semibold text-[var(--ru-ink)]">Passengers</p>
         <div className="mt-2 flex items-center gap-4">
           <button
             type="button"
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f5f5] text-xl font-bold text-[#000000]"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-xl font-bold text-[var(--ru-ink)] transition active:scale-[0.98]"
             onClick={() => setPassengers((n) => Math.max(1, n - 1))}
           >
             −
           </button>
-          <span className="min-w-8 text-center text-xl font-bold text-[#000000]">
+          <span className="min-w-8 text-center text-xl font-bold text-[var(--ru-ink)]">
             {passengers}
           </span>
           <button
             type="button"
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f5f5] text-xl font-bold text-[#000000]"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-xl font-bold text-[var(--ru-ink)] transition active:scale-[0.98]"
             onClick={() => setPassengers((n) => Math.min(6, n + 1))}
           >
             +
@@ -271,54 +325,72 @@ export function RideSheet({
       </div>
 
       <div>
-        <p className="text-sm font-semibold text-[#000000]">Vehicle type</p>
-        <div className="mt-2 space-y-2">
-          {(
-            [
-              {
-                id: "sedan" as VehicleType,
-                label: "Car (up to 4 people)",
-                from: country.pricing.ride.base,
-                modeId: null as string | null,
-              },
-              {
-                id: "bakkie" as VehicleType,
-                label: "Bakkie / pickup (up to 6 people)",
-                from: country.pricing.delivery.base,
-                modeId: null as string | null,
-              },
-              ...country.localRideModes.map((m) => ({
-                id: "motorcycle" as VehicleType,
-                label: m.label,
-                from: country.pricing.motorcycle.base,
-                modeId: m.id as string,
-              })),
-            ]
-          ).map((opt) => (
-            <button
-              key={`${opt.id}-${opt.modeId ?? opt.label}`}
-              type="button"
-              onClick={() => {
-                setVehicle(opt.id);
-                setLocalModeId(opt.modeId);
-              }}
-              className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition ${
-                vehicle === opt.id && localModeId === opt.modeId
-                  ? "border-[#000000] bg-[#f5f5f5]"
-                  : "border-slate-200 bg-white hover:bg-slate-50"
-              }`}
-            >
-              <span className="text-sm font-semibold text-[#000000]">
-                {opt.label}
-              </span>
-              <span className="text-sm text-slate-600">
-                from {country.currencySymbol}
-                {opt.from}
-              </span>
-            </button>
-          ))}
+        <p className="mb-1 text-xs font-bold tracking-wide text-gray-500 uppercase">
+          Choose a ride
+        </p>
+        <div className="overflow-hidden rounded-2xl border border-gray-100">
+          {vehicleOptions.map((opt) => {
+            const selected =
+              vehicle === opt.id && localModeId === opt.modeId;
+            const Icon = opt.Icon;
+            const showPrice =
+              vehicle === opt.id && localModeId === opt.modeId
+                ? fee
+                : opt.from;
+            return (
+              <button
+                key={`${opt.id}-${opt.modeId ?? opt.label}`}
+                type="button"
+                onClick={() => {
+                  setVehicle(opt.id);
+                  setLocalModeId(opt.modeId);
+                }}
+                className={`flex w-full items-center justify-between gap-3 border-b border-gray-100 px-4 py-3.5 text-left transition-colors last:border-b-0 hover:bg-gray-50 active:scale-[0.99] ${
+                  selected ? "bg-gray-50 ring-2 ring-inset ring-black" : "bg-white"
+                }`}
+              >
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-[var(--ru-ink)]">
+                    <Icon className="h-6 w-6" aria-hidden />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-[var(--ru-ink)]">
+                      {opt.label}
+                      <span className="inline-flex items-center gap-0.5 text-xs font-normal text-gray-500">
+                        <User className="h-3 w-3" aria-hidden />
+                        {opt.capacity}
+                      </span>
+                    </span>
+                    <span className="mt-0.5 block text-xs text-gray-500">
+                      {opt.eta} away
+                    </span>
+                  </span>
+                </span>
+                <span className="flex shrink-0 flex-col items-end gap-1">
+                  {selected ? (
+                    <Check className="h-4 w-4 text-[var(--ru-ink)]" aria-hidden />
+                  ) : (
+                    <span className="h-4" />
+                  )}
+                  <span className="text-sm font-bold text-[var(--ru-ink)]">
+                    {formatMoney(showPrice, currency, countryCode)}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
+
+      <FareBreakdownCard
+        baseFare={baseFee}
+        distanceFare={distanceFare + nightExtra}
+        platformFee={bookingFee}
+        total={fee}
+        currency={currency}
+        villagePass={villagePass}
+        distanceKm={distanceKm}
+      />
 
       <CheckoutBlock
         fee={fee}
@@ -329,7 +401,7 @@ export function RideSheet({
         isNightRide={isNight}
         baseFee={baseFee}
         nightSurchargeAmount={nightExtra}
-        buttonLabel="Request Ride"
+        buttonLabel="Choose Village Ride"
         description={`Village Ride · ${
           localModeId
             ? country.localRideModes.find((m) => m.id === localModeId)?.label ??

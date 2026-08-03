@@ -29,7 +29,16 @@ import { DEFAULT_COUNTRY, getCountry } from "./countries";
 import { rankDriversForJob } from "./dispatch-score";
 import { jobNeedsFromJob } from "./job-needs";
 import { suggestVehicle, vehicleFitsJob } from "./vehicles";
-import { applyCommissionToWallet, driverEligibleForDispatch } from "./wallet";
+import {
+  applyCommissionToWallet,
+  cashPlatformRemittance,
+  cardDriverPayout,
+  creditLimitBlockMessage,
+  creditPayoutToWallet,
+  driverEligibleForDispatch,
+  isCardPaymentMethod,
+  isCashPaymentMethod,
+} from "./wallet";
 
 function uid() {
   return crypto.randomUUID();
@@ -902,6 +911,9 @@ export const mockRepo = {
       fee_currency: getCountry(input.country_code || DEFAULT_COUNTRY).currency,
       country_code: input.country_code || DEFAULT_COUNTRY,
       currency: getCountry(input.country_code || DEFAULT_COUNTRY).currency,
+      booking_fee: 0,
+      priority_score: 0,
+      village_pass: false,
       payment_status: isCash ? "unpaid" : "paid_online",
       payment_method: isCash
         ? "cash"
@@ -964,6 +976,9 @@ export const mockRepo = {
   ): Driver {
     const driver = store().drivers.find((d) => d.id === driverId);
     if (!driver) throw new Error("Driver not found");
+    if (online && !driverEligibleForDispatch(driver)) {
+      throw new Error(creditLimitBlockMessage(driver.country_code));
+    }
     const nowIso = new Date().toISOString();
     driver.is_online = online;
     if (lat != null && lng != null) {
@@ -1006,6 +1021,9 @@ export const mockRepo = {
     if (!job || !driver) throw new Error("Job or driver not found");
     if (job.status !== "new" && job.status !== "searching_driver") {
       throw new Error("Offer already taken");
+    }
+    if (!driverEligibleForDispatch(driver)) {
+      throw new Error(creditLimitBlockMessage(driver.country_code));
     }
     if (!vehicleFitsJob(driver.vehicle_type, job.required_vehicle)) {
       throw new Error(
@@ -1084,7 +1102,11 @@ export const mockRepo = {
     return withDriver(job);
   },
 
-  completeTrip(jobId: string, driverId: string): JobWithDriver {
+  completeTrip(
+    jobId: string,
+    driverId: string,
+    options?: { cashCollected?: boolean },
+  ): JobWithDriver {
     const job = store().jobs.find((j) => j.id === jobId);
     const driver = store().drivers.find((d) => d.id === driverId);
     if (!job || !driver) throw new Error("Job or driver not found");
@@ -1096,23 +1118,54 @@ export const mockRepo = {
     ) {
       throw new Error("Job cannot be completed from this status");
     }
+
+    const method = job.payment_method ?? "cash";
+    const cashTrip = isCashPaymentMethod(method);
+    if (cashTrip && options?.cashCollected === undefined) {
+      throw new Error("Confirm whether the rider paid cash before completing.");
+    }
+
     const nowIso = new Date().toISOString();
     job.status = "completed";
     job.completed_at = nowIso;
     job.updated_at = nowIso;
     driver.is_online = true;
 
-    const fee = Number(job.fee_amount) || 0;
-    const commission =
-      Number(job.platform_commission) > 0
-        ? Math.round(Number(job.platform_commission))
-        : Math.round((fee * 15) / 100);
-    const walletUpdate = applyCommissionToWallet({
-      walletBalance: Number(driver.wallet_balance ?? 0),
-      commission,
-    });
-    driver.wallet_balance = walletUpdate.wallet_balance;
-    driver.commission_owed = walletUpdate.commission_owed;
+    const remit = cashPlatformRemittance(job);
+    const payout = cardDriverPayout(job);
+
+    if (cashTrip) {
+      const collected = Boolean(options?.cashCollected);
+      job.cash_collected_confirmed = collected;
+      job.cash_confirmed_at = nowIso;
+      if (collected) {
+        job.payment_status = "cash_collected";
+        job.paid_at = nowIso;
+        // Scenario A: deduct platform_fee (flat) or legacy % remittance
+        const walletUpdate = applyCommissionToWallet({
+          walletBalance: Number(driver.wallet_balance ?? 0),
+          commission: remit,
+        });
+        driver.wallet_balance = walletUpdate.wallet_balance;
+        driver.commission_owed = walletUpdate.commission_owed;
+      } else {
+        job.payment_status = "unpaid";
+        job.dispatcher_notes = [
+          job.dispatcher_notes,
+          "CASH NOT COLLECTED — driver flagged for ops review",
+        ]
+          .filter(Boolean)
+          .join(" · ");
+      }
+    } else if (isCardPaymentMethod(method)) {
+      // Scenario B: credit (total − platform_fee)
+      const walletUpdate = creditPayoutToWallet({
+        walletBalance: Number(driver.wallet_balance ?? 0),
+        payout,
+      });
+      driver.wallet_balance = walletUpdate.wallet_balance;
+      driver.commission_owed = walletUpdate.commission_owed;
+    }
 
     return withDriver(job);
   },

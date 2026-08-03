@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, type ReactNode } from "react";
+import { Suspense, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { UberShell } from "@/components/uber/uber-shell";
 import { ServiceHomeSheet } from "@/components/uber/service-home";
@@ -8,13 +8,23 @@ import { CaptureReferral } from "@/components/referral/capture-referral";
 import { useBookingMapPin } from "@/components/uber/use-booking-map-pin";
 import { useInstallActions } from "@/components/install-share-bar";
 
-/** Client home chrome — auto-GPS map + landmark both active. */
+/** Client home chrome — full-bleed map + Uber bottom sheet. */
 export function HomeMapShell({ trust }: { trust: ReactNode }) {
   const { pin, setPin, mapTapPin, mapTapToken, onMapPin } = useBookingMapPin();
+  const [dropoffPin, setDropoffPin] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const { standalone, installing, install } = useInstallActions();
 
   return (
-    <UberShell showTabBar pin={pin} onMapPin={onMapPin}>
+    <UberShell
+      showTabBar
+      showServicePills
+      pin={pin}
+      dropoffPin={dropoffPin}
+      onMapPin={onMapPin}
+    >
       <Suspense fallback={null}>
         <CaptureReferral />
       </Suspense>
@@ -23,6 +33,7 @@ export function HomeMapShell({ trust }: { trust: ReactNode }) {
           mapTapPin={mapTapPin}
           mapTapToken={mapTapToken}
           onPinChange={setPin}
+          onDropoffPinChange={setDropoffPin}
         />
         {trust}
         {!standalone ? (
@@ -30,22 +41,22 @@ export function HomeMapShell({ trust }: { trust: ReactNode }) {
             type="button"
             onClick={install}
             disabled={installing}
-            className="ru-btn ru-btn-primary ru-btn-block"
+            className="ru-btn-book ru-btn-block"
           >
             {installing ? "Starting…" : "Install Village Ride"}
           </button>
         ) : null}
-        <p className="px-1 text-center text-xs text-slate-500">
+        <p className="px-1 pb-2 text-center text-xs text-gray-500">
           <Link
             href="/onboarding?replay=1"
-            className="font-semibold text-black underline underline-offset-2"
+            className="font-semibold text-[var(--ru-ink)] underline underline-offset-2"
           >
             See feature tour
           </Link>
           {" · "}
           <Link
             href="/get-app"
-            className="font-semibold text-black underline underline-offset-2"
+            className="font-semibold text-[var(--ru-ink)] underline underline-offset-2"
           >
             Get the app
           </Link>

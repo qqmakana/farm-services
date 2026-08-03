@@ -100,6 +100,10 @@ export async function matchJobAfterCreate(jobId: string) {
   const rankIds = ranked.map((r) => r.driver.id);
   const top = ranked[0];
 
+  // Village Pass: priority_score=1 — dispatch these requests ahead of standard jobs
+  const priority = Number((typedJob as Job & { priority_score?: number }).priority_score) || 0;
+  const baseScore = top?.score ?? 0;
+
   await admin
     .from("rr_jobs")
     .update({
@@ -111,8 +115,11 @@ export async function matchJobAfterCreate(jobId: string) {
       offered_driver_id: null,
       offer_expires_at: null,
       offered_at: new Date().toISOString(),
-      match_score: top?.score ?? null,
-      match_breakdown: top?.breakdown ?? null,
+      // Boost stored match_score so ops / queues can sort Pass jobs first
+      match_score: baseScore + (priority > 0 ? 1000 : 0),
+      match_breakdown: top?.breakdown
+        ? { ...top.breakdown, village_pass_priority: priority }
+        : { village_pass_priority: priority },
     })
     .eq("id", jobId)
     .in("status", ["searching_driver", "new"]);

@@ -28,9 +28,20 @@ import {
   isFirebaseClientConfigured,
   requestFcmToken,
 } from "@/lib/firebase/client";
+import { CashCollectModal } from "@/components/driver/cash-collect-modal";
 import type { Driver, JobApplication, JobWithDriver } from "@/lib/types";
 import { distanceKm, etaMinutes } from "@/lib/geo";
 import { useDriverOffersRealtime } from "@/lib/use-driver-offers-realtime";
+import {
+  buildSimpleWalletTopUpMessage,
+  walletTopUpWhatsAppHref,
+} from "@/lib/whatsapp";
+import {
+  isApproachingCreditLimit,
+  isCashPaymentMethod,
+  walletCreditFloor,
+  walletCreditLimitAmount,
+} from "@/lib/wallet";
 
 type DriverTab = "jobs" | "wallet";
 
@@ -48,6 +59,9 @@ export function DriverBoard({
   const [error, setError] = useState<string | null>(null);
   const [offers, setOffers] = useState<JobApplication[]>([]);
   const [active, setActive] = useState<JobWithDriver | null>(null);
+  const [cashPromptJob, setCashPromptJob] = useState<JobWithDriver | null>(
+    null,
+  );
   const [showTopUp, setShowTopUp] = useState(false);
 
   const driver = drivers.find((d) => d.id === driverId);
@@ -145,7 +159,13 @@ export function DriverBoard({
 
   const walletBalance = Number(driver?.wallet_balance ?? 0);
   const commissionOwed = Number(driver?.commission_owed ?? 0);
-  const walletBlocked = walletBalance < 0;
+  const creditFloor = walletCreditFloor(driver?.country_code);
+  const creditLimit = walletCreditLimitAmount(driver?.country_code);
+  const walletBlocked = walletBalance < creditFloor;
+  const walletWarning =
+    walletBlocked ||
+    isApproachingCreditLimit(walletBalance, driver?.country_code) ||
+    walletBalance < 0;
 
   return (
     <div className="space-y-4">
@@ -213,7 +233,7 @@ export function DriverBoard({
           }`}
         >
           Wallet
-          {walletBlocked ? (
+          {walletWarning ? (
             <span className="ml-1.5 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] text-white">
               Top up
             </span>
@@ -237,8 +257,10 @@ export function DriverBoard({
               Commission wallet
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Customers pay you in cash. Village Ride takes 15% commission from
-              this wallet when you complete a trip.
+              Post-paid: start at R0. Cash trips deduct the platform fee from
+              this wallet. You can go into debt up to{" "}
+              {formatMoney(creditFloor)}. Card trips credit your payout (never
+              create debt).
             </p>
           </div>
 
@@ -248,8 +270,9 @@ export function DriverBoard({
                 Current balance
               </p>
               <p
+                data-testid="wallet-balance"
                 className={`mt-1 text-2xl font-bold ${
-                  walletBlocked ? "text-rose-700" : "text-emerald-900"
+                  walletBalance < 0 ? "text-rose-700" : "text-emerald-900"
                 }`}
               >
                 {formatMoney(walletBalance)}
@@ -265,19 +288,48 @@ export function DriverBoard({
             </div>
             <div className="rounded-lg bg-amber-50 px-4 py-3">
               <p className="text-xs font-semibold text-slate-500 uppercase">
-                Commission owed
+                Credit used
               </p>
               <p className="mt-1 text-2xl font-bold text-amber-950">
                 {formatMoney(commissionOwed)}
+                <span className="ml-1 text-xs font-normal text-slate-500">
+                  / {formatMoney(creditLimit)}
+                </span>
               </p>
             </div>
           </div>
 
           {walletBlocked ? (
-            <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-900">
-              Your wallet is below R0. You will not receive new automatic job
-              offers until you top up.
+            <p
+              data-testid="wallet-warning"
+              className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-900"
+            >
+              You have reached your {formatMoney(creditLimit)} credit limit.
+              Top up via WhatsApp to continue receiving jobs.
             </p>
+          ) : walletWarning ? (
+            <p
+              data-testid="wallet-warning"
+              className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-950"
+            >
+              Approaching credit limit ({formatMoney(creditFloor)}). Top up
+              soon so dispatch keeps sending jobs.
+            </p>
+          ) : null}
+
+          {driver ? (
+            <a
+              href={walletTopUpWhatsAppHref(
+                BRAND.phoneWhatsApp,
+                buildSimpleWalletTopUpMessage(driver.id),
+              )}
+              target="_blank"
+              rel="noreferrer"
+              data-testid="top-up-wallet-button"
+              className="ru-btn inline-flex w-full items-center justify-center bg-[#25D366] py-3 text-base font-semibold text-white hover:bg-[#1ebe57] sm:w-auto"
+            >
+              Top Up Wallet
+            </a>
           ) : null}
 
           <button
@@ -285,7 +337,7 @@ export function DriverBoard({
             onClick={() => setShowTopUp((v) => !v)}
             className="ru-btn w-full bg-[#000000] py-3 text-base font-semibold text-white hover:bg-[#1a1a1a] sm:w-auto"
           >
-            Top Up Wallet
+            {showTopUp ? "Hide payment details" : "EFT / eWallet details"}
           </button>
 
           {showTopUp ? (
@@ -305,8 +357,8 @@ export function DriverBoard({
                 </li>
               </ol>
               <p className="mt-3 text-xs text-slate-500">
-                Keep a positive balance so automatic dispatch keeps sending you
-                jobs.
+                Credit limit {formatMoney(creditFloor)} — below that, go-online
+                and job offers pause until you top up.
               </p>
             </div>
           ) : null}
@@ -318,9 +370,12 @@ export function DriverBoard({
       {driver ? <DriverTrustPanel key={driver.id} driver={driver} /> : null}
 
       {walletBlocked ? (
-        <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-950">
-          Wallet below R0 — top up on the Wallet tab to receive new automatic
-          jobs.
+        <p
+          data-testid="wallet-warning"
+          className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-950"
+        >
+          Credit limit reached — top up on the Wallet tab to receive new
+          automatic jobs.
         </p>
       ) : null}
 
@@ -371,7 +426,13 @@ export function DriverBoard({
                 type="button"
                 disabled={pending}
                 className="ru-btn bg-slate-900 text-white"
-                onClick={() => run(() => completeTrip(active.id, driverId))}
+                onClick={() => {
+                  if (isCashPaymentMethod(active.payment_method)) {
+                    setCashPromptJob(active);
+                    return;
+                  }
+                  run(() => completeTrip(active.id, driverId));
+                }}
               >
                 Complete trip
               </button>
@@ -385,6 +446,26 @@ export function DriverBoard({
           </div>
         </section>
       )}
+
+      {cashPromptJob ? (
+        <CashCollectModal
+          amount={Number(cashPromptJob.fee_amount) || 0}
+          currency={cashPromptJob.fee_currency}
+          countryCode={cashPromptJob.country_code}
+          pending={pending}
+          onCancel={() => setCashPromptJob(null)}
+          onYes={() => {
+            const id = cashPromptJob.id;
+            setCashPromptJob(null);
+            run(() => completeTrip(id, driverId, { cashCollected: true }));
+          }}
+          onNo={() => {
+            const id = cashPromptJob.id;
+            setCashPromptJob(null);
+            run(() => completeTrip(id, driverId, { cashCollected: false }));
+          }}
+        />
+      ) : null}
 
       <section className="space-y-3">
         <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold">

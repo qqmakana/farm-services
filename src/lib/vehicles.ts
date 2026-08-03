@@ -24,11 +24,15 @@ export function localModeLabel(mode: LocalRideMode | null | undefined): string {
 export function suggestVehicle(params: {
   service_type: ServiceType;
   delivery_size?: "small" | "medium" | "large" | "xl";
+  weight_category?: "light" | "medium" | "heavy" | "extra_heavy";
 }): VehicleType {
   if (params.service_type === "ride") return "sedan";
   if (params.service_type === "courier") {
     return params.delivery_size === "medium" ? "bakkie" : "sedan";
   }
+  const w = params.weight_category;
+  if (w === "heavy" || w === "extra_heavy") return "truck";
+  if (w === "light" || w === "medium") return "bakkie";
   if (params.service_type === "farm") return "bakkie";
   if (params.delivery_size === "xl" || params.delivery_size === "large") {
     return "truck";

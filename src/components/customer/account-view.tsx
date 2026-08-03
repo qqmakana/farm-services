@@ -26,6 +26,7 @@ import { resetOnboardingForReplay } from "@/lib/onboarding";
 import { t } from "@/lib/i18n";
 import { RiderPhotoField } from "@/components/rider/rider-photo-field";
 import { RiderReferralCard } from "@/components/referral/rider-referral-card";
+import { SubscribeButton } from "@/components/subscription/subscribe-button";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardSkeleton } from "@/components/ui/skeleton";
 
@@ -172,6 +173,10 @@ export function AccountView() {
       ) : null}
 
       {profile?.phone ? <RiderReferralCard /> : null}
+
+      <div className="mt-4">
+        <SubscribeButton />
+      </div>
 
       <div className="ru-list mt-6">
         <button

@@ -17,10 +17,12 @@ import {
 } from "@/components/uber/schedule-when";
 import { quoteFareAction } from "@/lib/actions";
 import { locsFromSearchParams } from "@/lib/booking-query";
+import { getGuestProfile } from "@/lib/guest-profile";
 import { useCountry } from "@/components/country/country-provider";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
 import type { CourierWeight, VehicleType } from "@/lib/types";
 import { suggestVehicle } from "@/lib/vehicles";
+import { FareBreakdownCard } from "@/components/uber/fare-breakdown-card";
 
 const WEIGHT_OPTIONS = [
   {
@@ -74,8 +76,12 @@ export function CourierSheet({
   const [vehicle, setVehicle] = useState<VehicleType>("sedan");
   const [whenMode, setWhenMode] = useState<WhenMode>("now");
   const [scheduledLocal, setScheduledLocal] = useState(defaultLaterLocal);
-  const [fee, setFee] = useState(country.pricing.delivery.base);
-  const [baseFee, setBaseFee] = useState(country.pricing.delivery.base);
+  const [fee, setFee] = useState(country.pricing.ride.base);
+  const [baseFee, setBaseFee] = useState(country.pricing.ride.base);
+  const [distanceFare, setDistanceFare] = useState(0);
+  const [distanceKm, setDistanceKm] = useState(0);
+  const [bookingFee, setBookingFee] = useState(5);
+  const [villagePass, setVillagePass] = useState(false);
   const [isNight, setIsNight] = useState(false);
   const [nightExtra, setNightExtra] = useState(0);
   const [currency, setCurrency] = useState(country.currency);
@@ -128,17 +134,18 @@ export function CourierSheet({
           dropoff_lat: dropoff.lat,
           dropoff_lng: dropoff.lng,
           at: atIso,
+          customer_phone: senderPhone || getGuestProfile()?.phone || null,
         });
         if (!cancelled) {
-          const floor = weightOpt.from;
-          const base = Math.max(fare.base_fee_amount, floor);
-          const surcharge = fare.is_night_ride
-            ? Math.round((base * fare.night_surcharge_pct) / 100)
-            : 0;
-          setBaseFee(base);
-          setNightExtra(surcharge);
+          // Unified courier pricing (same band as ride) — trust server quote
+          setBaseFee(fare.base_fee_amount);
+          setDistanceFare(fare.distance_fare);
+          setDistanceKm(fare.distance_km);
+          setBookingFee(fare.booking_fee);
+          setVillagePass(fare.village_pass);
+          setNightExtra(fare.night_surcharge_amount);
           setIsNight(fare.is_night_ride);
-          setFee(base + surcharge);
+          setFee(fare.fee_amount);
           setCurrency(fare.currency);
         }
       } catch {
@@ -150,14 +157,13 @@ export function CourierSheet({
     };
   }, [
     vehicle,
-    weight,
-    weightOpt.from,
     pickup.lat,
     pickup.lng,
     dropoff.lat,
     dropoff.lng,
     atIso,
     countryCode,
+    senderPhone,
   ]);
 
   const ready =
@@ -281,6 +287,16 @@ export function CourierSheet({
           onChange={(e) => setSpecialInstructions(e.target.value)}
         />
       </label>
+
+      <FareBreakdownCard
+        baseFare={baseFee}
+        distanceFare={distanceFare + nightExtra}
+        platformFee={bookingFee}
+        total={fee}
+        currency={currency}
+        villagePass={villagePass}
+        distanceKm={distanceKm}
+      />
 
       <CheckoutBlock
         fee={fee}

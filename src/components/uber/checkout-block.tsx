@@ -4,10 +4,20 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useCountry } from "@/components/country/country-provider";
 import {
+  PaymentSelector,
+  type CheckoutPaymentChoice,
+} from "@/components/checkout/payment-selector";
+import { PayPalCheckout } from "@/components/paypal-checkout";
+import {
   bookingWhatsAppHref,
   type BookingWhatsAppDraft,
 } from "@/lib/brand";
-import { createCashJob } from "@/lib/actions";
+import {
+  capturePayPalAndCreateJob,
+  createCashJob,
+  createLocalPaidJob,
+  createPayPalOrderAction,
+} from "@/lib/actions";
 import { formatMoney } from "@/lib/format";
 import { setGuestProfile } from "@/lib/guest-profile";
 import { enqueuePendingBooking } from "@/lib/offline-booking-queue";
@@ -15,6 +25,7 @@ import { driverOptInNote } from "@/lib/night-fare";
 import { getCapturedReferrer } from "@/lib/rider-referral";
 import type { NewJobInput, ServiceType, VehicleType } from "@/lib/types";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
+import { SubscribeButton } from "@/components/subscription/subscribe-button";
 
 type Draft = Omit<NewJobInput, "payment">;
 
@@ -62,12 +73,17 @@ function detailsFromDraft(d: Draft, locale: string): string {
         : "Package";
     const size =
       "size" in d.details ? String(d.details.size || "") : "";
+    const weightCat =
+      "weight_category" in d.details && d.details.weight_category
+        ? String(d.details.weight_category)
+        : "";
     const weight =
       "item_weight" in d.details && d.details.item_weight
         ? String(d.details.item_weight)
         : "";
     return [
       item,
+      weightCat && `weight ${weightCat}`,
       weight && `weight ${weight}`,
       size && `size ${size}`,
       VEHICLE_LABELS[d.required_vehicle],
@@ -81,7 +97,13 @@ function detailsFromDraft(d: Draft, locale: string): string {
     "notes" in d.details && d.details.notes
       ? String(d.details.notes)
       : d.product_summary || "Farm load";
-  return `${notes} · ${VEHICLE_LABELS[d.required_vehicle]} · ${when}`;
+  const weightCat =
+    "weight_category" in d.details && d.details.weight_category
+      ? String(d.details.weight_category)
+      : "";
+  return [notes, weightCat && `weight ${weightCat}`, VEHICLE_LABELS[d.required_vehicle], when]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 export function CheckoutBlock({
@@ -89,7 +111,7 @@ export function CheckoutBlock({
   vehicle,
   ready,
   draft,
-  buttonLabel = "Request",
+  buttonLabel = "Book ride",
   serviceType,
   isNightRide = false,
   baseFee,
@@ -110,6 +132,7 @@ export function CheckoutBlock({
 }) {
   const router = useRouter();
   const { country, countryCode } = useCountry();
+  const [payMethod, setPayMethod] = useState<CheckoutPaymentChoice>("cash");
   const [formError, setFormError] = useState<string | null>(null);
   const [queuedOffline, setQueuedOffline] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -135,7 +158,15 @@ export function CheckoutBlock({
     setFormError(null);
   }
 
-  function requestJob() {
+  async function buildDraft(): Promise<Draft> {
+    const d = withReferralNote(await draft());
+    return {
+      ...d,
+      country_code: d.country_code || countryCode,
+    };
+  }
+
+  function requestCashJob() {
     setFormError(null);
     setQueuedOffline(false);
     if (!ready) {
@@ -144,16 +175,13 @@ export function CheckoutBlock({
     }
     startTransition(async () => {
       try {
-        const d = withReferralNote(await draft());
+        const d = await buildDraft();
         saveGuest(d);
         if (typeof navigator !== "undefined" && navigator.onLine === false) {
           queueOffline(d);
           return;
         }
-        const job = await createCashJob({
-          ...d,
-          country_code: d.country_code || countryCode,
-        });
+        const job = await createCashJob(d);
         router.push(`/trip/${job.reference_code}`);
         router.refresh();
       } catch (err) {
@@ -164,7 +192,7 @@ export function CheckoutBlock({
           /fetch|network|failed to fetch|load failed|offline/i.test(msg);
         if (offline || looksNetwork) {
           try {
-            const d = withReferralNote(await draft());
+            const d = await buildDraft();
             saveGuest(d);
             queueOffline(d);
             return;
@@ -184,12 +212,8 @@ export function CheckoutBlock({
       return;
     }
     void (async () => {
-      const d = await draft();
-      setGuestProfile({
-        name: d.customer_name,
-        phone: d.customer_phone,
-        country_code: countryCode,
-      });
+      const d = await buildDraft();
+      saveGuest(d);
       const payload: BookingWhatsAppDraft = {
         service_type: d.service_type,
         pickup_landmark: d.pickup_landmark,
@@ -197,7 +221,7 @@ export function CheckoutBlock({
         customer_name: d.customer_name,
         customer_phone: d.customer_phone,
         detailsLine: detailsFromDraft(d, country.locale),
-        paymentLabel: "Cash",
+        paymentLabel: payMethod === "card" ? "Card" : "Cash",
         estimateZar: fee,
         currencySymbol: country.currencySymbol,
       };
@@ -206,26 +230,34 @@ export function CheckoutBlock({
   }
 
   return (
-    <div className="space-y-3 border-t border-slate-100 bg-white pt-4 text-slate-900">
+    <div className="space-y-3 border-t border-gray-100 bg-white pt-4 text-[var(--ru-ink)]">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+          <p className="text-xs font-medium tracking-wide text-gray-500 uppercase">
             Price estimate
           </p>
-          <p className="text-2xl font-bold text-[#000000]">
+          <p
+            data-testid="price-display"
+            className="text-2xl font-bold text-[var(--ru-ink)]"
+          >
             {Number.isFinite(fee)
               ? formatMoney(fee, displayCurrency, countryCode)
               : "—"}
           </p>
           {isNightRide && baseFee != null ? (
-            <p className="mt-0.5 text-xs text-slate-500">
-              Base {formatMoney(baseFee, displayCurrency, countryCode)} +
-              after-hours{" "}
-              {formatMoney(nightSurchargeAmount, displayCurrency, countryCode)}
+            <p className="mt-0.5 text-xs text-gray-500">
+              Driver fare{" "}
+              {formatMoney(baseFee + nightSurchargeAmount, displayCurrency, countryCode)}{" "}
+              (base + after-hours)
             </p>
-          ) : null}
+          ) : (
+            <p className="mt-0.5 text-xs text-gray-500">
+              Includes driver fare · booking fee may apply (waived with Village
+              Pass)
+            </p>
+          )}
         </div>
-        <p className="text-xs text-slate-500">{VEHICLE_LABELS[vehicle]}</p>
+        <p className="text-xs text-gray-500">{VEHICLE_LABELS[vehicle]}</p>
       </div>
 
       {isNightRide ? (
@@ -239,21 +271,48 @@ export function CheckoutBlock({
         {optIn}
       </p>
 
-      <div className="rounded-2xl border border-[var(--ru-line)] bg-[var(--ru-elevated)] px-3 py-3">
-        <p className="text-sm font-semibold text-black">Pay the driver in cash</p>
-        <p className="mt-1 text-xs leading-relaxed text-[var(--ru-muted)]">
-          At pickup or dropoff — simple and reliable. Village Ride takes ~15%
-          from the driver&apos;s prepaid wallet, not from you. Card and mobile
-          money are coming later.
-        </p>
-      </div>
+      <PaymentSelector
+        value={payMethod}
+        onChange={setPayMethod}
+        currencyLabel={country.currencySymbol}
+      />
+
+      <SubscribeButton compact />
+
+      {payMethod === "cash" ? (
+        <div
+          data-testid="cash-payment-message"
+          className="rounded-2xl border border-[var(--ru-line)] bg-[var(--ru-elevated)] px-3 py-3"
+        >
+          <p className="text-sm font-semibold text-black">
+            Pay the driver in cash
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-[var(--ru-muted)]">
+            {/* Scenario A — Cash: rider pays full total to driver; platform fee
+                is deducted from the driver&apos;s prepaid wallet on complete. */}
+            Pay the driver the full total at pickup or dropoff. Village Ride
+            takes only the small platform fee from the driver&apos;s wallet
+            after the trip (waived with Village Pass).
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-[var(--ru-line)] bg-[var(--ru-elevated)] px-3 py-3">
+          <p className="text-sm font-semibold text-black">Pay with PayPal</p>
+          <p className="mt-1 text-xs leading-relaxed text-[var(--ru-muted)]">
+            {/* Scenario B — Card: // TODO: Integrate PayPal API here
+                (order/capture already wired in PayPalCheckout). */}
+            You pay the full fare now. When the trip completes, the driver is
+            credited the fare minus the platform fee.
+          </p>
+        </div>
+      )}
 
       {queuedOffline ? (
         <div className="space-y-2 rounded-2xl border border-[var(--ru-line)] bg-[var(--ru-elevated)] px-3 py-3 text-sm text-black">
           <p className="font-semibold">Saved on this phone (offline)</p>
           <p className="text-xs leading-relaxed text-[var(--ru-muted)]">
-            Your landmark booking is stored here and will send automatically
-            when you have signal — GPS not required.
+            Cash bookings can queue offline and send when you have signal. Card
+            payments need an internet connection.
           </p>
           <button
             type="button"
@@ -283,30 +342,85 @@ export function CheckoutBlock({
         live updates — photos, plate, and status — on the next screen.
       </p>
 
-      <button
-        type="button"
-        disabled={!ready || pending}
-        onClick={requestJob}
-        className="ru-btn ru-btn-primary ru-btn-block"
-      >
-        {pending ? (
-          <>
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-            Finding driver…
-          </>
+      <div className="sticky bottom-0 z-10 -mx-4 mt-2 space-y-2 border-t border-gray-100 bg-white px-4 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        {payMethod === "cash" ? (
+          <button
+            type="button"
+            data-testid="book-button"
+            disabled={!ready || pending}
+            onClick={requestCashJob}
+            className="ru-btn-book ru-btn-block"
+          >
+            {pending ? (
+              <>
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Finding driver…
+              </>
+            ) : (
+              buttonLabel
+            )}
+          </button>
         ) : (
-          buttonLabel
+          <PayPalCheckout
+            amount={Number(fee) || 0}
+            description={`${VEHICLE_LABELS[vehicle]} · Village Ride`}
+            disabled={!ready}
+            submitLabel={buttonLabel}
+            onCreateOrder={async () => {
+              setFormError(null);
+              if (!ready) throw new Error("Complete the form first.");
+              const d = await buildDraft();
+              saveGuest(d);
+              const { orderId } = await createPayPalOrderAction({
+                vehicle,
+                service_type: serviceType,
+                country_code: d.country_code || countryCode,
+                customer_phone: d.customer_phone,
+                pickup_lat: d.pickup_lat,
+                pickup_lng: d.pickup_lng,
+                dropoff_lat: d.dropoff_lat,
+                dropoff_lng: d.dropoff_lng,
+                description: `Village Ride ${serviceType} · ${VEHICLE_LABELS[vehicle]}`,
+                at: d.scheduled_for ?? null,
+              });
+              return orderId;
+            }}
+            onApprove={async (orderId) => {
+              setFormError(null);
+              try {
+                const d = await buildDraft();
+                saveGuest(d);
+                const job = await capturePayPalAndCreateJob(orderId, d);
+                router.push(`/trip/${job.reference_code}`);
+                router.refresh();
+              } catch (err) {
+                setFormError(
+                  err instanceof Error ? err.message : "Payment failed",
+                );
+                throw err;
+              }
+            }}
+            onLocalPay={async () => {
+              setFormError(null);
+              if (!ready) throw new Error("Complete the form first.");
+              const d = await buildDraft();
+              saveGuest(d);
+              const job = await createLocalPaidJob(d);
+              router.push(`/trip/${job.reference_code}`);
+              router.refresh();
+            }}
+          />
         )}
-      </button>
 
-      <button
-        type="button"
-        disabled={!ready || pending}
-        onClick={openWhatsAppBooking}
-        className="ru-btn ru-btn-secondary ru-btn-block"
-      >
-        Or send booking via WhatsApp
-      </button>
+        <button
+          type="button"
+          disabled={!ready || pending}
+          onClick={openWhatsAppBooking}
+          className="ru-btn ru-btn-secondary ru-btn-block !min-h-11 !rounded-xl !text-sm"
+        >
+          Or send booking via WhatsApp
+        </button>
+      </div>
     </div>
   );
 }

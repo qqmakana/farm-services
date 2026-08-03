@@ -10,89 +10,41 @@ import {
   getCountry,
   type CountryCode,
 } from "./countries";
+import {
+  calculateUnifiedFare,
+  normalizeWeightCategory,
+  type WeightCategory,
+} from "./pricing";
 
 export type FareBreakdown = {
+  /**
+   * Total the rider pays (driver fare + platform booking fee).
+   * Payment A/B/C: see src/lib/pricing.ts comments.
+   */
   fee_amount: number;
+  /** Sacred driver fare: base + km (+ night), min-enforced. */
+  driver_fare_amount: number;
+  /** Platform booking fee. 0 with Village Pass. */
+  booking_fee: number;
+  /**
+   * Legacy % commission (0 under flat-fee model).
+   * Kept for old jobs; new quotes set 0 so wallet uses booking_fee.
+   */
   platform_commission: number;
+  /** Amount credited to driver on card complete (= driver fare). */
   driver_payout: number;
   currency: string;
-  /** Base fare before after-hours surcharge */
+  /** Base fare component (before km / night) */
   base_fee_amount: number;
+  distance_fare: number;
+  distance_km: number;
+  weight_category: WeightCategory | null;
   is_night_ride: boolean;
   night_surcharge_pct: number;
   night_surcharge_amount: number;
+  village_pass: boolean;
   country_code?: CountryCode;
 };
-
-function resolveRate(params: {
-  vehicle: VehicleType;
-  serviceType?: ServiceType | null;
-  countryCode?: string | null;
-}): { base: number; perKm: number; commissionPct: number; currency: string } {
-  const country = getCountry(params.countryCode);
-  const p = country.pricing;
-
-  if (params.vehicle === "truck") {
-    return {
-      base: p.truck.base,
-      perKm: p.truck.perKm,
-      commissionPct: p.commissionPct,
-      currency: p.currency,
-    };
-  }
-
-  if (params.vehicle === "motorcycle") {
-    return {
-      base: p.motorcycle.base,
-      perKm: p.motorcycle.perKm,
-      commissionPct: p.commissionPct,
-      currency: p.currency,
-    };
-  }
-
-  const service = params.serviceType;
-  if (service === "ride") {
-    return {
-      base: p.ride.base,
-      perKm: p.ride.perKm,
-      commissionPct: p.commissionPct,
-      currency: p.currency,
-    };
-  }
-  if (service === "delivery" || service === "courier") {
-    return {
-      base: p.delivery.base,
-      perKm: p.delivery.perKm,
-      commissionPct: p.commissionPct,
-      currency: p.currency,
-    };
-  }
-  if (service === "farm") {
-    return {
-      base: p.farm.base,
-      perKm: p.farm.perKm,
-      commissionPct: p.commissionPct,
-      currency: p.currency,
-    };
-  }
-
-  // Legacy vehicle-only path
-  if (params.vehicle === "sedan") {
-    return {
-      base: p.ride.base,
-      perKm: p.ride.perKm,
-      commissionPct: p.commissionPct,
-      currency: p.currency,
-    };
-  }
-  // bakkie → farm base (historical SA default)
-  return {
-    base: p.farm.base,
-    perKm: p.farm.perKm,
-    commissionPct: p.commissionPct,
-    currency: p.currency,
-  };
-}
 
 /** Server-side fare — never trust client fee for charging. */
 export function calculateFare(params: {
@@ -101,8 +53,10 @@ export function calculateFare(params: {
   countryCode?: string | null;
   pickup?: { lat: number; lng: number } | null;
   dropoff?: { lat: number; lng: number } | null;
-  /** ISO datetime or null = now (Ride Now) */
   at?: string | Date | null;
+  isSubscribed?: boolean;
+  weightCategory?: WeightCategory | string | null;
+  /** @deprecated Prefer unified pricing; ignored when serviceType set */
   rules?: {
     base_fare: number;
     per_km: number;
@@ -111,20 +65,15 @@ export function calculateFare(params: {
   } | null;
 }): FareBreakdown {
   const countryCode = (params.countryCode as CountryCode) || DEFAULT_COUNTRY;
-  const fromCountry = resolveRate({
-    vehicle: params.vehicle,
-    serviceType: params.serviceType,
-    countryCode,
-  });
-
-  const rule = params.rules
-    ? {
-        base: Number(params.rules.base_fare),
-        perKm: Number(params.rules.per_km),
-        commissionPct: Number(params.rules.platform_commission_pct),
-        currency: params.rules.currency || fromCountry.currency,
-      }
-    : fromCountry;
+  const serviceType: ServiceType =
+    params.serviceType ||
+    (params.vehicle === "sedan"
+      ? "ride"
+      : params.vehicle === "motorcycle"
+        ? "courier"
+        : params.vehicle === "truck"
+          ? "farm"
+          : "delivery");
 
   let km = 0;
   if (
@@ -136,7 +85,6 @@ export function calculateFare(params: {
     km = distanceKm(params.pickup, params.dropoff);
   }
 
-  const baseFee = Math.round(rule.base + km * rule.perKm);
   const when =
     params.at instanceof Date
       ? params.at
@@ -144,22 +92,36 @@ export function calculateFare(params: {
           typeof params.at === "string" ? params.at : null,
         );
   const night = isNightWindow(when);
-  const surcharge = night
-    ? Math.round((baseFee * NIGHT_SURCHARGE_PCT) / 100)
-    : 0;
-  const fee = baseFee + surcharge;
-  const commission = Math.round((fee * rule.commissionPct) / 100);
-  const payout = Math.max(0, fee - commission);
 
+  const unified = calculateUnifiedFare({
+    serviceType,
+    distanceKm: km,
+    weightCategory:
+      serviceType === "delivery" || serviceType === "farm"
+        ? normalizeWeightCategory(params.weightCategory)
+        : null,
+    countryCode,
+    isSubscribed: params.isSubscribed,
+    nightSurchargePct: night ? NIGHT_SURCHARGE_PCT : 0,
+  });
+
+  // Flat platform-fee model: no % commission on new quotes.
+  // driver_payout = sacred driver fare (card Scenario B: total − platform_fee).
   return {
-    fee_amount: fee,
-    platform_commission: commission,
-    driver_payout: payout,
-    currency: rule.currency,
-    base_fee_amount: baseFee,
-    is_night_ride: night,
+    fee_amount: unified.total_fare,
+    driver_fare_amount: unified.driver_fare,
+    booking_fee: unified.platform_fee,
+    platform_commission: 0,
+    driver_payout: unified.driver_fare,
+    currency: unified.currency,
+    base_fee_amount: unified.base_fare,
+    distance_fare: unified.distance_fare,
+    distance_km: unified.distance_km,
+    weight_category: unified.weight_category,
+    is_night_ride: unified.is_night_ride,
     night_surcharge_pct: night ? NIGHT_SURCHARGE_PCT : 0,
-    night_surcharge_amount: surcharge,
+    night_surcharge_amount: unified.night_surcharge_amount,
+    village_pass: unified.village_pass,
     country_code: getCountry(countryCode).code,
   };
 }

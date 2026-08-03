@@ -36,6 +36,7 @@ export function LandmarkField({
   showSaved = true,
   showExamples = false,
   showGps = true,
+  compact = false,
 }: {
   label: string;
   placeholder: string;
@@ -48,15 +49,16 @@ export function LandmarkField({
   showExamples?: boolean;
   /** GPS button next to search — map pin stays available too. */
   showGps?: boolean;
+  compact?: boolean;
 }) {
   return (
-    <div className="space-y-2">
-      {showSaved ? (
+    <div className={compact ? "" : "space-y-2"}>
+      {showSaved && !compact ? (
         <SavedPlacesChips
           onSelect={(v) => onChange(placeToLoc(v))}
         />
       ) : null}
-      {showExamples ? (
+      {showExamples && !compact ? (
         <DescribePlaceExamples
           onPick={(text) =>
             onChange({
@@ -67,15 +69,16 @@ export function LandmarkField({
         />
       ) : null}
       <PlacesAutocomplete
-        label={label}
+        label={compact ? undefined : label}
         placeholder={placeholder}
         value={locToPlace(loc)}
         onChange={(v) => onChange(placeToLoc(v))}
         required={required}
         preferVillages={preferVillages}
-        showGps={showGps}
+        showGps={compact ? false : showGps}
+        compact={compact}
       />
-      {loc.lat != null && loc.lng != null ? (
+      {!compact && loc.lat != null && loc.lng != null ? (
         <p className="text-[11px] font-medium text-emerald-700">
           Map pin set · keep refining the landmark name for your driver
         </p>

@@ -23,6 +23,7 @@ import {
   setStoredCountryCode,
   setStoredLocale,
 } from "@/lib/country-preference";
+import { detectCountryFromBrowser } from "@/lib/detect-country";
 import { getGuestProfile, setGuestProfile } from "@/lib/guest-profile";
 
 type CountryContextValue = {
@@ -46,10 +47,17 @@ export function CountryProvider({ children }: { children: ReactNode }) {
   const [needsCountryPick, setNeedsPick] = useState(false);
 
   useEffect(() => {
-    const code = getStoredCountryCode();
-    setCountryCodeState(code);
+    const picked = hasPickedCountry();
+    if (picked) {
+      setCountryCodeState(getStoredCountryCode());
+      setNeedsPick(false);
+    } else {
+      // Auto-detect once, then lock via welcome modal / Continue
+      const detected = detectCountryFromBrowser();
+      setCountryCodeState(detected);
+      setNeedsPick(true);
+    }
     setLocaleState(getStoredLocale());
-    setNeedsPick(!hasPickedCountry());
     setReady(true);
   }, []);
 

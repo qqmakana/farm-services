@@ -139,8 +139,19 @@ export function CountryWelcomeModal() {
               {t("select_country", { locale, country: countryCode })}
             </p>
             <p className="mt-1 text-sm text-[var(--ru-muted)]">
-              {t("welcome_country", { locale, country: countryCode })}{" "}
-              ({GLOBAL_COUNTRY_COUNT} countries)
+              Detected from your device — confirm to lock currency, phone
+              prefix, map &amp; pricing. Change later in Account. (
+              {GLOBAL_COUNTRY_COUNT} countries)
+            </p>
+            <p className="mt-2 rounded-xl bg-[var(--ru-elevated)] px-3 py-2 text-xs text-[var(--ru-ink)]">
+              Suggested:{" "}
+              <strong>
+                {countries.find((c) => c.code === countryCode)?.flag}{" "}
+                {countries.find((c) => c.code === countryCode)?.name ||
+                  countryCode}
+              </strong>{" "}
+              · {countries.find((c) => c.code === countryCode)?.currencySymbol}
+              {countries.find((c) => c.code === countryCode)?.currency}
             </p>
           </div>
           <button

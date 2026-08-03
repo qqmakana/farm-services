@@ -22,26 +22,19 @@ import {
 } from "@/components/uber/sender-type-field";
 import { quoteFareAction } from "@/lib/actions";
 import { locsFromSearchParams } from "@/lib/booking-query";
+import { getGuestProfile } from "@/lib/guest-profile";
 import { useCountry } from "@/components/country/country-provider";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
-import type { VehicleType } from "@/lib/types";
+import type { VehicleType, WeightCategory } from "@/lib/types";
+import { vehicleForWeight } from "@/lib/pricing";
+import { WeightCategoryField } from "@/components/uber/weight-category-field";
+import { FareBreakdownCard } from "@/components/uber/fare-breakdown-card";
 
 const TRANSPORT_TYPES = [
   "Produce (vegetables, fruits, maize)",
   "Livestock (goats, chickens, cattle)",
   "Equipment (tractor, plow, tools)",
   "Supplies (feed, fertilizer, seed)",
-] as const;
-
-const VEHICLES = [
-  { id: "bakkie" as const, label: "Bakkie (small load)", from: 180 },
-  { id: "truck" as const, label: "Truck with sides (medium)", from: 350 },
-  {
-    id: "livestock" as const,
-    label: "Livestock truck",
-    from: 400,
-    mapsTo: "truck" as VehicleType,
-  },
 ] as const;
 
 export function FarmSheet({
@@ -64,21 +57,24 @@ export function FarmSheet({
   const [phone, setPhone] = useState("");
   const [transport, setTransport] =
     useState<(typeof TRANSPORT_TYPES)[number]>(TRANSPORT_TYPES[0]);
-  const [vehicleChoice, setVehicleChoice] =
-    useState<(typeof VEHICLES)[number]["id"]>("bakkie");
+  const [weight, setWeight] = useState<WeightCategory>("medium");
+  const [livestockTruck, setLivestockTruck] = useState(false);
   const [quantity, setQuantity] = useState("");
   const [whenMode, setWhenMode] = useState<WhenMode>("now");
   const [scheduledLocal, setScheduledLocal] = useState(defaultLaterLocal);
   const [fee, setFee] = useState(country.pricing.farm.base);
   const [baseFee, setBaseFee] = useState(country.pricing.farm.base);
+  const [distanceFare, setDistanceFare] = useState(0);
+  const [distanceKm, setDistanceKm] = useState(0);
+  const [bookingFee, setBookingFee] = useState(5);
+  const [villagePass, setVillagePass] = useState(false);
   const [isNight, setIsNight] = useState(false);
   const [nightExtra, setNightExtra] = useState(0);
   const [currency, setCurrency] = useState(country.currency);
 
-  const requiredVehicle: VehicleType =
-    vehicleChoice === "bakkie" ? "bakkie" : "truck";
-  const fromPrice =
-    VEHICLES.find((v) => v.id === vehicleChoice)?.from ?? 180;
+  const requiredVehicle: VehicleType = livestockTruck
+    ? "truck"
+    : vehicleForWeight(weight);
 
   const atIso = useMemo(
     () =>
@@ -120,16 +116,18 @@ export function FarmSheet({
           dropoff_lat: dropoff.lat,
           dropoff_lng: dropoff.lng,
           at: atIso,
+          customer_phone: phone || getGuestProfile()?.phone || null,
+          weight_category: weight,
         });
         if (!cancelled) {
-          const base = Math.max(fare.base_fee_amount, fromPrice);
-          const surcharge = fare.is_night_ride
-            ? Math.round((base * fare.night_surcharge_pct) / 100)
-            : 0;
-          setBaseFee(base);
-          setNightExtra(surcharge);
+          setBaseFee(fare.base_fee_amount);
+          setDistanceFare(fare.distance_fare);
+          setDistanceKm(fare.distance_km);
+          setBookingFee(fare.booking_fee);
+          setVillagePass(fare.village_pass);
+          setNightExtra(fare.night_surcharge_amount);
           setIsNight(fare.is_night_ride);
-          setFee(base + surcharge);
+          setFee(fare.fee_amount);
           setCurrency(fare.currency);
         }
       } catch {
@@ -141,13 +139,14 @@ export function FarmSheet({
     };
   }, [
     requiredVehicle,
-    fromPrice,
+    weight,
     pickup.lat,
     pickup.lng,
     dropoff.lat,
     dropoff.lng,
     atIso,
     countryCode,
+    phone,
   ]);
 
   const ready =
@@ -246,31 +245,24 @@ export function FarmSheet({
         </select>
       </label>
 
-      <div>
-        <p className="text-sm font-semibold text-[#000000]">Vehicle needed</p>
-        <div className="mt-2 space-y-2">
-          {VEHICLES.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => setVehicleChoice(opt.id)}
-              className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left ${
-                vehicleChoice === opt.id
-                  ? "border-[#000000] bg-[#FFF3E0]"
-                  : "border-slate-200 bg-white hover:bg-slate-50"
-              }`}
-            >
-              <span className="text-sm font-semibold text-[#000000]">
-                {opt.label}
-              </span>
-              <span className="text-sm text-slate-600">from R{opt.from}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      <WeightCategoryField
+        value={weight}
+        onChange={setWeight}
+        serviceLabel="farm load"
+      />
+
+      <label className="flex items-center gap-2 text-sm font-semibold text-[#000000]">
+        <input
+          type="checkbox"
+          checked={livestockTruck}
+          onChange={(e) => setLivestockTruck(e.target.checked)}
+          className="h-4 w-4 rounded border-slate-300"
+        />
+        Needs livestock truck
+      </label>
 
       <label className="block text-sm font-semibold text-[#000000]">
-        Weight / quantity estimate
+        Quantity notes (optional)
         <input
           className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
           placeholder="e.g., 10 bags maize, 5 goats"
@@ -278,6 +270,16 @@ export function FarmSheet({
           onChange={(e) => setQuantity(e.target.value)}
         />
       </label>
+
+      <FareBreakdownCard
+        baseFare={baseFee}
+        distanceFare={distanceFare + nightExtra}
+        platformFee={bookingFee}
+        total={fee}
+        currency={currency}
+        villagePass={villagePass}
+        distanceKm={distanceKm}
+      />
 
       <CheckoutBlock
         fee={fee}
@@ -311,6 +313,7 @@ export function FarmSheet({
           dispatcher_notes:
             [
               `Sender type: ${senderTypeLabel(senderType)}`,
+              `Weight: ${weight}`,
               isNight &&
                 "Night Ride (Premium) — after-hours safety surcharge applied",
             ]
@@ -327,10 +330,8 @@ export function FarmSheet({
                 ? [{ name: quantity.trim(), qty: 1, price: 0 }]
                 : []),
             ],
-            notes:
-              vehicleChoice === "livestock"
-                ? "Needs livestock truck"
-                : undefined,
+            weight_category: weight,
+            notes: livestockTruck ? "Needs livestock truck" : undefined,
             sender_type: senderType,
           },
           fee_amount: fee,
