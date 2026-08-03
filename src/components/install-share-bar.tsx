@@ -4,10 +4,8 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { BRAND } from "@/lib/brand";
 import {
-  getApkUrl,
   getAppInstallUrl,
   getDeferredPrompt,
-  isAndroidDevice,
   isIosDevice,
   isStandaloneDisplay,
   promptNativeInstall,
@@ -31,8 +29,11 @@ const HIDE_BANNER = new Set([
 ]);
 
 async function shareAppLink() {
-  const url = getAppInstallUrl();
-  const text = `${BRAND.appName} — tap to get the app (Android: downloads directly, no Play Store needed):\n${url}`;
+  const url =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : "https://village-ride.vercel.app";
+  const text = `${BRAND.appName} — open in Chrome/Safari, then Install / Add to Home Screen:\n${url}`;
   if (navigator.share) {
     await navigator.share({ title: `${BRAND.appName} app`, text, url });
     return "shared";
@@ -58,28 +59,24 @@ export function useInstallActions() {
   useEffect(() => {
     setStandalone(isStandaloneDisplay());
     setIos(isIosDevice());
+    const onInstalled = () => setStandalone(true);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => window.removeEventListener("appinstalled", onInstalled);
   }, []);
 
   const install = useCallback(async () => {
-    // Android → download the real signed app directly. Works from WhatsApp,
-    // Chrome, or any browser — no beforeinstallprompt dependency, no menu hunting.
-    if (isAndroidDevice()) {
-      window.location.href = getApkUrl();
-      return;
-    }
-
-    if (isIosDevice()) {
-      setHelpOpen(true);
-      return;
-    }
-
-    if (deferred) {
+    // Prefer the native browser PWA prompt (Chrome/Edge/Android).
+    // Never force an APK download from in-app Install buttons — that causes
+    // "format not supported" when the file is missing or blocked.
+    if (deferred || getDeferredPrompt()) {
       setInstalling(true);
       try {
         const outcome = await promptNativeInstall();
         if (outcome === "accepted") {
           setStandalone(true);
           setNote("Installed — check your home screen");
+        } else if (outcome === "unavailable") {
+          setHelpOpen(true);
         }
       } finally {
         setInstalling(false);
@@ -87,8 +84,14 @@ export function useInstallActions() {
       return;
     }
 
-    // Fallback: take them to the simple install page
-    window.location.href = "/get-app";
+    // iOS Safari never fires beforeinstallprompt — show Share instructions.
+    if (isIosDevice()) {
+      setHelpOpen(true);
+      return;
+    }
+
+    // Android / desktop without a deferred prompt: guide to browser menu.
+    setHelpOpen(true);
   }, [deferred]);
 
   const share = useCallback(async () => {
@@ -117,33 +120,56 @@ export function useInstallActions() {
   };
 }
 
-function HelpPanel({ ios, onClose }: { ios: boolean; onClose: () => void }) {
+export function InstallHelpPanel({
+  ios,
+  onClose,
+}: {
+  ios: boolean;
+  onClose: () => void;
+}) {
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-4 sm:items-center">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 p-4 sm:items-center">
       <div className="w-full max-w-md rounded-2xl bg-white p-5 text-slate-900 shadow-2xl">
         <p className="font-[family-name:var(--font-display)] text-lg font-bold">
           Install {BRAND.appName}
         </p>
         {ios ? (
-          <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-800">
-            <li>
-              Tap <strong>Share</strong> in Safari
-            </li>
-            <li>
-              Tap <strong>Add to Home Screen</strong>
-            </li>
-            <li>
-              Tap <strong>Add</strong>
-            </li>
-          </ol>
+          <>
+            <p className="mt-2 text-sm text-slate-600">
+              To install, tap the Share button and select &quot;Add to Home
+              Screen.&quot;
+            </p>
+            <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-800">
+              <li>
+                Tap <strong>Share</strong> (square with ↑) in Safari
+              </li>
+              <li>
+                Tap <strong>Add to Home Screen</strong>
+              </li>
+              <li>
+                Tap <strong>Add</strong>
+              </li>
+            </ol>
+          </>
         ) : (
-          <p className="mt-2 text-sm text-slate-600">
-            Open{" "}
-            <a href="/get-app" className="font-bold text-[var(--ru-brand)] underline">
-              the install page
-            </a>{" "}
-            and tap the big Install button.
-          </p>
+          <>
+            <p className="mt-2 text-sm text-slate-600">
+              Use your browser&apos;s Install option — that&apos;s the reliable
+              way to add Village Ride to your home screen.
+            </p>
+            <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-800">
+              <li>
+                Tap the <strong>⋮</strong> menu in Chrome
+              </li>
+              <li>
+                Tap <strong>Install app</strong> or{" "}
+                <strong>Add to Home screen</strong>
+              </li>
+              <li>
+                Tap <strong>Install</strong>
+              </li>
+            </ol>
+          </>
         )}
         <button
           type="button"
@@ -196,7 +222,9 @@ export function NavInstallShare() {
           {note}
         </span>
       ) : null}
-      {helpOpen ? <HelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
+      {helpOpen ? (
+        <InstallHelpPanel ios={ios} onClose={() => setHelpOpen(false)} />
+      ) : null}
     </>
   );
 }
@@ -252,7 +280,9 @@ export function InstallShareBar() {
         >
           Install app
         </button>
-        {helpOpen ? <HelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
+        {helpOpen ? (
+          <InstallHelpPanel ios={ios} onClose={() => setHelpOpen(false)} />
+        ) : null}
       </div>
     );
   }
@@ -306,7 +336,7 @@ export function InstallShareBar() {
           {note}
         </p>
       ) : null}
-      {helpOpen ? <HelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
+      {helpOpen ? <InstallHelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
     </div>
   );
 }
@@ -342,7 +372,7 @@ export function HomeInstallShareCtas() {
         Share app
       </button>
       {note ? <p className="w-full text-sm text-sky-200">{note}</p> : null}
-      {helpOpen ? <HelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
+      {helpOpen ? <InstallHelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
     </div>
   );
 }

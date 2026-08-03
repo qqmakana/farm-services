@@ -13,7 +13,10 @@ import {
   Users,
 } from "lucide-react";
 import { OnboardingGate } from "@/components/onboarding/onboarding-gate";
-import { useInstallActions } from "@/components/install-share-bar";
+import {
+  InstallHelpPanel,
+  useInstallActions,
+} from "@/components/install-share-bar";
 import { PageShell } from "@/components/ui/page-shell";
 import { resetOnboardingForReplay } from "@/lib/onboarding";
 
@@ -58,7 +61,14 @@ const cards = [
 
 function ServicesContent() {
   const router = useRouter();
-  const { standalone, installing, install } = useInstallActions();
+  const {
+    standalone,
+    installing,
+    install,
+    ios,
+    helpOpen,
+    setHelpOpen,
+  } = useInstallActions();
 
   function openTour() {
     resetOnboardingForReplay();
@@ -79,7 +89,7 @@ function ServicesContent() {
             className="ru-btn ru-btn-primary ru-btn-block"
           >
             <Download className="h-4 w-4" strokeWidth={2.25} aria-hidden />
-            {installing ? "Starting…" : "Install app"}
+            {installing ? "Installing…" : "Install app"}
           </button>
         ) : null}
         <button
@@ -121,6 +131,9 @@ function ServicesContent() {
       <p className="mt-8 text-center text-[11px] tracking-wide text-[var(--ru-muted)]">
         Google Play coming soon · Install now from this page
       </p>
+      {helpOpen ? (
+        <InstallHelpPanel ios={ios} onClose={() => setHelpOpen(false)} />
+      ) : null}
     </PageShell>
   );
 }

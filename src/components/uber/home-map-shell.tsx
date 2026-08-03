@@ -6,7 +6,10 @@ import { UberShell } from "@/components/uber/uber-shell";
 import { ServiceHomeSheet } from "@/components/uber/service-home";
 import { CaptureReferral } from "@/components/referral/capture-referral";
 import { useBookingMapPin } from "@/components/uber/use-booking-map-pin";
-import { useInstallActions } from "@/components/install-share-bar";
+import {
+  InstallHelpPanel,
+  useInstallActions,
+} from "@/components/install-share-bar";
 
 /** Client home chrome — full-bleed map + Uber bottom sheet. */
 export function HomeMapShell({ trust }: { trust: ReactNode }) {
@@ -15,7 +18,15 @@ export function HomeMapShell({ trust }: { trust: ReactNode }) {
     lat: number;
     lng: number;
   } | null>(null);
-  const { standalone, installing, install } = useInstallActions();
+  const {
+    standalone,
+    installing,
+    install,
+    ios,
+    helpOpen,
+    setHelpOpen,
+    note,
+  } = useInstallActions();
 
   return (
     <UberShell
@@ -43,8 +54,13 @@ export function HomeMapShell({ trust }: { trust: ReactNode }) {
             disabled={installing}
             className="ru-btn-book ru-btn-block"
           >
-            {installing ? "Starting…" : "Install Village Ride"}
+            {installing ? "Installing…" : "Install Village Ride"}
           </button>
+        ) : null}
+        {note ? (
+          <p className="text-center text-xs font-semibold text-[var(--ru-success)]">
+            {note}
+          </p>
         ) : null}
         <p className="px-1 pb-2 text-center text-xs text-gray-500">
           <Link
@@ -62,6 +78,9 @@ export function HomeMapShell({ trust }: { trust: ReactNode }) {
           </Link>
         </p>
       </div>
+      {helpOpen ? (
+        <InstallHelpPanel ios={ios} onClose={() => setHelpOpen(false)} />
+      ) : null}
     </UberShell>
   );
 }
