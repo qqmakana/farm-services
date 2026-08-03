@@ -24,6 +24,7 @@ import type {
   FuelRequest,
 } from "./types";
 import { distanceKm } from "./geo";
+import { calculateFare } from "./fares";
 import { isValidMobileForCountry } from "./phone";
 import { DEFAULT_COUNTRY, getCountry } from "./countries";
 import { rankDriversForJob } from "./dispatch-score";
@@ -1370,6 +1371,19 @@ export const mockRepo = {
       delivery_size: product.size,
     });
 
+    const fare = calculateFare({
+      vehicle: required,
+      serviceType: "delivery",
+      pickup:
+        shop.lat != null && shop.lng != null
+          ? { lat: shop.lat, lng: shop.lng }
+          : null,
+      dropoff:
+        input.dropoff_lat != null && input.dropoff_lng != null
+          ? { lat: input.dropoff_lat, lng: input.dropoff_lng }
+          : null,
+    });
+
     return mockRepo.createJob({
       service_type: "delivery",
       required_vehicle: required,
@@ -1386,11 +1400,12 @@ export const mockRepo = {
         size: product.size,
         needs_helpers: product.size === "large" || product.size === "xl",
       },
-      fee_amount:
-        required === "truck" ? 450 : required === "bakkie" ? 180 : 50,
+      fee_amount: fare.fee_amount,
       shop_id: shop.id,
-      product_summary: `${product.name} (R${product.price})`,
-      dispatcher_notes: `Shop order from ${shop.name} · paid with PayPal`,
+      product_summary: `${product.name} (${product.price})`,
+      dispatcher_notes: `Shop order from ${shop.name} · paid with ${
+        input.payment.method === "cash" ? "cash" : "PayPal"
+      }`,
       payment: input.payment,
     });
   },

@@ -29,21 +29,18 @@ const WEIGHT_OPTIONS = [
     id: "under_5" as const,
     label: "Under 5 kg",
     hint: "Keys, documents, small gifts",
-    from: 30,
     size: "small" as const,
   },
   {
     id: "5_10" as const,
     label: "5–10 kg",
     hint: "Clothes bag, shoes, books",
-    from: 50,
     size: "small" as const,
   },
   {
     id: "10_20" as const,
     label: "10–20 kg",
     hint: "Small box / appliance (max ~20 kg)",
-    from: 80,
     size: "medium" as const,
   },
 ] as const;
@@ -207,7 +204,7 @@ export function CourierSheet({
         <label className="block text-sm font-semibold text-[#000000]">
           Your name
           <input
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+            className="ru-soft-field mt-1.5 text-sm"
             value={senderName}
             onChange={(e) => setSenderName(e.target.value)}
           />
@@ -215,7 +212,7 @@ export function CourierSheet({
         <label className="block text-sm font-semibold text-[#000000]">
           Your phone
           <input
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+            className="ru-soft-field mt-1.5 text-sm"
             value={senderPhone}
             onChange={(e) => setSenderPhone(e.target.value)}
             placeholder={formatPhonePlaceholder(countryCode)}
@@ -234,7 +231,7 @@ export function CourierSheet({
         <label className="block text-sm font-semibold text-[#000000]">
           Recipient name
           <input
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+            className="ru-soft-field mt-1.5 text-sm"
             value={recipientName}
             onChange={(e) => setRecipientName(e.target.value)}
             placeholder="Optional"
@@ -243,7 +240,7 @@ export function CourierSheet({
         <label className="block text-sm font-semibold text-[#000000]">
           Recipient phone
           <input
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+            className="ru-soft-field mt-1.5 text-sm"
             value={recipientPhone}
             onChange={(e) => setRecipientPhone(e.target.value)}
             placeholder="Optional"
@@ -255,7 +252,7 @@ export function CourierSheet({
       <label className="block text-sm font-semibold text-[#000000]">
         Item description
         <input
-          className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+          className="ru-soft-field mt-1.5 text-sm"
           value={itemDescription}
           onChange={(e) => setItemDescription(e.target.value)}
           placeholder='e.g., "Clothes in a bag", "Small sealed box"'
@@ -265,13 +262,13 @@ export function CourierSheet({
       <label className="block text-sm font-semibold text-[#000000]">
         Item weight
         <select
-          className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+          className="ru-soft-field mt-1.5 text-sm"
           value={weight}
           onChange={(e) => setWeight(e.target.value as CourierWeight)}
         >
           {WEIGHT_OPTIONS.map((o) => (
             <option key={o.id} value={o.id}>
-              {o.label} — from R{o.from} ({o.hint})
+              {o.label} — {o.hint}
             </option>
           ))}
         </select>
@@ -281,7 +278,7 @@ export function CourierSheet({
         Special instructions
         <textarea
           rows={2}
-          className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+          className="ru-soft-field mt-1.5 text-sm"
           placeholder='e.g., "Call recipient when arriving"'
           value={specialInstructions}
           onChange={(e) => setSpecialInstructions(e.target.value)}

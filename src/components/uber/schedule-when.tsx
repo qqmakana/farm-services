@@ -53,7 +53,7 @@ export function ScheduleWhen({
           <input
             type="datetime-local"
             required
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+            className="ru-soft-field mt-1.5 text-sm"
             value={scheduledLocal}
             onChange={(e) => onScheduledLocalChange(e.target.value)}
             min={toLocalInputValue(new Date())}

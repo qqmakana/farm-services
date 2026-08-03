@@ -182,7 +182,7 @@ export function FarmSheet({
       <label className="block text-sm font-semibold text-[#000000]">
         Farm / business / place name
         <input
-          className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+          className="ru-soft-field mt-1.5 text-sm"
           placeholder="e.g., Magwaza farm, Nkomazi co-op, town supplier"
           value={farmName}
           onChange={(e) => setFarmName(e.target.value)}
@@ -211,7 +211,7 @@ export function FarmSheet({
         <label className="block text-sm font-semibold text-[#000000]">
           Your name
           <input
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+            className="ru-soft-field mt-1.5 text-sm"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -219,7 +219,7 @@ export function FarmSheet({
         <label className="block text-sm font-semibold text-[#000000]">
           Phone
           <input
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+            className="ru-soft-field mt-1.5 text-sm"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder={formatPhonePlaceholder(countryCode)}
@@ -231,7 +231,7 @@ export function FarmSheet({
       <label className="block text-sm font-semibold text-[#000000]">
         Transport type
         <select
-          className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+          className="ru-soft-field mt-1.5 text-sm"
           value={transport}
           onChange={(e) =>
             setTransport(e.target.value as (typeof TRANSPORT_TYPES)[number])
@@ -264,7 +264,7 @@ export function FarmSheet({
       <label className="block text-sm font-semibold text-[#000000]">
         Quantity notes (optional)
         <input
-          className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+          className="ru-soft-field mt-1.5 text-sm"
           placeholder="e.g., 10 bags maize, 5 goats"
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}

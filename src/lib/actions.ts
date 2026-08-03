@@ -2314,12 +2314,13 @@ export async function createShopOrder(input: ShopOrderInput) {
     throw new Error("Delivery landmark is required.");
   }
 
-  if (
-    input.payment?.method !== "paypal" ||
-    !input.payment.paypalOrderId ||
-    !input.payment.paypalCaptureId
-  ) {
-    throw new Error("PayPal payment required.");
+  const isCash = input.payment?.method === "cash";
+  const isPayPal =
+    input.payment?.method === "paypal" &&
+    Boolean(input.payment.paypalOrderId) &&
+    Boolean(input.payment.paypalCaptureId);
+  if (!isCash && !isPayPal) {
+    throw new Error("Cash or PayPal payment required.");
   }
 
   const shops = await listShops();
@@ -2335,10 +2336,12 @@ export async function createShopOrder(input: ShopOrderInput) {
 
   const fare = await resolveFare({
     vehicle: required,
+    service_type: "delivery",
     pickup_lat: shop.lat,
     pickup_lng: shop.lng,
     dropoff_lat: input.dropoff_lat,
     dropoff_lng: input.dropoff_lng,
+    customer_phone: input.buyer_phone,
   });
 
   return createJob({
@@ -2359,13 +2362,25 @@ export async function createShopOrder(input: ShopOrderInput) {
     },
     fee_amount: fare.fee_amount,
     shop_id: shop.id,
-    product_summary: `${product.name} (R${product.price})`,
-    dispatcher_notes: `Shop order from ${shop.name} - paid with PayPal`,
+    product_summary: `${product.name} (${product.price})`,
+    dispatcher_notes: `Shop order from ${shop.name} — paid with ${
+      isCash ? "cash" : "PayPal"
+    }`,
     payment: input.payment,
   }).then(async (job) => {
     const { notifyPartnerForJob } = await import("./partner");
     await notifyPartnerForJob(job, "order_created");
     return job;
+  });
+}
+
+/** Cash shop delivery — pay the driver; platform fee from driver wallet. */
+export async function createCashShopOrder(
+  input: Omit<ShopOrderInput, "payment">,
+) {
+  return createShopOrder({
+    ...input,
+    payment: { method: "cash" },
   });
 }
 

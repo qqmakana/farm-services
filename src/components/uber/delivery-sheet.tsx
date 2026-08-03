@@ -187,7 +187,7 @@ export function DeliverySheet({
         <label className="block text-sm font-semibold text-[#000000]">
           Sender name
           <input
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+            className="ru-soft-field mt-1.5 text-sm"
             value={senderName}
             onChange={(e) => setSenderName(e.target.value)}
           />
@@ -195,7 +195,7 @@ export function DeliverySheet({
         <label className="block text-sm font-semibold text-[#000000]">
           Sender phone
           <input
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+            className="ru-soft-field mt-1.5 text-sm"
             value={senderPhone}
             onChange={(e) => setSenderPhone(e.target.value)}
             placeholder={formatPhonePlaceholder(countryCode)}
@@ -221,7 +221,7 @@ export function DeliverySheet({
         <label className="block text-sm font-semibold text-[#000000]">
           Recipient name
           <input
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+            className="ru-soft-field mt-1.5 text-sm"
             value={recipientName}
             onChange={(e) => setRecipientName(e.target.value)}
             placeholder="Optional"
@@ -230,7 +230,7 @@ export function DeliverySheet({
         <label className="block text-sm font-semibold text-[#000000]">
           Recipient phone
           <input
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+            className="ru-soft-field mt-1.5 text-sm"
             value={recipientPhone}
             onChange={(e) => setRecipientPhone(e.target.value)}
             placeholder="Optional"
@@ -249,7 +249,7 @@ export function DeliverySheet({
         Special notes
         <textarea
           rows={2}
-          className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F5F5F5] px-3 py-3 text-sm"
+          className="ru-soft-field mt-1.5 text-sm"
           placeholder="e.g., 2nd floor, fragile"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}

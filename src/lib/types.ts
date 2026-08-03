@@ -472,11 +472,13 @@ export type ShopOrderInput = {
   dropoff_landmark: string;
   dropoff_lat: number | null;
   dropoff_lng: number | null;
-  payment: {
-    method: "paypal";
-    paypalOrderId: string;
-    paypalCaptureId: string;
-  };
+  payment:
+    | { method: "cash" }
+    | {
+        method: "paypal";
+        paypalOrderId: string;
+        paypalCaptureId: string;
+      };
 };
 
 export type LocationCategory =
