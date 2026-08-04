@@ -58,7 +58,9 @@ export function RideSheet({
   const [passengers, setPassengers] = useState(1);
   const [vehicle, setVehicle] = useState<VehicleType>("sedan");
   const [localModeId, setLocalModeId] = useState<string | null>(null);
-  const [whenMode, setWhenMode] = useState<WhenMode>("now");
+  const [whenMode, setWhenMode] = useState<WhenMode>(() =>
+    searchParams.get("when") === "later" ? "later" : "now",
+  );
   const [scheduledLocal, setScheduledLocal] = useState(defaultLaterLocal);
   const [fee, setFee] = useState(country.pricing.ride.base);
   const [baseFee, setBaseFee] = useState(country.pricing.ride.base);

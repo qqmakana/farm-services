@@ -116,7 +116,10 @@ test.describe("Phase 3 — Nav confusion & checkout clarity", () => {
     expect(cleaned.some((t) => /Activity/i.test(t))).toBeTruthy();
     expect(cleaned.some((t) => /Account/i.test(t))).toBeTruthy();
     expect(cleaned.some((t) => /Services/i.test(t))).toBeFalsy();
-    await expect(page.getByTestId("service-pills")).toBeVisible();
+    await expect(page.getByTestId("uber-home")).toBeVisible();
+    await expect(page.getByTestId("home-chips")).toBeVisible();
+    await expect(page.getByTestId("service-circles")).toBeVisible();
+    await expect(page.getByTestId("home-where-to")).toBeVisible();
   });
 
   test("driver bottom nav has exactly 3 tabs (Jobs · Earnings · Account)", async ({

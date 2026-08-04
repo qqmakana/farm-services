@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clock, MapPin, User } from "lucide-react";
+import { Clock, Home, User } from "lucide-react";
 
 const TABS = [
   {
     href: "/",
     label: "Home",
-    icon: MapPin,
+    icon: Home,
     match: (p: string) =>
       p === "/" ||
       p.startsWith("/ride") ||
@@ -39,7 +39,7 @@ export function CustomerTabBar() {
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 z-[60] w-full max-w-md -translate-x-1/2 border-t border-[var(--ru-line)] bg-white/95 pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-sans)] backdrop-blur"
+      className="fixed bottom-0 left-1/2 z-[60] w-full max-w-md -translate-x-1/2 touch-manipulation border-t border-gray-100 bg-white pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-sans)]"
       style={{ height: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}
       aria-label="Main"
       data-testid="customer-tab-bar"
@@ -53,18 +53,19 @@ export function CustomerTabBar() {
               <Link
                 href={tab.href}
                 data-testid={`customer-tab-${tab.label.toLowerCase()}`}
-                className={`flex flex-1 flex-col items-center justify-center gap-0.5 transition active:scale-95 ${
+                className={`flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-3 transition-colors duration-150 ease-out hover:bg-gray-50 active:bg-gray-100 ${
                   active
-                    ? "font-bold text-black"
-                    : "font-medium text-[var(--ru-muted)]"
+                    ? "font-semibold text-black"
+                    : "font-medium text-gray-500"
                 }`}
               >
                 <Icon
-                  className="h-5 w-5"
-                  strokeWidth={active ? 2.5 : 2}
+                  className="h-6 w-6"
+                  strokeWidth={active ? 2.25 : 1.75}
+                  fill={active ? "currentColor" : "none"}
                   aria-hidden
                 />
-                <span className="text-[11px] leading-none">{tab.label}</span>
+                <span className="text-xs leading-none">{tab.label}</span>
               </Link>
             </li>
           );

@@ -242,11 +242,12 @@ body {
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: -0.01em;
+  touch-action: manipulation;
   transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.15s ease,
-    opacity 0.15s ease;
+    background 0.15s ease-out,
+    color 0.15s ease-out,
+    transform 0.15s ease-out,
+    opacity 0.15s ease-out;
 }
 
 .ru-btn:active {
@@ -282,10 +283,11 @@ body {
   font-weight: 700;
   letter-spacing: -0.01em;
   color: #fff;
+  touch-action: manipulation;
   transition:
-    background 0.2s ease,
-    transform 0.15s ease,
-    opacity 0.15s ease;
+    background 0.15s ease-out,
+    transform 0.15s ease-out,
+    opacity 0.15s ease-out;
 }
 
 .ru-btn-book:hover {
