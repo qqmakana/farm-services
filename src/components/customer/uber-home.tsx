@@ -1,10 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
-  Briefcase,
   Car,
   Clock,
   Package,
@@ -68,8 +68,53 @@ const ALL_SERVICES = [
   },
 ] as const;
 
+/** Uber-style image suggestion tiles (horizontal scroll). */
+const SUGGESTIONS: {
+  href: string;
+  title: string;
+  image: string;
+  bg: string;
+  chips: HomeChip[];
+}[] = [
+  {
+    href: "/ride",
+    title: "Ride",
+    image: "/home/sug-ride.jpg",
+    bg: "bg-[#E8E8E8]",
+    chips: ["for_you", "trip", "reserve"],
+  },
+  {
+    href: "/shops",
+    title: "Order\nanything",
+    image: "/home/sug-order.jpg",
+    bg: "bg-[#E8F5EE]",
+    chips: ["for_you", "shops", "delivery"],
+  },
+  {
+    href: "/group",
+    title: "Family &\nteens",
+    image: "/home/sug-family.jpg",
+    bg: "bg-[#EAF0FF]",
+    chips: ["for_you", "groups", "trip"],
+  },
+  {
+    href: "/courier",
+    title: "Send a\npackage",
+    image: "/home/sug-courier.jpg",
+    bg: "bg-[#F3F0EA]",
+    chips: ["for_you", "delivery"],
+  },
+  {
+    href: "/farm",
+    title: "Farm\nloads",
+    image: "/home/sug-farm.jpg",
+    bg: "bg-[#EAF6E8]",
+    chips: ["for_you", "delivery"],
+  },
+];
+
 /**
- * Uber-style content-first Home — chips, circular services, promos.
+ * Uber-style content-first Home — chips, circular services, photo suggestions.
  * Map opens on booking screens after a service is chosen.
  */
 export function UberHome() {
@@ -78,6 +123,11 @@ export function UberHome() {
 
   const services = useMemo(
     () => ALL_SERVICES.filter((s) => s.chips.includes(chip)),
+    [chip],
+  );
+
+  const suggestions = useMemo(
+    () => SUGGESTIONS.filter((s) => s.chips.includes(chip)),
     [chip],
   );
 
@@ -112,7 +162,7 @@ export function UberHome() {
         </button>
       </div>
 
-      {/* Uber-style category chips (For you / Trip / Reserve…) */}
+      {/* Uber-style category chips */}
       <div
         data-testid="home-chips"
         className="-mx-1 mt-5 flex gap-2 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -165,104 +215,150 @@ export function UberHome() {
         ))}
       </div>
 
-      {/* Suggestions / promos */}
+      {/* Suggestions — photo tiles like Uber */}
       <section className="mt-8">
         <h2 className="text-xl font-bold tracking-tight text-black">
           Suggestions
         </h2>
-        <div className="-mx-1 mt-4 flex gap-3 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <PromoCard
-            href="/partners"
-            title="For businesses"
-            body="Free signup · self-serve deliveries for shops & farms"
-            Icon={Briefcase}
-            accent="bg-[#E8F8F0]"
-          />
-          <PromoCard
-            href="/driver/join"
-            title="Drive with us"
-            body="Keep 85% · browse jobs now, verify before first paid trip"
-            Icon={Car}
-            accent="bg-[#F3F3F3]"
-          />
-          <PromoCard
-            href="/group"
-            title="Group rides"
-            body="Share the fare with others going the same way"
-            Icon={Users}
-            accent="bg-[#EEF2FF]"
-          />
+        <div
+          data-testid="home-suggestions"
+          className="-mx-1 mt-4 flex gap-3 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {suggestions.map((s) => (
+            <SuggestionCard key={s.href + s.title} {...s} />
+          ))}
         </div>
       </section>
 
-      <section className="mt-8 space-y-3">
+      {/* Full-bleed promo banner */}
+      <section className="mt-8">
+        <Link
+          href="/ride?when=later"
+          className="uber-press relative block overflow-hidden rounded-2xl active:opacity-95"
+        >
+          <div className="relative aspect-[16/9] w-full bg-gray-900">
+            <Image
+              src="/home/banner-night.jpg"
+              alt=""
+              fill
+              className="object-cover"
+              sizes="(max-width: 28rem) 100vw, 28rem"
+              priority={false}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 p-4">
+              <p className="text-lg font-bold tracking-tight text-white">
+                Go anytime
+              </p>
+              <p className="mt-0.5 text-sm text-white/85">
+                Reserve a night ride before you leave
+              </p>
+            </div>
+          </div>
+        </Link>
+      </section>
+
+      {/* More ways to use Village Ride — Uber list with photos */}
+      <section className="mt-8">
         <h2 className="text-xl font-bold tracking-tight text-black">
-          Get started
+          More ways to use Village Ride
         </h2>
-        <Link
-          href="/ride"
-          className="uber-press flex items-center gap-4 rounded-2xl bg-gray-50 p-4 hover:bg-gray-100 hover:shadow-md active:bg-gray-200"
-        >
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-black text-white">
-            <Car className="h-7 w-7" aria-hidden />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-base font-bold text-black">
-              Book a Village Ride
-            </span>
-            <span className="mt-0.5 block text-sm text-gray-500">
-              Landmark pickup · cash or card · night rides
-            </span>
-          </span>
-        </Link>
-        <Link
-          href="/onboarding?replay=1"
-          className="uber-press flex items-center gap-4 rounded-2xl bg-gray-50 p-4 hover:bg-gray-100 hover:shadow-md active:bg-gray-200"
-        >
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gray-200 text-black">
-            <Package className="h-7 w-7" aria-hidden />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-base font-bold text-black">
-              See how it works
-            </span>
-            <span className="mt-0.5 block text-sm text-gray-500">
-              Quick tour of Ride, Delivery, Farm &amp; Courier
-            </span>
-          </span>
-        </Link>
+        <ul className="mt-4 space-y-3">
+          <WayRow
+            href="/shops"
+            title="Order almost anything"
+            body="Local kitchens & spaza — delivered to your door"
+            image="/home/sug-order.png"
+          />
+          <WayRow
+            href="/group"
+            title="Family & teens"
+            body="Share rides safely with people you trust"
+            image="/home/sug-family.png"
+          />
+          <WayRow
+            href="/farm"
+            title="Move farm goods"
+            body="Bakkie & truck for crates, feed and harvest"
+            image="/home/sug-farm.png"
+          />
+          <WayRow
+            href="/driver/join"
+            title="Drive & earn"
+            body="Keep 85% · browse jobs now, verify before first trip"
+            image="/home/sug-ride.png"
+          />
+        </ul>
       </section>
     </main>
   );
 }
 
-function PromoCard({
+function SuggestionCard({
   href,
   title,
-  body,
-  Icon,
-  accent,
+  image,
+  bg,
 }: {
   href: string;
   title: string;
-  body: string;
-  Icon: typeof Car;
-  accent: string;
+  image: string;
+  bg: string;
 }) {
   return (
     <Link
       href={href}
-      className={`uber-press flex w-[16.5rem] shrink-0 gap-3 rounded-2xl ${accent} p-4 hover:shadow-md`}
+      className={`uber-press relative flex h-[11.5rem] w-[8.75rem] shrink-0 flex-col overflow-hidden rounded-2xl ${bg}`}
     >
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-black shadow-sm">
-        <Icon className="h-6 w-6" aria-hidden />
-      </span>
-      <span className="min-w-0">
-        <span className="block text-sm font-bold text-black">{title}</span>
-        <span className="mt-1 block text-xs leading-snug text-gray-600">
-          {body}
-        </span>
-      </span>
+      <p className="relative z-10 px-3 pt-3 text-[15px] leading-tight font-bold whitespace-pre-line text-black">
+        {title}
+      </p>
+      <div className="absolute inset-x-0 bottom-0 h-[65%]">
+        <Image
+          src={image}
+          alt=""
+          fill
+          className="object-cover object-center"
+          sizes="140px"
+        />
+      </div>
     </Link>
+  );
+}
+
+function WayRow({
+  href,
+  title,
+  body,
+  image,
+}: {
+  href: string;
+  title: string;
+  body: string;
+  image: string;
+}) {
+  return (
+    <li>
+      <Link
+        href={href}
+        className="uber-press flex items-center gap-3 rounded-2xl bg-gray-50 p-3 hover:bg-gray-100 active:bg-gray-200"
+      >
+        <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-200">
+          <Image
+            src={image}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="64px"
+          />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-base font-bold text-black">{title}</span>
+          <span className="mt-0.5 block text-sm leading-snug text-gray-500">
+            {body}
+          </span>
+        </span>
+      </Link>
+    </li>
   );
 }
