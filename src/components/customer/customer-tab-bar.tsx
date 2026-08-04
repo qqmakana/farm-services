@@ -53,7 +53,7 @@ export function CustomerTabBar() {
               <Link
                 href={tab.href}
                 data-testid={`customer-tab-${tab.label.toLowerCase()}`}
-                className={`flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-3 transition-colors duration-150 ease-out hover:bg-gray-50 active:bg-gray-100 ${
+                className={`uber-press flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-3 hover:bg-gray-50 active:bg-gray-100 ${
                   active
                     ? "font-semibold text-black"
                     : "font-medium text-gray-500"

@@ -303,6 +303,162 @@ body {
   pointer-events: none;
 }
 
+/* Uber tap physics — use on every pressable control */
+.uber-press {
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  transition:
+    transform 0.15s ease-out,
+    background-color 0.15s ease-out,
+    box-shadow 0.15s ease-out,
+    opacity 0.15s ease-out,
+    color 0.15s ease-out,
+    border-color 0.15s ease-out;
+}
+.uber-press:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.uber-press:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.uber-btn-black {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 3.25rem;
+  border-radius: 9999px;
+  background: #000;
+  padding: 0.875rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 18%);
+}
+.uber-btn-black:hover:not(:disabled) {
+  background: #1a1a1a;
+}
+.uber-btn-black:active:not(:disabled) {
+  background: #0a0a0a;
+  transform: scale(0.97);
+}
+
+.uber-btn-soft {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  border-radius: 9999px;
+  background: #f3f3f3;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #000;
+}
+.uber-btn-soft:hover:not(:disabled) {
+  background: #e8e8e8;
+}
+.uber-btn-soft:active:not(:disabled) {
+  background: #ddd;
+  transform: scale(0.96);
+}
+
+.uber-add-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  min-width: 2.75rem;
+  border-radius: 9999px;
+  background: #fff;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #06c167;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 16%);
+}
+.uber-add-chip:hover:not(:disabled) {
+  background: #f7f7f7;
+}
+.uber-add-chip:active:not(:disabled) {
+  transform: scale(0.92);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 20%);
+}
+
+.uber-qty-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  border-radius: 9999px;
+  background: #fff;
+  padding: 0.15rem;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 18%);
+}
+.uber-qty-stepper button {
+  display: flex;
+  height: 1.85rem;
+  width: 1.85rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: #06c167;
+}
+.uber-qty-stepper button:hover:not(:disabled) {
+  background: #f3f3f3;
+}
+.uber-qty-stepper button:active:not(:disabled) {
+  background: #e8e8e8;
+  transform: scale(0.9);
+}
+.uber-qty-stepper span {
+  min-width: 1.25rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #000;
+}
+
+@keyframes uber-cart-up {
+  from {
+    opacity: 0;
+    transform: translateY(120%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes uber-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes uber-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.uber-cart-enter {
+  animation: uber-cart-up 0.28s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.uber-sheet-scrim {
+  animation: uber-fade-in 0.2s ease-out both;
+}
+.uber-sheet-panel {
+  animation: uber-sheet-up 0.32s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
 .ru-btn-brand {
   background: var(--ru-brand);
   color: white;

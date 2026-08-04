@@ -18,7 +18,7 @@ function etaFor(shop: Shop) {
 
 export function ShopStorefront({ shops }: { shops: Shop[] }) {
   return (
-    <div className="space-y-5">
+    <div className="touch-manipulation space-y-5">
       <header>
         <h1 className="text-3xl font-bold tracking-tight text-black">
           Shops near you
@@ -41,7 +41,7 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
             <Link
               key={shop.id}
               href={`/shops/${shop.id}`}
-              className="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition active:scale-[0.98] touch-manipulation"
+              className="uber-press group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md active:bg-gray-50"
             >
               <div
                 className={`relative h-32 bg-gradient-to-br ${ACCENTS[i % ACCENTS.length]}`}
@@ -51,7 +51,7 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
                   <img
                     src={shop.image_url}
                     alt=""
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover transition-transform duration-150 group-active:scale-105"
                   />
                 ) : (
                   <div className="flex h-full items-end p-3">
@@ -60,7 +60,7 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
                 )}
               </div>
               <div className="space-y-1 p-3">
-                <p className="line-clamp-1 text-sm font-semibold text-black group-hover:underline">
+                <p className="line-clamp-1 text-sm font-semibold text-black">
                   {shop.name}
                 </p>
                 <p className="line-clamp-2 text-xs text-gray-500">

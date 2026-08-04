@@ -96,7 +96,7 @@ export function UberHome() {
           type="button"
           data-testid="home-where-to"
           onClick={() => router.push("/ride")}
-          className="flex min-h-14 flex-1 cursor-pointer items-center gap-3 rounded-full bg-gray-100 px-4 py-3 text-left transition-all duration-150 ease-out hover:bg-gray-200 focus:bg-white focus:ring-2 focus:ring-black/10 focus:outline-none active:scale-[0.98]"
+          className="uber-press flex min-h-14 flex-1 items-center gap-3 rounded-full bg-gray-100 px-4 py-3 text-left hover:bg-gray-200 focus:bg-white focus:ring-2 focus:ring-black/10 focus:outline-none active:bg-gray-300"
         >
           <Search className="h-5 w-5 shrink-0 text-black" aria-hidden />
           <span className="text-base font-semibold text-black">Where to?</span>
@@ -105,7 +105,7 @@ export function UberHome() {
           type="button"
           data-testid="home-later"
           onClick={() => router.push("/ride?when=later")}
-          className="flex h-14 min-w-[5.5rem] shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-gray-100 px-4 text-sm font-semibold text-black transition-all duration-150 ease-out hover:bg-gray-200 active:scale-[0.98]"
+          className="uber-press flex h-14 min-w-[5.5rem] shrink-0 items-center justify-center gap-1.5 rounded-full bg-gray-100 px-4 text-sm font-semibold text-black hover:bg-gray-200 active:bg-gray-300"
         >
           <Clock className="h-4 w-4" aria-hidden />
           Later
@@ -129,10 +129,10 @@ export function UberHome() {
               aria-selected={active}
               data-testid={`home-chip-${c.id}`}
               onClick={() => setChip(c.id)}
-              className={`min-h-11 shrink-0 cursor-pointer rounded-full px-4 text-sm font-semibold transition-all duration-150 ease-out active:scale-[0.98] ${
+              className={`uber-press min-h-11 shrink-0 rounded-full px-4 text-sm font-semibold ${
                 active
-                  ? "bg-black text-white hover:bg-gray-800"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  ? "bg-black text-white hover:bg-gray-800 active:bg-gray-900"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300"
               }`}
             >
               {c.label}
@@ -153,7 +153,7 @@ export function UberHome() {
             key={`${chip}-${href}-${label}`}
             href={href}
             data-testid={`service-circle-${label.toLowerCase()}`}
-            className="group flex w-[4.5rem] shrink-0 cursor-pointer flex-col items-center gap-2 transition-all duration-150 ease-out active:scale-95"
+            className="uber-press group flex w-[4.5rem] shrink-0 flex-col items-center gap-2"
           >
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-black transition-all duration-150 group-hover:bg-gray-200 group-active:bg-gray-300 group-active:ring-2 group-active:ring-black">
               <Icon className="h-7 w-7" strokeWidth={1.75} aria-hidden />
@@ -201,7 +201,7 @@ export function UberHome() {
         </h2>
         <Link
           href="/ride"
-          className="flex cursor-pointer items-center gap-4 rounded-2xl bg-gray-50 p-4 transition-all duration-150 ease-out hover:bg-gray-100 hover:shadow-md active:scale-[0.99]"
+          className="uber-press flex items-center gap-4 rounded-2xl bg-gray-50 p-4 hover:bg-gray-100 hover:shadow-md active:bg-gray-200"
         >
           <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-black text-white">
             <Car className="h-7 w-7" aria-hidden />
@@ -217,7 +217,7 @@ export function UberHome() {
         </Link>
         <Link
           href="/onboarding?replay=1"
-          className="flex cursor-pointer items-center gap-4 rounded-2xl bg-gray-50 p-4 transition-all duration-150 ease-out hover:bg-gray-100 hover:shadow-md active:scale-[0.99]"
+          className="uber-press flex items-center gap-4 rounded-2xl bg-gray-50 p-4 hover:bg-gray-100 hover:shadow-md active:bg-gray-200"
         >
           <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gray-200 text-black">
             <Package className="h-7 w-7" aria-hidden />
@@ -252,7 +252,7 @@ function PromoCard({
   return (
     <Link
       href={href}
-      className={`flex w-[16.5rem] shrink-0 cursor-pointer gap-3 rounded-2xl ${accent} p-4 transition-all duration-150 ease-out hover:shadow-md active:scale-[0.99]`}
+      className={`uber-press flex w-[16.5rem] shrink-0 gap-3 rounded-2xl ${accent} p-4 hover:shadow-md`}
     >
       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-black shadow-sm">
         <Icon className="h-6 w-6" aria-hidden />

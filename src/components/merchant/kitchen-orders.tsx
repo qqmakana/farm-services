@@ -8,14 +8,10 @@ import { formatMoney, formatWhen } from "@/lib/format";
 import type { ShopOrder, ShopOrderStatus } from "@/lib/types";
 
 function statusStyle(status: ShopOrderStatus) {
-  if (status === "pending")
-    return "bg-amber-100 text-amber-800";
-  if (status === "preparing")
-    return "bg-blue-100 text-blue-800";
-  if (status === "ready")
-    return "bg-emerald-100 text-emerald-800";
-  if (status === "cancelled")
-    return "bg-gray-100 text-gray-600";
+  if (status === "pending") return "bg-amber-100 text-amber-800";
+  if (status === "preparing") return "bg-blue-100 text-blue-800";
+  if (status === "ready") return "bg-emerald-100 text-emerald-800";
+  if (status === "cancelled") return "bg-gray-100 text-gray-600";
   return "bg-gray-100 text-gray-700";
 }
 
@@ -46,7 +42,7 @@ export function KitchenOrders({ orders }: { orders: ShopOrder[] }) {
   }
 
   return (
-    <section className="mt-8">
+    <section className="mt-8 touch-manipulation">
       <div className="flex items-center gap-2">
         <CookingPot className="h-5 w-5 text-black" />
         <h2 className="text-lg font-bold tracking-tight">Kitchen orders</h2>
@@ -102,7 +98,7 @@ export function KitchenOrders({ orders }: { orders: ShopOrder[] }) {
                       type="button"
                       disabled={pending}
                       onClick={() => setStatus(order.id, "preparing")}
-                      className="rounded-xl bg-black px-3 py-2 text-xs font-semibold text-white active:scale-95 disabled:opacity-50 touch-manipulation"
+                      className="uber-press uber-btn-black !min-h-10 !px-4 !text-sm"
                     >
                       Start preparing
                     </button>
@@ -113,7 +109,7 @@ export function KitchenOrders({ orders }: { orders: ShopOrder[] }) {
                       type="button"
                       disabled={pending}
                       onClick={() => setStatus(order.id, "ready")}
-                      className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white active:scale-95 disabled:opacity-50 touch-manipulation"
+                      className="uber-press inline-flex min-h-10 items-center gap-1 rounded-full bg-[#06c167] px-4 text-sm font-bold text-white hover:bg-[#05a85a] active:bg-[#048a4a]"
                     >
                       <CheckCircle className="h-3.5 w-3.5" />
                       Ready for pickup

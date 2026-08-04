@@ -11,6 +11,7 @@ import {
   Plus,
   ShoppingBag,
   Store,
+  X,
 } from "lucide-react";
 import {
   addToCart,
@@ -26,6 +27,10 @@ import {
 import { placeShopCartOrder } from "@/lib/actions-shop-orders";
 import { formatMoney } from "@/lib/format";
 import type { Product, Shop } from "@/lib/types";
+
+function qtyFor(lines: CartLine[], productId: string) {
+  return lines.find((l) => l.productId === productId)?.quantity ?? 0;
+}
 
 export function ShopMenu({
   shop,
@@ -43,6 +48,7 @@ export function ShopMenu({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [justAdded, setJustAdded] = useState<string | null>(null);
 
   useEffect(() => {
     const sync = () => {
@@ -57,6 +63,12 @@ export function ShopMenu({
     return subscribeCart(sync);
   }, [shop.id]);
 
+  useEffect(() => {
+    if (!justAdded) return;
+    const t = window.setTimeout(() => setJustAdded(null), 220);
+    return () => window.clearTimeout(t);
+  }, [justAdded]);
+
   const shopLines = lines.filter((l) => l.shopId === shop.id);
   const count = cartCount(shopLines);
   const subtotal = cartSubtotal(shopLines);
@@ -70,6 +82,7 @@ export function ShopMenu({
       price: Number(product.price),
       imageUrl: product.image_url,
     });
+    setJustAdded(product.id);
   }
 
   function placeOrder() {
@@ -98,10 +111,10 @@ export function ShopMenu({
 
   if (success) {
     return (
-      <div className="flex min-h-dvh flex-col bg-white px-4 pb-28 pt-8">
+      <div className="flex min-h-dvh touch-manipulation flex-col bg-white px-4 pb-28 pt-8">
         <div className="mx-auto flex max-w-md flex-1 flex-col items-center justify-center text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
-            <CheckCircle2 className="h-9 w-9 text-emerald-600" />
+            <CheckCircle2 className="h-9 w-9 text-[#06c167]" />
           </div>
           <h1 className="mt-5 text-2xl font-bold tracking-tight">
             Order placed!
@@ -113,13 +126,13 @@ export function ShopMenu({
           <button
             type="button"
             onClick={() => router.push("/shops")}
-            className="mt-8 w-full rounded-2xl bg-black py-3.5 text-sm font-semibold text-white active:scale-[0.98] touch-manipulation"
+            className="uber-press uber-btn-black mt-8 w-full"
           >
             Back to shops
           </button>
           <Link
             href="/activity"
-            className="mt-3 text-sm font-medium text-gray-600 underline"
+            className="uber-press mt-3 rounded-full px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100"
           >
             View activity
           </Link>
@@ -129,7 +142,7 @@ export function ShopMenu({
   }
 
   return (
-    <div className="relative min-h-dvh bg-white pb-28">
+    <div className="relative min-h-dvh touch-manipulation bg-white pb-28">
       <div className="relative h-44 bg-gradient-to-br from-emerald-800 to-emerald-500">
         {shop.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -145,7 +158,7 @@ export function ShopMenu({
         )}
         <Link
           href="/shops"
-          className="absolute top-4 left-4 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md active:scale-95 touch-manipulation"
+          className="uber-press absolute top-4 left-4 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-md hover:bg-gray-50 active:bg-gray-100"
           aria-label="Back"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -164,44 +177,77 @@ export function ShopMenu({
           </p>
         </div>
 
-        <h2 className="mt-6 text-lg font-bold">Menu</h2>
+        <h2 className="mt-6 text-lg font-bold">Featured items</h2>
         <ul className="mt-3 divide-y divide-gray-100">
-          {products.map((product) => (
-            <li key={product.id} className="flex gap-3 py-4">
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold text-black">{product.name}</p>
-                {product.description && (
-                  <p className="mt-0.5 line-clamp-2 text-sm text-gray-500">
-                    {product.description}
+          {products.map((product) => {
+            const qty = qtyFor(shopLines, product.id);
+            const popped = justAdded === product.id;
+            return (
+              <li key={product.id} className="flex gap-3 py-4">
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-black">{product.name}</p>
+                  {product.description && (
+                    <p className="mt-0.5 line-clamp-2 text-sm text-gray-500">
+                      {product.description}
+                    </p>
+                  )}
+                  <p className="mt-2 text-sm font-semibold">
+                    {formatMoney(Number(product.price))}
                   </p>
-                )}
-                <p className="mt-2 text-sm font-semibold">
-                  {formatMoney(Number(product.price))}
-                </p>
-              </div>
-              <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100">
-                {product.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={product.image_url}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-gray-300">
-                    <ShoppingBag className="h-7 w-7" />
+                </div>
+                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100">
+                  {product.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={product.image_url}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-gray-300">
+                      <ShoppingBag className="h-7 w-7" />
+                    </div>
+                  )}
+                  <div
+                    className={`absolute right-1.5 bottom-1.5 transition-transform duration-150 ease-out ${
+                      popped ? "scale-110" : "scale-100"
+                    }`}
+                  >
+                    {qty === 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => onAdd(product)}
+                        className="uber-press uber-add-chip"
+                        aria-label={`Add ${product.name}`}
+                      >
+                        Add
+                      </button>
+                    ) : (
+                      <div className="uber-qty-stepper">
+                        <button
+                          type="button"
+                          className="uber-press"
+                          aria-label="Decrease"
+                          onClick={() => setLineQty(product.id, qty - 1)}
+                        >
+                          <Minus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        </button>
+                        <span>{qty}</span>
+                        <button
+                          type="button"
+                          className="uber-press"
+                          aria-label="Increase"
+                          onClick={() => onAdd(product)}
+                        >
+                          <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => onAdd(product)}
-                  className="absolute right-1.5 bottom-1.5 rounded-full bg-white px-2.5 py-1 text-xs font-bold text-green-600 shadow-md active:scale-95 touch-manipulation"
-                >
-                  Add
-                </button>
-              </div>
-            </li>
-          ))}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </div>
 
@@ -210,81 +256,90 @@ export function ShopMenu({
           <button
             type="button"
             onClick={() => setSheetOpen(true)}
-            className="flex w-full max-w-md items-center justify-between rounded-2xl bg-black px-5 py-4 text-sm font-semibold text-white shadow-lg active:scale-[0.99] touch-manipulation"
+            className="uber-press uber-btn-black uber-cart-enter flex w-full max-w-md items-center justify-between !rounded-full px-5"
           >
-            <span className="inline-flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-xs">
+            <span className="inline-flex items-center gap-2.5">
+              <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-white/20 px-2 text-xs font-bold">
                 {count}
               </span>
               View cart
             </span>
-            <span>{formatMoney(subtotal)}</span>
+            <span className="font-bold">{formatMoney(subtotal)}</span>
           </button>
         </div>
       )}
 
       {sheetOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
+        <div className="uber-sheet-scrim fixed inset-0 z-50 flex items-end justify-center bg-black/45">
           <button
             type="button"
             className="absolute inset-0"
             aria-label="Close cart"
             onClick={() => setSheetOpen(false)}
           />
-          <div className="relative max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white px-4 pt-4 pb-8 shadow-2xl">
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-gray-200" />
-            <h3 className="text-xl font-bold">Your cart</h3>
-            <ul className="mt-4 space-y-3">
+          <div className="uber-sheet-panel relative max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-[1.75rem] bg-white px-4 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-2xl">
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-gray-300" />
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold tracking-tight">Cart</h3>
+              <button
+                type="button"
+                onClick={() => setSheetOpen(false)}
+                className="uber-press flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 active:bg-gray-300"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <ul className="space-y-4">
               {shopLines.map((line) => (
                 <li
                   key={line.productId}
                   className="flex items-center justify-between gap-3"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-medium">{line.name}</p>
+                    <p className="truncate font-semibold">{line.name}</p>
                     <p className="text-sm text-gray-500">
-                      {formatMoney(line.price)}
+                      {formatMoney(line.price * line.quantity)}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="uber-qty-stepper">
                     <button
                       type="button"
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 active:scale-95"
+                      className="uber-press"
                       onClick={() =>
                         setLineQty(line.productId, line.quantity - 1)
                       }
                     >
-                      <Minus className="h-4 w-4" />
+                      <Minus className="h-3.5 w-3.5" strokeWidth={2.5} />
                     </button>
-                    <span className="w-5 text-center text-sm font-semibold">
-                      {line.quantity}
-                    </span>
+                    <span>{line.quantity}</span>
                     <button
                       type="button"
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 active:scale-95"
+                      className="uber-press"
                       onClick={() =>
                         setLineQty(line.productId, line.quantity + 1)
                       }
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
                     </button>
                   </div>
                 </li>
               ))}
             </ul>
 
-            <div className="mt-5 space-y-2 rounded-2xl bg-gray-50 p-4 text-sm">
+            <div className="mt-5 space-y-2.5 rounded-2xl bg-gray-50 p-4 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-600">Subtotal</span>
-                <span className="font-medium">{formatMoney(subtotal)}</span>
+                <span className="font-semibold">{formatMoney(subtotal)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Delivery fee</span>
-                <span className="font-medium">
+                <span className="font-semibold">
                   {formatMoney(SHOP_DELIVERY_FEE)}
                 </span>
               </div>
-              <div className="flex justify-between border-t border-gray-200 pt-2 text-base font-bold">
+              <div className="flex justify-between border-t border-gray-200 pt-2.5 text-base font-bold">
                 <span>Total</span>
                 <span>{formatMoney(total)}</span>
               </div>
@@ -295,20 +350,20 @@ export function ShopMenu({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your name"
-                className="w-full rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm outline-none focus:border-gray-300"
+                className="w-full rounded-2xl border border-transparent bg-gray-100 px-4 py-3.5 text-sm outline-none transition focus:border-gray-300 focus:bg-white"
               />
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="Phone number"
                 inputMode="tel"
-                className="w-full rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm outline-none focus:border-gray-300"
+                className="w-full rounded-2xl border border-transparent bg-gray-100 px-4 py-3.5 text-sm outline-none transition focus:border-gray-300 focus:bg-white"
               />
               <input
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="Delivery address / landmark"
-                className="w-full rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm outline-none focus:border-gray-300"
+                className="w-full rounded-2xl border border-transparent bg-gray-100 px-4 py-3.5 text-sm outline-none transition focus:border-gray-300 focus:bg-white"
               />
             </div>
 
@@ -320,9 +375,11 @@ export function ShopMenu({
               type="button"
               disabled={pending || shopLines.length === 0}
               onClick={placeOrder}
-              className="mt-5 w-full rounded-2xl bg-black py-3.5 text-sm font-semibold text-white disabled:opacity-50 active:scale-[0.98] touch-manipulation"
+              className="uber-press uber-btn-black mt-5 w-full"
             >
-              {pending ? "Placing order…" : `Place order · ${formatMoney(total)}`}
+              {pending
+                ? "Placing order…"
+                : `Place order · ${formatMoney(total)}`}
             </button>
           </div>
         </div>
