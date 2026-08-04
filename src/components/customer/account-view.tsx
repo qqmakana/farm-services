@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
-  BadgeCheck,
   ChevronRight,
+  Clock,
   CreditCard,
   Gift,
   LifeBuoy,
@@ -12,8 +12,6 @@ import {
   MapPin,
   Scale,
   Settings,
-  Shield,
-  Users,
   Wallet,
 } from "lucide-react";
 import { CountrySelector } from "@/components/country/country-selector";
@@ -29,6 +27,7 @@ import { RiderReferralCard } from "@/components/referral/rider-referral-card";
 import { SubscribeButton } from "@/components/subscription/subscribe-button";
 import { DashboardSkeleton } from "@/components/ui/skeleton";
 
+/** Uber-style Account — profile, shortcuts, menu. */
 export function AccountView() {
   const { country, countryCode } = useCountry();
   const [profile, setProfile] = useState<GuestProfile | null>(null);
@@ -88,30 +87,25 @@ export function AccountView() {
       data-testid="account-view"
       className="min-h-dvh touch-manipulation bg-white px-4 pb-28 pt-6"
     >
-      {/* Profile header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-3xl font-bold tracking-tight text-black">
-            {displayName}
-          </h1>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {profile?.phone ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-black">
-                <BadgeCheck className="h-3.5 w-3.5 text-[#0ECB81]" aria-hidden />
-                Verified guest
-              </span>
-            ) : (
-              <span className="text-sm text-gray-500">Add your phone to save trips</span>
-            )}
-            <span className="text-xs text-gray-500">
-              {country.flag} {country.name}
-            </span>
-          </div>
-        </div>
+      <div className="flex items-center justify-between gap-4">
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="uber-press flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-xl font-bold text-black hover:bg-gray-300"
+          className="min-w-0 flex-1 text-left"
+        >
+          <h1 className="text-3xl font-bold tracking-tight text-black">
+            {displayName}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">
+            {profile?.phone
+              ? `${profile.phone} · ${country.flag} ${country.name}`
+              : "Add phone to save trips"}
+          </p>
+        </button>
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="uber-press flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-2xl font-bold text-black"
           aria-label="Edit profile"
         >
           {profile?.photo_data_url ? (
@@ -128,35 +122,24 @@ export function AccountView() {
       </div>
 
       {showForm ? (
-        <form
-          onSubmit={saveDetails}
-          className="mt-6 space-y-3 rounded-2xl bg-gray-100 p-4"
-        >
-          <label className="block text-sm font-semibold text-black">
-            Name
-            <input
-              className="ru-soft-field mt-1 !bg-white"
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              placeholder="Your name"
-            />
-          </label>
-          <label className="block text-sm font-semibold text-black">
-            Phone
-            <input
-              className="ru-soft-field mt-1 !bg-white"
-              value={phoneInput}
-              onChange={(e) => setPhoneInput(e.target.value)}
-              placeholder={formatPhonePlaceholder(countryCode)}
-              inputMode="tel"
-              required
-            />
-          </label>
-          <div className="pt-1">
-            <CountrySelector compact showLanguage={false} />
-          </div>
+        <form onSubmit={saveDetails} className="mt-6 space-y-3">
+          <input
+            className="ru-soft-field"
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            placeholder="Name"
+          />
+          <input
+            className="ru-soft-field"
+            value={phoneInput}
+            onChange={(e) => setPhoneInput(e.target.value)}
+            placeholder={formatPhonePlaceholder(countryCode)}
+            inputMode="tel"
+            required
+          />
+          <CountrySelector compact showLanguage={false} />
           <button type="submit" className="uber-press uber-btn-black w-full">
-            Save profile
+            Save
           </button>
           {editing && profile?.phone ? (
             <button
@@ -170,36 +153,34 @@ export function AccountView() {
         </form>
       ) : null}
 
-      {/* 2x2 grid */}
+      {/* Uber Account 2×2 shortcuts */}
       <div className="mt-6 grid grid-cols-2 gap-3">
         <GridTile href="/help" label="Help" Icon={LifeBuoy} />
         <GridTile href="/account/payment" label="Wallet" Icon={Wallet} />
-        <GridTile href="/help" label="Safety" Icon={Shield} />
+        <GridTile href="/activity" label="Activity" Icon={Clock} />
         <GridTile href="/notifications" label="Inbox" Icon={Mail} />
       </div>
 
-      {/* Balances */}
-      <div className="mt-4 flex items-center justify-between rounded-2xl bg-gray-100 p-4">
-        <div>
-          <p className="text-sm font-semibold text-black">Village Ride balances</p>
-          <p className="mt-0.5 text-xs text-gray-500">Cash to driver · card online</p>
-        </div>
-        <p className="text-lg font-bold text-black">—</p>
-      </div>
-
-      {/* Village Pass promo */}
-      <div className="mt-3 rounded-2xl bg-gray-100 p-4">
-        <div className="mb-3 flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-black">
-            <Gift className="h-5 w-5" aria-hidden />
+      {/* Promo strip — soft Uber card */}
+      <Link
+        href="/account/payment"
+        className="uber-press mt-4 flex items-center gap-3 rounded-2xl bg-gray-50 p-4 hover:bg-gray-100"
+      >
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white">
+          <Gift className="h-5 w-5 text-black" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-bold text-black">
+            Village Pass
           </span>
-          <div>
-            <p className="text-sm font-bold text-black">Village Pass</p>
-            <p className="mt-0.5 text-xs text-gray-500">
-              Waive the platform fee on rides — driver still keeps the fare.
-            </p>
-          </div>
-        </div>
+          <span className="mt-0.5 block text-xs text-gray-500">
+            Waive the platform fee · driver keeps the fare
+          </span>
+        </span>
+        <ChevronRight className="h-4 w-4 text-gray-400" />
+      </Link>
+
+      <div className="mt-3">
         <SubscribeButton compact />
       </div>
 
@@ -209,7 +190,6 @@ export function AccountView() {
         </div>
       ) : null}
 
-      {/* List menu */}
       <ul className="mt-6">
         <ListRow href="/account/places" label="Saved places" Icon={MapPin} />
         <ListRow
@@ -217,22 +197,22 @@ export function AccountView() {
           label="Payment methods"
           Icon={CreditCard}
         />
-        <ListRow href="/help" label="Refer friends" Icon={Users} />
         <ListRow
           href="/onboarding?replay=1"
-          label="Settings & tour"
+          label="Settings"
           Icon={Settings}
         />
         <ListRow href="/terms" label="Legal" Icon={Scale} />
+        <ListRow href="/help" label="Support" Icon={LifeBuoy} />
       </ul>
 
       {profile?.phone ? (
         <button
           type="button"
           onClick={logout}
-          className="uber-press mt-6 w-full rounded-full py-3 text-center text-sm font-semibold text-rose-600 hover:bg-rose-50"
+          className="uber-press mt-8 w-full py-3 text-center text-sm font-semibold text-gray-600 hover:text-black"
         >
-          Log out
+          Sign out
         </button>
       ) : null}
     </main>
@@ -251,7 +231,7 @@ function GridTile({
   return (
     <Link
       href={href}
-      className="uber-press flex min-h-[3.5rem] items-center gap-3 rounded-2xl bg-gray-100 p-4 hover:bg-gray-200 hover:shadow-md active:bg-gray-300"
+      className="uber-press flex min-h-[4.5rem] flex-col justify-between rounded-2xl bg-gray-100 p-4 hover:bg-gray-200 active:bg-gray-300"
     >
       <Icon className="h-5 w-5 text-black" aria-hidden />
       <span className="text-sm font-semibold text-black">{label}</span>
@@ -272,7 +252,7 @@ function ListRow({
     <li>
       <Link
         href={href}
-        className="uber-press flex min-h-14 w-full items-center gap-4 border-b border-gray-100 py-4 last:border-b-0 hover:bg-gray-50 active:bg-gray-100"
+        className="uber-press flex min-h-14 w-full items-center gap-4 border-b border-gray-100 py-4 last:border-b-0 active:bg-gray-50"
       >
         <Icon className="h-5 w-5 shrink-0 text-black" aria-hidden />
         <span className="flex-1 text-left text-base font-medium text-black">

@@ -53,19 +53,21 @@ export function CustomerTabBar() {
               <Link
                 href={tab.href}
                 data-testid={`customer-tab-${tab.label.toLowerCase()}`}
-                className={`uber-press flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-3 hover:bg-gray-50 active:bg-gray-100 ${
+                className={`uber-press flex min-h-11 flex-1 flex-col items-center justify-center gap-1 rounded-none py-2 ${
                   active
                     ? "font-semibold text-black"
                     : "font-medium text-gray-500"
                 }`}
               >
                 <Icon
-                  className="h-6 w-6"
-                  strokeWidth={active ? 2.25 : 1.75}
+                  className="h-[22px] w-[22px]"
+                  strokeWidth={active ? 2.5 : 1.75}
                   fill={active ? "currentColor" : "none"}
                   aria-hidden
                 />
-                <span className="text-xs leading-none">{tab.label}</span>
+                <span className="text-[10px] leading-none tracking-wide">
+                  {tab.label}
+                </span>
               </Link>
             </li>
           );

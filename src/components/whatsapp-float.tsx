@@ -3,22 +3,36 @@
 import { usePathname } from "next/navigation";
 import { WhatsAppLinks } from "@/lib/whatsapp-links";
 
-/** Fixed WhatsApp support on public pages (hidden on dense app shells). */
+/**
+ * WhatsApp support — marketing pages only.
+ * Hidden on the Uber-style rider/driver app so it never covers the tab bar.
+ */
 export function WhatsAppFloat() {
   const pathname = usePathname() ?? "";
-  if (
+
+  const isAppShell =
+    pathname === "/" ||
+    pathname.startsWith("/activity") ||
     pathname.startsWith("/account") ||
-    pathname.startsWith("/driver/home") ||
-    pathname.startsWith("/driver/jobs") ||
-    pathname.startsWith("/driver/earnings") ||
-    pathname.startsWith("/driver/account") ||
+    pathname.startsWith("/ride") ||
+    pathname.startsWith("/delivery") ||
+    pathname.startsWith("/courier") ||
+    pathname.startsWith("/farm") ||
+    pathname.startsWith("/shops") ||
+    pathname.startsWith("/shop") ||
+    pathname.startsWith("/group") ||
+    pathname.startsWith("/services") ||
     pathname.startsWith("/trip/") ||
-    pathname.startsWith("/admin") ||
+    pathname.startsWith("/help") ||
     pathname.startsWith("/onboarding") ||
-    pathname === "/get-app"
-  ) {
-    return null;
-  }
+    pathname.startsWith("/driver") ||
+    pathname.startsWith("/merchant") ||
+    pathname.startsWith("/dispatch") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/notifications") ||
+    pathname === "/get-app";
+
+  if (isAppShell) return null;
 
   return (
     <div className="pointer-events-none fixed bottom-4 left-1/2 z-[70] flex w-full max-w-md -translate-x-1/2 justify-end px-4">
