@@ -268,25 +268,25 @@ export function UberHome() {
             href="/shops"
             title="Order almost anything"
             body="Local kitchens & spaza — delivered to your door"
-            image="/home/sug-order.png"
+            image="/home/sug-order.jpg"
           />
           <WayRow
             href="/group"
             title="Family & teens"
             body="Share rides safely with people you trust"
-            image="/home/sug-family.png"
+            image="/home/sug-family.jpg"
           />
           <WayRow
             href="/farm"
             title="Move farm goods"
             body="Bakkie & truck for crates, feed and harvest"
-            image="/home/sug-farm.png"
+            image="/home/sug-farm.jpg"
           />
           <WayRow
             href="/driver/join"
             title="Drive & earn"
             body="Keep 85% · browse jobs now, verify before first trip"
-            image="/home/sug-ride.png"
+            image="/home/sug-ride.jpg"
           />
         </ul>
       </section>
