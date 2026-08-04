@@ -1980,6 +1980,7 @@ export async function getMerchantDashboardData(): Promise<{
   notifications: import("./types").PartnerNotification[];
   reports: import("./types").PartnerWeeklyReport[];
   referralCount: number;
+  shopOrders: import("./types").ShopOrder[];
 } | null> {
   if (!useAdmin()) {
     const { mockPartnerStore } = await import("./partner-mock");
@@ -1998,6 +1999,7 @@ export async function getMerchantDashboardData(): Promise<{
       referralCount: shop
         ? shops.filter((s) => s.referred_by_shop_id === shop.id).length
         : 0,
+      shopOrders: shop ? mockRepo.listShopOrders(shop.id) : [],
     };
   }
 
@@ -2029,6 +2031,7 @@ export async function getMerchantDashboardData(): Promise<{
       notifications: [],
       reports: [],
       referralCount: 0,
+      shopOrders: [],
     };
   }
 
@@ -2067,6 +2070,7 @@ export async function getMerchantDashboardData(): Promise<{
       notifications: [],
       reports: [],
       referralCount: 0,
+      shopOrders: [],
     };
   }
 
@@ -2138,6 +2142,14 @@ export async function getMerchantDashboardData(): Promise<{
     /* PARTNER_SYSTEM.sql not applied yet */
   }
 
+  let shopOrders: import("./types").ShopOrder[] = [];
+  try {
+    const { listShopOrdersForShop } = await import("./actions-shop-orders");
+    shopOrders = await listShopOrdersForShop(shop.id);
+  } catch {
+    shopOrders = [];
+  }
+
   return {
     shop,
     jobs: (jobs ?? []) as JobWithDriver[],
@@ -2146,6 +2158,7 @@ export async function getMerchantDashboardData(): Promise<{
     notifications,
     reports,
     referralCount,
+    shopOrders,
   };
 }
 

@@ -19,7 +19,11 @@ import type {
   SavedLocation,
   SavePersonalLocationInput,
   Shop,
+  ShopCartOrderInput,
+  ShopOrder,
   ShopOrderInput,
+  ShopOrderItem,
+  ShopOrderStatus,
   CreateFuelRequestInput,
   FuelRequest,
 } from "./types";
@@ -29,6 +33,7 @@ import { isValidMobileForCountry } from "./phone";
 import { DEFAULT_COUNTRY, getCountry } from "./countries";
 import { rankDriversForJob } from "./dispatch-score";
 import { jobNeedsFromJob } from "./job-needs";
+import { SHOP_DELIVERY_FEE } from "./shop-constants";
 import { suggestVehicle, vehicleFitsJob } from "./vehicles";
 import {
   applyCommissionToWallet,
@@ -229,6 +234,44 @@ const seedCommunityLocations: CommunityLocation[] = [
 
 const seedShops: Shop[] = [
   {
+    id: "s3",
+    name: "Mama's Kitchen",
+    phone: "0472223344",
+    category: "food",
+    landmark: "Next to taxi rank, Engcobo",
+    lat: ENGCOBO.lat,
+    lng: ENGCOBO.lng,
+    delivers: true,
+    is_active: true,
+    notes: "Home-cooked meals",
+    description: "Home cooking · Pap, stews & vetkoek",
+    image_url: null,
+    created_at: new Date().toISOString(),
+    referral_code: "MAMAk9p",
+    referred_by_shop_id: null,
+    rating_avg: 4.8,
+    rating_count: 126,
+  },
+  {
+    id: "s4",
+    name: "Village Spaza Fresh",
+    phone: "0473334455",
+    category: "groceries",
+    landmark: "Main street Engcobo",
+    lat: -31.586,
+    lng: 28.781,
+    delivers: true,
+    is_active: true,
+    notes: "Everyday groceries",
+    description: "Groceries · Cold drinks & essentials",
+    image_url: null,
+    created_at: new Date().toISOString(),
+    referral_code: "SPAZf3n",
+    referred_by_shop_id: "s3",
+    rating_avg: 4.6,
+    rating_count: 89,
+  },
+  {
     id: "s1",
     name: "Mthatha Home & Appliances",
     phone: "0471112233",
@@ -239,6 +282,8 @@ const seedShops: Shop[] = [
     delivers: true,
     is_active: true,
     notes: "Fridges, TVs, washing machines",
+    description: "Appliances · Fridges, TVs & more",
+    image_url: null,
     created_at: new Date().toISOString(),
     referral_code: "MTHAx7k",
     referred_by_shop_id: null,
@@ -254,6 +299,8 @@ const seedShops: Shop[] = [
     delivers: true,
     is_active: true,
     notes: "Couches, beds, wardrobes",
+    description: "Furniture · Beds, couches & wardrobes",
+    image_url: null,
     created_at: new Date().toISOString(),
     referral_code: "ENGCf2m",
     referred_by_shop_id: "s1",
@@ -261,6 +308,94 @@ const seedShops: Shop[] = [
 ];
 
 const seedProducts: Product[] = [
+  {
+    id: "p10",
+    shop_id: "s3",
+    name: "Beef stew + pap",
+    description: "Hearty plate with chakalaka",
+    price: 55,
+    size: "small",
+    in_stock: true,
+    image_url: null,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "p11",
+    shop_id: "s3",
+    name: "Chicken curry + rice",
+    description: "Mild spice, fresh veggies",
+    price: 60,
+    size: "small",
+    in_stock: true,
+    image_url: null,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "p12",
+    shop_id: "s3",
+    name: "Vetkoek with mince",
+    description: "2 pieces, filling",
+    price: 35,
+    size: "small",
+    in_stock: true,
+    image_url: null,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "p13",
+    shop_id: "s3",
+    name: "1L Coke",
+    description: "Ice-cold",
+    price: 22,
+    size: "small",
+    in_stock: true,
+    image_url: null,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "p20",
+    shop_id: "s4",
+    name: "Brown bread loaf",
+    description: "Fresh baked",
+    price: 18,
+    size: "small",
+    in_stock: true,
+    image_url: null,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "p21",
+    shop_id: "s4",
+    name: "2L Milk",
+    description: "Full cream",
+    price: 32,
+    size: "small",
+    in_stock: true,
+    image_url: null,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "p22",
+    shop_id: "s4",
+    name: "Eggs (dozen)",
+    description: "Farm fresh",
+    price: 45,
+    size: "small",
+    in_stock: true,
+    image_url: null,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "p23",
+    shop_id: "s4",
+    name: "Sunlight soap bar",
+    description: "Household staple",
+    price: 16,
+    size: "small",
+    in_stock: true,
+    image_url: null,
+    created_at: new Date().toISOString(),
+  },
   {
     id: "p1",
     shop_id: "s1",
@@ -460,6 +595,8 @@ type Store = {
   jobs: Job[];
   shops: Shop[];
   products: Product[];
+  shopOrders: ShopOrder[];
+  shopOrderItems: ShopOrderItem[];
   applications: JobApplication[];
   ratings: Rating[];
   groupTrips: GroupTrip[];
@@ -497,6 +634,8 @@ function store(): Store {
       jobs: structuredClone(seedJobs),
       shops: structuredClone(seedShops),
       products: structuredClone(seedProducts),
+      shopOrders: [],
+      shopOrderItems: [],
       applications: [],
       ratings: [],
       groupTrips: structuredClone(seedGroupTrips),
@@ -510,6 +649,13 @@ function store(): Store {
   const s = globalThis.__ruralMockStore;
   if (!s.shops) s.shops = structuredClone(seedShops);
   if (!s.products) s.products = structuredClone(seedProducts);
+  if (!s.shopOrders) s.shopOrders = [];
+  if (!s.shopOrderItems) s.shopOrderItems = [];
+  // Hot-reload: ensure food storefront seeds exist
+  if (!s.shops.some((x) => x.id === "s3")) {
+    s.shops = structuredClone(seedShops);
+    s.products = structuredClone(seedProducts);
+  }
   if (!s.applications) s.applications = [];
   if (!s.ratings) s.ratings = [];
   if (!s.wearLogs) s.wearLogs = structuredClone(seedWearLogs);
@@ -728,6 +874,137 @@ export const mockRepo = {
     return store().products.filter(
       (p) => p.in_stock && (!shopId || p.shop_id === shopId),
     );
+  },
+
+  placeShopCartOrder(input: ShopCartOrderInput): ShopOrder {
+    const shop = store().shops.find(
+      (s) => s.id === input.shop_id && s.is_active,
+    );
+    if (!shop) throw new Error("Shop not found.");
+    const lines: { product: Product; quantity: number }[] = [];
+    for (const line of input.items) {
+      const product = store().products.find(
+        (p) =>
+          p.id === line.product_id &&
+          p.shop_id === input.shop_id &&
+          p.in_stock,
+      );
+      if (!product) throw new Error("A product in your cart is unavailable.");
+      lines.push({ product, quantity: Math.floor(line.quantity) });
+    }
+    if (!lines.length) throw new Error("Cart is empty.");
+
+    const subtotal = lines.reduce(
+      (s, l) => s + l.product.price * l.quantity,
+      0,
+    );
+    const delivery_fee = SHOP_DELIVERY_FEE;
+    const total_amount = subtotal + delivery_fee;
+    const summary = lines
+      .map((l) => `${l.quantity}x ${l.product.name}`)
+      .join(", ");
+    const maxSize = lines.reduce<"small" | "medium" | "large" | "xl">(
+      (acc, l) => {
+        const order = ["small", "medium", "large", "xl"] as const;
+        return order.indexOf(l.product.size) > order.indexOf(acc)
+          ? l.product.size
+          : acc;
+      },
+      "small",
+    );
+
+    let jobId: string | null = null;
+    try {
+      const required = suggestVehicle({
+        service_type: "delivery",
+        delivery_size: maxSize,
+      });
+      const job = mockRepo.createJob({
+        service_type: "delivery",
+        required_vehicle: required,
+        customer_name: input.customer_name.trim(),
+        customer_phone: input.customer_phone.trim(),
+        pickup_lat: shop.lat,
+        pickup_lng: shop.lng,
+        pickup_landmark: `${shop.name} — ${shop.landmark}`,
+        dropoff_lat: input.delivery_lat ?? null,
+        dropoff_lng: input.delivery_lng ?? null,
+        dropoff_landmark: input.delivery_address.trim(),
+        details: {
+          item_description: summary,
+          size: maxSize,
+          needs_helpers: maxSize === "large" || maxSize === "xl",
+        },
+        fee_amount: delivery_fee,
+        shop_id: shop.id,
+        product_summary: `${summary} · goods ${subtotal}`,
+        dispatcher_notes: `Eats order from ${shop.name}`,
+        payment: { method: "cash" },
+      });
+      jobId = job.id;
+    } catch {
+      /* keep shop order even if job fails */
+    }
+
+    const now = new Date().toISOString();
+    const order: ShopOrder = {
+      id: uid(),
+      reference_code: `SO-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+      shop_id: shop.id,
+      job_id: jobId,
+      customer_name: input.customer_name.trim(),
+      customer_phone: input.customer_phone.trim(),
+      delivery_address: input.delivery_address.trim(),
+      delivery_lat: input.delivery_lat ?? null,
+      delivery_lng: input.delivery_lng ?? null,
+      status: "pending",
+      subtotal,
+      delivery_fee,
+      total_amount,
+      payment_method: input.payment_method ?? "cash",
+      notes: input.notes?.trim() || null,
+      created_at: now,
+      updated_at: now,
+    };
+    store().shopOrders.unshift(order);
+    const items: ShopOrderItem[] = lines.map((l) => ({
+      id: uid(),
+      order_id: order.id,
+      product_id: l.product.id,
+      product_name: l.product.name,
+      quantity: l.quantity,
+      price_at_purchase: l.product.price,
+      created_at: now,
+    }));
+    store().shopOrderItems.unshift(...items);
+    return { ...order, items };
+  },
+
+  listShopOrders(shopId: string): ShopOrder[] {
+    return store()
+      .shopOrders.filter((o) => o.shop_id === shopId)
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      )
+      .map((o) => ({
+        ...o,
+        items: store().shopOrderItems.filter((i) => i.order_id === o.id),
+      }));
+  },
+
+  updateShopOrderStatus(
+    orderId: string,
+    status: ShopOrderStatus,
+  ): ShopOrder {
+    const order = store().shopOrders.find((o) => o.id === orderId);
+    if (!order) throw new Error("Order not found.");
+    order.status = status;
+    order.updated_at = new Date().toISOString();
+    return {
+      ...order,
+      items: store().shopOrderItems.filter((i) => i.order_id === order.id),
+    };
   },
 
   listApplications(jobId?: string): JobApplication[] {

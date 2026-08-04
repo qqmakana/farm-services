@@ -239,6 +239,66 @@ export type Shop = {
   referred_by_shop_id?: string | null;
   rating_avg?: number;
   rating_count?: number;
+  /** Storefront hero / card image */
+  image_url?: string | null;
+  /** Short cuisine / storefront blurb */
+  description?: string | null;
+};
+
+export type ShopOrderStatus =
+  | "pending"
+  | "preparing"
+  | "ready"
+  | "out_for_delivery"
+  | "delivered"
+  | "cancelled";
+
+export type ShopOrderItem = {
+  id: string;
+  order_id: string;
+  product_id: string | null;
+  product_name: string;
+  quantity: number;
+  price_at_purchase: number;
+  created_at: string;
+};
+
+export type ShopOrder = {
+  id: string;
+  reference_code: string;
+  shop_id: string;
+  job_id: string | null;
+  customer_name: string;
+  customer_phone: string;
+  delivery_address: string;
+  delivery_lat: number | null;
+  delivery_lng: number | null;
+  status: ShopOrderStatus;
+  subtotal: number;
+  delivery_fee: number;
+  total_amount: number;
+  payment_method: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  items?: ShopOrderItem[];
+};
+
+export type ShopCartLineInput = {
+  product_id: string;
+  quantity: number;
+};
+
+export type ShopCartOrderInput = {
+  shop_id: string;
+  customer_name: string;
+  customer_phone: string;
+  delivery_address: string;
+  delivery_lat?: number | null;
+  delivery_lng?: number | null;
+  items: ShopCartLineInput[];
+  payment_method?: "cash" | "card";
+  notes?: string | null;
 };
 
 export type PartnerNotification = {
@@ -287,6 +347,7 @@ export type Product = {
   size: "small" | "medium" | "large" | "xl";
   in_stock: boolean;
   created_at: string;
+  image_url?: string | null;
 };
 
 export type JobApplication = {
