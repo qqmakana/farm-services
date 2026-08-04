@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import {
   Car,
   Clock,
+  HelpCircle,
   Package,
   Search,
   ShoppingBag,
@@ -140,7 +141,7 @@ export function UberHome() {
         <CaptureReferral />
       </Suspense>
 
-      {/* Where to? + Later */}
+      {/* Where to? + Later + Help (Uber chrome) */}
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -160,6 +161,14 @@ export function UberHome() {
           <Clock className="h-4 w-4" aria-hidden />
           Later
         </button>
+        <Link
+          href="/help"
+          className="uber-press flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-100 text-black hover:bg-gray-200 active:bg-gray-300"
+          aria-label="Help"
+        >
+          <HelpCircle className="h-5 w-5" aria-hidden />
+          <span className="sr-only">Help</span>
+        </Link>
       </div>
 
       {/* Uber-style category chips */}

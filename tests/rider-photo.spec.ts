@@ -42,6 +42,13 @@ test.describe("Rider photo", () => {
   }) => {
     await page.goto("/ride");
     await dismissCountryModalIfPresent(page);
+
+    // Uber-compact sheet: wearing + photo live under More options
+    const more = page.getByRole("button", { name: /More options/i });
+    if (await more.isVisible({ timeout: 5_000 }).catch(() => false)) {
+      await more.click();
+    }
+
     await expect(
       page.getByText(/What are you wearing/i).first(),
     ).toBeVisible({ timeout: 15_000 });

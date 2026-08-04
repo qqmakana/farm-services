@@ -48,13 +48,17 @@ test.describe("Final polish", () => {
     });
     await page.reload();
     await dismissCountryModalIfPresent(page);
-    await expect(page.getByText(/Refer a friend/i)).toBeVisible({
+    await expect(page.getByText(/Invite friends|Refer a friend/i)).toBeVisible({
       timeout: 15_000,
     });
     await expect(page.getByText(/R50/i).first()).toBeVisible();
     await expect(
-      page.locator("a[href*='wa.me'], a[href*='whatsapp']").first(),
+      page.getByRole("button", { name: /Share invite|Share|WhatsApp/i }).first(),
     ).toBeVisible();
+    // Floating WhatsApp must not cover Account tab (Uber-style app shell)
+    await expect(
+      page.locator('a[aria-label="WhatsApp support"]'),
+    ).toHaveCount(0);
   });
 
   test("activity page loads trip history", async ({ page }) => {

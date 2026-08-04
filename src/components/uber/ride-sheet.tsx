@@ -393,13 +393,16 @@ export function RideSheet({
                   </button>
                 </div>
               </div>
-              <input
-                className="ru-soft-field !bg-white text-sm"
-                value={wearing}
-                onChange={(e) => setWearing(e.target.value)}
-                placeholder="What you're wearing (optional)"
-                maxLength={120}
-              />
+              <label className="block text-sm font-semibold text-black">
+                What are you wearing
+                <input
+                  className="ru-soft-field mt-1.5 !bg-white text-sm font-normal"
+                  value={wearing}
+                  onChange={(e) => setWearing(e.target.value)}
+                  placeholder="e.g. red jacket, blue cap (optional)"
+                  maxLength={120}
+                />
+              </label>
               <PickupPhotoField file={pickupPhoto} onChange={setPickupPhoto} />
               <RiderPhotoField
                 compact
@@ -420,18 +423,16 @@ export function RideSheet({
         </div>
       )}
 
-      {!needsContact ? (
-        <button
-          type="button"
-          onClick={() => setMoreOpen((v) => !v)}
-          className="uber-press flex w-full items-center justify-center gap-1 py-1 text-sm font-semibold text-gray-600 hover:text-black"
-        >
-          {moreOpen ? "Less" : "More options"}
-          <ChevronDown
-            className={`h-4 w-4 transition ${moreOpen ? "rotate-180" : ""}`}
-          />
-        </button>
-      ) : null}
+      <button
+        type="button"
+        onClick={() => setMoreOpen((v) => !v)}
+        className="uber-press flex w-full items-center justify-center gap-1 py-1 text-sm font-semibold text-gray-600 hover:text-black"
+      >
+        {moreOpen ? "Less" : "More options"}
+        <ChevronDown
+          className={`h-4 w-4 transition ${moreOpen ? "rotate-180" : ""}`}
+        />
+      </button>
 
       <CheckoutBlock
         compact

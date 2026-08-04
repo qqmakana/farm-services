@@ -117,7 +117,9 @@ async function registerMockFcm(page: Page) {
 async function bookVillageDelivery(page: Page) {
   await page.goto("/delivery");
   await dismissCountryModalIfPresent(page);
-  await expect(page.getByRole("heading", { name: "Village Delivery" })).toBeVisible({
+  await expect(
+    page.getByRole("heading", { name: /Village Delivery/i }),
+  ).toBeVisible({
     timeout: 15_000,
   });
 
@@ -133,14 +135,15 @@ async function bookVillageDelivery(page: Page) {
   await page.getByLabel("Sender name").fill(CUSTOMER.name);
   await page.getByLabel("Sender phone").fill(CUSTOMER.phone);
 
-  await page.getByLabel(/What are you sending/i).selectOption("medium");
+  // Weight categories are Uber-style chips (not a <select>)
+  await page.getByTestId("weight-medium").click();
   await page.getByPlaceholder("e.g., 2nd floor, fragile").fill("Fridge");
 
   // Confirm React state picked up landmark text
   await expect(pickup).toHaveValue(/Mthatha/i);
   await expect(dropoff).toHaveValue(/Qunu/i);
 
-  const estimateEl = page.locator("p.text-2xl.font-bold").first();
+  const estimateEl = page.getByTestId("price-display");
   await expect(estimateEl).toBeVisible();
   const estimateText = await estimateEl.innerText();
   const fareMatch = estimateText.replace(/[^\d]/g, "");
@@ -312,20 +315,27 @@ test.describe.serial("Uber-style Village Ride E2E", () => {
       if (await name.isVisible().catch(() => false)) {
         await name.fill(CUSTOMER.name);
       }
-      const view = customerPage.getByRole("button", { name: /View my trips|Show/i });
-      if (await view.isVisible().catch(() => false)) {
-        await view.click();
-      }
+      const view = customerPage.getByRole("button", {
+        name: /View activity|View my trips|Show/i,
+      });
+      await expect(view).toBeVisible({ timeout: 5_000 });
+      await view.click();
     }
 
-    const past = customerPage.getByRole("button", { name: /^past$/i });
+    const past = customerPage.getByRole("button", { name: /Past/i });
     if (await past.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await past.click();
     }
 
     await expect(
-      customerPage.getByText(/Completed|Mthatha Taxi Rank|Qunu Clinic/i).first(),
+      customerPage.getByText(/Qunu Clinic|Mthatha Taxi Rank/i).first(),
     ).toBeVisible({ timeout: 15_000 });
-    await expect(customerPage.locator("text=/R\\s?\\d+/").first()).toBeVisible();
+    await expect(
+      customerPage.getByText(/Completed/i).first(),
+    ).toBeVisible({ timeout: 10_000 });
+    await expect(customerPage.getByTestId("trip-fare").first()).toBeVisible();
+    await expect(customerPage.getByTestId("trip-fare").first()).toContainText(
+      /\d/,
+    );
   });
 });

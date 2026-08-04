@@ -23,6 +23,7 @@ import {
   setGuestProfile,
   type GuestProfile,
 } from "@/lib/guest-profile";
+import { RiderPhotoField } from "@/components/rider/rider-photo-field";
 import { RiderReferralCard } from "@/components/referral/rider-referral-card";
 import { SubscribeButton } from "@/components/subscription/subscribe-button";
 import { DashboardSkeleton } from "@/components/ui/skeleton";
@@ -151,6 +152,18 @@ export function AccountView() {
             </button>
           ) : null}
         </form>
+      ) : null}
+
+      {profile?.phone ? (
+        <div className="mt-5">
+          <RiderPhotoField
+            previewUrl={profile.photo_data_url}
+            name={profile.name}
+            phone={profile.phone}
+            countryCode={profile.country_code || countryCode}
+            onChange={() => refreshProfile()}
+          />
+        </div>
       ) : null}
 
       {/* Uber Account 2×2 shortcuts */}

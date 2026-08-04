@@ -15,7 +15,7 @@ export function WeightCategoryField({
   serviceLabel?: string;
 }) {
   return (
-    <div>
+    <div role="group" aria-label="What are you sending">
       <p className="text-sm font-semibold text-black">
         Select weight category
       </p>

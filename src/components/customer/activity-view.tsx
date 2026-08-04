@@ -345,10 +345,18 @@ function TripRow({
           </span>
           <span className="mt-0.5 block text-xs text-gray-400">
             {SERVICE_LABELS[job.service_type]}
+            {job.status === "completed"
+              ? " · Completed"
+              : job.status === "cancelled"
+                ? " · Cancelled"
+                : ""}
           </span>
         </span>
-        <span className="shrink-0 self-start pt-0.5 text-sm font-bold text-black">
-          {formatMoney(Number(job.fee_amount))}
+        <span
+          data-testid="trip-fare"
+          className="shrink-0 self-start pt-0.5 text-sm font-bold text-black"
+        >
+          {formatMoney(Number(job.fee_amount), job.fee_currency || "ZAR")}
         </span>
       </Link>
       {(showRebook || onReceipt || onCancel) && (

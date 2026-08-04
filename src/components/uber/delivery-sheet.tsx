@@ -73,6 +73,12 @@ export function DeliverySheet({
   );
 
   useEffect(() => {
+    const guest = getGuestProfile();
+    if (guest?.name) setSenderName(guest.name);
+    if (guest?.phone) setSenderPhone(guest.phone);
+  }, []);
+
+  useEffect(() => {
     setVehicle(
       suggestVehicle({ service_type: "delivery", weight_category: weight }),
     );
@@ -148,7 +154,9 @@ export function DeliverySheet({
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-black">Delivery</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-black">
+          Village Delivery
+        </h1>
         <p className="text-sm text-slate-600">
           Town &amp; village — store-to-home, person-to-person, town-to-town.
           Fridges, furniture, building materials.
