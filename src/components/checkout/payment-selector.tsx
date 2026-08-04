@@ -4,6 +4,7 @@ import { Banknote, CreditCard } from "lucide-react";
 
 export type CheckoutPaymentChoice = "cash" | "card";
 
+/** Uber-style payment row — tight list, black selected state. */
 export function PaymentSelector({
   value,
   onChange,
@@ -16,26 +17,26 @@ export function PaymentSelector({
   return (
     <div
       data-testid="payment-selector"
-      className="space-y-2"
+      className="space-y-1"
       role="radiogroup"
       aria-label="Payment method"
     >
       <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-        How will you pay?
+        Payment
       </p>
       {(
         [
           {
             id: "cash" as const,
-            title: "Pay cash",
-            sub: `Pay the driver directly in cash${currencyLabel ? ` (${currencyLabel})` : ""}`,
+            title: "Cash",
+            sub: `Pay driver${currencyLabel ? ` (${currencyLabel})` : ""}`,
             Icon: Banknote,
             testId: "pay-cash",
           },
           {
             id: "card" as const,
-            title: "Pay card",
-            sub: "Pay securely with PayPal (card or balance)",
+            title: "Card",
+            sub: "PayPal",
             Icon: CreditCard,
             testId: "pay-card",
           },
@@ -52,44 +53,32 @@ export function PaymentSelector({
             data-testid={opt.testId}
             data-selected={selected ? "true" : "false"}
             onClick={() => onChange(opt.id)}
-            className={`uber-press w-full rounded-2xl border px-4 py-3.5 text-left ${
-              selected
-                ? "border-2 border-black bg-white shadow-sm"
-                : "border border-gray-100 bg-gray-50 hover:bg-gray-100"
+            className={`uber-press flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left ${
+              selected ? "bg-gray-100" : "hover:bg-gray-50"
             }`}
           >
-            <span className="flex items-center justify-between gap-3">
-              <span className="flex min-w-0 items-center gap-3">
-                <span
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                    selected
-                      ? "bg-black text-white"
-                      : "bg-gray-200 text-black"
-                  }`}
-                >
-                  <Icon className="h-5 w-5" aria-hidden />
-                </span>
-                <span>
-                  <span className="block text-sm font-bold text-black">
-                    {opt.title}
-                  </span>
-                  <span className="mt-0.5 block text-xs text-gray-500">
-                    {opt.sub}
-                  </span>
-                </span>
+            <span
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                selected ? "bg-black text-white" : "bg-gray-200 text-black"
+              }`}
+            >
+              <Icon className="h-4 w-4" aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-bold text-black">
+                {opt.title}
               </span>
-              <span
-                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                  selected
-                    ? "border-[var(--ru-ink)] bg-[var(--ru-ink)]"
-                    : "border-gray-300"
-                }`}
-                aria-hidden
-              >
-                {selected ? (
-                  <span className="h-2 w-2 rounded-full bg-white" />
-                ) : null}
-              </span>
+              <span className="block text-xs text-gray-500">{opt.sub}</span>
+            </span>
+            <span
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                selected ? "border-black bg-black" : "border-gray-300"
+              }`}
+              aria-hidden
+            >
+              {selected ? (
+                <span className="h-2 w-2 rounded-full bg-white" />
+              ) : null}
             </span>
           </button>
         );

@@ -117,6 +117,7 @@ export function CheckoutBlock({
   baseFee,
   nightSurchargeAmount = 0,
   currency,
+  compact = false,
 }: {
   fee: number;
   vehicle: VehicleType;
@@ -129,6 +130,8 @@ export function CheckoutBlock({
   baseFee?: number;
   nightSurchargeAmount?: number;
   currency?: string;
+  /** Uber-style: payment + CTA only, no walls of text */
+  compact?: boolean;
 }) {
   const router = useRouter();
   const { country, countryCode } = useCountry();
@@ -230,46 +233,63 @@ export function CheckoutBlock({
   }
 
   return (
-    <div className="space-y-3 border-t border-gray-100 bg-white pt-4 text-black">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium tracking-wide text-gray-500 uppercase">
-            Price estimate
-          </p>
-          <p
-            data-testid="price-display"
-            className="text-2xl font-bold text-black"
-          >
-            {Number.isFinite(fee)
-              ? formatMoney(fee, displayCurrency, countryCode)
-              : "—"}
-          </p>
-          {isNightRide && baseFee != null ? (
-            <p className="mt-0.5 text-xs text-gray-500">
-              Driver fare{" "}
-              {formatMoney(baseFee + nightSurchargeAmount, displayCurrency, countryCode)}{" "}
-              (base + after-hours)
+    <div
+      className={`space-y-3 bg-white text-black ${
+        compact ? "pt-2" : "border-t border-gray-100 pt-4"
+      }`}
+    >
+      {!compact ? (
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium tracking-wide text-gray-500 uppercase">
+              Price estimate
             </p>
-          ) : (
-            <p className="mt-0.5 text-xs text-gray-500">
-              Includes driver fare · booking fee may apply (waived with Village
-              Pass)
+            <p
+              data-testid="price-display"
+              className="text-2xl font-bold text-black"
+            >
+              {Number.isFinite(fee)
+                ? formatMoney(fee, displayCurrency, countryCode)
+                : "—"}
             </p>
-          )}
+            {isNightRide && baseFee != null ? (
+              <p className="mt-0.5 text-xs text-gray-500">
+                Driver fare{" "}
+                {formatMoney(
+                  baseFee + nightSurchargeAmount,
+                  displayCurrency,
+                  countryCode,
+                )}{" "}
+                (base + after-hours)
+              </p>
+            ) : (
+              <p className="mt-0.5 text-xs text-gray-500">
+                Includes driver fare · booking fee may apply (waived with
+                Village Pass)
+              </p>
+            )}
+          </div>
+          <p className="text-xs text-gray-500">{VEHICLE_LABELS[vehicle]}</p>
         </div>
-        <p className="text-xs text-gray-500">{VEHICLE_LABELS[vehicle]}</p>
-      </div>
+      ) : (
+        <p data-testid="price-display" className="sr-only">
+          {Number.isFinite(fee)
+            ? formatMoney(fee, displayCurrency, countryCode)
+            : "—"}
+        </p>
+      )}
 
       {isNightRide ? (
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#000000] px-3 py-1.5 text-xs font-bold text-white shadow-sm">
-          <span aria-hidden>🌙</span>
-          Night Ride (Premium)
+        <div className="inline-flex items-center gap-2 rounded-full bg-black px-3 py-1.5 text-xs font-bold text-white">
+          Night Ride
         </div>
       ) : null}
 
-      <p className="rounded-xl border border-[#000000]/15 bg-[#f5f5f5] px-3 py-2.5 text-xs leading-relaxed text-[#000000]">
-        {optIn}
-      </p>
+      {!compact ? (
+        <p className="rounded-xl bg-gray-50 px-3 py-2.5 text-xs leading-relaxed text-black">
+          {optIn}
+        </p>
+      ) : null}
 
       <PaymentSelector
         value={payMethod}
@@ -277,9 +297,9 @@ export function CheckoutBlock({
         currencyLabel={country.currencySymbol}
       />
 
-      <SubscribeButton compact />
+      {!compact ? <SubscribeButton compact /> : null}
 
-      {payMethod === "cash" ? (
+      {!compact && payMethod === "cash" ? (
         <div
           data-testid="cash-payment-message"
           className="rounded-2xl bg-gray-50 px-3 py-3"
@@ -288,24 +308,28 @@ export function CheckoutBlock({
             Pay the driver in cash
           </p>
           <p className="mt-1 text-xs leading-relaxed text-gray-500">
-            {/* Scenario A — Cash: rider pays full total to driver; platform fee
-                is deducted from the driver&apos;s prepaid wallet on complete. */}
             Pay the driver the full total at pickup or dropoff. Village Ride
             takes only the small platform fee from the driver&apos;s wallet
             after the trip (waived with Village Pass).
           </p>
         </div>
-      ) : (
+      ) : null}
+
+      {compact && payMethod === "cash" ? (
+        <p data-testid="cash-payment-message" className="sr-only">
+          Pay the driver in cash
+        </p>
+      ) : null}
+
+      {!compact && payMethod === "card" ? (
         <div className="rounded-2xl bg-gray-50 px-3 py-3">
           <p className="text-sm font-semibold text-black">Pay with PayPal</p>
           <p className="mt-1 text-xs leading-relaxed text-gray-500">
-            {/* Scenario B — Card: // TODO: Integrate PayPal API here
-                (order/capture already wired in PayPalCheckout). */}
             You pay the full fare now. When the trip completes, the driver is
             credited the fare minus the platform fee.
           </p>
         </div>
-      )}
+      ) : null}
 
       {queuedOffline ? (
         <div className="space-y-2 rounded-2xl bg-gray-50 px-3 py-3 text-sm text-black">
@@ -337,12 +361,18 @@ export function CheckoutBlock({
         </div>
       ) : null}
 
-      <p className="rounded-2xl bg-gray-50 px-3 py-2.5 text-xs leading-relaxed text-gray-500">
-        We&apos;ll find the best available driver and ping them. You&apos;ll see
-        live updates — photos, plate, and status — on the next screen.
-      </p>
+      {!compact ? (
+        <p className="rounded-2xl bg-gray-50 px-3 py-2.5 text-xs leading-relaxed text-gray-500">
+          We&apos;ll find the best available driver and ping them. You&apos;ll
+          see live updates — photos, plate, and status — on the next screen.
+        </p>
+      ) : null}
 
-      <div className="sticky bottom-0 z-10 -mx-4 mt-2 space-y-2 border-t border-gray-100 bg-white px-4 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      <div
+        className={`sticky bottom-0 z-10 space-y-2 bg-white pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] ${
+          compact ? "-mx-4 border-t border-gray-100 px-4" : "-mx-4 border-t border-gray-100 px-4"
+        }`}
+      >
         {payMethod === "cash" ? (
           <button
             type="button"
@@ -416,7 +446,11 @@ export function CheckoutBlock({
           type="button"
           disabled={!ready || pending}
           onClick={openWhatsAppBooking}
-          className="uber-press uber-btn-soft w-full"
+          className={
+            compact
+              ? "uber-press w-full py-2 text-center text-sm font-semibold text-gray-500"
+              : "uber-press uber-btn-soft w-full"
+          }
         >
           Or send booking via WhatsApp
         </button>

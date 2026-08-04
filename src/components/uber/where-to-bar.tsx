@@ -30,7 +30,7 @@ export function WhereToBar({
       <div className="flex gap-3">
         <div className="flex w-3 shrink-0 flex-col items-center pt-4 pb-4">
           <span
-            className="h-2 w-2 shrink-0 rounded-full bg-[var(--ru-ink)]"
+            className="h-2.5 w-2.5 shrink-0 rounded-full bg-black"
             aria-hidden
           />
           <span
@@ -38,7 +38,7 @@ export function WhereToBar({
             aria-hidden
           />
           <span
-            className="h-2 w-2 shrink-0 bg-[var(--ru-ink)]"
+            className="h-2.5 w-2.5 shrink-0 rounded-[2px] bg-black"
             aria-hidden
           />
         </div>
