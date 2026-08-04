@@ -50,7 +50,7 @@ const PILLS = [
   },
 ] as const;
 
-/** Uber-style horizontal service pills — switches booking surface via route. */
+/** Uber-style horizontal service pills — same look on map + content pages. */
 export function ServicePills({
   className = "",
 }: {
@@ -75,13 +75,13 @@ export function ServicePills({
             role="tab"
             aria-selected={active}
             data-testid={`service-pill-${pill.label.toLowerCase()}`}
-            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold shadow-[0_4px_16px_rgba(0,0,0,0.08)] transition active:scale-[0.98] ${
+            className={`uber-press inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold ${
               active
-                ? "bg-black text-white"
-                : "bg-white/95 text-[var(--ru-ink)] backdrop-blur hover:bg-white"
+                ? "bg-black text-white hover:bg-gray-800 active:bg-gray-900"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300"
             }`}
           >
-            <Icon className="h-4 w-4" aria-hidden />
+            <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
             {pill.label}
           </Link>
         );

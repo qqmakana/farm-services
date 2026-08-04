@@ -2,7 +2,7 @@
 
 export type WhenMode = "now" | "later";
 
-/** Ride Now vs Schedule for Later — shared across Ride / Delivery / Farm. */
+/** Ride Now vs Schedule for Later — Home-style black / gray-100 pills. */
 export function ScheduleWhen({
   mode,
   onModeChange,
@@ -12,22 +12,21 @@ export function ScheduleWhen({
 }: {
   mode: WhenMode;
   onModeChange: (mode: WhenMode) => void;
-  /** value for datetime-local input */
   scheduledLocal: string;
   onScheduledLocalChange: (value: string) => void;
   nowLabel?: string;
 }) {
   return (
     <div className="space-y-2">
-      <p className="text-sm font-semibold text-[#000000]">When</p>
+      <p className="text-sm font-semibold text-black">When</p>
       <div className="grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => onModeChange("now")}
-          className={`rounded-xl border px-3 py-3 text-sm font-bold transition ${
+          className={`uber-press min-h-12 rounded-full px-3 text-sm font-bold ${
             mode === "now"
-              ? "border-[#000000] bg-[#f5f5f5] text-[#000000]"
-              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              ? "bg-black text-white hover:bg-gray-800"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           }`}
         >
           {nowLabel}
@@ -35,20 +34,20 @@ export function ScheduleWhen({
         <button
           type="button"
           onClick={() => onModeChange("later")}
-          className={`rounded-xl border px-3 py-3 text-sm font-bold transition ${
+          className={`uber-press min-h-12 rounded-full px-3 text-sm font-bold ${
             mode === "later"
-              ? "border-[#000000] bg-[#f5f5f5] text-[#000000]"
-              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              ? "bg-black text-white hover:bg-gray-800"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           }`}
         >
           Schedule for Later
         </button>
       </div>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-gray-500">
         Taxis not running? Book a verified ride or delivery in advance.
       </p>
       {mode === "later" ? (
-        <label className="block text-sm font-semibold text-[#000000]">
+        <label className="block text-sm font-semibold text-black">
           Date &amp; time
           <input
             type="datetime-local"
@@ -69,7 +68,6 @@ export function toLocalInputValue(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-/** Convert datetime-local string → ISO for API / scheduled_for. */
 export function localInputToIso(local: string): string | null {
   if (!local.trim()) return null;
   const d = new Date(local);

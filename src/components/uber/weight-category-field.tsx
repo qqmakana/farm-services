@@ -16,7 +16,7 @@ export function WeightCategoryField({
 }) {
   return (
     <div>
-      <p className="text-sm font-semibold text-[var(--ru-ink)]">
+      <p className="text-sm font-semibold text-black">
         Select weight category
       </p>
       <p className="mt-0.5 text-xs text-gray-500">
@@ -32,14 +32,14 @@ export function WeightCategoryField({
               type="button"
               data-testid={`weight-${opt.id}`}
               onClick={() => onChange(opt.id)}
-              className={`flex w-full items-start justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition active:scale-[0.99] ${
+              className={`uber-press flex w-full items-start justify-between gap-3 rounded-2xl border px-4 py-3 text-left ${
                 selected
-                  ? "border-2 border-[var(--ru-ink)] bg-white"
-                  : "border border-gray-100 bg-white hover:bg-gray-50"
+                  ? "border-2 border-black bg-white"
+                  : "border border-transparent bg-gray-50 hover:bg-gray-100"
               }`}
             >
               <span>
-                <span className="block text-sm font-semibold text-[var(--ru-ink)]">
+                <span className="block text-sm font-semibold text-black">
                   {opt.label}
                 </span>
                 <span className="mt-0.5 block text-xs text-gray-500">
@@ -49,7 +49,7 @@ export function WeightCategoryField({
               <span
                 className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
                   selected
-                    ? "border-[var(--ru-ink)] bg-[var(--ru-ink)]"
+                    ? "border-black bg-black"
                     : "border-gray-300"
                 }`}
                 aria-hidden

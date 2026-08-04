@@ -66,17 +66,17 @@ export function GroupTripCard({ trip, showJoin = true }: Props) {
   }
 
   return (
-    <article className="rounded-2xl bg-white p-4 shadow-lg">
+    <article className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-bold text-black">{title}</p>
-          <p className="mt-1 text-xs text-[var(--ru-muted)]">
+          <p className="text-base font-bold text-black">{title}</p>
+          <p className="mt-1 text-xs text-gray-500">
             {trip.route_pickup} → {trip.route_dropoff}
             {trip.route_stops?.length
               ? ` · via ${trip.route_stops.join(", ")}`
               : ""}
           </p>
-          <p className="mt-2 text-sm font-semibold text-[var(--ru-ink)]">
+          <p className="mt-2 text-sm font-semibold text-black">
             {formatMoney(perSeat, country.currency, countryCode)} per{" "}
             {trip.kind === "goods" ? "package" : "person"}
           </p>
@@ -84,7 +84,7 @@ export function GroupTripCard({ trip, showJoin = true }: Props) {
         <span
           className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
             spotsLeft > 0
-              ? "bg-emerald-50 text-emerald-800"
+              ? "bg-black text-white"
               : "bg-gray-100 text-gray-600"
           }`}
         >
@@ -105,18 +105,18 @@ export function GroupTripCard({ trip, showJoin = true }: Props) {
               </span>
             ))}
           </div>
-          <span className="text-xs text-[var(--ru-muted)]">
+          <span className="text-xs text-gray-500">
             {trip.seats_taken}/{trip.capacity} joined
           </span>
         </div>
       ) : (
-        <p className="mt-3 text-xs text-[var(--ru-muted)]">
+        <p className="mt-3 text-xs text-gray-500">
           Be the first to join · {trip.capacity} spots
         </p>
       )}
 
       {trip.drivers ? (
-        <p className="mt-2 text-xs text-[var(--ru-muted)]">
+        <p className="mt-2 text-xs text-gray-500">
           Driver: {trip.drivers.full_name} · ★
           {Number(trip.drivers.rating_avg).toFixed(1)}
         </p>
@@ -125,7 +125,7 @@ export function GroupTripCard({ trip, showJoin = true }: Props) {
       <div className="mt-3 flex flex-wrap gap-2">
         <Link
           href={`/group/${trip.id}`}
-          className="ru-btn ru-btn-secondary !min-h-10 !px-4 !text-xs"
+          className="uber-press uber-btn-soft !min-h-10 !px-4 !text-xs"
         >
           Details
         </Link>
@@ -133,7 +133,7 @@ export function GroupTripCard({ trip, showJoin = true }: Props) {
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="ru-btn ru-btn-primary !min-h-10 !px-4 !text-xs"
+            className="uber-press uber-btn-black !min-h-10 !px-4 !text-xs"
           >
             Join this group
           </button>
@@ -208,7 +208,7 @@ export function GroupTripCard({ trip, showJoin = true }: Props) {
             type="submit"
             data-testid="book-button"
             disabled={pending || payMethod === "card"}
-            className="ru-btn-book ru-btn-block"
+            className="uber-press uber-btn-black w-full"
           >
             {pending ? "Booking…" : "Book Now"}
           </button>

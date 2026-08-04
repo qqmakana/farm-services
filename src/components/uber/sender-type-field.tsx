@@ -18,24 +18,24 @@ export function SenderTypeField({
 }) {
   return (
     <div>
-      <p className="text-sm font-semibold text-[#000000]">{label}</p>
+      <p className="text-sm font-semibold text-black">{label}</p>
       <div className="mt-2 grid grid-cols-2 gap-2">
         {OPTIONS.map((opt) => (
           <button
             key={opt.id}
             type="button"
             onClick={() => onChange(opt.id)}
-            className={`rounded-xl border px-3 py-3 text-left text-sm font-bold transition ${
+            className={`uber-press min-h-12 rounded-full px-3 text-center text-sm font-bold ${
               value === opt.id
-                ? "border-[#000000] bg-[#f5f5f5] text-[#000000]"
-                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                ? "bg-black text-white hover:bg-gray-800"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
             {opt.label}
           </button>
         ))}
       </div>
-      <p className="mt-1.5 text-xs text-slate-500">
+      <p className="mt-1.5 text-xs text-gray-500">
         Helps us know if you&apos;re a person or a local store — both welcome
         anywhere.
       </p>

@@ -159,7 +159,7 @@ export function FarmSheet({
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-[#000000]">Farm Connect</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-black">Farm</h1>
         <p className="text-sm text-slate-600">
           Farm &amp; regional logistics anywhere — produce, livestock, equipment.
         </p>

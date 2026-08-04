@@ -174,7 +174,7 @@ export function CourierSheet({
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-[#000000]">Send a package</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-black">Courier</h1>
         <p className="text-sm text-slate-600">
           Person-to-person courier across villages, towns &amp; cities — keys,
           gifts, documents, Marketplace items. Max ~20 kg, packaged &amp;

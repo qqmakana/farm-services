@@ -304,21 +304,21 @@ export function RideSheet({
       />
 
       <div>
-        <p className="text-sm font-semibold text-[var(--ru-ink)]">Passengers</p>
+        <p className="text-sm font-semibold text-black">Passengers</p>
         <div className="mt-2 flex items-center gap-4">
           <button
             type="button"
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-xl font-bold text-[var(--ru-ink)] transition active:scale-[0.98]"
+            className="uber-press flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-xl font-bold text-black hover:bg-gray-200"
             onClick={() => setPassengers((n) => Math.max(1, n - 1))}
           >
             −
           </button>
-          <span className="min-w-8 text-center text-xl font-bold text-[var(--ru-ink)]">
+          <span className="min-w-8 text-center text-xl font-bold text-black">
             {passengers}
           </span>
           <button
             type="button"
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-xl font-bold text-[var(--ru-ink)] transition active:scale-[0.98]"
+            className="uber-press flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-xl font-bold text-black hover:bg-gray-200"
             onClick={() => setPassengers((n) => Math.min(6, n + 1))}
           >
             +
@@ -327,7 +327,7 @@ export function RideSheet({
       </div>
 
       <div>
-        <p className="mb-1 text-xs font-bold tracking-wide text-gray-500 uppercase">
+        <p className="mb-2 text-sm font-bold tracking-tight text-black">
           Choose a ride
         </p>
         <div className="overflow-hidden rounded-2xl border border-gray-100">
@@ -347,16 +347,16 @@ export function RideSheet({
                   setVehicle(opt.id);
                   setLocalModeId(opt.modeId);
                 }}
-                className={`flex w-full items-center justify-between gap-3 border-b border-gray-100 px-4 py-3.5 text-left transition-colors last:border-b-0 hover:bg-gray-50 active:scale-[0.99] ${
+                className={`uber-press flex w-full items-center justify-between gap-3 border-b border-gray-100 px-4 py-3.5 text-left last:border-b-0 hover:bg-gray-50 ${
                   selected ? "bg-gray-50 ring-2 ring-inset ring-black" : "bg-white"
                 }`}
               >
                 <span className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-[var(--ru-ink)]">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-black">
                     <Icon className="h-6 w-6" aria-hidden />
                   </span>
                   <span className="min-w-0">
-                    <span className="flex items-center gap-2 text-sm font-semibold text-[var(--ru-ink)]">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-black">
                       {opt.label}
                       <span className="inline-flex items-center gap-0.5 text-xs font-normal text-gray-500">
                         <User className="h-3 w-3" aria-hidden />
@@ -370,11 +370,11 @@ export function RideSheet({
                 </span>
                 <span className="flex shrink-0 flex-col items-end gap-1">
                   {selected ? (
-                    <Check className="h-4 w-4 text-[var(--ru-ink)]" aria-hidden />
+                    <Check className="h-4 w-4 text-black" aria-hidden />
                   ) : (
                     <span className="h-4" />
                   )}
-                  <span className="text-sm font-bold text-[var(--ru-ink)]">
+                  <span className="text-sm font-bold text-black">
                     {formatMoney(showPrice, currency, countryCode)}
                   </span>
                 </span>

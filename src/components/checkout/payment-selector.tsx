@@ -52,25 +52,25 @@ export function PaymentSelector({
             data-testid={opt.testId}
             data-selected={selected ? "true" : "false"}
             onClick={() => onChange(opt.id)}
-            className={`w-full rounded-2xl border px-4 py-3.5 text-left transition active:scale-[0.98] ${
+            className={`uber-press w-full rounded-2xl border px-4 py-3.5 text-left ${
               selected
-                ? "border-2 border-[var(--ru-ink)] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)]"
-                : "border border-gray-100 bg-white hover:bg-gray-50"
+                ? "border-2 border-black bg-white shadow-sm"
+                : "border border-gray-100 bg-gray-50 hover:bg-gray-100"
             }`}
           >
             <span className="flex items-center justify-between gap-3">
               <span className="flex min-w-0 items-center gap-3">
                 <span
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
                     selected
-                      ? "bg-[var(--ru-ink)] text-white"
-                      : "bg-gray-100 text-[var(--ru-ink)]"
+                      ? "bg-black text-white"
+                      : "bg-gray-200 text-black"
                   }`}
                 >
                   <Icon className="h-5 w-5" aria-hidden />
                 </span>
                 <span>
-                  <span className="block text-sm font-bold text-[var(--ru-ink)]">
+                  <span className="block text-sm font-bold text-black">
                     {opt.title}
                   </span>
                   <span className="mt-0.5 block text-xs text-gray-500">

@@ -71,7 +71,7 @@ export function PayPalCheckout({
               }
             });
           }}
-          className="ru-btn-book ru-btn-block mt-2"
+          className="uber-press uber-btn-black mt-2 w-full"
         >
           {pending
             ? "Creating trip…"

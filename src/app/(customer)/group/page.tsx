@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { listOpenGroupTrips } from "@/lib/actions-group";
 import { GroupTripCard } from "@/components/group/group-trip-card";
+import { ServicePills } from "@/components/uber/service-pills";
 import type { GroupTrip } from "@/lib/types";
 
 export default function GroupRidesPage() {
@@ -18,18 +19,23 @@ export default function GroupRidesPage() {
   }, []);
 
   return (
-    <main className="ru-page-enter mx-auto min-h-dvh max-w-lg bg-white px-5 pb-24 pt-8">
-      <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-black">
-        Group rides &amp; shared loads
+    <main className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-28 pt-6">
+      <ServicePills className="mb-5" />
+
+      <h1 className="text-3xl font-bold tracking-tight text-black">
+        Groups near you
       </h1>
-      <p className="mt-1 text-sm text-[var(--ru-muted)]">
+      <p className="mt-1 text-sm text-gray-500">
         Split the cost with others going the same way. Drivers still earn the
         full fare.
       </p>
 
-      <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-950">
+      <div className="mt-4 rounded-2xl bg-gray-50 px-4 py-3 text-sm text-gray-700">
         Drivers: publish a group from the{" "}
-        <Link href="/driver/group" className="font-bold underline">
+        <Link
+          href="/driver/group"
+          className="uber-press font-bold text-black underline"
+        >
           driver app
         </Link>
         .
@@ -37,11 +43,16 @@ export default function GroupRidesPage() {
 
       <section className="mt-6 space-y-3">
         {loading ? (
-          <p className="text-sm text-[var(--ru-muted)]">Loading groups…</p>
+          <p className="text-sm text-gray-500">Loading groups…</p>
         ) : trips.length === 0 ? (
-          <p className="text-sm text-[var(--ru-muted)]">
-            No open groups right now. Check back soon, or book a private ride.
-          </p>
+          <div className="rounded-2xl bg-gray-50 px-4 py-8 text-center">
+            <p className="text-sm font-medium text-gray-700">
+              No open groups right now
+            </p>
+            <p className="mt-1 text-sm text-gray-500">
+              Check back soon, or book a private ride.
+            </p>
+          </div>
         ) : (
           trips.map((t) => <GroupTripCard key={t.id} trip={t} />)
         )}
@@ -49,7 +60,7 @@ export default function GroupRidesPage() {
 
       <Link
         href="/ride"
-        className="ru-btn ru-btn-secondary ru-btn-block mt-8 text-center"
+        className="uber-press uber-btn-black mt-8 flex w-full text-center"
       >
         Book a private ride instead
       </Link>

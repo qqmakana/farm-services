@@ -230,7 +230,7 @@ export function CheckoutBlock({
   }
 
   return (
-    <div className="space-y-3 border-t border-gray-100 bg-white pt-4 text-[var(--ru-ink)]">
+    <div className="space-y-3 border-t border-gray-100 bg-white pt-4 text-black">
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="text-xs font-medium tracking-wide text-gray-500 uppercase">
@@ -238,7 +238,7 @@ export function CheckoutBlock({
           </p>
           <p
             data-testid="price-display"
-            className="text-2xl font-bold text-[var(--ru-ink)]"
+            className="text-2xl font-bold text-black"
           >
             {Number.isFinite(fee)
               ? formatMoney(fee, displayCurrency, countryCode)
@@ -282,12 +282,12 @@ export function CheckoutBlock({
       {payMethod === "cash" ? (
         <div
           data-testid="cash-payment-message"
-          className="rounded-2xl border border-[var(--ru-line)] bg-[var(--ru-elevated)] px-3 py-3"
+          className="rounded-2xl bg-gray-50 px-3 py-3"
         >
           <p className="text-sm font-semibold text-black">
             Pay the driver in cash
           </p>
-          <p className="mt-1 text-xs leading-relaxed text-[var(--ru-muted)]">
+          <p className="mt-1 text-xs leading-relaxed text-gray-500">
             {/* Scenario A — Cash: rider pays full total to driver; platform fee
                 is deducted from the driver&apos;s prepaid wallet on complete. */}
             Pay the driver the full total at pickup or dropoff. Village Ride
@@ -296,9 +296,9 @@ export function CheckoutBlock({
           </p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[var(--ru-line)] bg-[var(--ru-elevated)] px-3 py-3">
+        <div className="rounded-2xl bg-gray-50 px-3 py-3">
           <p className="text-sm font-semibold text-black">Pay with PayPal</p>
-          <p className="mt-1 text-xs leading-relaxed text-[var(--ru-muted)]">
+          <p className="mt-1 text-xs leading-relaxed text-gray-500">
             {/* Scenario B — Card: // TODO: Integrate PayPal API here
                 (order/capture already wired in PayPalCheckout). */}
             You pay the full fare now. When the trip completes, the driver is
@@ -308,16 +308,16 @@ export function CheckoutBlock({
       )}
 
       {queuedOffline ? (
-        <div className="space-y-2 rounded-2xl border border-[var(--ru-line)] bg-[var(--ru-elevated)] px-3 py-3 text-sm text-black">
+        <div className="space-y-2 rounded-2xl bg-gray-50 px-3 py-3 text-sm text-black">
           <p className="font-semibold">Saved on this phone (offline)</p>
-          <p className="text-xs leading-relaxed text-[var(--ru-muted)]">
+          <p className="text-xs leading-relaxed text-gray-500">
             Cash bookings can queue offline and send when you have signal. Card
             payments need an internet connection.
           </p>
           <button
             type="button"
             onClick={() => router.push("/activity")}
-            className="text-xs font-semibold underline"
+            className="uber-press text-xs font-semibold underline"
           >
             View activity
           </button>
@@ -330,14 +330,14 @@ export function CheckoutBlock({
           <button
             type="button"
             onClick={openWhatsAppBooking}
-            className="font-semibold underline"
+            className="uber-press font-semibold underline"
           >
             Try WhatsApp booking instead
           </button>
         </div>
       ) : null}
 
-      <p className="rounded-2xl border border-[var(--ru-line)] bg-[var(--ru-elevated)] px-3 py-2.5 text-xs leading-relaxed text-[var(--ru-muted)]">
+      <p className="rounded-2xl bg-gray-50 px-3 py-2.5 text-xs leading-relaxed text-gray-500">
         We&apos;ll find the best available driver and ping them. You&apos;ll see
         live updates — photos, plate, and status — on the next screen.
       </p>
@@ -349,7 +349,7 @@ export function CheckoutBlock({
             data-testid="book-button"
             disabled={!ready || pending}
             onClick={requestCashJob}
-            className="ru-btn-book ru-btn-block"
+            className="uber-press uber-btn-black w-full"
           >
             {pending ? (
               <>
@@ -416,7 +416,7 @@ export function CheckoutBlock({
           type="button"
           disabled={!ready || pending}
           onClick={openWhatsAppBooking}
-          className="ru-btn ru-btn-secondary ru-btn-block !min-h-11 !rounded-xl !text-sm"
+          className="uber-press uber-btn-soft w-full"
         >
           Or send booking via WhatsApp
         </button>

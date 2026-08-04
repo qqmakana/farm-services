@@ -251,7 +251,7 @@ function GridTile({
   return (
     <Link
       href={href}
-      className="flex min-h-[3.5rem] cursor-pointer items-center gap-3 rounded-2xl bg-gray-100 p-4 transition-all duration-150 ease-out hover:bg-gray-200 hover:shadow-md active:scale-[0.98] active:bg-gray-300"
+      className="uber-press flex min-h-[3.5rem] items-center gap-3 rounded-2xl bg-gray-100 p-4 hover:bg-gray-200 hover:shadow-md active:bg-gray-300"
     >
       <Icon className="h-5 w-5 text-black" aria-hidden />
       <span className="text-sm font-semibold text-black">{label}</span>
@@ -272,7 +272,7 @@ function ListRow({
     <li>
       <Link
         href={href}
-        className="flex min-h-14 w-full cursor-pointer items-center gap-4 border-b border-gray-100 py-4 transition-colors duration-150 ease-out last:border-b-0 hover:bg-gray-50 active:bg-gray-100"
+        className="uber-press flex min-h-14 w-full items-center gap-4 border-b border-gray-100 py-4 last:border-b-0 hover:bg-gray-50 active:bg-gray-100"
       >
         <Icon className="h-5 w-5 shrink-0 text-black" aria-hidden />
         <span className="flex-1 text-left text-base font-medium text-black">

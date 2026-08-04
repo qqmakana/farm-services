@@ -261,7 +261,7 @@ export function ActivityView() {
           <button
             type="button"
             onClick={() => setShowPastOnly((v) => !v)}
-            className={`flex h-11 w-11 cursor-pointer items-center justify-center rounded-full transition-all duration-150 ease-out active:scale-[0.98] ${
+            className={`uber-press flex h-11 w-11 cursor-pointer items-center justify-center rounded-full ${
               showPastOnly
                 ? "bg-black text-white hover:bg-gray-800"
                 : "bg-gray-100 text-black hover:bg-gray-200"
@@ -327,7 +327,7 @@ function TripCard({
   showRebook?: boolean;
 }) {
   return (
-    <li className="cursor-pointer overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-shadow duration-150 hover:shadow-md active:scale-[0.99]">
+    <li className="uber-press overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md">
       <Link href={`/trip/${job.reference_code}`} className="block touch-manipulation">
         <div className="relative h-32 overflow-hidden bg-gradient-to-br from-gray-200 via-gray-100 to-emerald-50">
           <div className="absolute inset-0 flex items-center justify-center">
@@ -353,7 +353,7 @@ function TripCard({
         {showRebook ? (
           <Link
             href={rebookHref(job)}
-            className="min-h-11 cursor-pointer rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-black transition-all duration-150 ease-out hover:bg-gray-50 active:scale-[0.98]"
+            className="uber-press min-h-11 rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-black hover:bg-gray-200"
           >
             Rebook
           </Link>
@@ -362,7 +362,7 @@ function TripCard({
           <button
             type="button"
             onClick={onReceipt}
-            className="min-h-11 cursor-pointer rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-black transition-all duration-150 ease-out hover:bg-gray-50 active:scale-[0.98]"
+            className="uber-press min-h-11 rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-black hover:bg-gray-200"
           >
             Receipt
           </button>
@@ -372,7 +372,7 @@ function TripCard({
             type="button"
             disabled={pending}
             onClick={onCancel}
-            className="min-h-11 cursor-pointer rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-rose-700 transition-all duration-150 ease-out hover:bg-rose-50 active:scale-[0.98]"
+            className="uber-press min-h-11 rounded-full bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100"
           >
             Cancel
           </button>

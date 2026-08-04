@@ -148,7 +148,7 @@ export function DeliverySheet({
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-[#000000]">Village Delivery</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-black">Delivery</h1>
         <p className="text-sm text-slate-600">
           Town &amp; village — store-to-home, person-to-person, town-to-town.
           Fridges, furniture, building materials.
