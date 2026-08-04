@@ -53,16 +53,23 @@ export default function HelpPage() {
   return (
     <>
       <SiteNav active="help" />
-      <main className="ru-force-light ru-page max-w-2xl">
-        <p className="ru-section-label">Support</p>
-        <h1 className="ru-page-title mt-1">Help &amp; Support</h1>
-        <p className="ru-page-sub">
-          Chat on WhatsApp or email us — both go to the Sandton Streets team.
+      <main className="mx-auto min-h-dvh max-w-md bg-white px-4 pt-6 pb-16">
+        <Link
+          href="/account"
+          className="uber-press inline-flex rounded-full bg-gray-100 px-3 py-2 text-sm font-semibold text-black hover:bg-gray-200"
+        >
+          ← Account
+        </Link>
+        <h1 className="mt-5 text-3xl font-bold tracking-tight text-black">
+          Help
+        </h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Chat on WhatsApp or email — we reply as soon as we can.
         </p>
 
-        <section className="ru-card mt-6 p-4">
-          <p className="ru-section-label">Contact us</p>
-          <ul className="mt-2 space-y-1 text-sm text-[var(--ru-muted)]">
+        <section className="mt-6 rounded-2xl bg-gray-50 p-4">
+          <p className="text-sm font-bold text-black">Contact us</p>
+          <ul className="mt-2 space-y-1 text-sm text-gray-600">
             <li>
               WhatsApp:{" "}
               <a
@@ -87,32 +94,22 @@ export default function HelpPage() {
           <ContactSupportActions className="mt-4" />
           <a
             href={BRAND_TEL_HREF}
-            className="ru-btn ru-btn-secondary ru-btn-block mt-2"
+            className="uber-press uber-btn-soft mt-2 flex w-full"
           >
             Call {BRAND.phone}
           </a>
         </section>
 
-        <ul className="ru-list mt-8">
+        <ul className="mt-8 divide-y divide-gray-100">
           {FAQS.map((item) => (
-            <li key={item.q} className="ru-row !min-h-0 flex-col !items-start gap-2 py-4">
+            <li key={item.q} className="py-4">
               <h2 className="font-bold text-black">{item.q}</h2>
-              <p className="text-sm text-[var(--ru-muted)]">{item.a}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-gray-500">
+                {item.a}
+              </p>
             </li>
           ))}
         </ul>
-        <p className="mt-8 text-center text-sm">
-          <Link
-            href="/partners"
-            className="font-semibold text-black underline"
-          >
-            For businesses
-          </Link>
-          {" · "}
-          <Link href="/driver" className="font-semibold text-black underline">
-            Drive with us
-          </Link>
-        </p>
       </main>
       <SiteFooter />
     </>

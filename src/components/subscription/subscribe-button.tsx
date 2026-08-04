@@ -141,7 +141,7 @@ export function SubscribeButton({
         data-testid="subscribe-button"
         disabled={pending}
         onClick={subscribe}
-        className="ru-btn ru-btn-primary ru-btn-block"
+        className="uber-press uber-btn-black w-full"
       >
         {pending ? "Starting PayPal…" : "Get Village Pass"}
       </button>

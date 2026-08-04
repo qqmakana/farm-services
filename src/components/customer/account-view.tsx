@@ -111,7 +111,7 @@ export function AccountView() {
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-xl font-bold text-black"
+          className="uber-press flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-xl font-bold text-black hover:bg-gray-300"
           aria-label="Edit profile"
         >
           {profile?.photo_data_url ? (
@@ -155,14 +155,14 @@ export function AccountView() {
           <div className="pt-1">
             <CountrySelector compact showLanguage={false} />
           </div>
-          <button type="submit" className="ru-btn-book ru-btn-block">
+          <button type="submit" className="uber-press uber-btn-black w-full">
             Save profile
           </button>
           {editing && profile?.phone ? (
             <button
               type="button"
               onClick={() => setEditing(false)}
-              className="ru-btn ru-btn-ghost ru-btn-block"
+              className="uber-press uber-btn-soft w-full"
             >
               Cancel
             </button>
@@ -230,7 +230,7 @@ export function AccountView() {
         <button
           type="button"
           onClick={logout}
-          className="mt-6 w-full py-3 text-center text-sm font-semibold text-rose-600"
+          className="uber-press mt-6 w-full rounded-full py-3 text-center text-sm font-semibold text-rose-600 hover:bg-rose-50"
         >
           Log out
         </button>

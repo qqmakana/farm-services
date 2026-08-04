@@ -6,135 +6,122 @@ import {
   ArrowUpRight,
   Car,
   CircleDot,
-  Download,
   Package,
+  ShoppingBag,
   Tractor,
   Truck,
   Users,
 } from "lucide-react";
 import { OnboardingGate } from "@/components/onboarding/onboarding-gate";
-import {
-  InstallHelpPanel,
-  useInstallActions,
-} from "@/components/install-share-bar";
-import { PageShell } from "@/components/ui/page-shell";
+import { ServicePills } from "@/components/uber/service-pills";
 import { resetOnboardingForReplay } from "@/lib/onboarding";
 
-const cards = [
+const CARDS = [
   {
     href: "/ride",
-    title: "Village Ride",
+    title: "Ride",
     subtitle: "Night rides & village trips",
     Icon: Car,
+    image: "/home/sug-ride.jpg",
+  },
+  {
+    href: "/shops",
+    title: "Order anything",
+    subtitle: "Local kitchens & spaza",
+    Icon: ShoppingBag,
+    image: "/home/sug-order.jpg",
   },
   {
     href: "/delivery",
-    title: "Village Delivery",
+    title: "Delivery",
     subtitle: "Goods, furniture & materials",
     Icon: Truck,
-  },
-  {
-    href: "/farm",
-    title: "Farm Connect",
-    subtitle: "Produce, livestock & equipment",
-    Icon: Tractor,
+    image: "/home/sug-courier.jpg",
   },
   {
     href: "/courier",
     title: "Courier",
-    subtitle: "Packages — village, town & city",
+    subtitle: "Packages — village to city",
     Icon: Package,
+    image: "/home/sug-courier.jpg",
+  },
+  {
+    href: "/farm",
+    title: "Farm",
+    subtitle: "Produce, livestock & equipment",
+    Icon: Tractor,
+    image: "/home/sug-farm.jpg",
   },
   {
     href: "/group",
-    title: "Group Rides",
+    title: "Groups",
     subtitle: "Split the fare · shared loads",
     Icon: Users,
+    image: "/home/sug-family.jpg",
   },
   {
     href: "/driver/join",
-    title: "Become a Driver",
-    subtitle: "Earn with Village Ride",
+    title: "Drive & earn",
+    subtitle: "Keep 85% · browse jobs now",
     Icon: CircleDot,
+    image: "/home/sug-ride.jpg",
   },
 ] as const;
 
 function ServicesContent() {
   const router = useRouter();
-  const {
-    standalone,
-    installing,
-    install,
-    ios,
-    helpOpen,
-    setHelpOpen,
-  } = useInstallActions();
-
-  function openTour() {
-    resetOnboardingForReplay();
-    router.push("/onboarding?replay=1");
-  }
 
   return (
-    <PageShell
-      title="What do you need today?"
-      subtitle="Choose a service. Cash to the driver. Same app for ride, delivery, farm & courier."
-    >
-      <div className="flex flex-col gap-2 sm:flex-row">
-        {!standalone ? (
-          <button
-            type="button"
-            onClick={install}
-            disabled={installing}
-            className="ru-btn ru-btn-primary ru-btn-block"
-          >
-            <Download className="h-4 w-4" strokeWidth={2.25} aria-hidden />
-            {installing ? "Installing…" : "Install app"}
-          </button>
-        ) : null}
-        <button
-          type="button"
-          onClick={openTour}
-          className="ru-btn ru-btn-secondary ru-btn-block"
-        >
-          See feature tour
-          <ArrowUpRight className="h-4 w-4" strokeWidth={2.25} aria-hidden />
-        </button>
-      </div>
+    <main className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-28 pt-6">
+      <ServicePills className="mb-5" />
 
-      <div className="ru-list mt-6">
-        {cards.map((card) => {
+      <h1 className="text-3xl font-bold tracking-tight text-black">Services</h1>
+      <p className="mt-1 text-sm text-gray-500">
+        Same app for ride, shops, delivery, farm &amp; courier.
+      </p>
+
+      <ul className="mt-6 space-y-2">
+        {CARDS.map((card) => {
           const Icon = card.Icon;
           return (
-            <Link key={card.href} href={card.href} className="ru-row w-full">
-              <span className="ru-icon-circle">
-                <Icon className="h-5 w-5" strokeWidth={2} aria-hidden />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-bold tracking-tight text-black">
-                  {card.title}
+            <li key={card.href}>
+              <Link
+                href={card.href}
+                className="uber-press flex items-center gap-3 rounded-2xl bg-gray-50 p-3 hover:bg-gray-100 active:bg-gray-200"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={card.image}
+                  alt=""
+                  className="h-14 w-14 shrink-0 rounded-xl object-cover"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1.5 text-base font-bold text-black">
+                    <Icon className="h-4 w-4" aria-hidden />
+                    {card.title}
+                  </span>
+                  <span className="mt-0.5 block text-sm text-gray-500">
+                    {card.subtitle}
+                  </span>
                 </span>
-                <span className="mt-0.5 block text-xs text-[var(--ru-muted)]">
-                  {card.subtitle}
-                </span>
-              </span>
-              <ArrowUpRight
-                className="h-4 w-4 shrink-0 text-[var(--ru-muted)]"
-                strokeWidth={2}
-                aria-hidden
-              />
-            </Link>
+                <ArrowUpRight className="h-4 w-4 shrink-0 text-gray-400" />
+              </Link>
+            </li>
           );
         })}
-      </div>
+      </ul>
 
-      <p className="mt-8 text-center text-[11px] tracking-wide text-[var(--ru-muted)]">
-        Google Play coming soon · Install now from this page
-      </p>
-      {helpOpen ? (
-        <InstallHelpPanel ios={ios} onClose={() => setHelpOpen(false)} />
-      ) : null}
-    </PageShell>
+      <button
+        type="button"
+        onClick={() => {
+          resetOnboardingForReplay();
+          router.push("/onboarding?replay=1");
+        }}
+        className="uber-press uber-btn-soft mt-8 w-full"
+      >
+        See how it works
+      </button>
+    </main>
   );
 }
 

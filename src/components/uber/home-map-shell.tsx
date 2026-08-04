@@ -52,7 +52,7 @@ export function HomeMapShell({ trust }: { trust: ReactNode }) {
             type="button"
             onClick={install}
             disabled={installing}
-            className="ru-btn-book ru-btn-block"
+            className="uber-press uber-btn-black w-full"
           >
             {installing ? "Installing…" : "Install Village Ride"}
           </button>

@@ -139,19 +139,18 @@ export default function SavedPlacesPage() {
   }
 
   return (
-    <main className="mx-auto min-h-dvh max-w-lg bg-white px-5 pb-24 pt-6">
+    <main className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-28 pt-6">
       <Link
         href="/account"
-        className="inline-flex items-center gap-1 text-sm font-semibold text-[#000000] transition active:scale-95"
+        className="uber-press inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-2 text-sm font-semibold text-black hover:bg-gray-200"
       >
         <ChevronLeft className="h-4 w-4" /> Account
       </Link>
-      <h1 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-bold text-slate-900">
-        Saved Places
+      <h1 className="mt-5 text-3xl font-bold tracking-tight text-black">
+        Saved places
       </h1>
-      <p className="mt-2 text-sm text-slate-500">
-        Describe your places in your own words — Home, Work, Farm. Works
-        offline. Map pin is optional.
+      <p className="mt-1 text-sm text-gray-500">
+        Home, Work, Farm — describe places in your own words. Works offline.
       </p>
 
       <div className="mt-4 rounded-2xl bg-black px-4 py-4 text-white">
@@ -219,7 +218,7 @@ export default function SavedPlacesPage() {
         <button
           type="button"
           onClick={() => setAdding(true)}
-          className="ru-btn ru-btn-primary ru-btn-block mt-6 inline-flex items-center justify-center gap-2"
+          className="uber-press uber-btn-black mt-6 flex w-full items-center justify-center gap-2"
         >
           <Plus className="h-4 w-4" /> Add new location
         </button>
@@ -243,8 +242,10 @@ export default function SavedPlacesPage() {
                 key={k}
                 type="button"
                 onClick={() => setKind(k)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-                  kind === k ? "bg-black text-white" : "bg-slate-100 text-slate-700"
+                className={`uber-press rounded-full px-3 py-1.5 text-xs font-semibold ${
+                  kind === k
+                    ? "bg-black text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 {label}
@@ -306,14 +307,14 @@ export default function SavedPlacesPage() {
             <button
               type="button"
               onClick={() => setAdding(false)}
-              className="ru-btn ru-btn-secondary"
+              className="uber-press uber-btn-soft w-full"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={pending || !canSave}
-              className="ru-btn ru-btn-primary"
+              className="uber-press uber-btn-black w-full"
             >
               {pending ? "Saving…" : "Save"}
             </button>

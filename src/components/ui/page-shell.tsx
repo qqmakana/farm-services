@@ -15,12 +15,20 @@ export function PageShell({
   actions?: ReactNode;
 }) {
   return (
-    <main className={`ru-page ru-page-enter ru-force-light ${className}`}>
+    <main
+      className={`mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-28 pt-6 ${className}`}
+    >
       {title || actions ? (
         <header className="mb-6 flex items-start justify-between gap-3">
           <div className="min-w-0">
-            {title ? <h1 className="ru-page-title">{title}</h1> : null}
-            {subtitle ? <p className="ru-page-sub">{subtitle}</p> : null}
+            {title ? (
+              <h1 className="text-3xl font-bold tracking-tight text-black">
+                {title}
+              </h1>
+            ) : null}
+            {subtitle ? (
+              <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
+            ) : null}
           </div>
           {actions}
         </header>

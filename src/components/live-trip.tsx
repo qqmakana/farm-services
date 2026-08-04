@@ -214,7 +214,7 @@ export function LiveTrip({
       job.status === "completed");
 
   return (
-    <div className="ru-page-enter relative space-y-4 text-black">
+    <div className="relative touch-manipulation space-y-4 text-black">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold tracking-[0.16em] text-[var(--ru-muted)] uppercase">
@@ -246,7 +246,7 @@ export function LiveTrip({
             type="button"
             disabled={pending}
             onClick={runSos}
-            className="ru-btn shrink-0 !min-h-11 bg-[var(--ru-error)] !px-4 text-sm font-bold text-white hover:opacity-90"
+            className="uber-press shrink-0 rounded-full !min-h-11 bg-[var(--ru-error)] !px-4 text-sm font-bold text-white hover:opacity-90"
           >
             SOS
           </button>
@@ -254,7 +254,7 @@ export function LiveTrip({
       </div>
 
       {/* Horizontal progress */}
-      <div className="ru-card flex items-center justify-between gap-1 px-3 py-4">
+      <div className="rounded-2xl bg-gray-50 flex items-center justify-between gap-1 px-3 py-4">
         {STEPS.map((step, i) => {
           const done = active > i || job.status === "completed";
           const current = active === i;
@@ -308,7 +308,7 @@ export function LiveTrip({
       </div>
 
       {searching ? (
-        <div className="ru-card flex flex-col items-center gap-3 px-4 py-8 text-center">
+        <div className="rounded-2xl bg-gray-50 flex flex-col items-center gap-3 px-4 py-8 text-center">
           <span className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-black border-t-transparent" />
           <p className="text-base font-bold text-black">
             Finding your driver...
@@ -323,7 +323,7 @@ export function LiveTrip({
           <div className="mt-1 flex flex-wrap justify-center gap-2">
             <a
               href="/"
-              className="ru-btn ru-btn-secondary !min-h-11 !px-4 !text-sm"
+              className="uber-press uber-btn-soft !min-h-11 !px-4 !text-sm"
             >
               Back to home
             </a>
@@ -333,7 +333,7 @@ export function LiveTrip({
               )}`}
               target="_blank"
               rel="noreferrer"
-              className="ru-btn !min-h-11 !bg-[#25D366] !px-4 !text-sm text-white hover:!bg-[#1ebe57]"
+              className="uber-press rounded-full !min-h-11 !bg-[#25D366] !px-4 !text-sm text-white hover:!bg-[#1ebe57]"
             >
               WhatsApp dispatch
             </a>
@@ -342,7 +342,7 @@ export function LiveTrip({
       ) : null}
 
       {noDrivers ? (
-        <div className="ru-card border-[var(--ru-error)]/30 bg-[color-mix(in_srgb,var(--ru-error)_8%,white)] px-4 py-6 text-center">
+        <div className="rounded-2xl bg-gray-50 border-[var(--ru-error)]/30 bg-[color-mix(in_srgb,var(--ru-error)_8%,white)] px-4 py-6 text-center">
           <p className="text-base font-bold text-black">
             No drivers available right now
           </p>
@@ -353,7 +353,7 @@ export function LiveTrip({
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
             <a
               href={bookAgainHref}
-              className="ru-btn ru-btn-primary !min-h-11 !px-4 !text-sm"
+              className="uber-press uber-btn-black !min-h-11 !px-4 !text-sm"
             >
               Book again
             </a>
@@ -363,13 +363,13 @@ export function LiveTrip({
               )}`}
               target="_blank"
               rel="noreferrer"
-              className="ru-btn !min-h-11 !bg-[#25D366] !px-4 !text-sm text-white hover:!bg-[#1ebe57]"
+              className="uber-press rounded-full !min-h-11 !bg-[#25D366] !px-4 !text-sm text-white hover:!bg-[#1ebe57]"
             >
               WhatsApp dispatch
             </a>
             <a
               href="/"
-              className="ru-btn ru-btn-secondary !min-h-11 !px-4 !text-sm"
+              className="uber-press uber-btn-soft !min-h-11 !px-4 !text-sm"
             >
               Home
             </a>
@@ -378,7 +378,7 @@ export function LiveTrip({
       ) : null}
 
       {confirmed && job.drivers ? (
-        <div className="ru-card space-y-3 p-4">
+        <div className="rounded-2xl bg-gray-50 space-y-3 p-4">
           <DriverVehiclePhotos driver={job.drivers} />
           <div className="flex items-center justify-between gap-3 border-t border-[var(--ru-line)] pt-3">
             <div className="min-w-0">
@@ -407,7 +407,7 @@ export function LiveTrip({
               {job.drivers.phone ? (
                 <a
                   href={`tel:${job.drivers.phone}`}
-                  className="ru-btn ru-btn-primary !min-h-10 !px-3 !text-xs"
+                  className="uber-press uber-btn-black !min-h-10 !px-3 !text-xs"
                 >
                   Call driver
                 </a>
@@ -417,7 +417,7 @@ export function LiveTrip({
                   href={`https://wa.me/${toWhatsAppNumber(job.drivers.phone, job.country_code)}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="ru-btn !min-h-10 !bg-[#25D366] !px-3 !text-xs text-white hover:!bg-[#1ebe57]"
+                  className="uber-press rounded-full !min-h-10 !bg-[#25D366] !px-3 !text-xs text-white hover:!bg-[#1ebe57]"
                 >
                   Chat driver
                 </a>
@@ -427,7 +427,7 @@ export function LiveTrip({
         </div>
       ) : null}
 
-      <section className="ru-card p-4">
+      <section className="rounded-2xl bg-gray-50 p-4">
         <p className="ru-section-label">Need help?</p>
         <p className="mt-1 text-sm text-[var(--ru-muted)]">
           Issues with this trip? Contact support on WhatsApp or email.
@@ -449,7 +449,7 @@ export function LiveTrip({
           )}
           target="_blank"
           rel="noreferrer"
-          className="ru-btn ru-btn-block !bg-[#25D366] text-white hover:!bg-[#1ebe57]"
+          className="uber-press rounded-full w-full !min-h-12 !bg-[#25D366] text-white hover:!bg-[#1ebe57]"
         >
           <span aria-hidden>WhatsApp</span>
           Share trip details via WhatsApp
@@ -457,7 +457,7 @@ export function LiveTrip({
       ) : null}
 
       {mapLat != null && mapLng != null && (
-        <div className="ru-card overflow-hidden">
+        <div className="rounded-2xl bg-gray-50 overflow-hidden">
           <iframe
             title="Live map"
             className="h-64 w-full border-0"
@@ -475,7 +475,7 @@ export function LiveTrip({
         {isActiveTrip ? (
           <button
             type="button"
-            className="ru-btn bg-[var(--ru-error)] text-white hover:opacity-90"
+            className="uber-press rounded-full bg-[var(--ru-error)] px-4 text-white hover:opacity-90"
             disabled={pending}
             onClick={runSos}
           >
@@ -489,13 +489,13 @@ export function LiveTrip({
           )}
           target="_blank"
           rel="noreferrer"
-          className="ru-btn !bg-[#25D366] text-white hover:!bg-[#1ebe57]"
+          className="uber-press rounded-full !bg-[#25D366] px-4 text-white hover:!bg-[#1ebe57]"
         >
           WhatsApp trip
         </a>
         <button
           type="button"
-          className="ru-btn ru-btn-secondary"
+          className="uber-press uber-btn-soft"
           onClick={() => {
             const url = `${window.location.origin}/trip/${job.reference_code}`;
             void navigator.clipboard?.writeText(url);
@@ -506,7 +506,7 @@ export function LiveTrip({
         </button>
       </div>
 
-      <div className="ru-card space-y-3 p-5 text-sm">
+      <div className="rounded-2xl bg-gray-50 space-y-3 p-5 text-sm">
         <div className="flex justify-between gap-3">
           <span className="text-[var(--ru-muted)]">Fare</span>
           <span className="font-semibold text-black">
@@ -587,7 +587,7 @@ export function LiveTrip({
       </div>
 
       {job.status === "completed" && !rating && (
-        <div className="ru-card space-y-3 p-5">
+        <div className="rounded-2xl bg-gray-50 space-y-3 p-5">
           <h2 className="font-semibold text-black">Rate your driver</h2>
           <p className="text-xs text-[var(--ru-muted)]">
             Honest ratings keep Village Ride safe for everyone.
@@ -618,7 +618,7 @@ export function LiveTrip({
             type="button"
             disabled={pending}
             onClick={submitRating}
-            className="ru-btn ru-btn-primary ru-btn-block"
+            className="uber-press uber-btn-black w-full"
           >
             Submit rating
           </button>
@@ -626,14 +626,14 @@ export function LiveTrip({
       )}
 
       {rating && (
-        <div className="ru-card space-y-3 px-4 py-3 text-sm text-black">
+        <div className="rounded-2xl bg-gray-50 space-y-3 px-4 py-3 text-sm text-black">
           <p>
             You rated ★{rating.stars}
             {rating.comment ? ` — “${rating.comment}”` : ""}
           </p>
           <a
             href={bookAgainHref}
-            className="ru-btn ru-btn-primary !min-h-11 !px-4 !text-sm"
+            className="uber-press uber-btn-black !min-h-11 !px-4 !text-sm"
           >
             Request another
           </a>

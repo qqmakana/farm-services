@@ -77,7 +77,7 @@ export function UberShell({
             {backHref ? (
               <Link
                 href={backHref}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[var(--ru-ink)] shadow-[0_4px_24px_rgba(0,0,0,0.08)] transition active:scale-[0.98]"
+                className="uber-press flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-[0_4px_24px_rgba(0,0,0,0.08)]"
                 aria-label="Back"
               >
                 ←
@@ -85,7 +85,7 @@ export function UberShell({
             ) : null}
             <Link
               href="/"
-              className="flex items-center gap-2 rounded-full bg-white/95 py-1.5 pr-3.5 pl-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur transition active:scale-[0.98]"
+              className="uber-press flex items-center gap-2 rounded-full bg-white/95 py-1.5 pr-3.5 pl-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -112,7 +112,7 @@ export function UberShell({
           <div className="flex items-center gap-1.5">
             <Link
               href="/help"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-[var(--ru-ink)] shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur transition active:scale-[0.98]"
+              className="uber-press flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-black shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur"
               aria-label="Help"
             >
               <HelpCircle className="h-5 w-5" aria-hidden />

@@ -175,7 +175,7 @@ export function OnboardingFlow() {
             if (isLast) finishPermanent();
             else go(index + 1);
           }}
-          className="ru-btn ru-btn-primary ru-btn-block !rounded-full text-base"
+          className="uber-press uber-btn-black w-full !rounded-full text-base"
         >
           {isLast ? "Get started" : "Next"}
         </button>

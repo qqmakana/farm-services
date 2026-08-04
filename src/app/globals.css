@@ -71,10 +71,10 @@ body {
   margin-left: auto;
   margin-right: auto;
   min-height: 100dvh;
-  max-width: 32rem;
-  background: var(--ru-canvas);
-  padding: 1.75rem 1.25rem calc(6rem + env(safe-area-inset-bottom, 0px));
-  color: var(--ru-ink);
+  max-width: 28rem;
+  background: #ffffff;
+  padding: 1.5rem 1rem calc(6rem + env(safe-area-inset-bottom, 0px));
+  color: #000;
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
@@ -103,18 +103,18 @@ body {
 }
 
 .ru-card {
-  background: var(--ru-surface);
-  border: 1px solid var(--ru-line);
-  border-radius: var(--ru-radius);
-  box-shadow: var(--ru-shadow);
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 1rem;
+  box-shadow: none;
 }
 
 .ru-list {
   overflow: hidden;
-  border: 1px solid var(--ru-line);
-  border-radius: var(--ru-radius);
-  background: var(--ru-surface);
-  box-shadow: var(--ru-shadow);
+  border: none;
+  border-radius: 1rem;
+  background: #f3f3f3;
+  box-shadow: none;
 }
 
 .ru-row {
@@ -124,19 +124,22 @@ body {
   gap: 0.75rem;
   padding: 0.9rem 1rem;
   text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition:
-    background 0.15s ease,
-    transform 0.15s ease;
+    background 0.15s ease-out,
+    transform 0.15s ease-out;
 }
 
 .ru-row + .ru-row,
 .ru-list > * + * {
-  border-top: 1px solid var(--ru-line);
+  border-top: 1px solid #e8e8e8;
 }
 
 .ru-row:active {
-  background: var(--ru-canvas);
-  transform: scale(0.995);
+  background: #e8e8e8;
+  transform: scale(0.98);
 }
 
 .ru-icon-circle {
@@ -146,9 +149,9 @@ body {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border-radius: var(--ru-radius-pill);
-  background: var(--ru-black);
-  color: white;
+  border-radius: 9999px;
+  background: #fff;
+  color: #000;
 }
 
 .ru-soft-field {
@@ -268,7 +271,7 @@ body {
   background: #000000;
 }
 
-/* Sticky Book CTA — brand green only for primary positive actions */
+/* Primary Book CTA — Uber black pill (not green) */
 .ru-btn-book {
   display: inline-flex;
   width: 100%;
@@ -276,14 +279,17 @@ body {
   justify-content: center;
   gap: 0.5rem;
   min-height: 3.25rem;
-  border-radius: 0.75rem;
-  background: var(--ru-accent);
+  border-radius: 9999px;
+  background: #000;
   padding: 1rem 1.25rem;
-  font-size: 1.0625rem;
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: #fff;
+  cursor: pointer;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 18%);
   transition:
     background 0.15s ease-out,
     transform 0.15s ease-out,
@@ -291,11 +297,12 @@ body {
 }
 
 .ru-btn-book:hover {
-  background: #0bb56f;
+  background: #1a1a1a;
 }
 
 .ru-btn-book:active {
-  transform: scale(0.98);
+  background: #0a0a0a;
+  transform: scale(0.97);
 }
 
 .ru-btn-book:disabled {
@@ -469,20 +476,30 @@ body {
 }
 
 .ru-btn-secondary {
-  background: transparent;
-  color: var(--ru-ink);
-  border: 1.5px solid var(--ru-ink);
+  background: #f3f3f3;
+  color: #000;
+  border: none;
 }
 
 .ru-btn-secondary:hover {
-  background: #f0f0f0;
+  background: #e8e8e8;
+}
+
+.ru-btn-secondary:active {
+  background: #ddd;
+  transform: scale(0.97);
 }
 
 .ru-btn-ghost {
   background: transparent;
-  color: var(--ru-brand);
+  color: #000;
   min-height: 40px;
   padding: 0.5rem 0.75rem;
+}
+
+.ru-btn-ghost:active {
+  background: #f3f3f3;
+  transform: scale(0.97);
 }
 
 .ru-btn-block {
