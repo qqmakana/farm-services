@@ -36,6 +36,11 @@ import { jobNeedsFromJob } from "./job-needs";
 import { SHOP_DELIVERY_FEE } from "./shop-constants";
 import { suggestVehicle, vehicleFitsJob } from "./vehicles";
 import {
+  FOUNDING_CITIES,
+  isWithinFoundingEra,
+  normalizeHomeCity,
+} from "./founding-driver";
+import {
   applyCommissionToWallet,
   cashPlatformRemittance,
   cardDriverPayout,
@@ -45,6 +50,15 @@ import {
   isCardPaymentMethod,
   isCashPaymentMethod,
 } from "./wallet";
+
+type MonthlyCityRevenue = {
+  id: string;
+  city: string;
+  month_year: string;
+  total_gross_revenue: number;
+  bonus_pool_amount: number;
+  is_distributed: boolean;
+};
 
 function uid() {
   return crypto.randomUUID();
@@ -90,6 +104,9 @@ const seedDrivers: Driver[] = [
     vehicle_model: "Hilux",
     vehicle_color: "White",
     vehicle_registration: "EC 123-456",
+    home_city: "Johannesburg",
+    is_founding_driver: false,
+    accumulated_bonus_balance: 0,
     created_at: new Date().toISOString(),
   },
   {
@@ -125,6 +142,9 @@ const seedDrivers: Driver[] = [
     vehicle_model: "Polo",
     vehicle_color: "Silver",
     vehicle_registration: "EC 987-654",
+    home_city: "Cape Town",
+    is_founding_driver: false,
+    accumulated_bonus_balance: 0,
     created_at: new Date().toISOString(),
   },
   {
@@ -156,6 +176,9 @@ const seedDrivers: Driver[] = [
     vehicle_front_url: "mock://vfront/sipho.jpg",
     vehicle_side_url: "mock://vside/sipho.jpg",
     code_of_conduct_accepted_at: new Date().toISOString(),
+    home_city: "Durban",
+    is_founding_driver: false,
+    accumulated_bonus_balance: 0,
     vehicle_make: "Isuzu",
     vehicle_model: "NPR",
     vehicle_color: "Blue",
@@ -605,6 +628,7 @@ type Store = {
   savedLocations: SavedLocation[];
   wearLogs: WearLog[];
   fuelRequests: FuelRequest[];
+  monthlyCityRevenue: MonthlyCityRevenue[];
 };
 
 const seedWearLogs: WearLog[] = (() => {
@@ -644,6 +668,7 @@ function store(): Store {
       savedLocations: [],
       wearLogs: structuredClone(seedWearLogs),
       fuelRequests: [],
+      monthlyCityRevenue: [],
     };
   }
   const s = globalThis.__ruralMockStore;
@@ -651,6 +676,7 @@ function store(): Store {
   if (!s.products) s.products = structuredClone(seedProducts);
   if (!s.shopOrders) s.shopOrders = [];
   if (!s.shopOrderItems) s.shopOrderItems = [];
+  if (!s.monthlyCityRevenue) s.monthlyCityRevenue = [];
   // Hot-reload: ensure food storefront seeds exist
   if (!s.shops.some((x) => x.id === "s3")) {
     s.shops = structuredClone(seedShops);
@@ -812,6 +838,7 @@ export const mockRepo = {
       throw new Error("Application already submitted — waiting for approval.");
     }
 
+    const homeCity = normalizeHomeCity(input.area);
     const driver: Driver = {
       id: uid(),
       full_name: name,
@@ -830,6 +857,9 @@ export const mockRepo = {
       country_code: input.country_code || DEFAULT_COUNTRY,
       prefer_heavy: true,
       prefer_village_routes: true,
+      home_city: homeCity,
+      is_founding_driver: false,
+      accumulated_bonus_balance: 0,
       notes: [
         `Area: ${input.area.trim()}`,
         "SA mobile · auto-approved",
@@ -2061,5 +2091,126 @@ export const mockRepo = {
     return store().fuelRequests.filter(
       (r) => r.status === "pending" || r.status === "assigned",
     );
+  },
+
+  setDriverHomeCity(driverId: string, city: string): Driver {
+    const driver = store().drivers.find((d) => d.id === driverId);
+    if (!driver) throw new Error("Driver not found");
+    const homeCity = normalizeHomeCity(city);
+    if (!homeCity) throw new Error("Choose a valid home city.");
+    driver.home_city = homeCity;
+    return driver;
+  },
+
+  processFoundingBonusOnComplete(
+    driverId: string,
+    feeCents: number,
+    monthYear: string,
+  ) {
+    const driver = store().drivers.find((d) => d.id === driverId);
+    if (!driver) return;
+
+    if (!driver.home_city) {
+      const fromNotes = driver.notes?.match(/Area:\s*([^·]+)/i)?.[1];
+      const mapped = normalizeHomeCity(fromNotes);
+      if (mapped) driver.home_city = mapped;
+    }
+
+    const completedBefore = store().jobs.filter(
+      (j) =>
+        j.driver_id === driverId &&
+        j.status === "completed" &&
+        j.id /* already includes current */,
+    ).length;
+
+    if (
+      !driver.is_founding_driver &&
+      isWithinFoundingEra() &&
+      completedBefore <= 1
+    ) {
+      driver.is_founding_driver = true;
+      driver.founding_era_qualified_at = new Date().toISOString();
+    }
+
+    const city = driver.home_city;
+    if (!city || feeCents <= 0) return;
+
+    const rows = store().monthlyCityRevenue;
+    let row = rows.find((r) => r.city === city && r.month_year === monthYear);
+    if (!row) {
+      row = {
+        id: uid(),
+        city,
+        month_year: monthYear,
+        total_gross_revenue: 0,
+        bonus_pool_amount: 0,
+        is_distributed: false,
+      };
+      rows.push(row);
+    }
+    if (row.is_distributed) return;
+    row.total_gross_revenue += feeCents;
+  },
+
+  listCityBonusBoard(monthYear: string) {
+    return FOUNDING_CITIES.map((city) => {
+      const r = store().monthlyCityRevenue.find(
+        (x) => x.city === city && x.month_year === monthYear,
+      );
+      const gross = r?.total_gross_revenue ?? 0;
+      const founding_driver_count = store().drivers.filter(
+        (d) =>
+          d.is_founding_driver &&
+          d.is_active &&
+          d.home_city === city,
+      ).length;
+      return {
+        city,
+        month_year: monthYear,
+        total_gross_revenue_cents: gross,
+        bonus_pool_cents: r?.is_distributed
+          ? r.bonus_pool_amount
+          : Math.floor((gross * 2) / 100),
+        is_distributed: Boolean(r?.is_distributed),
+        founding_driver_count,
+      };
+    });
+  },
+
+  distributeCityBonus(city: string, monthYear: string) {
+    const homeCity = normalizeHomeCity(city) || city;
+    let row = store().monthlyCityRevenue.find(
+      (r) => r.city === homeCity && r.month_year === monthYear,
+    );
+    if (!row) {
+      throw new Error(`No revenue row for ${homeCity} / ${monthYear}`);
+    }
+    if (row.is_distributed) {
+      throw new Error(`Bonus already distributed for ${homeCity} / ${monthYear}`);
+    }
+    const drivers = store().drivers.filter(
+      (d) =>
+        d.is_founding_driver &&
+        d.is_active &&
+        d.home_city === homeCity,
+    );
+    if (!drivers.length) {
+      throw new Error(`No founding drivers for city ${homeCity}`);
+    }
+    const pool = Math.floor((row.total_gross_revenue * 2) / 100);
+    const each = Math.floor(pool / drivers.length);
+    for (const d of drivers) {
+      d.accumulated_bonus_balance =
+        Number(d.accumulated_bonus_balance ?? 0) + each;
+    }
+    row.bonus_pool_amount = pool;
+    row.is_distributed = true;
+    return {
+      city: homeCity,
+      month_year: monthYear,
+      bonus_pool_cents: pool,
+      founding_driver_count: drivers.length,
+      bonus_each_cents: each,
+    };
   },
 };

@@ -13,6 +13,7 @@ import {
 } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
 import { OutOfFuelPanel } from "@/components/driver/out-of-fuel-panel";
+import { FoundingBanner } from "@/components/driver/founding-banner";
 import { PickupDescribeCard } from "@/components/driver/pickup-describe-card";
 import { RiderSpottingCard } from "@/components/driver/rider-spotting-card";
 import { DriverPushPrompt } from "@/components/driver-push-prompt";
@@ -311,6 +312,9 @@ export function DriverHomeView() {
             ) : null}
           </div>
         ) : null}
+        <div className="mb-3">
+          <FoundingBanner />
+        </div>
         {error ? (
           <p className="mb-2 rounded-2xl bg-[#fdecea] px-3 py-2 text-sm text-[#b01000]">
             {error}

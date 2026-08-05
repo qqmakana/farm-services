@@ -476,7 +476,10 @@ export async function applyToDrive(input: NewDriverApplicationInput) {
     input.notes?.trim() || null,
   ]
     .filter(Boolean)
-    .join(" ?- ");
+    .join(" · ");
+
+  const { normalizeHomeCity } = await import("./founding-driver");
+  const homeCity = normalizeHomeCity(input.area);
 
   // SA drivers are auto-approved so they can go online immediately
   const { data, error } = await admin
@@ -494,6 +497,7 @@ export async function applyToDrive(input: NewDriverApplicationInput) {
       prefer_village_routes: true,
       notes,
       country_code: countryCode,
+      home_city: homeCity,
     })
     .select("*")
     .single();
@@ -760,6 +764,9 @@ export async function applyToDriveWithTrust(formData: FormData) {
     .filter(Boolean)
     .join(" · ");
 
+  const { normalizeHomeCity } = await import("./founding-driver");
+  const homeCity = normalizeHomeCity(area);
+
   const { data: created, error: insertErr } = await admin
     .from("rr_drivers")
     .insert({
@@ -776,6 +783,7 @@ export async function applyToDriveWithTrust(formData: FormData) {
       prefer_village_routes: true,
       notes: noteLine,
       country_code,
+      home_city: homeCity,
       code_of_conduct_accepted_at: now,
       docs_submitted_at: now,
       vehicle_make,
@@ -3018,6 +3026,14 @@ export async function completeTrip(
     } catch {
       /* ignore — not eligible yet */
     }
+    try {
+      const { processFoundingBonusOnTripComplete } = await import(
+        "./actions-founding-bonus"
+      );
+      await processFoundingBonusOnTripComplete(driverId, job);
+    } catch {
+      /* founding bonus is best-effort */
+    }
     revalidateAll();
     return job;
   }
@@ -3142,6 +3158,15 @@ export async function completeTrip(
     await claimWeeklyTripBonus(driverId);
   } catch {
     /* not eligible yet */
+  }
+
+  try {
+    const { processFoundingBonusOnTripComplete } = await import(
+      "./actions-founding-bonus"
+    );
+    await processFoundingBonusOnTripComplete(driverId, data as Job);
+  } catch {
+    /* founding bonus is best-effort */
   }
 
   revalidateAll();

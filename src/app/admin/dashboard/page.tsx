@@ -67,6 +67,9 @@ export default async function AdminDashboardPage() {
             <Link href="/admin/verifications" className="rounded-lg border px-3 py-1.5 font-semibold">
               Verifications
             </Link>
+            <Link href="/admin/bonus-payouts" className="rounded-lg border px-3 py-1.5 font-semibold">
+              Bonus pools
+            </Link>
             <Link href="/dispatch" className="rounded-lg border px-3 py-1.5 font-semibold">
               Dispatch
             </Link>

@@ -147,6 +147,13 @@ export type Driver = {
   code_of_conduct_accepted_at?: string | null;
   suspended_at?: string | null;
   suspend_reason?: string | null;
+  /** Founding Driver Bonus Pool (performance incentive — not a financial security). */
+  is_founding_driver?: boolean;
+  founding_era_qualified_at?: string | null;
+  /** Accumulated bonus in cents (ZAR). */
+  accumulated_bonus_balance?: number;
+  /** Home city for city bonus pool (e.g. Johannesburg). */
+  home_city?: string | null;
 };
 
 export type GroupTripKind = "ride" | "goods";

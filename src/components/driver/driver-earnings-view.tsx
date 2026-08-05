@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { claimWeeklyTripBonus, listDriverJobs } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
+import { FoundingBonusPoolCard } from "@/components/driver/founding-bonus-pool-card";
 import { useCountry } from "@/components/country/country-provider";
 import { PageShell } from "@/components/ui/page-shell";
 import { BRAND, BRAND_TEL_HREF } from "@/lib/brand";
@@ -187,7 +188,9 @@ export function DriverEarningsView() {
       title="Earnings"
       subtitle="Post-paid: start at R0. Cash trips deduct the platform fee. Credit limit stops new jobs."
     >
-      <section className="ru-card p-5">
+      <FoundingBonusPoolCard />
+
+      <section className="ru-card mt-4 p-5">
         <p className="ru-section-label">Driver wallet</p>
         <p
           data-testid="wallet-balance"

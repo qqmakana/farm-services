@@ -91,6 +91,13 @@ export default function MarketingAdsPage() {
             >
               /driver/join
             </Link>
+            {" · "}
+            <Link
+              href="/marketing/founding-driver"
+              className="font-semibold text-[#000000] underline"
+            >
+              Founding Driver card
+            </Link>
           </p>
         </div>
       </main>
