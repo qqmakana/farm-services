@@ -46,9 +46,9 @@ self.addEventListener('notificationclick', function (event) {
 `
     : "";
 
-  const body = `/* Village Ride service worker v2 — PWA + FCM */
-const CACHE = "village-ride-v2";
-const PRECACHE = ["/", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
+  const body = `/* Village Ride service worker v3 — PWA + FCM */
+const CACHE = "village-ride-v3";
+const PRECACHE = ["/", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png", "/get-app"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

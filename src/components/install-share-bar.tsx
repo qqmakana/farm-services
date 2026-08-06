@@ -6,21 +6,19 @@ import { BRAND } from "@/lib/brand";
 import {
   getAppInstallUrl,
   getDeferredPrompt,
+  isAndroidDevice,
+  isInAppBrowser,
   isIosDevice,
   isStandaloneDisplay,
+  openInstallInChrome,
   promptNativeInstall,
   subscribeInstallReady,
 } from "@/lib/pwa-install";
 
 const HIDE_BANNER = new Set([
-  "/",
   "/services",
   "/activity",
   "/account",
-  "/ride",
-  "/delivery",
-  "/farm",
-  "/courier",
   "/driver/home",
   "/driver/jobs",
   "/driver/earnings",
@@ -66,8 +64,6 @@ export function useInstallActions() {
 
   const install = useCallback(async () => {
     // Prefer the native browser PWA prompt (Chrome/Edge/Android).
-    // Never force an APK download from in-app Install buttons — that causes
-    // "format not supported" when the file is missing or blocked.
     if (deferred || getDeferredPrompt()) {
       setInstalling(true);
       try {
@@ -84,14 +80,20 @@ export function useInstallActions() {
       return;
     }
 
+    // WhatsApp / Instagram in-app browser — open real Chrome on Android.
+    if (isInAppBrowser() && isAndroidDevice()) {
+      openInstallInChrome();
+      return;
+    }
+
     // iOS Safari never fires beforeinstallprompt — show Share instructions.
     if (isIosDevice()) {
       setHelpOpen(true);
       return;
     }
 
-    // Android / desktop without a deferred prompt: guide to browser menu.
-    setHelpOpen(true);
+    // Fall back to dedicated install page with clear steps.
+    window.location.href = getAppInstallUrl();
   }, [deferred]);
 
   const share = useCallback(async () => {
@@ -154,8 +156,8 @@ export function InstallHelpPanel({
         ) : (
           <>
             <p className="mt-2 text-sm text-slate-600">
-              Use your browser&apos;s Install option — that&apos;s the reliable
-              way to add Village Ride to your home screen.
+              Use Chrome&apos;s Install option — that adds Village Ride to your
+              home screen like a real app.
             </p>
             <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-800">
               <li>
@@ -169,12 +171,18 @@ export function InstallHelpPanel({
                 Tap <strong>Install</strong>
               </li>
             </ol>
+            <a
+              href={getAppInstallUrl()}
+              className="mt-4 block w-full rounded-xl bg-black py-3 text-center text-sm font-bold text-white"
+            >
+              Open install page
+            </a>
           </>
         )}
         <button
           type="button"
           onClick={onClose}
-          className="mt-4 w-full rounded-xl bg-[var(--ru-brand)] py-3 text-sm font-bold text-white"
+          className="mt-3 w-full rounded-xl border border-slate-200 py-3 text-sm font-bold text-black"
         >
           Got it
         </button>
@@ -193,7 +201,7 @@ export function NavInstallShare() {
       <button
         type="button"
         onClick={share}
-        className="ml-1 rounded-lg bg-white px-2.5 py-1.5 text-sm font-bold text-[var(--ru-brand)]"
+        className="ml-1 rounded-full bg-black px-3 py-1.5 text-xs font-bold text-white"
       >
         Share
       </button>
@@ -206,19 +214,12 @@ export function NavInstallShare() {
         type="button"
         onClick={install}
         disabled={installing}
-        className="ml-1 rounded-lg bg-white px-2.5 py-1.5 text-sm font-bold text-[var(--ru-brand)] disabled:opacity-70"
+        className="ml-1 rounded-full bg-black px-3 py-1.5 text-xs font-bold text-white disabled:opacity-70"
       >
         {installing ? "…" : "Install"}
       </button>
-      <button
-        type="button"
-        onClick={share}
-        className="rounded-lg bg-white/15 px-2.5 py-1.5 text-sm font-semibold text-white hover:bg-white/25"
-      >
-        Share
-      </button>
       {note ? (
-        <span className="absolute top-full right-4 z-[70] mt-1 max-w-[240px] rounded bg-white px-2 py-1 text-[10px] font-medium text-slate-800 shadow">
+        <span className="absolute top-full right-0 z-[70] mt-1 max-w-[240px] rounded bg-black px-2 py-1 text-[10px] font-medium text-white shadow">
           {note}
         </span>
       ) : null}

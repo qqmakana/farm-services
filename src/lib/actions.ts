@@ -107,6 +107,46 @@ function weightFromDetails(
   return null;
 }
 
+/** Strip base64 / oversized fields — prevents Server Action body explosions. */
+function sanitizeJobDetails(details: unknown): Record<string, unknown> {
+  if (!details || typeof details !== "object") return {};
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(details as Record<string, unknown>)) {
+    if (typeof value === "string") {
+      if (value.startsWith("data:")) continue;
+      if (value.length > 4_000) continue;
+      out[key] = value;
+      continue;
+    }
+    if (
+      value === null ||
+      typeof value === "number" ||
+      typeof value === "boolean"
+    ) {
+      out[key] = value;
+    }
+  }
+  return out;
+}
+
+function friendlyBookingError(err: unknown): Error {
+  const raw = err instanceof Error ? err.message : String(err ?? "");
+  if (
+    /Server Components|digest|Body exceeded|request entity too large|413|FETCH_ERROR|Failed to fetch/i.test(
+      raw,
+    )
+  ) {
+    return new Error(
+      "Could not create your trip. Check your connection and try again — or use WhatsApp booking.",
+    );
+  }
+  if (/landmark|pickup|dropoff/i.test(raw) && /required/i.test(raw)) {
+    return new Error(raw);
+  }
+  if (raw.trim()) return err instanceof Error ? err : new Error(raw);
+  return new Error("Could not create your trip. Please try again.");
+}
+
 async function resolveFare(params: {
   vehicle: VehicleType;
   service_type?: ServiceType | null;
@@ -1411,6 +1451,17 @@ export async function createPayPalOrderAction(params: {
 }
 
 export async function createJob(input: NewJobInput) {
+  try {
+    return await createJobInner({
+      ...input,
+      details: sanitizeJobDetails(input.details) as NewJobInput["details"],
+    });
+  } catch (err) {
+    throw friendlyBookingError(err);
+  }
+}
+
+async function createJobInner(input: NewJobInput) {
   if (!input.pickup_landmark?.trim() || !input.dropoff_landmark?.trim()) {
     throw new Error("Pickup and dropoff landmarks are required.");
   }
@@ -1660,22 +1711,28 @@ export async function capturePayPalAndCreateJob(
 
 /** Book with cash — pay the driver when the trip starts. */
 export async function createCashJob(draft: Omit<NewJobInput, "payment">) {
-  const fare = await resolveFare({
-    vehicle: draft.required_vehicle,
-    service_type: draft.service_type,
-    country_code: draft.country_code || DEFAULT_COUNTRY,
-    pickup_lat: draft.pickup_lat,
-    pickup_lng: draft.pickup_lng,
-    dropoff_lat: draft.dropoff_lat,
-    dropoff_lng: draft.dropoff_lng,
-    at: draft.scheduled_for ?? null,
-    customer_phone: draft.customer_phone,
-  });
-  return createJob({
-    ...draft,
-    fee_amount: fare.fee_amount,
-    payment: { method: "cash" },
-  });
+  try {
+    const fare = await resolveFare({
+      vehicle: draft.required_vehicle,
+      service_type: draft.service_type,
+      country_code: draft.country_code || DEFAULT_COUNTRY,
+      pickup_lat: draft.pickup_lat,
+      pickup_lng: draft.pickup_lng,
+      dropoff_lat: draft.dropoff_lat,
+      dropoff_lng: draft.dropoff_lng,
+      at: draft.scheduled_for ?? null,
+      customer_phone: draft.customer_phone,
+      details: draft.details,
+    });
+    return await createJob({
+      ...draft,
+      details: sanitizeJobDetails(draft.details) as NewJobInput["details"],
+      fee_amount: fare.fee_amount,
+      payment: { method: "cash" },
+    });
+  } catch (err) {
+    throw friendlyBookingError(err);
+  }
 }
 
 export async function capturePayPalAndCreateShopOrder(

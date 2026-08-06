@@ -190,9 +190,15 @@ export function CheckoutBlock({
       } catch (err) {
         const offline =
           typeof navigator !== "undefined" && navigator.onLine === false;
-        const msg = err instanceof Error ? err.message : "Could not book";
+        const raw = err instanceof Error ? err.message : "Could not book";
+        const msg =
+          /Server Components|digest|omitted in production|Body exceeded|413/i.test(
+            raw,
+          )
+            ? "Could not create your trip. Check your connection and try again — or use WhatsApp booking."
+            : raw;
         const looksNetwork =
-          /fetch|network|failed to fetch|load failed|offline/i.test(msg);
+          /fetch|network|failed to fetch|load failed|offline/i.test(raw);
         if (offline || looksNetwork) {
           try {
             const d = await buildDraft();

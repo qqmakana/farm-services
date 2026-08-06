@@ -13,7 +13,6 @@ import {
 import { WhereToBar } from "@/components/uber/where-to-bar";
 import { PickupPhotoField } from "@/components/location/pickup-photo-field";
 import { RiderPhotoField } from "@/components/rider/rider-photo-field";
-import { compressPickupPhotoDataUrl } from "@/lib/pickup-photo";
 import { getGuestProfile } from "@/lib/guest-profile";
 import {
   defaultLaterLocal,
@@ -447,11 +446,8 @@ export function RideSheet({
         buttonLabel={`Choose ${selectedLabel}`}
         description={`Village Ride · ${selectedLabel}${isNight ? " · Night" : ""}`}
         draft={async () => {
-          const photoDataUrl = pickupPhoto
-            ? await compressPickupPhotoDataUrl(pickupPhoto)
-            : null;
-          const guestPhoto =
-            riderPhotoPreview || getGuestProfile()?.photo_data_url || null;
+          // Never send base64 data URLs through Server Actions — they blow the
+          // body limit and surface as opaque "Server Components" errors in prod.
           const guestPath = getGuestProfile()?.photo_url || null;
           return {
             service_type: "ride" as const,
@@ -466,19 +462,20 @@ export function RideSheet({
             dropoff_landmark: dropoff.landmark.trim(),
             scheduled_for: atIso,
             country_code: countryCode,
-            dispatcher_notes: isNight
-              ? "Night Ride (Premium) — after-hours safety surcharge applied"
-              : null,
+            dispatcher_notes: [
+              isNight
+                ? "Night Ride (Premium) — after-hours safety surcharge applied"
+                : null,
+              pickupPhoto ? "Rider attached a pickup photo (kept on device)" : null,
+            ]
+              .filter(Boolean)
+              .join(" · ") || null,
             details: {
               seats: passengers,
               route_name: `${pickup.landmark} → ${dropoff.landmark}`,
               direction: "to_village" as const,
               ...(localModeId ? { local_mode: localModeId } : {}),
               ...(wearing.trim() ? { wearing: wearing.trim() } : {}),
-              ...(photoDataUrl
-                ? { pickup_photo_data_url: photoDataUrl }
-                : {}),
-              ...(guestPhoto ? { rider_photo_data_url: guestPhoto } : {}),
               ...(guestPath && !guestPath.startsWith("mock://")
                 ? { rider_photo_url: guestPath }
                 : {}),
