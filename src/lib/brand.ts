@@ -17,7 +17,11 @@ export const BRAND = {
 export const BRAND_ADDRESS_LINE = `${BRAND.street}, ${BRAND.suburb}, ${BRAND.city}, ${BRAND.postalCode}`;
 
 export const BRAND_TAGLINE =
-  "Rural transport with landmark booking — pay your driver in cash. Fair pay for drivers.";
+  "Rides and deliveries for villages, small towns, towns and cities — book by landmark, pay cash or card. Fair pay for drivers.";
+
+/** Text pasted when someone taps Share (WhatsApp, etc.). */
+export const BRAND_SHARE_TEXT =
+  `Village Ride — simple rides & deliveries for villages, small towns, towns and cities. Pay cash or card. Open the link, then Install / Add to Home Screen if you'd like it on your phone.`;
 
 export const BRAND_FULL = `${BRAND.appName} by ${BRAND.company}`;
 

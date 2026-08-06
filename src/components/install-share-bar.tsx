@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { BRAND } from "@/lib/brand";
+import { BRAND, BRAND_SHARE_TEXT } from "@/lib/brand";
 import {
   getAppInstallUrl,
   getDeferredPrompt,
@@ -31,7 +31,7 @@ async function shareAppLink() {
     typeof window !== "undefined"
       ? window.location.origin
       : "https://village-ride.vercel.app";
-  const text = `${BRAND.appName} — open in Chrome/Safari, then Install / Add to Home Screen:\n${url}`;
+  const text = `${BRAND_SHARE_TEXT}\n${url}`;
   if (navigator.share) {
     await navigator.share({ title: `${BRAND.appName} app`, text, url });
     return "shared";
