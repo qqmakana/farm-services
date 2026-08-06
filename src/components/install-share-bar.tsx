@@ -230,7 +230,7 @@ export function NavInstallShare() {
   );
 }
 
-/** Bottom banner — shown until installed or dismissed. */
+/** Bottom banner — sits above the Home/Activity/Account tab bar. */
 export function InstallShareBar() {
   const pathname = usePathname();
   const { standalone, ios, helpOpen, setHelpOpen, note, installing, install, share, deferred } =
@@ -249,20 +249,29 @@ export function InstallShareBar() {
   if (
     HIDE_BANNER.has(pathname) ||
     pathname.startsWith("/account/") ||
-    pathname.startsWith("/onboarding")
+    pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/driver") ||
+    pathname.startsWith("/admin")
   ) {
     return null;
   }
 
   if (dismissed) return null;
 
+  // Clearance for customer tab bar (4rem) + home indicator safe area
+  const aboveTabs =
+    "calc(4rem + env(safe-area-inset-bottom, 0px) + 0.75rem)";
+
   if (standalone) {
     return (
-      <div className="fixed right-3 bottom-3 z-50">
+      <div
+        className="fixed right-3 z-[70]"
+        style={{ bottom: aboveTabs }}
+      >
         <button
           type="button"
           onClick={share}
-          className="rounded-full bg-[var(--ru-brand)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg"
+          className="rounded-full bg-black px-4 py-2.5 text-sm font-semibold text-white shadow-lg"
         >
           Share app
         </button>
@@ -272,12 +281,15 @@ export function InstallShareBar() {
 
   if (minimized) {
     return (
-      <div className="fixed right-3 bottom-3 z-50 flex flex-col items-end gap-2">
+      <div
+        className="fixed right-3 z-[70] flex flex-col items-end gap-2"
+        style={{ bottom: aboveTabs }}
+      >
         <button
           type="button"
           onClick={install}
           disabled={installing}
-          className="ru-btn ru-btn-primary !min-h-10 shadow-lg !text-sm"
+          className="uber-press rounded-full bg-black px-4 py-2.5 text-sm font-bold text-white shadow-lg disabled:opacity-70"
         >
           Install app
         </button>
@@ -289,8 +301,12 @@ export function InstallShareBar() {
   }
 
   return (
-    <div className="fixed bottom-0 left-1/2 z-50 w-full max-w-md -translate-x-1/2 p-3 sm:p-4">
-      <div className="mx-auto flex w-full items-center gap-3 rounded-2xl border border-[var(--ru-line)] bg-white p-3 shadow-[0_4px_24px_rgba(0,0,0,0.12)] dark:bg-[#1e1e1e]">
+    <div
+      className="fixed left-1/2 z-[70] w-full max-w-md -translate-x-1/2 px-3"
+      style={{ bottom: aboveTabs }}
+      data-testid="install-share-bar"
+    >
+      <div className="mx-auto flex w-full items-center gap-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-[0_4px_24px_rgba(0,0,0,0.16)]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/icons/icon-192.png"
@@ -300,10 +316,10 @@ export function InstallShareBar() {
           className="h-12 w-12 rounded-xl"
         />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-black dark:text-white">
+          <p className="text-sm font-bold text-black">
             Install {BRAND.appName}
           </p>
-          <p className="text-xs text-[var(--ru-muted)]">
+          <p className="text-xs text-gray-500">
             {deferred ? "Add to your home screen" : "One tap to install"}
           </p>
         </div>
@@ -311,7 +327,7 @@ export function InstallShareBar() {
           type="button"
           onClick={install}
           disabled={installing}
-          className="ru-btn ru-btn-brand !min-h-10 shrink-0 !px-4 !text-sm disabled:opacity-70"
+          className="uber-press shrink-0 rounded-full bg-black px-4 py-2.5 text-sm font-bold text-white disabled:opacity-70"
         >
           {installing ? "…" : "Install"}
         </button>
@@ -327,7 +343,7 @@ export function InstallShareBar() {
               /* ignore */
             }
           }}
-          className="shrink-0 px-1 text-lg text-[var(--ru-muted)]"
+          className="shrink-0 px-1 text-lg text-gray-400"
         >
           ×
         </button>
