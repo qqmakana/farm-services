@@ -31,6 +31,12 @@ const CHIPS: { id: HomeChip; label: string }[] = [
 ];
 
 const ALL_SERVICES = [
+  {
+    href: "/driver/join",
+    label: "Drive",
+    Icon: Car,
+    chips: ["for_you"] as HomeChip[],
+  },
   { href: "/ride", label: "Ride", Icon: Car, chips: ["for_you", "trip"] as HomeChip[] },
   {
     href: "/ride?when=later",
@@ -172,6 +178,9 @@ export function UberHome() {
         </Link>
       </div>
 
+      {/* Driver signup — above the fold while recruiting */}
+      <DriveSignupCard variant="compact" className="mt-4" />
+
       {/* Uber-style category chips */}
       <div
         data-testid="home-chips"
@@ -208,21 +217,30 @@ export function UberHome() {
         role="navigation"
         aria-label="Services"
       >
-        {services.map(({ href, label, Icon }) => (
-          <Link
-            key={`${chip}-${href}-${label}`}
-            href={href}
-            data-testid={`service-circle-${label.toLowerCase()}`}
-            className="uber-press group flex w-[4.5rem] shrink-0 flex-col items-center gap-2"
-          >
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-black transition-all duration-150 group-hover:bg-gray-200 group-active:bg-gray-300 group-active:ring-2 group-active:ring-black">
-              <Icon className="h-7 w-7" strokeWidth={1.75} aria-hidden />
-            </span>
-            <span className="text-center text-xs font-medium text-black">
-              {label}
-            </span>
-          </Link>
-        ))}
+        {services.map(({ href, label, Icon }) => {
+          const isDrive = href === "/driver/join";
+          return (
+            <Link
+              key={`${chip}-${href}-${label}`}
+              href={href}
+              data-testid={`service-circle-${label.toLowerCase()}`}
+              className="uber-press group flex w-[4.5rem] shrink-0 flex-col items-center gap-2"
+            >
+              <span
+                className={`flex h-16 w-16 items-center justify-center rounded-full transition-all duration-150 group-active:ring-2 group-active:ring-black ${
+                  isDrive
+                    ? "bg-black text-white group-hover:bg-gray-800 group-active:bg-gray-900"
+                    : "bg-gray-100 text-black group-hover:bg-gray-200 group-active:bg-gray-300"
+                }`}
+              >
+                <Icon className="h-7 w-7" strokeWidth={1.75} aria-hidden />
+              </span>
+              <span className="text-center text-xs font-medium text-black">
+                {label}
+              </span>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Suggestions — photo tiles like Uber */}
@@ -267,9 +285,6 @@ export function UberHome() {
           </div>
         </Link>
       </section>
-
-      {/* Driver signup — easy to find */}
-      <DriveSignupCard className="mt-8" />
 
       {/* More ways to use Village Ride — Uber list with photos */}
       <section className="mt-8">

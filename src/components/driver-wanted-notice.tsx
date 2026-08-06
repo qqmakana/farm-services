@@ -13,6 +13,8 @@ import {
 // checkout, or installed-app flow.
 const RECRUITMENT_PROMOTION_PATHS = new Set([
   "/",
+  "/activity",
+  "/account",
   "/partners",
   "/countries",
   "/countries-social",
@@ -64,11 +66,11 @@ export function DriverWantedNotice() {
               id="driver-wanted-notice-title"
               className="font-[family-name:var(--font-display)] text-lg font-bold text-slate-900"
             >
-              Drivers wanted in your village
+              Want to drive with Village Ride?
             </p>
             <p className="mt-1 text-sm text-slate-600">
-              Earn 85% on rides, deliveries &amp; farm jobs — apply once for all
-              three Village Ride services.
+              Keep 85% on rides, deliveries and farm jobs. Apply once — cash or
+              card paid to you.
             </p>
           </div>
           <button

@@ -176,6 +176,8 @@ export function AccountView() {
         <GridTile href="/notifications" label="Inbox" Icon={Mail} />
       </div>
 
+      <DriveSignupCard className="mt-4" />
+
       {/* Promo strip — soft Uber card */}
       <Link
         href="/account/payment"
@@ -204,8 +206,6 @@ export function AccountView() {
           <RiderReferralCard />
         </div>
       ) : null}
-
-      <DriveSignupCard className="mt-6" />
 
       <ul className="mt-6">
         <ListRow href="/account/places" label="Saved places" Icon={MapPin} />
