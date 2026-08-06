@@ -36,14 +36,20 @@ export default function DriverJoinPage() {
       <SiteNav active="driver" />
       <main className="ru-force-light min-h-dvh bg-[var(--ru-canvas)] text-[var(--ru-ink)]">
         <div className="mx-auto max-w-lg px-4 py-10 pb-24">
-          <p className="ru-section-label">Drive with {BRAND.appName}</p>
-          <h1 className="ru-page-title mt-2 !text-[1.85rem]">
-            Earn with your car, bakkie, or truck
-          </h1>
-          <p className="ru-page-sub">
-            Keep <strong className="text-[var(--ru-ink)]">85%</strong> of every
-            job. Drivers for all four services — not rides only.
-          </p>
+          <header className="rounded-2xl bg-black px-5 py-7 text-white">
+            <p className="text-[11px] font-semibold tracking-[0.14em] text-white/55 uppercase">
+              Driver signup
+            </p>
+            <h1 className="mt-2 text-[1.75rem] font-bold leading-tight tracking-tight">
+              Drive with {BRAND.appName}
+            </h1>
+            <p className="mt-2 text-sm leading-relaxed text-white/75">
+              Earn with your car, bakkie or truck across villages, towns and
+              cities. Keep{" "}
+              <strong className="font-semibold text-white">85%</strong> of
+              every job — cash or card paid to you.
+            </p>
+          </header>
 
           <div className="mt-6 grid grid-cols-2 gap-2">
             {SERVICES.map(({ Icon, title, blurb }) => (
@@ -61,18 +67,33 @@ export default function DriverJoinPage() {
             ))}
           </div>
 
-          <ul className="ru-card mt-5 space-y-2 p-4 text-sm font-medium text-[var(--ru-ink)]">
-            <li>✓ 85% earnings · cash to you</li>
-            <li>✓ Browse jobs right away — verify before your first paid trip</li>
-            <li>✓ Photo of you + vehicle on every job</li>
+          <ul className="mt-5 space-y-2.5 px-1 text-sm font-medium text-[var(--ru-ink)]">
+            <li className="flex gap-2">
+              <span className="text-[var(--ru-muted)]" aria-hidden>
+                ·
+              </span>
+              Keep 85% · pay is cash or card to you
+            </li>
+            <li className="flex gap-2">
+              <span className="text-[var(--ru-muted)]" aria-hidden>
+                ·
+              </span>
+              Browse jobs right away — verify before your first paid trip
+            </li>
+            <li className="flex gap-2">
+              <span className="text-[var(--ru-muted)]" aria-hidden>
+                ·
+              </span>
+              Your photo and vehicle on every job
+            </li>
           </ul>
 
-          <div className="ru-card mt-6 p-5">
-            <DriverApplyForm compactTitle="Apply now — photos required" />
+          <div className="ru-card mt-6 p-5" id="apply">
+            <DriverApplyForm compactTitle="Apply to drive" />
           </div>
 
           <p className="mt-4 text-center text-xs text-[var(--ru-muted)]">
-            Already applied?{" "}
+            Already a driver?{" "}
             <Link href="/driver" className="font-semibold text-black underline">
               Open driver app
             </Link>
@@ -81,7 +102,7 @@ export default function DriverJoinPage() {
             href={WhatsAppLinks.chatUs()}
             className="ru-btn ru-btn-block mt-4 !bg-[#25D366] !text-white hover:!bg-[#1ebe57]"
           >
-            Chat with us on WhatsApp
+            Questions? Chat on WhatsApp
           </a>
         </div>
       </main>

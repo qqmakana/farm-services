@@ -16,6 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { CaptureReferral } from "@/components/referral/capture-referral";
+import { DriveSignupCard } from "@/components/driver/drive-signup-card";
 import { Suspense } from "react";
 
 type HomeChip = "for_you" | "trip" | "reserve" | "delivery" | "shops" | "groups";
@@ -267,6 +268,9 @@ export function UberHome() {
         </Link>
       </section>
 
+      {/* Driver signup — easy to find */}
+      <DriveSignupCard className="mt-8" />
+
       {/* More ways to use Village Ride — Uber list with photos */}
       <section className="mt-8">
         <h2 className="text-xl font-bold tracking-tight text-black">
@@ -290,12 +294,6 @@ export function UberHome() {
             title="Move farm goods"
             body="Bakkie & truck for crates, feed and harvest"
             image="/home/sug-farm.jpg"
-          />
-          <WayRow
-            href="/driver/join"
-            title="Drive & earn"
-            body="Keep 85% · browse jobs now, verify before first trip"
-            image="/home/sug-ride.jpg"
           />
         </ul>
       </section>

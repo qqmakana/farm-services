@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
+  Car,
   ChevronRight,
   Clock,
   CreditCard,
@@ -25,6 +26,7 @@ import {
 } from "@/lib/guest-profile";
 import { RiderPhotoField } from "@/components/rider/rider-photo-field";
 import { RiderReferralCard } from "@/components/referral/rider-referral-card";
+import { DriveSignupCard } from "@/components/driver/drive-signup-card";
 import { SubscribeButton } from "@/components/subscription/subscribe-button";
 import { DashboardSkeleton } from "@/components/ui/skeleton";
 
@@ -203,6 +205,8 @@ export function AccountView() {
         </div>
       ) : null}
 
+      <DriveSignupCard className="mt-6" />
+
       <ul className="mt-6">
         <ListRow href="/account/places" label="Saved places" Icon={MapPin} />
         <ListRow
@@ -210,6 +214,7 @@ export function AccountView() {
           label="Payment methods"
           Icon={CreditCard}
         />
+        <ListRow href="/driver/join" label="Drive with Village Ride" Icon={Car} />
         <ListRow
           href="/onboarding?replay=1"
           label="Settings"
