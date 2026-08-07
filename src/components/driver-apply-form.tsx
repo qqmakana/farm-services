@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useCountry } from "@/components/country/country-provider";
 import { PhotoUploadField } from "@/components/photo-upload-field";
-import { applyToDriveWithTrust } from "@/lib/actions";
 import { operatingCountries, type CountryCode } from "@/lib/countries";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
 import type { VehicleType } from "@/lib/types";
@@ -40,23 +39,35 @@ export function DriverApplyForm({
 
     startTransition(async () => {
       try {
-        await applyToDriveWithTrust(fd);
+        const res = await fetch("/api/driver/apply", {
+          method: "POST",
+          body: fd,
+        });
+        let data: { ok?: boolean; error?: string; driverId?: string } = {};
+        try {
+          data = (await res.json()) as typeof data;
+        } catch {
+          setError(
+            "Server returned an invalid response. Check your connection and try again.",
+          );
+          return;
+        }
+        if (!res.ok || !data.ok) {
+          setError(
+            data.error ||
+              "Application failed. Please try again in a moment.",
+          );
+          return;
+        }
         setMessage(
-          "Upload your documents to get started. You can start browsing jobs immediately. A human will verify your ID before your first paid trip.",
+          "Thanks — your photos were received. You can open the driver app and browse jobs. A human will verify your ID before your first paid trip.",
         );
         form.reset();
         setConduct(false);
         router.refresh();
-      } catch (err) {
-        const raw = err instanceof Error ? err.message : "Application failed";
-        const looksLikeTransport =
-          /unexpected response|failed to fetch|networkerror|load failed|body.*limit|too large|413/i.test(
-            raw,
-          );
+      } catch {
         setError(
-          looksLikeTransport
-            ? "Photos could not be sent (too large or connection dropped). Remove one photo and try again, or use a clearer smaller JPEG."
-            : raw,
+          "Could not reach the server. Check your connection and try again.",
         );
       }
     });
