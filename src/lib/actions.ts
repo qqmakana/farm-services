@@ -675,16 +675,26 @@ async function uploadDriverDoc(
   file: File,
 ) {
   const admin = createAdminClient();
-  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-  const path = `${driverId}/${kind}-${Date.now()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
+  const isPng = (file.type || "").includes("png");
+  const ext = isPng ? "png" : "jpg";
+  const contentType = isPng ? "image/png" : "image/jpeg";
+  const path = `${driverId}/${kind}-${Date.now()}.${ext}`;
   const { error } = await admin.storage
     .from("rr-driver-docs")
     .upload(path, buffer, {
-      contentType: file.type || "image/jpeg",
+      contentType,
       upsert: true,
     });
-  if (error) throw new Error(error.message);
+  if (error) {
+    const msg = error.message || "Upload failed";
+    if (/bucket|not found|row-level|policy|jwt|apikey/i.test(msg)) {
+      throw new Error(
+        "Photo storage is not ready. Ask support to enable the rr-driver-docs bucket, then try again.",
+      );
+    }
+    throw new Error(`Could not upload ${kind.replace("_", " ")} photo: ${msg}`);
+  }
   return path;
 }
 
@@ -701,9 +711,10 @@ function requireImageFile(formData: FormData, key: string, label: string): File 
     type === "image/jpeg" ||
     type === "image/jpg" ||
     type === "image/png" ||
+    type === "image/webp" ||
     type === "";
   const ext = file.name.split(".").pop()?.toLowerCase();
-  const okExt = !ext || ["jpg", "jpeg", "png"].includes(ext);
+  const okExt = !ext || ["jpg", "jpeg", "png", "webp"].includes(ext);
   if (!okType || !okExt) {
     throw new Error(`${label} must be JPEG or PNG.`);
   }

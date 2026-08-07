@@ -48,7 +48,16 @@ export function DriverApplyForm({
         setConduct(false);
         router.refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Application failed");
+        const raw = err instanceof Error ? err.message : "Application failed";
+        const looksLikeTransport =
+          /unexpected response|failed to fetch|networkerror|load failed|body.*limit|too large|413/i.test(
+            raw,
+          );
+        setError(
+          looksLikeTransport
+            ? "Photos could not be sent (too large or connection dropped). Remove one photo and try again, or use a clearer smaller JPEG."
+            : raw,
+        );
       }
     });
   }
@@ -166,7 +175,7 @@ export function DriverApplyForm({
 
         <div className="sm:col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-4">
           <p className="text-sm font-bold text-amber-950">
-            Required photos (JPEG/PNG, max 5MB each)
+            Required photos (JPEG/PNG — we shrink them automatically)
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <PhotoUploadField
