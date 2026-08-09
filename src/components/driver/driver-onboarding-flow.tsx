@@ -23,7 +23,7 @@ const SLIDES = [
   {
     id: "paid",
     title: "How to get paid",
-    body: "Customer pays you cash. You keep ~85%. Keep your commission wallet topped up so you stay eligible for new offers.",
+    body: "Customer pays you cash. You keep ~90%. Keep your commission wallet topped up so you stay eligible for new offers.",
   },
   {
     id: "bonus",

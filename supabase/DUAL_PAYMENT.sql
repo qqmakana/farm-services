@@ -41,4 +41,4 @@ alter table public.rr_drivers
   add column if not exists commission_owed numeric(12, 2) not null default 0;
 
 comment on column public.rr_drivers.wallet_balance is
-  'Cash trips: deduct ~15% on complete. Card trips: credit ~85% payout on complete. Below -50 blocks going online / dispatch.';
+  'Cash trips: deduct ~10% on complete. Card trips: credit ~90% payout on complete. Below -50 blocks going online / dispatch.';

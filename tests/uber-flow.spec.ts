@@ -300,7 +300,7 @@ test.describe.serial("Uber-style Village Ride E2E", () => {
       driverPage.getByText(/Cash from customer|Trip RU-|RU-/i).first(),
     ).toBeVisible({ timeout: 10_000 });
     await expect(
-      driverPage.getByText(/Platform ~15%|Commission/i).first(),
+      driverPage.getByText(/Platform ~10%|Commission/i).first(),
     ).toBeVisible();
   });
 

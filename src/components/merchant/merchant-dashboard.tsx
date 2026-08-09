@@ -532,7 +532,7 @@ export function MerchantDashboard({
         <StatCard label="Fees" value={formatMoney(revenue)} />
       </div>
       <p className="mt-2 text-[11px] text-[var(--ru-muted)]">
-        Platform commission (~15% / {formatMoney(commissionShown)}) comes from
+        Platform commission (~10% / {formatMoney(commissionShown)}) comes from
         the driver wallet — not your shop. Open: {open}.
       </p>
 

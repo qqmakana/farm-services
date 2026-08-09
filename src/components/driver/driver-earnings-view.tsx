@@ -129,7 +129,7 @@ export function DriverEarningsView() {
       if (card) {
         rows.push({
           id: `${j.id}-credit`,
-          label: `Card payout ~85% · ${j.reference_code}`,
+          label: `Card payout ~90% · ${j.reference_code}`,
           amount: payout,
           at,
         });
@@ -149,7 +149,7 @@ export function DriverEarningsView() {
         });
         rows.push({
           id: `${j.id}-comm`,
-          label: `Platform ~15% (wallet) · ${j.reference_code}`,
+          label: `Platform ~10% (wallet) · ${j.reference_code}`,
           amount: -commission,
           at,
         });
@@ -382,7 +382,7 @@ export function DriverEarningsView() {
         </h2>
         {transactions.length === 0 ? (
           <p className="mt-3 text-sm text-[var(--ru-muted)]">
-            Complete trips to see cash received and ~15% wallet deductions here.
+            Complete trips to see cash received and ~10% wallet deductions here.
           </p>
         ) : (
           <ul className="ru-list mt-3">

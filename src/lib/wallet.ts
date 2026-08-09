@@ -1,7 +1,7 @@
 import { getCountry } from "./countries";
 
 /** Legacy % remittance when booking_fee / flat-fee fields are absent. */
-export const DEFAULT_COMMISSION_PCT = 15;
+export const DEFAULT_COMMISSION_PCT = 10;
 
 /**
  * Post-Paid / Earn First model:
@@ -71,7 +71,7 @@ export function applyCommissionToWallet(params: {
  * Cash Scenario A — amount to deduct from driver prepaid wallet on complete.
  *
  * Flat-fee model (new quotes): deduct `booking_fee` only (0 with Village Pass).
- * Legacy jobs: deduct stored `platform_commission`, else ~15% of fee.
+ * Legacy jobs: deduct stored `platform_commission`, else ~10% of fee.
  */
 export function cashPlatformRemittance(job: {
   fee_amount?: number | null;

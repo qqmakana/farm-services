@@ -28,7 +28,7 @@ test.describe("Public pages", () => {
       }),
     ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("link", { name: /Sign up free|Create partner/i }).first()).toBeVisible();
-    await expect(page.getByText(/15%|commission|Free signup/i).first()).toBeVisible();
+    await expect(page.getByText(/10%|commission|Free signup/i).first()).toBeVisible();
   });
 
   test("help FAQ page loads", async ({ page }) => {

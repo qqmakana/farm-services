@@ -46,7 +46,7 @@ export default function DriverJoinPage() {
             <p className="mt-2 text-sm leading-relaxed text-white/75">
               Earn with your car, bakkie or truck across villages, towns and
               cities. Keep{" "}
-              <strong className="font-semibold text-white">85%</strong> of
+              <strong className="font-semibold text-white">90%</strong> of
               every job — cash or card paid to you.
             </p>
           </header>
@@ -72,7 +72,7 @@ export default function DriverJoinPage() {
               <span className="text-[var(--ru-muted)]" aria-hidden>
                 ·
               </span>
-              Keep 85% · pay is cash or card to you
+              Keep 90% · pay is cash or card to you
             </li>
             <li className="flex gap-2">
               <span className="text-[var(--ru-muted)]" aria-hidden>

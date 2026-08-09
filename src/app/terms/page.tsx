@@ -35,7 +35,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
     body: [
       "Quotes and ETAs are estimates. Actual time and availability depend on drivers and conditions.",
       "Customers typically pay drivers in cash for the trip fee unless another method is offered in-app.",
-      "Drivers pay platform commission from their prepaid wallet when a trip completes (about 15% unless stated otherwise).",
+      "Drivers pay platform commission from their prepaid wallet when a trip completes (about 10% unless stated otherwise).",
       "Partners are responsible for accurate order details and legal sale of goods they ship.",
     ],
   },

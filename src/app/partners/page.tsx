@@ -93,7 +93,7 @@ export default function PartnersPage() {
             <h2 className="text-2xl font-bold text-slate-900">Pricing</h2>
             <p className="mt-3 text-sm text-slate-600">
               <strong>Free signup.</strong> Customers pay the driver the delivery
-              fee. Village Ride takes ~15% platform commission from the{" "}
+              fee. Village Ride takes ~10% platform commission from the{" "}
               <strong>driver wallet</strong> — not a separate invoice to your
               shop. No paid WhatsApp Business API required.
             </p>

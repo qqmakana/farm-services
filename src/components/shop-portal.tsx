@@ -333,7 +333,7 @@ export function ShopPortal({
                     }
                   />
                   <p className="pt-3 text-xs text-[var(--ru-muted)]">
-                    Free signup · ~15% is from the driver wallet, not your shop.
+                    Free signup · ~10% is from the driver wallet, not your shop.
                   </p>
                   <div className="mt-6 grid grid-cols-2 gap-2">
                     <Button type="button" variant="secondary" onClick={() => setStep(2)}>

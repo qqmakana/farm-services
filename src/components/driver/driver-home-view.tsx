@@ -385,7 +385,7 @@ export function DriverHomeView() {
                                   )
                         }`
                       : ""}
-                    {" · keep ~85%"}
+                    {" · keep ~90%"}
                   </p>
                 ) : null}
                 {job.service_type === "ride" ? (

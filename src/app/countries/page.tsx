@@ -37,7 +37,7 @@ export default function CountriesPage() {
             {[
               "Landmark booking",
               "Cash to driver",
-              "Drivers keep ~85%",
+              "Drivers keep ~90%",
               "Ride · Delivery · Farm · Courier",
             ].map((label) => (
               <li key={label} className="ru-chip">

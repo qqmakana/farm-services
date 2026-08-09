@@ -16,7 +16,7 @@ test.describe("Production readiness surfaces", () => {
     await expect(page.getByRole("heading", { name: /Simple pricing/i })).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByText(/Keep ~85%|FREE signup/i).first()).toBeVisible();
+    await expect(page.getByText(/Keep ~90%|FREE signup/i).first()).toBeVisible();
   });
 
   test("driver join recruitment page", async ({ page, baseURL }) => {

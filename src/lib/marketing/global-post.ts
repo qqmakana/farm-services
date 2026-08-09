@@ -11,7 +11,7 @@ ${AVAILABLE_IN_FLAGS} + ${GLOBAL_COUNTRY_COUNT - AVAILABLE_IN_FLAGS.split(" ").f
 
 Every continent · villages & small towns worldwide
 
-Landmark booking · Cash & Card · Drivers keep 85%
+Landmark booking · Cash & Card · Drivers keep 90%
 
 🚗 Rides · 📦 Delivery · 🚜 Farm · 📦 Courier
 
@@ -24,7 +24,7 @@ export function globalPostForCountry(countryName: string, flag: string): string 
   return `${flag} Village Ride is live in ${countryName}!
 
 Rural rides, delivery, farm & courier.
-Landmark booking. Cash & Card. Drivers keep 85%.
+Landmark booking. Cash & Card. Drivers keep 90%.
 
 Open: https://village-ride.vercel.app
 Drive: https://village-ride.vercel.app/driver/join

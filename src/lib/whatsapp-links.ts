@@ -15,7 +15,7 @@ export const WhatsAppLinks = {
     ),
   driverSignup: (joinUrl: string) =>
     waLink(
-      `I want to drive with ${BRAND.appName} — rides, deliveries & farm jobs. Keep 85%. Apply: ${joinUrl}`,
+      `I want to drive with ${BRAND.appName} — rides, deliveries & farm jobs. Keep 90%. Apply: ${joinUrl}`,
     ),
   chatUs: () =>
     waLink(

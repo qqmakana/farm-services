@@ -25,7 +25,7 @@ export function DriveSignupCard({
               Drivers wanted
             </p>
             <p className="mt-0.5 truncate text-sm font-bold tracking-tight text-white">
-              Earn with Village Ride — keep 85%
+              Earn with Village Ride — keep 90%
             </p>
           </div>
           <Link

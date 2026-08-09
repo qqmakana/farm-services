@@ -8,7 +8,7 @@ import { BRAND } from "@/lib/brand";
 
 export const metadata = {
   title: `${GLOBAL_COUNTRY_COUNT} Countries — Drive with ${BRAND.appName}`,
-  description: `Drivers wanted worldwide — ${GLOBAL_COUNTRY_COUNT} countries. Keep 85%. Cash & Card. Apply now.`,
+  description: `Drivers wanted worldwide — ${GLOBAL_COUNTRY_COUNT} countries. Keep 90%. Cash & Card. Apply now.`,
   robots: { index: false, follow: false },
 };
 
@@ -70,7 +70,7 @@ export default function CountriesSocialPage() {
 
         <div className="mt-5 rounded-2xl border border-[#000000]/15 bg-white px-5 py-5 shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
           <ul className="space-y-2.5 text-sm font-semibold text-[#000000]">
-            <li>Keep 85% of every trip</li>
+            <li>Keep 90% of every trip</li>
             <li>Cash &amp; Card accepted</li>
             <li>Work when you want</li>
             <li>Drivers wanted worldwide</li>

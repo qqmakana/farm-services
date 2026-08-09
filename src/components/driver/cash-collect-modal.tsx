@@ -38,7 +38,7 @@ export function CashCollectModal({
           Did the rider pay {money} in cash?
         </h2>
         <p className="mt-2 text-sm text-[var(--ru-muted)]">
-          If yes, we deduct ~15% platform fee from your prepaid wallet. If no,
+          If yes, we deduct ~10% platform fee from your prepaid wallet. If no,
           the trip is flagged for ops — no fee deducted yet.
         </p>
         <div className="mt-5 flex flex-col gap-2">

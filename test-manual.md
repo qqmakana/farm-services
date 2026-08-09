@@ -39,7 +39,7 @@ Production: https://village-ride.vercel.app
 - [ ] Can ACCEPT order
 - [ ] Can Start Trip
 - [ ] Can Complete Trip
-- [ ] Commission (~15%) deducted from wallet
+- [ ] Commission (~10%) deducted from wallet
 - [ ] Earnings page updates
 - [ ] Can rate customer after trip
 - [ ] Customer can rate driver on trip page

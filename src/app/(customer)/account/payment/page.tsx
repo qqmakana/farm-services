@@ -43,7 +43,7 @@ export default function PaymentMethodsPage() {
           <div>
             <p className="text-sm font-bold text-black">Pay card (PayPal)</p>
             <p className="mt-1 text-xs text-gray-500">
-              Pay the full fare online. Driver is credited ~85% when the trip
+              Pay the full fare online. Driver is credited ~90% when the trip
               completes.
             </p>
           </div>

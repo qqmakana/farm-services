@@ -55,7 +55,7 @@ npm run test:e2e:comprehensive
 
 ### Cash
 - [ ] “Pay the driver in cash” message
-- [ ] Driver YES → platform fee deducted from wallet (flat fee, not 15%)
+- [ ] Driver YES → platform fee deducted from wallet (flat fee, not 10%)
 - [ ] Driver NO → flagged for ops, no deduction
 - [ ] Village Pass cash trip → **R0** wallet deduction
 

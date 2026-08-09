@@ -34,7 +34,7 @@ export function DriverWantedBanner() {
             Drivers wanted — rides, delivery, farm &amp; courier
           </p>
           <p className="mt-0.5 text-xs text-[var(--ru-muted)]">
-            Earn 85% on Village Ride, Delivery, Farm Connect &amp; Courier.
+            Earn 90% on Village Ride, Delivery, Farm Connect &amp; Courier.
             Flexible hours.
           </p>
           <Link

@@ -181,7 +181,7 @@ create table if not exists public.rr_fare_rules (
   vehicle_type public.rr_vehicle_type not null unique,
   base_fare numeric(10, 2) not null,
   per_km numeric(10, 2) not null default 0,
-  platform_commission_pct numeric(5, 2) not null default 15.00,
+  platform_commission_pct numeric(5, 2) not null default 10.00,
   updated_at timestamptz not null default now()
 );
 

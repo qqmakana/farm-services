@@ -10,7 +10,7 @@ export const DRIVER_PLAY_STORE_CAPTION = `Drivers — get ready.
 
 Village Ride is coming to Google Play.
 
-Be first online. Keep ~85%. Cash to you.
+Be first online. Keep ~90%. Cash to you.
 
 Apply now:
 https://village-ride.vercel.app/driver/join
@@ -38,7 +38,7 @@ Open the app:
 https://village-ride.vercel.app
 
 Google Play — coming soon.
-Drivers, get ready. Be first online. Keep ~85%. Cash to you.
+Drivers, get ready. Be first online. Keep ~90%. Cash to you.
 
 Apply now:
 https://village-ride.vercel.app/driver/join
@@ -49,7 +49,7 @@ export const DRIVER_AD_CAPTION = `Drivers wanted! Every village & small town.
 
 Village Ride needs drivers for Ride, Delivery, Farm & Courier.
 
-Keep 85%
+Keep 90%
 Cash to the driver
 Work when you want
 Coming to Google Play — get ready
@@ -59,7 +59,7 @@ Apply: https://village-ride.vercel.app/driver/join
 #VillageRide #DriversWanted`;
 
 export const DRIVER_AD_WHATSAPP =
-  "🚗 Drivers wanted — every village & small town. Keep 85%. Cash & Card. Apply: https://village-ride.vercel.app/driver/join";
+  "🚗 Drivers wanted — every village & small town. Keep 90%. Cash & Card. Apply: https://village-ride.vercel.app/driver/join";
 
 /** Caption when posting a screenshot of /countries-social */
 export const COUNTRIES_SOCIAL_CAPTION = `🌍 Village Ride is now in ${GLOBAL_COUNTRY_COUNT} COUNTRIES worldwide!
@@ -67,7 +67,7 @@ export const COUNTRIES_SOCIAL_CAPTION = `🌍 Village Ride is now in ${GLOBAL_CO
 From Mthatha to Manila, Lagos to London, villages to small towns — global rural logistics.
 
 🚗 DRIVERS WANTED:
-✅ Keep 85% of every fare
+✅ Keep 90% of every fare
 ✅ Cash & Card payments
 ✅ Work when YOU want
 ✅ Jobs sent to your phone

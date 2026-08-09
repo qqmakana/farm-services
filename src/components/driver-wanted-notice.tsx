@@ -69,7 +69,7 @@ export function DriverWantedNotice() {
               Want to drive with Village Ride?
             </p>
             <p className="mt-1 text-sm text-slate-600">
-              Keep 85% on rides, deliveries and farm jobs. Apply once — cash or
+              Keep 90% on rides, deliveries and farm jobs. Apply once — cash or
               card paid to you.
             </p>
           </div>

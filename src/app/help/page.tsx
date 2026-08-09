@@ -24,8 +24,8 @@ const FAQS = [
     a: "Go to /partners or /shop, create an account with your business email, then open /merchant/dashboard. No in-person meeting required.",
   },
   {
-    q: "Who pays the 15% commission?",
-    a: "Customers pay the driver the delivery fee. Village Ride deducts ~15% from the driver’s prepaid wallet when the trip completes — not as a separate shop invoice.",
+    q: "Who pays the 10% commission?",
+    a: "Customers pay the driver the delivery fee. Village Ride deducts ~10% from the driver’s prepaid wallet when the trip completes — not as a separate shop invoice.",
   },
   {
     q: "What if no drivers are online?",

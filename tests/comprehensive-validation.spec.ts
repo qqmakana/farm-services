@@ -267,12 +267,12 @@ test.describe("Payment Flow - Cash, Card, Village Pass", () => {
     expect(remit).toBe(0);
   });
 
-  test("legacy job without flat-fee fields still uses ~15%", () => {
+  test("legacy job without flat-fee fields still uses ~10%", () => {
     const remit = cashPlatformRemittance({
       fee_amount: 400,
       // booking_fee defaults to 0 on mock create, but no driver_payout/base_fare
     });
-    expect(remit).toBe(60);
+    expect(remit).toBe(40);
   });
 });
 

@@ -130,7 +130,7 @@ function pricingFromMin(
 ): CountryPricing {
   return {
     currency,
-    commissionPct: 15,
+    commissionPct: 10,
     ride: { base: min, perKm },
     delivery: {
       base: Math.max(min, Math.round(min * 1.6)),

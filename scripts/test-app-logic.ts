@@ -90,7 +90,7 @@ test("mock: drivers seeded with wallet fields", () => {
   assert(typeof d.wallet_balance === "number", "wallet_balance missing");
 });
 
-test("mock: complete trip deducts 15% commission from wallet", () => {
+test("mock: complete trip deducts 10% commission from wallet", () => {
   const drivers = mockRepo.listDrivers();
   const driver =
     drivers.find((d) => d.vehicle_type === "sedan") ?? drivers[0];
@@ -132,9 +132,9 @@ test("mock: complete trip deducts 15% commission from wallet", () => {
   assert(active.status === "completed", "complete failed");
 
   const after = mockRepo.listDrivers().find((d) => d.id === driver.id)!;
-  // Legacy 15% of 400 = 60 — still within −R100 credit limit
-  assert(after.wallet_balance === -60, `wallet ${after.wallet_balance}`);
-  assert(after.commission_owed === 60, `owed ${after.commission_owed}`);
+  // Legacy 10% of 400 = 40 — still within −R100 credit limit
+  assert(after.wallet_balance === -40, `wallet ${after.wallet_balance}`);
+  assert(after.commission_owed === 40, `owed ${after.commission_owed}`);
   assert(
     driverEligibleForDispatch(after) === true,
     "−R60 still within −R100 credit",
@@ -332,7 +332,7 @@ test("fares: farm weight + Pass waives platform fee only", () => {
   assert(pass.driver_fare_amount === open.driver_fare_amount, "driver sacred");
 });
 
-test("wallet: flat-fee cash remittance uses booking_fee not 15%", () => {
+test("wallet: flat-fee cash remittance uses booking_fee not 10%", () => {
   const remit = cashPlatformRemittance({
     fee_amount: 145,
     booking_fee: 5,

@@ -62,7 +62,7 @@ const CARDS = [
   {
     href: "/driver/join",
     title: "Drive & earn",
-    subtitle: "Keep 85% · browse jobs now",
+    subtitle: "Keep 90% · browse jobs now",
     Icon: CircleDot,
     image: "/home/sug-ride.jpg",
   },

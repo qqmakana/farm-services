@@ -4,7 +4,7 @@ import { BRAND } from "@/lib/brand";
 
 export const metadata = {
   title: `Pricing — ${BRAND.appName}`,
-  description: "Free merchant signup. Drivers keep 85%. Clear Village Ride fees.",
+  description: "Free merchant signup. Drivers keep 90%. Clear Village Ride fees.",
 };
 
 export default function PricingPage() {
@@ -38,8 +38,8 @@ export default function PricingPage() {
           <div className="rounded-xl border border-slate-200 bg-white p-5">
             <h2 className="text-lg font-bold">For drivers</h2>
             <ul className="mt-3 space-y-2 text-sm text-slate-700">
-              <li>✓ Keep ~85% of every trip</li>
-              <li>✓ ~15% platform fee (wallet)</li>
+              <li>✓ Keep ~90% of every trip</li>
+              <li>✓ ~10% platform fee (wallet)</li>
               <li>✓ Weekly wallet top-ups / reconciliation</li>
               <li>✓ Go online when you want</li>
             </ul>
@@ -56,8 +56,8 @@ export default function PricingPage() {
           <h2 className="font-bold">Example</h2>
           <p className="mt-2 text-sm text-slate-700">
             Customer pays <strong>R300</strong> → Driver keeps{" "}
-            <strong>R255</strong> → {BRAND.appName} keeps <strong>R45</strong>{" "}
-            (15% from driver wallet).
+            <strong>R270</strong> → {BRAND.appName} keeps <strong>R30</strong>{" "}
+            (10% from driver wallet).
           </p>
         </section>
 
@@ -93,7 +93,7 @@ export default function PricingPage() {
               </tr>
               <tr>
                 <td className="py-2 pr-3">Driver keep rate</td>
-                <td className="py-2 pr-3 font-semibold text-emerald-800">~85%</td>
+                <td className="py-2 pr-3 font-semibold text-emerald-800">~90%</td>
                 <td className="py-2 pr-3">Lower</td>
                 <td className="py-2">Lower</td>
               </tr>
