@@ -30,26 +30,21 @@ export default function MarketingAdsPage() {
       <main className="ru-force-light min-h-dvh bg-white text-slate-900">
         <div className="mx-auto max-w-lg px-4 py-10 pb-24">
           <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-            Driver recruitment
+            Pictures to post
           </p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#000000]">
-            Official social ad
+            Scan square
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            Square creative + scan-to-apply QR post for Instagram, Facebook
-            &amp; WhatsApp.
+            Short pictures for Facebook, Instagram, Reels and TikTok. Anyone
+            can scan — riders and drivers. Same square opens the app.
           </p>
 
           <section className="mt-8">
-            <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-              Scan to apply (like your flyer)
-            </p>
-            <h2 className="mt-2 text-lg font-bold text-black">
-              “Platform that gives back” + QR
-            </h2>
+            <h2 className="text-lg font-bold text-black">Need a lift? Just scan this.</h2>
             <p className="mt-1 text-sm text-slate-600">
-              Post this image only — drivers scan the QR with their camera to
-              open signup. No link in the caption required.
+              The square sits in the middle. Address is on the picture so people
+              know we&apos;re a real place in Westdene.
             </p>
             <div className="mt-4">
               <DriverGivesBackCard />

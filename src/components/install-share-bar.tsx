@@ -2,7 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { BRAND, BRAND_SHARE_TEXT } from "@/lib/brand";
+import { BRAND } from "@/lib/brand";
+import { ShareQrSheet } from "@/components/share-qr-sheet";
+import { shareVillageRideQr, socialQrImagePath } from "@/lib/share-qr";
 import {
   getAppInstallUrl,
   getDeferredPrompt,
@@ -27,17 +29,7 @@ const HIDE_BANNER = new Set([
 ]);
 
 async function shareAppLink() {
-  const url =
-    typeof window !== "undefined"
-      ? window.location.origin
-      : "https://village-ride.vercel.app";
-  const text = `${BRAND_SHARE_TEXT}\n${url}`;
-  if (navigator.share) {
-    await navigator.share({ title: `${BRAND.appName} app`, text, url });
-    return "shared";
-  }
-  await navigator.clipboard.writeText(text);
-  return "copied";
+  return shareVillageRideQr();
 }
 
 function useDeferredInstall() {
@@ -51,6 +43,7 @@ export function useInstallActions() {
   const [standalone, setStandalone] = useState(false);
   const [ios, setIos] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [installing, setInstalling] = useState(false);
 
@@ -97,14 +90,22 @@ export function useInstallActions() {
   }, [deferred]);
 
   const share = useCallback(async () => {
+    setShareOpen(true);
+  }, []);
+
+  const sendSquare = useCallback(async () => {
     try {
       const result = await shareAppLink();
+      setShareOpen(false);
       if (result === "copied") {
-        setNote("Link copied — paste to WhatsApp");
+        setNote("Copied — paste to WhatsApp");
         setTimeout(() => setNote(null), 3000);
       }
     } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") return;
+      if (err instanceof Error && err.name === "AbortError") {
+        setShareOpen(false);
+        return;
+      }
       setNote(`Copy: ${getAppInstallUrl()}`);
     }
   }, []);
@@ -115,10 +116,13 @@ export function useInstallActions() {
     ios,
     helpOpen,
     setHelpOpen,
+    shareOpen,
+    setShareOpen,
     note,
     installing,
     install,
     share,
+    sendSquare,
   };
 }
 
@@ -193,18 +197,34 @@ export function InstallHelpPanel({
 
 /** Always-visible Install + Share in the top nav. */
 export function NavInstallShare() {
-  const { standalone, ios, helpOpen, setHelpOpen, note, installing, install, share } =
-    useInstallActions();
+  const {
+    standalone,
+    ios,
+    helpOpen,
+    setHelpOpen,
+    shareOpen,
+    setShareOpen,
+    note,
+    installing,
+    install,
+    share,
+    sendSquare,
+  } = useInstallActions();
 
   if (standalone) {
     return (
-      <button
-        type="button"
-        onClick={share}
-        className="ml-1 rounded-full bg-black px-3 py-1.5 text-xs font-bold text-white"
-      >
-        Share
-      </button>
+      <>
+        <button
+          type="button"
+          onClick={share}
+          className="ml-1 rounded-full bg-black px-3 py-1.5 text-xs font-bold text-white"
+        >
+          Share
+        </button>
+        {shareOpen ? (
+          <ShareQrSheet onClose={() => setShareOpen(false)} onShare={sendSquare} />
+        ) : null}
+      </>
     );
   }
 
@@ -226,6 +246,9 @@ export function NavInstallShare() {
       {helpOpen ? (
         <InstallHelpPanel ios={ios} onClose={() => setHelpOpen(false)} />
       ) : null}
+      {shareOpen ? (
+        <ShareQrSheet onClose={() => setShareOpen(false)} onShare={sendSquare} />
+      ) : null}
     </>
   );
 }
@@ -233,8 +256,20 @@ export function NavInstallShare() {
 /** Bottom banner — sits above the Home/Activity/Account tab bar. */
 export function InstallShareBar() {
   const pathname = usePathname();
-  const { standalone, ios, helpOpen, setHelpOpen, note, installing, install, share, deferred } =
-    useInstallActions();
+  const {
+    standalone,
+    ios,
+    helpOpen,
+    setHelpOpen,
+    shareOpen,
+    setShareOpen,
+    note,
+    installing,
+    install,
+    share,
+    sendSquare,
+    deferred,
+  } = useInstallActions();
   const [minimized, setMinimized] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
@@ -273,8 +308,11 @@ export function InstallShareBar() {
           onClick={share}
           className="rounded-full bg-black px-4 py-2.5 text-sm font-semibold text-white shadow-lg"
         >
-          Share app
+          Share
         </button>
+        {shareOpen ? (
+          <ShareQrSheet onClose={() => setShareOpen(false)} onShare={sendSquare} />
+        ) : null}
       </div>
     );
   }
@@ -307,20 +345,27 @@ export function InstallShareBar() {
       data-testid="install-share-bar"
     >
       <div className="mx-auto flex w-full items-center gap-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-[0_4px_24px_rgba(0,0,0,0.16)]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/icons/icon-192.png"
-          alt=""
-          width={48}
-          height={48}
-          className="h-12 w-12 rounded-xl"
-        />
+        <button
+          type="button"
+          onClick={share}
+          className="shrink-0 rounded-xl bg-white ring-1 ring-gray-200"
+          aria-label="Show scan square"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={socialQrImagePath(96)}
+            alt=""
+            width={48}
+            height={48}
+            className="h-12 w-12 rounded-xl"
+          />
+        </button>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-black">
-            Install {BRAND.appName}
+            Keep {BRAND.appName} handy
           </p>
           <p className="text-xs text-gray-500">
-            {deferred ? "Add to your home screen" : "One tap to install"}
+            {deferred ? "Add to your home screen" : "Scan the square, or tap Install"}
           </p>
         </div>
         <button
@@ -354,20 +399,37 @@ export function InstallShareBar() {
         </p>
       ) : null}
       {helpOpen ? <InstallHelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
+      {shareOpen ? (
+        <ShareQrSheet onClose={() => setShareOpen(false)} onShare={sendSquare} />
+      ) : null}
     </div>
   );
 }
 
 /** Hero CTAs for the home page. */
 export function HomeInstallShareCtas() {
-  const { standalone, ios, helpOpen, setHelpOpen, note, installing, install, share } =
-    useInstallActions();
+  const {
+    standalone,
+    ios,
+    helpOpen,
+    setHelpOpen,
+    shareOpen,
+    setShareOpen,
+    note,
+    installing,
+    install,
+    share,
+    sendSquare,
+  } = useInstallActions();
   if (standalone) {
     return (
       <div className="mt-6 flex flex-wrap gap-3">
         <button type="button" onClick={share} className="ru-btn ru-btn-primary">
           Share this app
         </button>
+        {shareOpen ? (
+          <ShareQrSheet onClose={() => setShareOpen(false)} onShare={sendSquare} />
+        ) : null}
       </div>
     );
   }
@@ -386,10 +448,13 @@ export function HomeInstallShareCtas() {
         onClick={share}
         className="rounded-xl border border-white/40 bg-white/10 px-5 py-3 text-sm font-semibold text-white"
       >
-        Share app
+        Share
       </button>
       {note ? <p className="w-full text-sm text-sky-200">{note}</p> : null}
       {helpOpen ? <InstallHelpPanel ios={ios} onClose={() => setHelpOpen(false)} /> : null}
+      {shareOpen ? (
+        <ShareQrSheet onClose={() => setShareOpen(false)} onShare={sendSquare} />
+      ) : null}
     </div>
   );
 }
