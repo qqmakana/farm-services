@@ -98,6 +98,13 @@ export default function MarketingAdsPage() {
             >
               Founding Driver card
             </Link>
+            {" · "}
+            <Link
+              href="/marketing/pamphlet"
+              className="font-semibold text-[#000000] underline"
+            >
+              Pamphlet QR
+            </Link>
           </p>
         </div>
       </main>
