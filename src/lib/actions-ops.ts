@@ -689,3 +689,111 @@ async function getReferralLeaderboard() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
 }
+
+export type AdminSignupDriver = {
+  id: string;
+  full_name: string;
+  phone: string;
+  verification_status: string | null;
+  approval_status: string | null;
+  created_at: string | null;
+  notes: string | null;
+};
+
+export type AdminSignupRider = {
+  customer_name: string;
+  customer_phone: string;
+  trips: number;
+  last_trip_at: string | null;
+};
+
+/** Admin-only: who applied to drive + who booked as a rider. */
+export async function getAdminSignupsData() {
+  const gate = await requireAdminAccess();
+  if (!gate.ok) {
+    return { gate, drivers: [] as AdminSignupDriver[], riders: [] as AdminSignupRider[] };
+  }
+
+  if (!useAdminDb()) {
+    const drivers = mockRepo.listAllDriversForOps().map((d) => ({
+      id: d.id,
+      full_name: d.full_name,
+      phone: d.phone,
+      verification_status: d.verification_status ?? null,
+      approval_status: d.approval_status ?? null,
+      created_at: d.created_at ?? null,
+      notes: d.notes ?? null,
+    }));
+    const byPhone = new Map<string, AdminSignupRider>();
+    for (const j of mockRepo.listJobs()) {
+      const phone = (j.customer_phone || "").trim();
+      if (!phone) continue;
+      const prev = byPhone.get(phone);
+      const at = j.created_at ?? null;
+      if (!prev) {
+        byPhone.set(phone, {
+          customer_name: j.customer_name || "Rider",
+          customer_phone: phone,
+          trips: 1,
+          last_trip_at: at,
+        });
+      } else {
+        prev.trips += 1;
+        if (at && (!prev.last_trip_at || at > prev.last_trip_at)) {
+          prev.last_trip_at = at;
+          prev.customer_name = j.customer_name || prev.customer_name;
+        }
+      }
+    }
+    return {
+      gate,
+      drivers,
+      riders: [...byPhone.values()].sort((a, b) =>
+        (b.last_trip_at || "").localeCompare(a.last_trip_at || ""),
+      ),
+    };
+  }
+
+  const admin = createAdminClient();
+  const [{ data: driverRows }, { data: jobRows }] = await Promise.all([
+    admin
+      .from("rr_drivers")
+      .select("id, full_name, phone, verification_status, approval_status, created_at, notes")
+      .order("created_at", { ascending: false }),
+    admin
+      .from("rr_jobs")
+      .select("customer_name, customer_phone, created_at")
+      .order("created_at", { ascending: false })
+      .limit(500),
+  ]);
+
+  const byPhone = new Map<string, AdminSignupRider>();
+  for (const j of jobRows ?? []) {
+    const phone = String(j.customer_phone || "").trim();
+    if (!phone) continue;
+    const prev = byPhone.get(phone);
+    const at = j.created_at ?? null;
+    if (!prev) {
+      byPhone.set(phone, {
+        customer_name: String(j.customer_name || "Rider"),
+        customer_phone: phone,
+        trips: 1,
+        last_trip_at: at,
+      });
+    } else {
+      prev.trips += 1;
+      if (at && (!prev.last_trip_at || at > prev.last_trip_at)) {
+        prev.last_trip_at = at;
+        prev.customer_name = String(j.customer_name || prev.customer_name);
+      }
+    }
+  }
+
+  return {
+    gate,
+    drivers: (driverRows ?? []) as AdminSignupDriver[],
+    riders: [...byPhone.values()].sort((a, b) =>
+      (b.last_trip_at || "").localeCompare(a.last_trip_at || ""),
+    ),
+  };
+}

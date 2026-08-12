@@ -64,6 +64,9 @@ export default async function AdminDashboardPage() {
             <Link href="/admin/monitoring" className="rounded-lg border px-3 py-1.5 font-semibold">
               Monitoring
             </Link>
+            <Link href="/admin/signups" className="rounded-lg border px-3 py-1.5 font-semibold">
+              Signups
+            </Link>
             <Link href="/admin/verifications" className="rounded-lg border px-3 py-1.5 font-semibold">
               Verifications
             </Link>
