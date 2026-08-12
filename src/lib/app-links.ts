@@ -20,6 +20,11 @@ export function getSocialQrEntryUrl(): string {
   return `${getAppInstallUrl()}?from=social`;
 }
 
+/** Driver signup from social QR posts. */
+export function getDriverSocialQrUrl(): string {
+  return `${getSiteUrl()}/driver/join?from=social`;
+}
+
 /** Short hostname for print (no https). */
 export function getSiteHost(): string {
   try {

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
 import { AdCar } from "@/components/marketing/ad-car";
+import { DriverGivesBackCard } from "@/components/marketing/driver-gives-back-card";
 import {
   DRIVER_AD_CAPTION,
   DRIVER_AD_IMAGE,
@@ -35,12 +36,34 @@ export default function MarketingAdsPage() {
             Official social ad
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            One square creative for Instagram, Facebook, WhatsApp &amp; boosts.
+            Square creative + scan-to-apply QR post for Instagram, Facebook
+            &amp; WhatsApp.
           </p>
 
-          <div className="mt-6">
-            <AdCar />
-          </div>
+          <section className="mt-8">
+            <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              Scan to apply (like your flyer)
+            </p>
+            <h2 className="mt-2 text-lg font-bold text-black">
+              “Platform that gives back” + QR
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Post this image only — drivers scan the QR with their camera to
+              open signup. No link in the caption required.
+            </p>
+            <div className="mt-4">
+              <DriverGivesBackCard />
+            </div>
+          </section>
+
+          <section className="mt-10 border-t border-slate-200 pt-8">
+            <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              Classic square ad
+            </p>
+            <div className="mt-4">
+              <AdCar />
+            </div>
+          </section>
 
           <a
             href={DRIVER_AD_IMAGE}
