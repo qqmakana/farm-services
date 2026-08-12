@@ -336,12 +336,9 @@ do $$ begin
 exception when duplicate_object then null; when others then null;
 end $$;
 
--- ---------- SEED SAMPLE DRIVERS (optional demo fleet) ----------
--- Demo drivers removed — do not re-seed fake phones into production.
--- (Was: Thabo Bakkie / Nomsa Go / Sipho Truck)
--- To wipe them if already inserted, run CLEANUP_SEEDED_DRIVERS.sql
-select 1 where false
-where not exists (select 1 from public.rr_drivers limit 1);
+-- ---------- DEMO DRIVERS (disabled — do not seed into production) ----------
+-- Previously seeded Thabo Bakkie / Nomsa Go / Sipho Truck.
+-- To remove them if already present, run CLEANUP_SEEDED_DRIVERS.sql
 
 -- ---------- DONE ----------
 -- Next:
