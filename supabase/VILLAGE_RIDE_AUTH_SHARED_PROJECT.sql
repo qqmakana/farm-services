@@ -1,30 +1,21 @@
--- Village Ride + another app share one Supabase Auth project.
--- Password emails default to Site URL (often the other app).
--- Fix redirects so Village Ride recovery stays on Village Ride.
+-- Shared Auth with TenderMatch: solarcouple@gmail.com uses Google (+ email).
+-- Village Ride login: prefer "Continue with Google".
 --
--- In Supabase Dashboard (not SQL):
--- 1) Authentication → URL Configuration
--- 2) Keep Site URL as your main app if you want (e.g. TenderMatch)
--- 3) Under Redirect URLs, ADD (do not remove the other app):
---      https://village-ride.vercel.app/**
---      https://village-ride.vercel.app/auth/callback
---      http://localhost:3000/**
---      http://localhost:3000/auth/callback
--- 4) Save
+-- Supabase → Authentication → URL Configuration → Redirect URLs, ADD:
+--   https://village-ride.vercel.app/**
+--   https://village-ride.vercel.app/auth/callback
+-- (Keep TenderMatch URLs. Site URL can stay TenderMatch.)
 --
--- To set a password WITHOUT email (avoids landing on the other app):
--- Authentication → Users → solarcouple@gmail.com → reset / set password
---
--- Then make that user Village Ride admin:
+-- After first Google login to Village Ride, grant admin:
 
 insert into public.rr_profiles (id, full_name, role)
-select u.id, 'Ops Admin', 'admin'::public.rr_user_role
+select u.id, coalesce(u.raw_user_meta_data->>'full_name', 'Ops Admin'), 'admin'::public.rr_user_role
 from auth.users u
 where lower(u.email) = 'solarcouple@gmail.com'
 on conflict (id) do update
 set role = 'admin'::public.rr_user_role;
 
-select u.email, p.role
+select u.email, p.role, u.raw_app_meta_data->>'provider' as provider
 from auth.users u
 left join public.rr_profiles p on p.id = u.id
 where lower(u.email) = 'solarcouple@gmail.com';
