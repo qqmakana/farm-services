@@ -15,6 +15,11 @@ export function getPamphletEntryUrl(): string {
   return `${getAppInstallUrl()}?from=pamphlet`;
 }
 
+/** Social post QR — same install page, social attribution. */
+export function getSocialQrEntryUrl(): string {
+  return `${getAppInstallUrl()}?from=social`;
+}
+
 /** Short hostname for print (no https). */
 export function getSiteHost(): string {
   try {

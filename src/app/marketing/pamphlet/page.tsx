@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
 import { PamphletCard } from "@/components/marketing/pamphlet-card";
+import { SocialQrPost } from "@/components/marketing/social-qr-post";
 import { BRAND } from "@/lib/brand";
-import { getAppInstallUrl, getPamphletEntryUrl } from "@/lib/app-links";
+import { getAppInstallUrl, getPamphletEntryUrl, getSocialQrEntryUrl } from "@/lib/app-links";
 
 export const metadata: Metadata = {
-  title: `Pamphlet QR — ${BRAND.appName}`,
-  description: `Printable QR pamphlet — scan to install ${BRAND.appName} on your phone.`,
+  title: `Pamphlet & social QR — ${BRAND.appName}`,
+  description: `QR codes for print pamphlets and social posts — scan to install ${BRAND.appName}.`,
 };
 
 export default function PamphletMarketingPage() {
@@ -34,9 +35,34 @@ export default function PamphletMarketingPage() {
             <PamphletCard />
           </div>
 
+          <section className="mt-12 print:hidden">
+            <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              Social media
+            </p>
+            <h2 className="mt-2 text-xl font-bold tracking-tight text-black">
+              Post QR only — no link needed
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Square image for Instagram, Facebook &amp; WhatsApp. People scan
+              with their camera — they do not tap the post.
+            </p>
+            <div className="mt-5">
+              <SocialQrPost />
+            </div>
+          </section>
+
           <section className="mt-8 space-y-3 text-sm text-slate-600 print:hidden">
             <p>
-              <strong className="text-slate-900">QR link:</strong>{" "}
+              <strong className="text-slate-900">Social QR link:</strong>{" "}
+              <a
+                href={getSocialQrEntryUrl()}
+                className="font-medium text-black underline"
+              >
+                {getSocialQrEntryUrl()}
+              </a>
+            </p>
+            <p>
+              <strong className="text-slate-900">Print pamphlet link:</strong>{" "}
               <a
                 href={getPamphletEntryUrl()}
                 className="font-medium text-black underline"
