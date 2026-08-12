@@ -2,31 +2,43 @@
 
 import { useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
 import { createClient } from "@/lib/supabase/client";
 
 const OPS_EMAIL = "solarcouple@gmail.com";
 
+type Mode = "signin" | "create" | "forgot";
+
 function initialError(code: string | null) {
   if (code === "dispatcher_required") {
-    return "Signed in, but this account is not a dispatcher yet. Run FIX_PROFILES_RLS.sql then try again.";
+    return "Signed in, but this account is not a dispatcher yet. In Supabase, set rr_profiles.role to admin or dispatcher for your user.";
+  }
+  if (code === "admin_email_required") {
+    return "Signed in, but your email is not on the ADMIN_EMAILS allowlist on Vercel.";
   }
   if (code === "driver_required") {
-    return "Signed in, but this account is not a driver. Link role=driver on rr_profiles, or use the driver picker on /driver.";
+    return "Signed in, but this account is not a driver.";
   }
   if (code === "merchant_required") {
-    return "Signed in, but this account is not a merchant. Register from Sell (/shop) or set role=merchant on rr_profiles.";
+    return "Signed in, but this account is not a merchant. Register from Sell (/shop).";
+  }
+  if (code === "auth_callback") {
+    return "That email link expired or was already used. Request a new password link below.";
   }
   return null;
 }
 
 export default function LoginClient() {
   const params = useSearchParams();
-  const next = params.get("next") || "/dispatch";
+  const next = params.get("next") || "/admin/signups";
+  const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState(
     next.includes("/merchant") ? "" : OPS_EMAIL,
   );
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(
     initialError(params.get("error")),
   );
@@ -37,22 +49,65 @@ export default function LoginClient() {
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setMessage(null);
+
     startTransition(async () => {
       try {
         const supabase = createClient();
+        const trimmed = email.trim().toLowerCase();
+
+        if (mode === "forgot") {
+          const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/login/set-password")}`;
+          const { error: err } = await supabase.auth.resetPasswordForEmail(
+            trimmed,
+            { redirectTo },
+          );
+          if (err) throw err;
+          setMessage(
+            "Check your email for a link. Open it, then choose a password on the next screen.",
+          );
+          return;
+        }
+
+        if (mode === "create") {
+          if (password.length < 8) {
+            setError("Use at least 8 characters.");
+            return;
+          }
+          if (password !== confirm) {
+            setError("Passwords do not match.");
+            return;
+          }
+          const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+          const { data, error: err } = await supabase.auth.signUp({
+            email: trimmed,
+            password,
+            options: { emailRedirectTo: redirectTo },
+          });
+          if (err) throw err;
+          if (data.session) {
+            window.location.assign(next);
+            return;
+          }
+          setMessage(
+            "Account created. If Supabase asks you to confirm email, open that message — then sign in here. Or use “Email me a password link” below.",
+          );
+          setMode("signin");
+          return;
+        }
+
         const { data, error: err } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
+          email: trimmed,
           password,
         });
         if (err) throw err;
         if (!data.session) throw new Error("No session returned from Supabase.");
-
         window.location.assign(next);
       } catch (err) {
         setError(
           err instanceof Error
             ? err.message
-            : "Login failed. Check email and password.",
+            : "Something went wrong. Try again.",
         );
       }
     });
@@ -63,26 +118,49 @@ export default function LoginClient() {
       <SiteNav />
       <main className="mx-auto max-w-md px-4 py-12">
         <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">
-          {isMerchantLogin ? "Merchant login" : "Sign in"}
+          {isMerchantLogin
+            ? "Merchant login"
+            : mode === "create"
+              ? "Create a password"
+              : mode === "forgot"
+                ? "Get a password link"
+                : "Sign in"}
         </h1>
         <p className="mt-2 text-sm text-slate-600">
           {isMerchantLogin ? (
             <>
               Business email from Sell registration. Need an account?{" "}
-              <a className="font-medium text-[var(--ru-brand)]" href="/shop">
+              <a className="font-medium text-black underline" href="/shop">
                 Register your shop
               </a>
               .
             </>
+          ) : mode === "create" ? (
+            <>
+              First time for ops? Use{" "}
+              <strong className="text-slate-900">{OPS_EMAIL}</strong> and choose
+              a password. This is not your Gmail password unless you pick the
+              same one.
+            </>
+          ) : mode === "forgot" ? (
+            <>
+              We&apos;ll email a link to set a new password. Use the email that
+              has the admin account (usually {OPS_EMAIL}).
+            </>
           ) : (
             <>
-              Ops, driver, or merchant accounts. Public customer email stays{" "}
-              <a
-                className="font-medium text-[var(--ru-brand)]"
-                href="mailto:ai@sandtonstreets.com"
+              Ops login for Signups &amp; Dispatch. First time?{" "}
+              <button
+                type="button"
+                className="font-semibold text-black underline"
+                onClick={() => {
+                  setMode("create");
+                  setError(null);
+                  setMessage(null);
+                }}
               >
-                ai@sandtonstreets.com
-              </a>
+                Create a password
+              </button>
               .
             </>
           )}
@@ -92,46 +170,134 @@ export default function LoginClient() {
           <label className="block text-sm">
             Email
             <input
-              type="text"
+              type="email"
               autoComplete="username"
               required
               className="ru-input mt-1 font-mono"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={
-                isMerchantLogin ? "you@yourshop.co.za" : OPS_EMAIL
-              }
+              placeholder={isMerchantLogin ? "you@yourshop.co.za" : OPS_EMAIL}
             />
           </label>
-          <label className="block text-sm">
-            Password
-            <input
-              type="password"
-              autoComplete="current-password"
-              required
-              className="ru-input mt-1 font-mono"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Your password"
-            />
-          </label>
-          {error && (
+
+          {mode !== "forgot" ? (
+            <label className="block text-sm">
+              {mode === "create" ? "Choose a password" : "Password"}
+              <input
+                type="password"
+                autoComplete={
+                  mode === "create" ? "new-password" : "current-password"
+                }
+                required
+                minLength={mode === "create" ? 8 : undefined}
+                className="ru-input mt-1 font-mono"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={
+                  mode === "create" ? "At least 8 characters" : "Your password"
+                }
+              />
+            </label>
+          ) : null}
+
+          {mode === "create" ? (
+            <label className="block text-sm">
+              Confirm password
+              <input
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={8}
+                className="ru-input mt-1 font-mono"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+              />
+            </label>
+          ) : null}
+
+          {error ? (
             <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
               {error}
             </p>
-          )}
+          ) : null}
+          {message ? (
+            <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+              {message}
+            </p>
+          ) : null}
+
           <button
             type="submit"
             disabled={pending}
             className="ru-btn ru-btn-primary w-full"
           >
             {pending
-              ? "Signing in…"
-              : isMerchantLogin
-                ? "Sign in to dashboard"
-                : "Sign in"}
+              ? "Please wait…"
+              : mode === "create"
+                ? "Create password & continue"
+                : mode === "forgot"
+                  ? "Email me a password link"
+                  : isMerchantLogin
+                    ? "Sign in to dashboard"
+                    : "Sign in"}
           </button>
         </form>
+
+        {!isMerchantLogin ? (
+          <div className="mt-4 space-y-2 text-center text-sm text-slate-600">
+            {mode !== "signin" ? (
+              <button
+                type="button"
+                className="font-semibold text-black underline"
+                onClick={() => {
+                  setMode("signin");
+                  setError(null);
+                  setMessage(null);
+                }}
+              >
+                Back to sign in
+              </button>
+            ) : (
+              <>
+                <p>
+                  <button
+                    type="button"
+                    className="font-semibold text-black underline"
+                    onClick={() => {
+                      setMode("create");
+                      setError(null);
+                      setMessage(null);
+                    }}
+                  >
+                    Create a password
+                  </button>
+                  {" · "}
+                  <button
+                    type="button"
+                    className="font-semibold text-black underline"
+                    onClick={() => {
+                      setMode("forgot");
+                      setError(null);
+                      setMessage(null);
+                    }}
+                  >
+                    Email me a password link
+                  </button>
+                </p>
+                <p className="text-xs text-slate-500">
+                  Or in Supabase → Authentication → Users → add{" "}
+                  {OPS_EMAIL} with a password.
+                </p>
+              </>
+            )}
+          </div>
+        ) : null}
+
+        <p className="mt-6 text-center text-xs text-slate-500">
+          <Link href="/" className="underline">
+            Back home
+          </Link>
+        </p>
       </main>
     </>
   );
