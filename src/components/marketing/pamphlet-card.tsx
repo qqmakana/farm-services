@@ -4,11 +4,7 @@ import Image from "next/image";
 import { useRef, useState, useTransition } from "react";
 import { toPng } from "html-to-image";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
-import {
-  getAppInstallUrl,
-  getPamphletEntryUrl,
-  getSiteHost,
-} from "@/lib/app-links";
+import { getAppInstallUrl, getPamphletEntryUrl } from "@/lib/app-links";
 
 const QR_SIZE = 280;
 
@@ -22,7 +18,6 @@ export function PamphletCard() {
   const [error, setError] = useState<string | null>(null);
 
   const entryUrl = getPamphletEntryUrl();
-  const installPath = "/get-app";
   const qrSrc = `/api/qr?url=${encodeURIComponent(entryUrl)}&size=${QR_SIZE}`;
 
   function downloadPng() {
@@ -100,12 +95,8 @@ export function PamphletCard() {
             </div>
           </div>
 
-          <p className="mt-4 text-sm font-semibold text-black">
-            {getSiteHost()}
-            <span className="text-slate-500">{installPath}</span>
-          </p>
-          <p className="mt-1 text-xs text-slate-500">
-            Or open {getAppInstallUrl()}
+          <p className="mt-4 break-all text-sm font-semibold text-black">
+            {getAppInstallUrl()}
           </p>
 
           <ol className="mt-6 space-y-2 text-left text-sm text-slate-700">

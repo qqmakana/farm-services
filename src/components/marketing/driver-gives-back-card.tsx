@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition, type RefObject } from "react";
 import { toPng } from "html-to-image";
 import { BRAND, BRAND_ADDRESS_LINE } from "@/lib/brand";
-import { getSiteHost, getSocialQrEntryUrl } from "@/lib/app-links";
+import { getAppInstallUrl, getSocialQrEntryUrl } from "@/lib/app-links";
 
 const QR_FEED = 168;
 const QR_REEL = 156;
@@ -176,7 +176,10 @@ function ScanCard({
             {BRAND_ADDRESS_LINE}
           </p>
           <p className="mt-0.5 text-[10px] text-slate-500">
-            {BRAND.company} · {getSiteHost()}
+            {BRAND.company}
+          </p>
+          <p className="mt-1 break-all text-[10px] font-medium text-amber-400/90">
+            {getAppInstallUrl()}
           </p>
         </div>
       </div>

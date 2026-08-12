@@ -85,7 +85,7 @@ export default function CountriesSocialPage() {
         </Link>
 
         <p className="mt-4 text-center text-xs text-slate-500">
-          village-ride.vercel.app/driver/join
+          https://village-ride.vercel.app/driver/join
         </p>
       </div>
     </main>

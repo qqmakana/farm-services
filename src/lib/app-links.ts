@@ -1,11 +1,16 @@
-/** Canonical public site URL (pamphlets, QR codes, share links). */
+/** Canonical public site URL — always https. */
 export function getSiteUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (fromEnv && fromEnv.startsWith("http")) return fromEnv.replace(/\/$/, "");
-  return "https://village-ride.vercel.app";
+  let url = "https://village-ride.vercel.app";
+  if (fromEnv) {
+    url = fromEnv.replace(/\/$/, "");
+    if (url.startsWith("http://")) url = `https://${url.slice("http://".length)}`;
+    if (!url.startsWith("https://")) url = `https://${url}`;
+  }
+  return url;
 }
 
-/** PWA install screen — best target for pamphlet QR codes. */
+/** Full https link printed on pamphlets, posts, and share text. */
 export function getAppInstallUrl(): string {
   return `${getSiteUrl()}/get-app`;
 }

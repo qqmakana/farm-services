@@ -1,6 +1,7 @@
 "use client";
 
 import { BRAND, BRAND_ADDRESS_LINE } from "@/lib/brand";
+import { getAppInstallUrl } from "@/lib/app-links";
 import { socialQrImagePath } from "@/lib/share-qr";
 
 /** Show a friend the scan square — no need to send a link. */
@@ -35,6 +36,9 @@ export function ShareQrSheet({
         </div>
         <p className="mt-3 text-center text-xs text-slate-500">
           {BRAND_ADDRESS_LINE}
+        </p>
+        <p className="mt-1 break-all text-center text-xs font-medium text-black">
+          {getAppInstallUrl()}
         </p>
         <button
           type="button"

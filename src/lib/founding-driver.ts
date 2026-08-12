@@ -15,7 +15,7 @@ export const FOUNDING_CITIES = [
 
 export type FoundingCity = (typeof FOUNDING_CITIES)[number];
 
-export const FOUNDING_APP_URL = "village-ride.vercel.app";
+export const FOUNDING_APP_URL = "https://village-ride.vercel.app";
 
 /** Hard cutoff — server-side only for qualification writes. */
 export function isWithinFoundingEra(now = new Date()): boolean {

@@ -21,7 +21,7 @@ export const BRAND_TAGLINE =
 
 /** Text pasted when someone taps Share (WhatsApp, etc.). */
 export const BRAND_SHARE_TEXT =
-  `Village Ride — a small ride & delivery app from Westdene, Johannesburg. Scan the square (or open the link), then Add to Home Screen if you'd like it on your phone. Cash or card is fine.`;
+  `Village Ride — a small ride & delivery app from Westdene, Johannesburg. Scan the square, or open https://village-ride.vercel.app/get-app then Add to Home Screen if you'd like it on your phone. Cash or card is fine.`;
 
 export const BRAND_FULL = `${BRAND.appName} by ${BRAND.company}`;
 

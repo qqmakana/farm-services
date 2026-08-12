@@ -4,21 +4,14 @@ import { getAppInstallUrl, getSocialQrEntryUrl } from "@/lib/app-links";
 /** Humble line when someone taps Share. */
 export const SHARE_SCAN_TEXT = `${BRAND_SHARE_TEXT}
 
-We're at ${BRAND_ADDRESS_LINE}. Scan the picture, or open the link.`;
+We're at ${BRAND_ADDRESS_LINE}. Scan the picture, or open ${getAppInstallUrl()}.`;
 
 export function socialQrImagePath(size = 512) {
-  const target =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/get-app?from=social`
-      : getSocialQrEntryUrl();
-  return `/api/qr?url=${encodeURIComponent(target)}&size=${size}`;
+  return `/api/qr?url=${encodeURIComponent(getSocialQrEntryUrl())}&size=${size}`;
 }
 
 export async function shareVillageRideQr(): Promise<"shared" | "copied"> {
-  const url =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/get-app`
-      : getAppInstallUrl();
+  const url = getAppInstallUrl();
   const text = SHARE_SCAN_TEXT;
 
   try {

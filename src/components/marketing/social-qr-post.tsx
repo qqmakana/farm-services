@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRef, useState, useTransition } from "react";
 import { toPng } from "html-to-image";
 import { BRAND } from "@/lib/brand";
-import { getSiteHost, getSocialQrEntryUrl } from "@/lib/app-links";
+import { getAppInstallUrl, getSocialQrEntryUrl } from "@/lib/app-links";
 
 const QR_SIZE = 340;
 
@@ -85,8 +85,8 @@ export function SocialQrPost() {
           </div>
 
           <div>
-            <p className="text-[clamp(0.75rem,2.8vw,0.95rem)] font-semibold text-black">
-              {getSiteHost()}/get-app
+            <p className="mt-1 break-all text-[clamp(0.7rem,2.6vw,0.85rem)] font-semibold text-black">
+              {getAppInstallUrl()}
             </p>
             <p className="mt-1 text-[clamp(0.65rem,2.4vw,0.8rem)] text-slate-500">
               Rides &amp; deliveries · Pay cash or card
