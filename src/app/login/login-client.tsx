@@ -137,29 +137,39 @@ export default function LoginClient() {
             </>
           ) : mode === "create" ? (
             <>
-              First time for ops? Use{" "}
-              <strong className="text-slate-900">{OPS_EMAIL}</strong> and choose
-              a password. This is not your Gmail password unless you pick the
-              same one.
+              First time for Village Ride ops? Prefer{" "}
+              <strong className="text-slate-900">{OPS_EMAIL}</strong>. This
+              Supabase project is shared with your other app — if that email
+              already exists, use &quot;Email me a password link&quot; or sign
+              in with the password that works on the other app.
             </>
           ) : mode === "forgot" ? (
             <>
-              We&apos;ll email a link to set a new password. Use the email that
-              has the admin account (usually {OPS_EMAIL}).
+              We email a link that must open on{" "}
+              <strong className="text-slate-900">village-ride.vercel.app</strong>
+              , not your other app. In Supabase → Authentication → URL
+              Configuration, add this to Redirect URLs:{" "}
+              <code className="text-xs">
+                https://village-ride.vercel.app/auth/callback
+              </code>
+              . Or set the password under Authentication → Users (no email
+              needed).
             </>
           ) : (
             <>
-              Ops login for Signups &amp; Dispatch. First time?{" "}
+              Same login database as your other app. If you already sign into
+              TenderMatch with an email, try that email + password here. Ops
+              email is usually {OPS_EMAIL}.{" "}
               <button
                 type="button"
                 className="font-semibold text-black underline"
                 onClick={() => {
-                  setMode("create");
+                  setMode("forgot");
                   setError(null);
                   setMessage(null);
                 }}
               >
-                Create a password
+                Email me a Village Ride password link
               </button>
               .
             </>
