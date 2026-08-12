@@ -337,12 +337,10 @@ exception when duplicate_object then null; when others then null;
 end $$;
 
 -- ---------- SEED SAMPLE DRIVERS (optional demo fleet) ----------
-insert into public.rr_drivers (full_name, phone, vehicle_type, is_active, approval_status, id_verified, is_online, last_lat, last_lng, last_location_at, notes)
-select * from (values
-  ('Thabo Bakkie', '27821234567', 'bakkie'::public.rr_vehicle_type, true, 'approved', true, true, -31.587::float8, 28.783::float8, now(), 'Furniture + farm'),
-  ('Nomsa Go', '27829876543', 'sedan'::public.rr_vehicle_type, true, 'approved', true, true, -31.589::float8, 28.785::float8, now(), 'Village rides'),
-  ('Sipho Truck', '27825551234', 'truck'::public.rr_vehicle_type, true, 'approved', true, true, -31.586::float8, 28.786::float8, now(), 'Heavy loads')
-) as v(full_name, phone, vehicle_type, is_active, approval_status, id_verified, is_online, last_lat, last_lng, last_location_at, notes)
+-- Demo drivers removed — do not re-seed fake phones into production.
+-- (Was: Thabo Bakkie / Nomsa Go / Sipho Truck)
+-- To wipe them if already inserted, run CLEANUP_SEEDED_DRIVERS.sql
+select 1 where false
 where not exists (select 1 from public.rr_drivers limit 1);
 
 -- ---------- DONE ----------
