@@ -78,9 +78,15 @@ export function BookingForm({
           dropoff_lat: dropoff.lat,
           dropoff_lng: dropoff.lng,
         });
-        if (!cancelled) setFee(String(fare.fee_amount));
-      } catch {
-        /* keep last fee */
+        if (!cancelled) {
+          if (fare.quote_ready) setFee(String(fare.fee_amount));
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setFormError(
+            err instanceof Error ? err.message : "Could not calculate fare.",
+          );
+        }
       }
     })();
     return () => {
@@ -96,6 +102,10 @@ export function BookingForm({
     Boolean(customerPhone.trim()) &&
     Boolean(pickup.landmark.trim()) &&
     Boolean(dropoff.landmark.trim()) &&
+    pickup.lat != null &&
+    pickup.lng != null &&
+    dropoff.lat != null &&
+    dropoff.lng != null &&
     (serviceType !== "delivery" || Boolean(itemDescription.trim()));
 
   function captureGps(which: "pickup" | "dropoff") {

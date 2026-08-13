@@ -6,9 +6,9 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import {
   MAPBOX_STYLE,
   MAPBOX_TOKEN,
-  curvedRoute,
   type MapPin,
 } from "@/lib/mapbox";
+import { getDrivingRouteAction } from "@/lib/actions-mapbox";
 
 export type JobMapPin = {
   id: string;
@@ -136,6 +136,7 @@ export function RideMapCanvas({
   const onSelectRef = useRef(onSelect);
   const onSelectJobRef = useRef(onSelectJob);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [routeLine, setRouteLine] = useState<[number, number][] | null>(null);
   onSelectRef.current = onSelect;
   onSelectJobRef.current = onSelectJob;
 
@@ -146,8 +147,38 @@ export function RideMapCanvas({
     driverLocation,
     jobs,
     cinematic,
+    routeLine,
   });
-  stateRef.current = { center, pin, dropoff, driverLocation, jobs, cinematic };
+  stateRef.current = {
+    center,
+    pin,
+    dropoff,
+    driverLocation,
+    jobs,
+    cinematic,
+    routeLine,
+  };
+
+  useEffect(() => {
+    if (!pin || !dropoff) {
+      setRouteLine(null);
+      return;
+    }
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void getDrivingRouteAction(pin, dropoff)
+        .then((route) => {
+          if (!cancelled) setRouteLine(route.geometry.coordinates);
+        })
+        .catch(() => {
+          if (!cancelled) setRouteLine(null);
+        });
+    }, 180);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [pin, dropoff]);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -182,11 +213,11 @@ export function RideMapCanvas({
 
       const source = m.getSource("vr-route") as GeoJSONSource | undefined;
       if (source) {
-        if (s.pin && s.dropoff) {
+        if (s.pin && s.dropoff && s.routeLine && s.routeLine.length >= 2) {
           source.setData({
             type: "Feature",
             properties: {},
-            geometry: curvedRoute(s.pin, s.dropoff),
+            geometry: { type: "LineString", coordinates: s.routeLine },
           });
         } else {
           source.setData(emptyRoute());
@@ -278,7 +309,7 @@ export function RideMapCanvas({
 
   useEffect(() => {
     syncRef.current();
-  }, [pin, dropoff, driverLocation, jobs, center.lat, center.lng, cinematic]);
+  }, [pin, dropoff, driverLocation, jobs, center.lat, center.lng, cinematic, routeLine]);
 
   return (
     <div className={`relative h-full w-full ${className}`}>

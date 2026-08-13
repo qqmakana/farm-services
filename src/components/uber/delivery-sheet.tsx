@@ -65,6 +65,8 @@ export function DeliverySheet({
   const [isNight, setIsNight] = useState(false);
   const [nightExtra, setNightExtra] = useState(0);
   const [currency, setCurrency] = useState(country.currency);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [quoteReady, setQuoteReady] = useState(false);
 
   const atIso = useMemo(
     () =>
@@ -122,6 +124,9 @@ export function DeliverySheet({
           weight_category: weight,
         });
         if (!cancelled) {
+          setQuoteError(null);
+          setQuoteReady(fare.quote_ready);
+          if (!fare.quote_ready) return;
           setBaseFee(fare.base_fee_amount);
           setDistanceFare(fare.distance_fare);
           setDistanceKm(fare.distance_km);
@@ -132,8 +137,13 @@ export function DeliverySheet({
           setFee(fare.fee_amount);
           setCurrency(fare.currency);
         }
-      } catch {
-        /* keep */
+      } catch (err) {
+        if (!cancelled) {
+          setQuoteReady(false);
+          setQuoteError(
+            err instanceof Error ? err.message : "Could not calculate fare.",
+          );
+        }
       }
     })();
     return () => {
@@ -149,6 +159,12 @@ export function DeliverySheet({
     Boolean(senderPhone.trim()) &&
     Boolean(pickup.landmark.trim()) &&
     Boolean(dropoff.landmark.trim()) &&
+    pickup.lat != null &&
+    pickup.lng != null &&
+    dropoff.lat != null &&
+    dropoff.lng != null &&
+    quoteReady &&
+    !quoteError &&
     (whenMode === "now" || Boolean(atIso));
 
   return (
@@ -273,6 +289,12 @@ export function DeliverySheet({
         villagePass={villagePass}
         distanceKm={distanceKm}
       />
+
+      {quoteError ? (
+        <p className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
+          {quoteError}
+        </p>
+      ) : null}
 
       <CheckoutBlock
         fee={fee}

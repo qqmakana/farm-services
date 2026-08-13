@@ -44,6 +44,13 @@ export type FareBreakdown = {
   night_surcharge_amount: number;
   village_pass: boolean;
   country_code?: CountryCode;
+  /** Driving duration from Mapbox Directions; 0 when unused. */
+  route_duration_seconds: number;
+  /**
+   * True only when both pins were present and a driving route (or same-point
+   * 0 km) was applied. Incomplete quotes must not be treated as a fare.
+   */
+  quote_ready: boolean;
 };
 
 /** Server-side fare — never trust client fee for charging. */
@@ -56,6 +63,13 @@ export function calculateFare(params: {
   at?: string | Date | null;
   isSubscribed?: boolean;
   weightCategory?: WeightCategory | string | null;
+  /**
+   * Road distance from Mapbox Directions. When set (including 0), this is the
+   * only distance used for R/km. Do not pass haversine here for charging.
+   */
+  routeDistanceKm?: number | null;
+  routeDurationSeconds?: number | null;
+  quoteReady?: boolean;
   /** @deprecated Prefer unified pricing; ignored when serviceType set */
   rules?: {
     base_fare: number;
@@ -75,14 +89,18 @@ export function calculateFare(params: {
           ? "farm"
           : "delivery");
 
-  let km = 0;
-  if (
+  const havePins =
     params.pickup?.lat != null &&
     params.pickup?.lng != null &&
     params.dropoff?.lat != null &&
-    params.dropoff?.lng != null
-  ) {
-    km = distanceKm(params.pickup, params.dropoff);
+    params.dropoff?.lng != null;
+
+  let km = 0;
+  if (params.routeDistanceKm != null && Number.isFinite(params.routeDistanceKm)) {
+    km = Math.max(0, Number(params.routeDistanceKm));
+  } else if (havePins) {
+    // Formula tests / matching helpers only. Charging must pass routeDistanceKm.
+    km = distanceKm(params.pickup!, params.dropoff!);
   }
 
   const when =
@@ -123,5 +141,12 @@ export function calculateFare(params: {
     night_surcharge_amount: unified.night_surcharge_amount,
     village_pass: unified.village_pass,
     country_code: getCountry(countryCode).code,
+    route_duration_seconds: Math.max(
+      0,
+      Math.round(Number(params.routeDurationSeconds ?? 0) || 0),
+    ),
+    quote_ready: params.quoteReady ?? Boolean(
+      params.routeDistanceKm != null && Number.isFinite(params.routeDistanceKm),
+    ),
   };
 }

@@ -18,6 +18,21 @@ import {
 import { calculateFare } from "../src/lib/fares";
 import { getCountry } from "../src/lib/countries";
 import { VILLAGE_PASS_BOOKING_FEE_ZAR } from "../src/lib/village-pass";
+import { distanceKm } from "../src/lib/geo";
+import {
+  checkBookingServiceArea,
+  isInServiceArea,
+  searchServiceAreaLandmarks,
+} from "../src/lib/service-area";
+import {
+  classifyMapboxFeature,
+  geocodeAddressQuery,
+  getDrivingRoute,
+  isSameStop,
+  mapboxServerToken,
+} from "../src/lib/mapbox-server";
+import fs from "node:fs";
+import path from "node:path";
 
 let passed = 0;
 let failed = 0;
@@ -277,12 +292,17 @@ test("fares: 10km ZA includes km + fee", () => {
     vehicle: "sedan",
     serviceType: "ride",
     countryCode: "ZA",
-    pickup: { lat: -26.2, lng: 28.0 },
-    dropoff: { lat: -26.2, lng: 28.1 }, // ~10km-ish depending on geo
+    pickup: { lat: -32.787, lng: 26.834 },
+    dropoff: { lat: -32.79, lng: 26.85 },
+    routeDistanceKm: 10,
+    quoteReady: true,
     isSubscribed: false,
   });
-  assert(f.driver_fare_amount >= 15, "at least base");
-  assert(f.fee_amount === f.driver_fare_amount + f.booking_fee, "sum");
+  // R15 base + R10/km * 10 = R115 driver, + R5 fee
+  assert(f.distance_km === 10, `km ${f.distance_km}`);
+  assert(f.driver_fare_amount === 115, `driver ${f.driver_fare_amount}`);
+  assert(f.fee_amount === 120, `total ${f.fee_amount}`);
+  assert(f.quote_ready === true, "quote ready");
   assert(f.platform_commission === 0, "flat fee model — no % commission");
 });
 
@@ -291,8 +311,8 @@ test("fares: delivery weight bands (10km ZA)", () => {
     vehicle: "bakkie",
     serviceType: "delivery",
     countryCode: "ZA",
-    pickup: { lat: -26.2, lng: 28.0 },
-    dropoff: { lat: -26.2, lng: 28.1 },
+    routeDistanceKm: 10,
+    quoteReady: true,
     weightCategory: "light",
     isSubscribed: false,
   });
@@ -300,8 +320,8 @@ test("fares: delivery weight bands (10km ZA)", () => {
     vehicle: "truck",
     serviceType: "delivery",
     countryCode: "ZA",
-    pickup: { lat: -26.2, lng: 28.0 },
-    dropoff: { lat: -26.2, lng: 28.1 },
+    routeDistanceKm: 10,
+    quoteReady: true,
     weightCategory: "heavy",
     isSubscribed: false,
   });
@@ -332,6 +352,90 @@ test("fares: farm weight + Pass waives platform fee only", () => {
   assert(pass.driver_fare_amount === open.driver_fare_amount, "driver sacred");
 });
 
+test("fares: route km wins over straight-line pins", () => {
+  const alice = { lat: -32.787, lng: 26.834 };
+  const nearby = { lat: -32.81, lng: 26.86 };
+  const straight = distanceKm(alice, nearby);
+  assert(straight > 0 && straight < 6, `straight ${straight}`);
+  const f = calculateFare({
+    vehicle: "sedan",
+    serviceType: "ride",
+    countryCode: "ZA",
+    pickup: alice,
+    dropoff: nearby,
+    routeDistanceKm: 6,
+    quoteReady: true,
+    isSubscribed: false,
+  });
+  assert(f.distance_km === 6, `used route km ${f.distance_km} not ${straight}`);
+  assert(f.driver_fare_amount === 75, `15+10*6 ${f.driver_fare_amount}`);
+});
+
+test("fares: same pickup and dropoff is minimum fare, not a crash", () => {
+  const pin = { lat: -32.787, lng: 26.834 };
+  assert(isSameStop(pin, pin), "same stop helper");
+  const f = calculateFare({
+    vehicle: "sedan",
+    serviceType: "ride",
+    countryCode: "ZA",
+    pickup: pin,
+    dropoff: pin,
+    routeDistanceKm: 0,
+    quoteReady: true,
+    isSubscribed: false,
+  });
+  assert(f.distance_km === 0, "0 km");
+  assert(f.driver_fare_amount === 25, "min driver fare");
+  assert(f.fee_amount === 30, "min total with booking fee");
+});
+
+test("service area: Alice in, Johannesburg out, no cross-town", () => {
+  const alice = { lat: -32.787, lng: 26.834 };
+  const fortHare = { lat: -32.784, lng: 26.851 };
+  const jhb = { lat: -26.2041, lng: 28.0473 };
+  const mthatha = { lat: -31.588, lng: 28.784 };
+  assert(isInServiceArea(alice, "ZA"), "Alice in");
+  assert(isInServiceArea(fortHare, "ZA"), "Fort Hare in");
+  assert(!isInServiceArea(jhb, "ZA"), "JHB out");
+  const okTrip = checkBookingServiceArea(alice, fortHare, "ZA");
+  assert(okTrip.ok, "Alice local trip allowed");
+  const jhbTrip = checkBookingServiceArea(alice, jhb, "ZA");
+  assert(!jhbTrip.ok, "JHB dropoff rejected");
+  const cross = checkBookingServiceArea(alice, mthatha, "ZA");
+  assert(!cross.ok, "Alice to Mthatha rejected");
+});
+
+test("geocoder: low relevance is not silently accepted", () => {
+  const rejected = classifyMapboxFeature(
+    {
+      id: "guess",
+      place_name: "Somewhere nearby",
+      relevance: 0.2,
+      center: [26.834, -32.787],
+    },
+    "ZA",
+  );
+  assert(rejected == null, "below threshold dropped");
+  const confirm = classifyMapboxFeature(
+    {
+      id: "maybe",
+      place_name: "Alice, Eastern Cape",
+      relevance: 0.6,
+      center: [26.834, -32.787],
+      properties: { accuracy: "approximate" },
+    },
+    "ZA",
+  );
+  assert(confirm != null && confirm.needsConfirmation, "did-you-mean required");
+});
+
+test("landmarks: national list is not used outside the geofence", () => {
+  const jhb = searchServiceAreaLandmarks("Johannesburg", 8, "ZA");
+  assert(jhb.length === 0, "Johannesburg must not leak in as a fallback pin");
+  const alice = searchServiceAreaLandmarks("Alice", 8, "ZA");
+  assert(alice.length >= 1, "Alice landmark fallback still works");
+});
+
 test("wallet: flat-fee cash remittance uses booking_fee not 10%", () => {
   const remit = cashPlatformRemittance({
     fee_amount: 145,
@@ -351,6 +455,26 @@ test("wallet: flat-fee cash remittance uses booking_fee not 10%", () => {
   assert(passRemit === 0, "Pass cash deducts 0");
 });
 
+function loadLocalEnv() {
+  const file = path.join(process.cwd(), ".env.local");
+  if (!fs.existsSync(file)) return;
+  for (const line of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq < 1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let val = trimmed.slice(eq + 1).trim();
+    if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
+      val = val.slice(1, -1);
+    }
+    if (!process.env[key]) process.env[key] = val;
+  }
+}
+
 async function runAsync() {
   try {
     const shops = mockRepo.listShops();
@@ -365,6 +489,118 @@ async function runAsync() {
     ok("partner: weekly report builds in mock");
   } catch (e) {
     fail("partner: weekly report builds in mock", e);
+  }
+
+  loadLocalEnv();
+  const token = mapboxServerToken();
+  if (!token) {
+    ok("mapbox live checks skipped (no token in this environment)");
+  } else {
+    const kind = token.startsWith("sk.")
+      ? "secret"
+      : token.startsWith("pk.")
+        ? "public"
+        : "unknown";
+    ok(`mapbox token kind is ${kind} (value not logged)`);
+
+    const alice = { lat: -32.787, lng: 26.834 };
+    const samples = [
+      "University of Fort Hare, Alice",
+      "Alice, Eastern Cape",
+      "Fort Hare campus Alice Eastern Cape",
+      "Ntselamanzi Alice",
+      "Alice Hospital",
+    ];
+    for (const query of samples) {
+      try {
+        const hits = await geocodeAddressQuery(query, {
+          countryCode: "ZA",
+          proximity: alice,
+        });
+        assert(hits.length >= 1, `${query}: no geocode hits`);
+        const top = hits[0];
+        const km = distanceKm(alice, { lat: top.lat, lng: top.lng });
+        assert(
+          km < 12,
+          `${query} pinned ${km.toFixed(1)}km from Alice (${top.label})`,
+        );
+        ok(
+          `geocode "${query}" → ${top.label} (${km.toFixed(1)}km, rel ${top.relevance.toFixed(2)}${top.needsConfirmation ? ", confirm" : ""})`,
+        );
+      } catch (e) {
+        fail(`geocode "${query}"`, e);
+      }
+    }
+
+    try {
+      const garbage = await geocodeAddressQuery("zzzxxyyqqq12345notanaddress", {
+        countryCode: "ZA",
+        proximity: alice,
+      });
+      assert(garbage.length === 0, "garbage should not geocode");
+      ok("geocode garbage input returns no results");
+    } catch (e) {
+      fail("geocode garbage input returns no results", e);
+    }
+
+    try {
+      const spar = await geocodeAddressQuery("Alice SPAR", {
+        countryCode: "ZA",
+        proximity: alice,
+      });
+      for (const hit of spar) {
+        assert(
+          isInServiceArea({ lat: hit.lat, lng: hit.lng }, "ZA"),
+          `Alice SPAR leaked outside area: ${hit.label}`,
+        );
+        assert(
+          !/king william/i.test(hit.label),
+          `Alice SPAR snapped to ${hit.label}`,
+        );
+      }
+      ok(
+        spar.length
+          ? `Alice SPAR stayed in-area (${spar[0].label})`
+          : "Alice SPAR had no Mapbox hit (no silent KWT pin)",
+      );
+    } catch (e) {
+      fail("Alice SPAR must not snap outside Alice", e);
+    }
+
+    try {
+      const informal = searchServiceAreaLandmarks("taxi rank", 8, "ZA");
+      const aliceHit = informal.find((p) => /alice/i.test(p.label));
+      assert(aliceHit, "Alice taxi-rank landmark still in fallback");
+      ok(`informal landmark fallback: ${aliceHit!.label}`);
+    } catch (e) {
+      fail("informal landmark fallback", e);
+    }
+
+    try {
+      const route = await getDrivingRoute(
+        { lat: -32.784, lng: 26.851 },
+        { lat: -32.787, lng: 26.834 },
+      );
+      const straight = distanceKm(
+        { lat: -32.784, lng: 26.851 },
+        { lat: -32.787, lng: 26.834 },
+      );
+      assert(route.distanceKm >= straight, "route >= straight-line");
+      assert(route.distanceKm > 0, "route has distance");
+      ok(
+        `directions Fort Hare → Alice CBD ${route.distanceKm}km road vs ${straight.toFixed(1)}km straight (${route.durationSeconds}s)`,
+      );
+    } catch (e) {
+      fail("directions Fort Hare → Alice", e);
+    }
+
+    try {
+      const same = await getDrivingRoute(alice, alice);
+      assert(same.distanceKm === 0, "same point is 0km");
+      ok("directions same pickup/dropoff is 0km");
+    } catch (e) {
+      fail("directions same pickup/dropoff is 0km", e);
+    }
   }
 
   console.log(`\nLogic summary: ${passed} passed, ${failed} failed`);

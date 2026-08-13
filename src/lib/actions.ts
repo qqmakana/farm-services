@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { mockRepo } from "./mock-store";
 import { calculateFare, type FareBreakdown } from "./fares";
+import { getDrivingRoute } from "./mapbox-server";
+import { assertBookingInServiceArea } from "./service-area";
 import { isValidMobileForCountry } from "./phone";
 import { DEFAULT_COUNTRY, getCountry } from "./countries";
 import {
@@ -141,7 +143,11 @@ function friendlyBookingError(err: unknown): Error {
       "Could not create your trip. Check your connection and try again — or use WhatsApp booking.",
     );
   }
-  if (/landmark|pickup|dropoff/i.test(raw) && /required/i.test(raw)) {
+  if (
+    /landmark|pickup|dropoff|service area|driving route|Mapbox|pinned/i.test(
+      raw,
+    )
+  ) {
     return new Error(raw);
   }
   if (raw.trim()) return err instanceof Error ? err : new Error(raw);
@@ -180,22 +186,47 @@ async function resolveFare(params: {
     weightFromDetails(params.details) ||
     null;
 
+  const pickup =
+    params.pickup_lat != null && params.pickup_lng != null
+      ? { lat: params.pickup_lat, lng: params.pickup_lng }
+      : null;
+  const dropoff =
+    params.dropoff_lat != null && params.dropoff_lng != null
+      ? { lat: params.dropoff_lat, lng: params.dropoff_lng }
+      : null;
+
+  if (!pickup || !dropoff) {
+    return calculateFare({
+      vehicle: params.vehicle,
+      serviceType: params.service_type,
+      countryCode,
+      pickup,
+      dropoff,
+      at: params.at ?? null,
+      isSubscribed,
+      weightCategory: weight,
+      routeDistanceKm: 0,
+      routeDurationSeconds: 0,
+      quoteReady: false,
+    });
+  }
+
+  assertBookingInServiceArea(pickup, dropoff, countryCode);
+  const route = await getDrivingRoute(pickup, dropoff);
+
   // Unified pricing (src/lib/pricing.ts) — ignore legacy rr_fare_rules % model
   return calculateFare({
     vehicle: params.vehicle,
     serviceType: params.service_type,
     countryCode,
-    pickup:
-      params.pickup_lat != null && params.pickup_lng != null
-        ? { lat: params.pickup_lat, lng: params.pickup_lng }
-        : null,
-    dropoff:
-      params.dropoff_lat != null && params.dropoff_lng != null
-        ? { lat: params.dropoff_lat, lng: params.dropoff_lng }
-        : null,
+    pickup,
+    dropoff,
     at: params.at ?? null,
     isSubscribed,
     weightCategory: weight,
+    routeDistanceKm: route.distanceKm,
+    routeDurationSeconds: route.durationSeconds,
+    quoteReady: true,
   });
 }
 
@@ -1296,6 +1327,11 @@ export async function createPayPalOrderAction(params: {
       at: params.at ?? null,
       customer_phone: params.customer_phone,
     });
+    if (!fare.quote_ready) {
+      throw new Error(
+        "Pickup and dropoff must be pinned before paying. We cannot charge a fare without a driving route.",
+      );
+    }
     amountZar = fare.fee_amount;
   }
 
@@ -1328,6 +1364,17 @@ export async function createJob(input: NewJobInput) {
 async function createJobInner(input: NewJobInput) {
   if (!input.pickup_landmark?.trim() || !input.dropoff_landmark?.trim()) {
     throw new Error("Pickup and dropoff landmarks are required.");
+  }
+
+  if (
+    input.pickup_lat == null ||
+    input.pickup_lng == null ||
+    input.dropoff_lat == null ||
+    input.dropoff_lng == null
+  ) {
+    throw new Error(
+      "Pickup and dropoff must be chosen from search or pinned on the map. We cannot quote a fare without both locations.",
+    );
   }
 
   if (
@@ -1366,6 +1413,11 @@ async function createJobInner(input: NewJobInput) {
     customer_phone: input.customer_phone,
     details: input.details,
   });
+  if (!fare.quote_ready) {
+    throw new Error(
+      "Pickup and dropoff must be chosen from search or pinned on the map. We cannot quote a fare without both locations.",
+    );
+  }
 
   if (!useAdmin()) {
     const job = mockRepo.createJob({
@@ -1547,9 +1599,7 @@ export async function capturePayPalAndCreateJob(
     if (existing) return existing as JobWithDriver;
   }
 
-  const captured = await paypalCaptureOrder(orderId);
-
-  // Recalculate fare server-side — do not trust draft.fee_amount.
+  // Quote before capture so a bad pin cannot take money then fail the job.
   const fare = await resolveFare({
     vehicle: draft.required_vehicle,
     service_type: draft.service_type,
@@ -1561,6 +1611,13 @@ export async function capturePayPalAndCreateJob(
     at: draft.scheduled_for ?? null,
     customer_phone: draft.customer_phone,
   });
+  if (!fare.quote_ready) {
+    throw new Error(
+      "Pickup and dropoff must be pinned before paying. We cannot charge a fare without a driving route.",
+    );
+  }
+
+  const captured = await paypalCaptureOrder(orderId);
 
   return createJob({
     ...draft,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Check, LocateFixed, MapPin, Plus, Search } from "lucide-react";
 import { useCountry } from "@/components/country/country-provider";
 import { AddLocationModal } from "@/components/location/add-location-modal";
@@ -8,13 +8,10 @@ import {
   bumpLocationUsage,
   searchCommunityLocations,
 } from "@/lib/actions-locations";
-import {
-  findPlaceByLabel,
-  provinceName,
-  searchPlaces,
-  type Place,
-} from "@/lib/landmarks";
+import { searchAddressesAction } from "@/lib/actions-mapbox";
 import { t } from "@/lib/i18n";
+import type { AddressSuggestion } from "@/lib/mapbox-types";
+import { isInServiceArea } from "@/lib/service-area";
 import type { CommunityLocation } from "@/lib/types";
 
 export type PlaceValue = {
@@ -29,7 +26,7 @@ export function emptyPlaceValue(): PlaceValue {
 }
 
 type Suggestion =
-  | { source: "static"; place: Place }
+  | { source: "mapbox"; hit: AddressSuggestion }
   | { source: "community"; loc: CommunityLocation };
 
 export function PlacesAutocomplete({
@@ -39,9 +36,8 @@ export function PlacesAutocomplete({
   onChange,
   required = false,
   showGps = false,
-  preferVillages = false,
+  preferVillages: _preferVillages = false,
   allowAddMissing = true,
-  /** Borderless Uber-style field (Where to? bar) */
   compact = false,
 }: {
   label?: string;
@@ -59,77 +55,121 @@ export function PlacesAutocomplete({
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [community, setCommunity] = useState<CommunityLocation[]>([]);
+  const [hits, setHits] = useState<AddressSuggestion[]>([]);
+  const [notFound, setNotFound] = useState(false);
+  const [usedLandmarkFallback, setUsedLandmarkFallback] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [, startSearch] = useTransition();
+  const pinnedLabelRef = useRef<string>(
+    value.lat != null ? value.label : "",
+  );
 
-  const staticSuggestions = useMemo(() => {
-    const list = searchPlaces(value.label, preferVillages ? 10 : 8, countryCode);
-    if (preferVillages && !value.label.trim()) {
-      return list.filter((p) => p.kind === "village");
+  useEffect(() => {
+    if (value.lat != null && value.lng != null) {
+      pinnedLabelRef.current = value.label;
     }
-    return list;
-  }, [value.label, preferVillages, countryCode]);
+  }, [value.label, value.lat, value.lng]);
 
   useEffect(() => {
     const q = value.label.trim();
     if (!focused) return;
-    const t = window.setTimeout(() => {
+    if (q.length < 2) {
+      setHits([]);
+      setNotFound(false);
+      setUsedLandmarkFallback(false);
+      setSearchError(null);
+      setCommunity([]);
+      return;
+    }
+    const timer = window.setTimeout(() => {
       startSearch(() => {
-        void searchCommunityLocations(q, countryCode, 6)
+        void searchAddressesAction(
+          q,
+          countryCode,
+          value.lat != null && value.lng != null
+            ? { lat: value.lat, lng: value.lng }
+            : null,
+        )
+          .then((res) => {
+            setHits(res.results);
+            setNotFound(res.notFound);
+            setUsedLandmarkFallback(res.usedLandmarkFallback);
+            setSearchError(null);
+          })
+          .catch((err: unknown) => {
+            setHits([]);
+            setNotFound(false);
+            setUsedLandmarkFallback(false);
+            setSearchError(
+              err instanceof Error ? err.message : "Address search failed.",
+            );
+          });
+        void searchCommunityLocations(q, countryCode, 4)
           .then(setCommunity)
           .catch(() => setCommunity([]));
       });
-    }, 180);
-    return () => window.clearTimeout(t);
-  }, [value.label, countryCode, focused]);
+    }, 220);
+    return () => window.clearTimeout(timer);
+  }, [value.label, countryCode, focused, value.lat, value.lng]);
 
   const suggestions: Suggestion[] = useMemo(() => {
-    const staticIds = new Set(
-      staticSuggestions.map((p) => p.label.toLowerCase()),
-    );
+    const fromHits: Suggestion[] = hits.map((hit) => ({
+      source: "mapbox" as const,
+      hit,
+    }));
+    if (fromHits.length > 0 && !usedLandmarkFallback) {
+      return fromHits;
+    }
+    const hitLabels = new Set(hits.map((h) => h.label.toLowerCase()));
     const fromCommunity: Suggestion[] = community
       .filter((loc) => {
-        const label = `${loc.name} · ${loc.village}`.toLowerCase();
-        return !staticIds.has(label) && !staticIds.has(loc.name.toLowerCase());
+        const name = `${loc.name} · ${loc.village}`.toLowerCase();
+        if (hitLabels.has(name) || hitLabels.has(loc.name.toLowerCase())) {
+          return false;
+        }
+        if (loc.latitude == null || loc.longitude == null) return true;
+        return isInServiceArea(
+          { lat: loc.latitude, lng: loc.longitude },
+          countryCode,
+        );
       })
       .map((loc) => ({ source: "community" as const, loc }));
-    const fromStatic: Suggestion[] = staticSuggestions.map((place) => ({
-      source: "static" as const,
-      place,
-    }));
-    // Community (popular / user-added) first when querying
-    if (value.label.trim()) {
-      return [...fromCommunity, ...fromStatic].slice(0, 10);
-    }
-    return [...fromStatic, ...fromCommunity].slice(0, 10);
-  }, [staticSuggestions, community, value.label]);
+    return [...fromHits, ...fromCommunity].slice(0, 10);
+  }, [hits, community, usedLandmarkFallback, countryCode]);
 
   const showEmptyAdd =
     allowAddMissing &&
     focused &&
     value.label.trim().length >= 2 &&
-    suggestions.length === 0;
+    (notFound || suggestions.length === 0);
 
-  const showList = focused && (suggestions.length > 0 || showEmptyAdd);
+  const showList =
+    focused &&
+    (suggestions.length > 0 || showEmptyAdd || notFound || Boolean(searchError));
 
-  function selectStatic(place: Place) {
+  function selectHit(hit: AddressSuggestion) {
     onChange({
-      label: place.label,
-      lat: place.lat,
-      lng: place.lng,
+      label: hit.label,
+      lat: hit.lat,
+      lng: hit.lng,
     });
+    pinnedLabelRef.current = hit.label;
     setFocused(false);
+    setNotFound(false);
   }
 
   function selectCommunity(loc: CommunityLocation) {
     const desc = loc.description?.trim();
     const base = `${loc.name} · ${loc.village}`;
+    const nextLabel = desc ? `${base} (${desc})` : base;
     onChange({
-      label: desc ? `${base} (${desc})` : base,
+      label: nextLabel,
       lat: loc.latitude,
       lng: loc.longitude,
       locationId: loc.id,
     });
+    pinnedLabelRef.current = nextLabel;
     setFocused(false);
     void bumpLocationUsage(loc.id);
   }
@@ -137,38 +177,30 @@ export function PlacesAutocomplete({
   function onBlurCommit() {
     window.setTimeout(() => {
       setFocused(false);
-      if (value.label.trim() && (value.lat == null || value.lng == null)) {
-        const found = findPlaceByLabel(value.label, countryCode);
-        if (found) {
-          onChange({
-            label: found.label,
-            lat: found.lat,
-            lng: found.lng,
-          });
-        }
-      }
     }, 180);
   }
 
   function useGps() {
     setGpsError(null);
     if (!navigator.geolocation) {
-      setGpsError("GPS unavailable — tap the map or type a landmark.");
+      setGpsError("GPS unavailable — tap the map or search for an address.");
       setFocused(true);
       return;
     }
     setGpsLoading(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        const nextLabel = value.label.trim() || "Pinned GPS location";
         onChange({
-          label: value.label.trim() || "Pinned GPS location",
+          label: nextLabel,
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
         });
+        pinnedLabelRef.current = nextLabel;
         setGpsLoading(false);
       },
       () => {
-        setGpsError("Couldn’t get GPS — tap the map or type a landmark.");
+        setGpsError("Couldn’t get GPS — tap the map or search for an address.");
         setGpsLoading(false);
         setFocused(true);
       },
@@ -177,6 +209,7 @@ export function PlacesAutocomplete({
   }
 
   const hintExample = country.landmarkHints[0] ?? "Near the clinic";
+  const pinned = value.lat != null && value.lng != null;
 
   return (
     <div className="relative">
@@ -200,15 +233,16 @@ export function PlacesAutocomplete({
                   : undefined
             }
             value={value.label}
-            onChange={(e) =>
-              // Keep map pin while typing (Uber-style) — only a new place pick moves it
+            onChange={(e) => {
+              const next = e.target.value;
+              const keepPin = next === pinnedLabelRef.current && pinned;
               onChange({
-                label: e.target.value,
-                lat: value.lat,
-                lng: value.lng,
-                locationId: value.locationId,
-              })
-            }
+                label: next,
+                lat: keepPin ? value.lat : null,
+                lng: keepPin ? value.lng : null,
+                locationId: keepPin ? value.locationId : undefined,
+              });
+            }}
             onFocus={() => setFocused(true)}
             onBlur={onBlurCommit}
             placeholder={
@@ -242,35 +276,51 @@ export function PlacesAutocomplete({
       </div>
       {!compact ? (
         <p className="mt-1 text-xs text-slate-500">
-          {country.flag} {country.name} — type a landmark or address (e.g.
-          &ldquo;{hintExample}&rdquo;). Tap the map or GPS to pin — both stay
-          active.
+          {country.flag} {country.name} — search an address or place (e.g.
+          &ldquo;{hintExample}&rdquo;). Tap a result to pin it; we never guess.
         </p>
       ) : null}
       {gpsError ? (
         <p className="mt-1 text-xs text-rose-600">{gpsError}</p>
       ) : null}
+      {searchError && focused ? (
+        <p className="mt-1 text-xs text-rose-600">{searchError}</p>
+      ) : null}
+      {notFound && focused && !searchError ? (
+        <p
+          data-testid="address-not-found"
+          className="mt-1 text-xs font-medium text-rose-600"
+        >
+          Address not found. Try a nearby shop, school, or landmark — we will
+          not guess a location.
+        </p>
+      ) : null}
       {showList ? (
         <ul className="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-xl border border-gray-200 bg-white shadow-lg">
           {suggestions.map((s) =>
-            s.source === "static" ? (
-              <li key={`s-${s.place.id}`}>
+            s.source === "mapbox" ? (
+              <li key={`m-${s.hit.id}`}>
                 <button
                   type="button"
                   className="flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm hover:bg-[#f5f5f5]"
                   onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => selectStatic(s.place)}
+                  onClick={() => selectHit(s.hit)}
                 >
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#000000]" />
                   <span>
                     <span className="font-medium text-slate-900">
-                      {s.place.label}
+                      {s.hit.needsConfirmation ? "Did you mean " : ""}
+                      {s.hit.label}
+                      {s.hit.needsConfirmation ? "?" : ""}
                     </span>
-                    <span className="block text-xs text-slate-500 capitalize">
-                      {s.place.kind === "village" ? "Town / area" : "Landmark"}
-                      {s.place.province
-                        ? ` · ${provinceName(s.place.province) || s.place.province}`
-                        : ""}
+                    <span className="block text-xs text-slate-500">
+                      {s.hit.source === "landmark"
+                        ? "Local landmark"
+                        : s.hit.needsConfirmation
+                          ? "Low-confidence match — tap to confirm"
+                          : s.hit.inServiceArea
+                            ? "Address"
+                            : "Outside service area"}
                     </span>
                   </span>
                 </button>
@@ -311,7 +361,8 @@ export function PlacesAutocomplete({
           {(showEmptyAdd ||
             (allowAddMissing &&
               focused &&
-              value.label.trim().length >= 2)) && (
+              value.label.trim().length >= 2 &&
+              notFound)) && (
             <li className="border-t border-gray-100">
               <button
                 type="button"
@@ -323,7 +374,7 @@ export function PlacesAutocomplete({
                 }}
               >
                 <Plus className="h-4 w-4" />
-                {suggestions.length === 0
+                {notFound || suggestions.length === 0
                   ? "Didn't find it? Add missing location"
                   : "Add missing location"}
               </button>
@@ -338,6 +389,7 @@ export function PlacesAutocomplete({
           onClose={() => setAddOpen(false)}
           onCreated={(place) => {
             onChange(place);
+            pinnedLabelRef.current = place.label;
             setAddOpen(false);
           }}
         />

@@ -80,7 +80,11 @@ export function LandmarkField({
       />
       {!compact && loc.lat != null && loc.lng != null ? (
         <p className="text-[11px] font-medium text-emerald-700">
-          Map pin set · keep refining the landmark name for your driver
+          Map pin set
+        </p>
+      ) : !compact && loc.landmark.trim() ? (
+        <p className="text-[11px] font-medium text-rose-700">
+          Address not pinned — pick a search result or tap the map
         </p>
       ) : null}
     </div>

@@ -67,6 +67,9 @@ export function RideSheet({
   const [nightExtra, setNightExtra] = useState(0);
   const [currency, setCurrency] = useState(country.currency);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [quoteReady, setQuoteReady] = useState(false);
+  const [etaLabel, setEtaLabel] = useState("Few min");
 
   useEffect(() => {
     const guest = getGuestProfile();
@@ -125,14 +128,31 @@ export function RideSheet({
           customer_phone: phone || getGuestProfile()?.phone || null,
         });
         if (!cancelled) {
-          setFee(fare.fee_amount);
-          setBaseFee(fare.base_fee_amount);
-          setIsNight(fare.is_night_ride);
-          setNightExtra(fare.night_surcharge_amount);
-          setCurrency(fare.currency);
+          setQuoteError(null);
+          setQuoteReady(fare.quote_ready);
+          if (fare.quote_ready) {
+            setFee(fare.fee_amount);
+            setBaseFee(fare.base_fee_amount);
+            setIsNight(fare.is_night_ride);
+            setNightExtra(fare.night_surcharge_amount);
+            setCurrency(fare.currency);
+            const mins = Math.max(
+              1,
+              Math.round((fare.route_duration_seconds || 0) / 60),
+            );
+            setEtaLabel(mins <= 1 ? "1 min" : `${mins} min`);
+          } else {
+            setFee(country.pricing.ride.base);
+            setEtaLabel("Few min");
+          }
         }
-      } catch {
-        /* keep */
+      } catch (err) {
+        if (!cancelled) {
+          setQuoteReady(false);
+          setQuoteError(
+            err instanceof Error ? err.message : "Could not calculate fare.",
+          );
+        }
       }
     })();
     return () => {
@@ -156,6 +176,12 @@ export function RideSheet({
     Boolean(phone.trim()) &&
     Boolean(pickup.landmark.trim()) &&
     Boolean(dropoff.landmark.trim()) &&
+    pickup.lat != null &&
+    pickup.lng != null &&
+    dropoff.lat != null &&
+    dropoff.lng != null &&
+    quoteReady &&
+    !quoteError &&
     (whenMode === "now" || Boolean(atIso));
 
   const selectedLabel = useMemo(() => {
@@ -177,7 +203,7 @@ export function RideSheet({
       from: country.pricing.ride.base,
       modeId: null as string | null,
       image: "/home/sug-ride.jpg",
-      eta: "Few min",
+      eta: etaLabel,
     },
     {
       id: "bakkie" as VehicleType,
@@ -186,7 +212,7 @@ export function RideSheet({
       from: country.pricing.delivery.base,
       modeId: null as string | null,
       image: "/home/sug-farm.jpg",
-      eta: "Few min",
+      eta: etaLabel,
     },
     ...country.localRideModes.map((m) => ({
       id: "motorcycle" as VehicleType,
@@ -243,6 +269,15 @@ export function RideSheet({
           />
         }
       />
+
+      {quoteError ? (
+        <p
+          data-testid="quote-error"
+          className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700"
+        >
+          {quoteError}
+        </p>
+      ) : null}
 
       {/* Uber-style Now / Later + GPS row */}
       <div className="flex items-center gap-2">
