@@ -13,6 +13,7 @@ function FarmInner() {
       <UberShell
         showTabBar
         showServicePills
+        initialSnap="mid"
         pin={pin}
         onMapPin={onMapPin}
         backHref="/"

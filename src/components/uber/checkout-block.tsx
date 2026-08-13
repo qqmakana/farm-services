@@ -298,6 +298,7 @@ export function CheckoutBlock({
       ) : null}
 
       <PaymentSelector
+        compact={compact}
         value={payMethod}
         onChange={setPayMethod}
         currencyLabel={country.currencySymbol}

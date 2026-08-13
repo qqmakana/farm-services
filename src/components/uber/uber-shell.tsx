@@ -2,7 +2,14 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
 import { HelpCircle, MapPin } from "lucide-react";
 import { ShareAppButton } from "@/components/share-app-button";
 import { ServicePills } from "@/components/uber/service-pills";
@@ -33,6 +40,7 @@ export function UberShell({
   showServicePills = false,
   floatingSearch = null,
   stickyAction = null,
+  initialSnap = "peek",
 }: {
   children: ReactNode;
   pin?: { lat: number; lng: number } | null;
@@ -49,11 +57,66 @@ export function UberShell({
   floatingSearch?: ReactNode;
   /** Pinned bottom CTA inside the sheet (Book Now) */
   stickyAction?: ReactNode;
+  /** Starting sheet height. Ride checkout uses mid so the map stays visible. */
+  initialSnap?: "peek" | "mid";
 }) {
   const { country } = useCountry();
   const bottomInset = showTabBar
     ? "calc(4rem + env(safe-area-inset-bottom, 0px))"
     : "0px";
+
+  type SheetSnap = "peek" | "mid" | "full";
+  const SNAP_PCT: Record<SheetSnap, number> = {
+    peek: 34,
+    mid: 48,
+    full: 70,
+  };
+  const [snap, setSnap] = useState<SheetSnap>(initialSnap);
+  const [dragPx, setDragPx] = useState(0);
+  const dragStartY = useRef(0);
+  const dragStartSnap = useRef<SheetSnap>("peek");
+  const dragging = useRef(false);
+  const sawDropoff = useRef(false);
+
+  useEffect(() => {
+    if (dropoffPin && !sawDropoff.current) {
+      setSnap("mid");
+    }
+    sawDropoff.current = Boolean(dropoffPin);
+  }, [dropoffPin]);
+
+  const applySnapFromDrag = useCallback((dy: number, from: SheetSnap) => {
+    const order: SheetSnap[] = ["peek", "mid", "full"];
+    const idx = order.indexOf(from);
+    if (dy > 40) setSnap(order[Math.max(0, idx - 1)]);
+    else if (dy < -40) setSnap(order[Math.min(2, idx + 1)]);
+  }, []);
+
+  function onHandlePointerDown(e: PointerEvent<HTMLDivElement>) {
+    dragging.current = true;
+    dragStartY.current = e.clientY;
+    dragStartSnap.current = snap;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+
+  function onHandlePointerMove(e: PointerEvent<HTMLDivElement>) {
+    if (!dragging.current) return;
+    setDragPx(e.clientY - dragStartY.current);
+  }
+
+  function onHandlePointerUp(e: PointerEvent<HTMLDivElement>) {
+    if (!dragging.current) return;
+    dragging.current = false;
+    const dy = e.clientY - dragStartY.current;
+    setDragPx(0);
+    if (Math.abs(dy) < 10) {
+      setSnap((s) => (s === "peek" ? "mid" : s === "mid" ? "peek" : "mid"));
+      return;
+    }
+    applySnapFromDrag(dy, dragStartSnap.current);
+  }
+
+  const sheetHeight = `clamp(11.5rem, calc(${SNAP_PCT[snap]}% - ${dragPx}px), 78%)`;
 
   return (
     <div
@@ -66,7 +129,10 @@ export function UberShell({
           pin={pin}
           dropoff={dropoffPin}
           center={country.mapCenter}
-          onSelect={onMapPin}
+          onSelect={(next) => {
+            if (snap === "full") setSnap("mid");
+            onMapPin?.(next);
+          }}
         />
       </div>
 
@@ -146,15 +212,51 @@ export function UberShell({
       {/* Native-style bottom sheet over the map */}
       <div
         data-testid="bottom-sheet"
-        className="ru-sheet absolute inset-x-0 bottom-0 z-20 flex max-h-[72vh] flex-col overflow-hidden transition-all duration-300 ease-out"
+        data-sheet-snap={snap}
+        className={`ru-sheet absolute inset-x-0 bottom-0 z-20 flex flex-col overflow-hidden ${
+          dragPx !== 0 ? "" : "transition-[height] duration-300 ease-out"
+        }`}
         style={{
+          height: sheetHeight,
           boxShadow: "0 -4px 24px rgba(0,0,0,0.1)",
+        }}
+        onFocusCapture={(e) => {
+          const tag = (e.target as HTMLElement).tagName;
+          if (tag === "INPUT" || tag === "TEXTAREA") setSnap("full");
+        }}
+        onBlurCapture={() => {
+          window.setTimeout(() => {
+            const active = document.activeElement;
+            const sheet = document.querySelector("[data-testid='bottom-sheet']");
+            if (sheet && active && sheet.contains(active)) return;
+            setSnap(dropoffPin ? "mid" : "peek");
+          }, 180);
         }}
       >
         <div
           data-testid="drag-handle"
-          className="ru-sheet-handle shrink-0 !my-3 !h-1.5 !w-12 !bg-gray-300"
-        />
+          className="flex shrink-0 cursor-grab touch-none flex-col items-center active:cursor-grabbing"
+          onPointerDown={onHandlePointerDown}
+          onPointerMove={onHandlePointerMove}
+          onPointerUp={onHandlePointerUp}
+          onPointerCancel={onHandlePointerUp}
+          role="button"
+          tabIndex={0}
+          aria-label="Drag to show or hide the map"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setSnap((s) => (s === "peek" ? "mid" : "peek"));
+            }
+          }}
+        >
+          <div className="ru-sheet-handle !my-3 !h-1.5 !w-12 !bg-gray-300" />
+          {snap !== "peek" ? (
+            <p className="pb-1 text-[10px] font-semibold tracking-wide text-gray-400 uppercase">
+              Pull down to see map
+            </p>
+          ) : null}
+        </div>
         <div
           className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 ${
             stickyAction ? "pb-2" : showTabBar ? "pb-4" : "pb-[max(1rem,env(safe-area-inset-bottom))]"

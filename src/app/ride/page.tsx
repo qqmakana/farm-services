@@ -18,6 +18,7 @@ function RideInner() {
       <UberShell
         showTabBar
         showServicePills
+        initialSnap="mid"
         pin={pin}
         dropoffPin={dropoffPin}
         onMapPin={onMapPin}
