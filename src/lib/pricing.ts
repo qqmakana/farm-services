@@ -6,10 +6,9 @@
  *
  * Payment scenarios (platform_fee = booking fee):
  * A) CASH — rider pays total to driver; on complete deduct platform_fee from wallet.
- * B) CARD — rider pays total via PayPal; on complete credit driver (total − platform_fee).
+ * B) CARD — rider pays total via PayPal (capture in src/lib/paypal.ts); on complete
+ *    credit driver (total − platform_fee).
  * C) VILLAGE PASS — platform_fee = 0; rider pays driver fare only; driver keeps 100%.
- *
- * // TODO: Integrate PayPal API here (checkout already wired elsewhere)
  */
 
 import type { ServiceType } from "./types";

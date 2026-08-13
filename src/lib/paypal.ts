@@ -13,6 +13,13 @@ export function isPayPalConfigured() {
   return true;
 }
 
+/** Fake "paid" trips — `next dev` only. Never on Vercel production or `next start`. */
+export function allowLocalTestPayments() {
+  if (process.env.VERCEL_ENV === "production") return false;
+  if (process.env.NEXT_PUBLIC_VERCEL_ENV === "production") return false;
+  return process.env.NODE_ENV !== "production";
+}
+
 export function getPayPalCurrency() {
   return (process.env.PAYPAL_CURRENCY || "ZAR").toUpperCase();
 }

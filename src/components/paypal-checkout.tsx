@@ -17,6 +17,12 @@ function paypalReady() {
   return true;
 }
 
+/** Fake paid trips — `next dev` only. Hard-blocked on Vercel production / `next start`. */
+function allowLocalTestPay() {
+  if (process.env.NEXT_PUBLIC_VERCEL_ENV === "production") return false;
+  return process.env.NODE_ENV !== "production";
+}
+
 export function PayPalCheckout({
   amount,
   description,
@@ -41,6 +47,16 @@ export function PayPalCheckout({
   const [pending, startTransition] = useTransition();
 
   if (!paypalReady()) {
+    if (!allowLocalTestPay()) {
+      return (
+        <section className="rounded-2xl border border-[var(--ru-line)] bg-[var(--ru-elevated)] p-5 text-sm text-[var(--ru-ink)]">
+          <p className="font-semibold">Card payments unavailable</p>
+          <p className="mt-2 text-xs leading-relaxed text-[var(--ru-muted)]">
+            Card payments are temporarily unavailable, please choose cash.
+          </p>
+        </section>
+      );
+    }
     return (
       <section className="rounded-2xl border border-[var(--ru-line)] bg-[var(--ru-elevated)] p-5 text-sm text-[var(--ru-ink)]">
         <p className="font-semibold">Card (local test mode)</p>

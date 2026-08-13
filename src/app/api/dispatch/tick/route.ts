@@ -1,44 +1,29 @@
 import { NextResponse } from "next/server";
-import { expireStaleOffers } from "@/lib/dispatch/offer-chain";
-import { matchJobAfterCreate } from "@/lib/matching";
-import { createAdminClient, hasServiceRole } from "@/lib/supabase/admin";
+import {
+  resolveDispatchTickSource,
+  runDispatchTick,
+} from "@/lib/dispatch/run-tick";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
  * Expire timed-out driver offers and cascade to the next ranked driver.
- * Also re-kick Village Pass (priority_score=1) searching jobs first.
+ *
+ * Triggered by:
+ * - Vercel Cron every minute (server-side; no rider client required)
+ * - Rider trip page poll every 4s (fast-path backup)
  */
-export async function POST() {
-  if (!hasServiceRole()) {
-    return NextResponse.json({ ok: true, expired: 0, mode: "local" });
-  }
-  const expired = await expireStaleOffers();
-
-  // Priority matching: Pass jobs waiting without an active offer get rematched first
-  let priorityRematched = 0;
-  try {
-    const admin = createAdminClient();
-    const { data: waiting } = await admin
-      .from("rr_jobs")
-      .select("id")
-      .in("status", ["searching_driver", "new"])
-      .is("offered_driver_id", null)
-      .order("priority_score", { ascending: false })
-      .order("created_at", { ascending: true })
-      .limit(5);
-    for (const row of waiting ?? []) {
-      await matchJobAfterCreate(row.id);
-      priorityRematched += 1;
-    }
-  } catch {
-    /* column may be missing until VILLAGE_PASS.sql is run */
-  }
-
-  return NextResponse.json({ ok: true, expired, priorityRematched });
+async function handle(request: Request) {
+  const source = resolveDispatchTickSource(request);
+  const result = await runDispatchTick(source);
+  return NextResponse.json(result);
 }
 
-export async function GET() {
-  return POST();
+export async function POST(request: Request) {
+  return handle(request);
+}
+
+export async function GET(request: Request) {
+  return handle(request);
 }

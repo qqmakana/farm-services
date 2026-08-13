@@ -61,6 +61,7 @@ import type {
   VehicleType,
 } from "./types";
 import {
+  allowLocalTestPayments,
   getPayPalCurrency,
   isPayPalConfigured,
   paypalCaptureOrder,
@@ -3039,8 +3040,7 @@ export async function completeTrip(
       commission: remit,
     });
   } else if (isCardPaymentMethod(method) && !cashDenied) {
-    // Scenario B (CARD): // TODO: Integrate PayPal API here (capture already elsewhere)
-    // Credit driver (total − platform_fee) = stored driver_payout
+    // Scenario B (CARD): PayPal already captured at checkout; credit driver fare.
     walletUpdate = creditPayoutToWallet({
       walletBalance: bal,
       payout,
@@ -3513,10 +3513,16 @@ export async function rematchJob(jobId: string) {
 }
 
 /**
- * Local test payment ? creates a paid job without PayPal.
- * Only works when live PayPal credentials are not configured.
+ * Local test payment — creates a paid job without PayPal.
+ * Only works in `next dev` when live PayPal credentials are not configured.
+ * Blocked in production even if keys are missing.
  */
 export async function createLocalPaidJob(draft: Omit<NewJobInput, "payment">) {
+  if (!allowLocalTestPayments()) {
+    throw new Error(
+      "Card payments are temporarily unavailable, please choose cash",
+    );
+  }
   if (isPayPalConfigured()) {
     throw new Error("PayPal is configured — use the PayPal button.");
   }
@@ -3534,8 +3540,13 @@ export async function createLocalPaidJob(draft: Omit<NewJobInput, "payment">) {
 export async function createLocalPaidShopOrder(
   input: Omit<ShopOrderInput, "payment">,
 ) {
+  if (!allowLocalTestPayments()) {
+    throw new Error(
+      "Card payments are temporarily unavailable, please choose cash",
+    );
+  }
   if (isPayPalConfigured()) {
-    throw new Error("PayPal is configured ? use the PayPal button.");
+    throw new Error("PayPal is configured — use the PayPal button.");
   }
   const stamp = Date.now().toString(36).toUpperCase();
   return createShopOrder({

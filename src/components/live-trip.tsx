@@ -84,7 +84,10 @@ export function LiveTrip({
 
   useEffect(() => {
     const t = setInterval(() => {
-      void fetch("/api/dispatch/tick", { method: "POST" }).catch(() => null);
+      // Fast-path only — cascade also runs via Vercel Cron /api/cron/dispatch-tick
+      void fetch("/api/dispatch/tick?source=client", { method: "POST" }).catch(
+        () => null,
+      );
       refresh();
     }, 4000);
     return () => clearInterval(t);
@@ -347,8 +350,15 @@ export function LiveTrip({
             No drivers available right now
           </p>
           <p className="mt-2 text-sm text-[var(--ru-muted)]">
-            Three drivers were offered and none accepted. Book again, schedule
-            for later, or WhatsApp dispatch on {BRAND.phone}.
+            {Number(job.dispatch_attempts) > 0
+              ? `${Number(job.dispatch_attempts)} driver${
+                  Number(job.dispatch_attempts) === 1 ? "" : "s"
+                } ${
+                  Number(job.dispatch_attempts) === 1 ? "was" : "were"
+                } offered and none accepted.`
+              : "No drivers are online near you right now."}{" "}
+            Book again, schedule for later, or WhatsApp dispatch on{" "}
+            {BRAND.phone}.
           </p>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
             <a
