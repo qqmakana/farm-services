@@ -384,9 +384,9 @@ test.describe("Uber-Style UI/UX Quality Checks", () => {
   test("full-bleed map + floating search + bottom sheet", async ({ page }) => {
     await gotoReady(page, "/ride");
 
-    const map = page.locator(".leaflet-container");
+    const map = page.locator("[data-testid=\"ride-map\"]");
     await expect(map).toBeVisible({ timeout: 15_000 });
-    await expect(page.locator(".leaflet-control-zoom")).toHaveCount(0);
+    await expect(page.locator(".mapboxgl-ctrl-zoom-in")).toHaveCount(0);
 
     await expect(page.getByTestId("search-bar")).toBeVisible();
     const sheet = page.getByTestId("bottom-sheet");
@@ -484,7 +484,7 @@ test.describe("Performance & Load Time", () => {
     await lockCountry(context, "ZA");
     const start = Date.now();
     await gotoReady(page, "/ride");
-    await page.locator(".leaflet-container").waitFor({ state: "visible" });
+    await page.locator("[data-testid=\"ride-map\"]").waitFor({ state: "visible" });
     expect(Date.now() - start).toBeLessThan(8_000);
   });
 

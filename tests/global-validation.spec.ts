@@ -61,10 +61,9 @@ test.describe("Multi-country configuration", () => {
     await lockCountry(context, "ZA");
     await gotoReady(page, "/ride");
 
-    const map = page.locator(".leaflet-container");
+    const map = page.locator("[data-testid=\"ride-map\"]");
     await expect(map).toBeVisible({ timeout: 15_000 });
-    // Tiles depend on CDN — only assert chrome is clean
-    await expect(page.locator(".leaflet-control-zoom")).toHaveCount(0);
+    await expect(page.locator(".mapboxgl-ctrl-zoom-in")).toHaveCount(0);
   });
 });
 
@@ -76,7 +75,7 @@ test.describe("Uber-style UI", () => {
   test("full-bleed map + bottom sheet + drag handle", async ({ page }) => {
     await gotoReady(page, "/ride");
 
-    await expect(page.locator(".leaflet-container")).toBeVisible({
+    await expect(page.locator("[data-testid=\"ride-map\"]")).toBeVisible({
       timeout: 15_000,
     });
     const sheet = page.getByTestId("bottom-sheet");

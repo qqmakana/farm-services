@@ -742,6 +742,92 @@ html[data-theme="dark"] .ru-skeleton {
   }
 }
 
+/* Mapbox ride map — dusk 3D, Uber-style pins */
+.vr-mapbox,
+.vr-mapbox .mapboxgl-map,
+.vr-mapbox .mapboxgl-canvas-container,
+.vr-mapbox .mapboxgl-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.vr-mapbox .mapboxgl-canvas {
+  outline: none;
+}
+
+.vr-mapbox .mapboxgl-ctrl-bottom-left,
+.vr-mapbox .mapboxgl-ctrl-bottom-right {
+  top: 5.25rem;
+  bottom: auto;
+  z-index: 2;
+}
+
+.vr-mapbox .mapboxgl-ctrl-attrib {
+  background: rgb(255 255 255 / 72%);
+  font-size: 10px;
+}
+
+.vr-map-pin {
+  position: relative;
+  pointer-events: auto;
+}
+
+.vr-map-pin-pickup {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #111;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 40%);
+}
+
+.vr-map-pin-pickup::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 2px solid rgb(14 203 129 / 70%);
+  animation: vr-map-pulse 2.1s ease-out infinite;
+}
+
+.vr-map-pin-dropoff {
+  width: 14px;
+  height: 14px;
+  background: #111;
+  border: 2.5px solid #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 35%);
+}
+
+.vr-map-pin-you {
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #2563eb;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 6px rgb(37 99 235 / 28%);
+}
+
+.vr-map-pin-job {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: #111;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 30%);
+  cursor: pointer;
+}
+
+@keyframes vr-map-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
 /* Printable pamphlet — /marketing/pamphlet */
 @media print {
   header,

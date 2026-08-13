@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
+  transpilePackages: ["mapbox-gl"],
   // Driver apply sends several photos; compress client-side but keep headroom.
   experimental: {
     serverActions: {

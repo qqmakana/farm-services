@@ -46,7 +46,7 @@ const DriverJobsMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full items-center justify-center bg-[#f5f5f5] text-sm text-[#000000]">
+      <div className="flex h-full items-center justify-center bg-[#1b2433] text-sm text-white/70">
         Loading map…
       </div>
     ),

@@ -10,7 +10,7 @@ const PinMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-48 items-center justify-center rounded-xl bg-[#f5f5f5] text-sm text-[#000000]">
+      <div className="flex h-48 items-center justify-center rounded-xl bg-[#e8eef5] text-sm text-[#000000]">
         Loading map…
       </div>
     ),

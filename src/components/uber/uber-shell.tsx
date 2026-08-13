@@ -15,7 +15,7 @@ const VillageMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full w-full items-center justify-center bg-[#F3F3F3] text-sm text-[var(--ru-muted)]">
+      <div className="flex h-full w-full items-center justify-center bg-[#1b2433] text-sm text-white/70">
         Loading map…
       </div>
     ),
@@ -57,7 +57,7 @@ export function UberShell({
 
   return (
     <div
-      className="ru-force-light fixed top-0 left-1/2 z-[45] w-full max-w-md -translate-x-1/2 overflow-hidden bg-[#F3F3F3] font-[family-name:var(--font-sans)] text-[var(--ru-ink)]"
+      className="ru-force-light fixed top-0 left-1/2 z-[45] w-full max-w-md -translate-x-1/2 overflow-hidden bg-[#1b2433] font-[family-name:var(--font-sans)] text-[var(--ru-ink)]"
       style={{ bottom: bottomInset }}
     >
       {/* Full-screen map foundation */}
