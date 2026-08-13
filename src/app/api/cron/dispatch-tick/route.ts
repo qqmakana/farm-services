@@ -5,9 +5,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Vercel Cron entry — every minute.
- * Auth: Authorization: Bearer $CRON_SECRET (same pattern as partner-weekly).
- * Vercel injects this header when CRON_SECRET is set on the project.
+ * Server-side dispatch cascade (no rider client required).
+ *
+ * Triggered by GitHub Actions every 5 minutes (Hobby Vercel cannot
+ * schedule sub-daily crons). Auth: Authorization: Bearer $CRON_SECRET.
  */
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET?.trim();

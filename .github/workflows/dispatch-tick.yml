@@ -1,0 +1,32 @@
+# Hobby Vercel cannot run crons more than once per day.
+# GitHub Actions schedules every 5 minutes (platform minimum) so
+# expired driver offers cascade without a rider client open.
+name: Dispatch tick
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cascade expired driver offers
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          DISPATCH_TICK_URL: ${{ secrets.DISPATCH_TICK_URL }}
+        run: |
+          URL="${DISPATCH_TICK_URL:-https://village-ride.vercel.app/api/cron/dispatch-tick}"
+          if [ -z "$CRON_SECRET" ]; then
+            echo "CRON_SECRET GitHub secret is not set — skipping"
+            exit 1
+          fi
+          code=$(curl -sS -o /tmp/dispatch-tick.json -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "User-Agent: github-actions-dispatch-tick" \
+            "$URL")
+          echo "HTTP $code"
+          cat /tmp/dispatch-tick.json
+          test "$code" = "200"

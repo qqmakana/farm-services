@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
  * Expire timed-out driver offers and cascade to the next ranked driver.
  *
  * Triggered by:
- * - Vercel Cron every minute (server-side; no rider client required)
+ * - GitHub Actions every 5 minutes → /api/cron/dispatch-tick (server-side)
  * - Rider trip page poll every 4s (fast-path backup)
  */
 async function handle(request: Request) {

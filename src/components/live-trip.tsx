@@ -84,7 +84,7 @@ export function LiveTrip({
 
   useEffect(() => {
     const t = setInterval(() => {
-      // Fast-path only — cascade also runs via Vercel Cron /api/cron/dispatch-tick
+      // Fast-path only — cascade also runs via GitHub Actions → /api/cron/dispatch-tick
       void fetch("/api/dispatch/tick?source=client", { method: "POST" }).catch(
         () => null,
       );
