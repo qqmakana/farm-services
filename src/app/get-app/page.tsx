@@ -3,7 +3,7 @@ import { EasyInstallScreen } from "@/components/easy-install-screen";
 import { BRAND } from "@/lib/brand";
 
 const title = `Install ${BRAND.appName}`;
-const description = `Tap once to install ${BRAND.appName} on your phone — free, no Play Store needed.`;
+const description = `${BRAND.appName} serves villages, towns and cities. Riders are welcome, and we humbly need a few more drivers. Cash or card.`;
 
 export const metadata: Metadata = {
   title,
@@ -13,13 +13,20 @@ export const metadata: Metadata = {
     title,
     description,
     type: "website",
-    images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: BRAND.appName }],
+    images: [
+      {
+        url: "/village-ride-share.png",
+        width: 1024,
+        height: 1024,
+        alt: `${BRAND.appName} — rides and deliveries for villages, towns and cities`,
+      },
+    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title,
     description,
-    images: ["/icons/icon-512.png"],
+    images: ["/village-ride-share.png"],
   },
 };
 

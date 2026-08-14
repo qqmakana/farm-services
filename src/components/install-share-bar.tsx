@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { BRAND } from "@/lib/brand";
 import { ShareQrSheet } from "@/components/share-qr-sheet";
-import { shareVillageRideQr, socialQrImagePath } from "@/lib/share-qr";
+import { SHARE_IMAGE_PATH, shareVillageRideImage } from "@/lib/share-qr";
 import {
   getAppInstallUrl,
   getDeferredPrompt,
@@ -29,7 +29,7 @@ const HIDE_BANNER = new Set([
 ]);
 
 async function shareAppLink() {
-  return shareVillageRideQr();
+  return shareVillageRideImage();
 }
 
 function useDeferredInstall() {
@@ -349,15 +349,15 @@ export function InstallShareBar() {
           type="button"
           onClick={share}
           className="shrink-0 rounded-xl bg-white ring-1 ring-gray-200"
-          aria-label="Show scan square"
+          aria-label="Preview share picture"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={socialQrImagePath(96)}
+            src={SHARE_IMAGE_PATH}
             alt=""
             width={48}
             height={48}
-            className="h-12 w-12 rounded-xl"
+            className="h-12 w-12 rounded-xl object-cover"
           />
         </button>
         <div className="min-w-0 flex-1">
@@ -365,7 +365,7 @@ export function InstallShareBar() {
             Keep {BRAND.appName} handy
           </p>
           <p className="text-xs text-gray-500">
-            {deferred ? "Add to your home screen" : "Scan the square, or tap Install"}
+            {deferred ? "Add to your home screen" : "Tap Install or share the app"}
           </p>
         </div>
         <button

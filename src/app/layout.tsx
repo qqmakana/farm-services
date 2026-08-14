@@ -61,19 +61,18 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/village-ride-whatsapp-booking.png",
-        width: 1080,
-        height: 1080,
-        alt: "Village Ride — book free on WhatsApp",
+        url: "/village-ride-share.png",
+        width: 1024,
+        height: 1024,
+        alt: "Village Ride — rides and deliveries for villages, towns and cities",
       },
-      { url: "/village-ride-social-feed.png" },
     ],
   },
   twitter: {
     card: "summary_large_image",
     title: `${BRAND.appName} by ${BRAND.company}`,
     description: BRAND_TAGLINE,
-    images: ["/village-ride-whatsapp-booking.png"],
+    images: ["/village-ride-share.png"],
   },
   other: {
     "mobile-web-app-capable": "yes",

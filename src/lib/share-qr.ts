@@ -1,24 +1,17 @@
-import { BRAND, BRAND_ADDRESS_LINE, BRAND_SHARE_TEXT } from "@/lib/brand";
-import { getAppInstallUrl, getSocialQrEntryUrl } from "@/lib/app-links";
+import { BRAND, BRAND_SHARE_TEXT } from "@/lib/brand";
+import { getAppInstallUrl } from "@/lib/app-links";
 
-/** Humble line when someone taps Share. */
-export const SHARE_SCAN_TEXT = `${BRAND_SHARE_TEXT}
+export const SHARE_IMAGE_PATH = "/village-ride-share.png";
 
-We're at ${BRAND_ADDRESS_LINE}. Scan the picture, or open ${getAppInstallUrl()}.`;
-
-export function socialQrImagePath(size = 512) {
-  return `/api/qr?url=${encodeURIComponent(getSocialQrEntryUrl())}&size=${size}`;
-}
-
-export async function shareVillageRideQr(): Promise<"shared" | "copied"> {
+export async function shareVillageRideImage(): Promise<"shared" | "copied"> {
   const url = getAppInstallUrl();
-  const text = SHARE_SCAN_TEXT;
+  const text = BRAND_SHARE_TEXT;
 
   try {
-    const res = await fetch(socialQrImagePath(640));
+    const res = await fetch(SHARE_IMAGE_PATH);
     if (res.ok) {
       const blob = await res.blob();
-      const file = new File([blob], "village-ride-scan.png", {
+      const file = new File([blob], "village-ride-share.png", {
         type: blob.type || "image/png",
       });
       if (navigator.canShare?.({ files: [file] })) {
