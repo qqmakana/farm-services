@@ -1,4 +1,5 @@
-import { Source_Sans_3, Space_Grotesk } from "next/font/google";
+import { Source_Sans_3 } from "next/font/google";
+import localFont from "next/font/local";
 import type { Metadata, Viewport } from "next";
 import { ConditionalFooter } from "@/components/conditional-footer";
 import { CountryProvider } from "@/components/country/country-provider";
@@ -25,10 +26,12 @@ const sans = Source_Sans_3({
   weight: ["400", "500", "600", "700"],
 });
 
-const display = Space_Grotesk({
-  subsets: ["latin"],
+/** Self-hosted — Google CDN woff2 hashes for Space Grotesk break next/font builds. */
+const display = localFont({
+  src: "./fonts/space-grotesk.woff2",
   variable: "--font-display",
-  weight: ["500", "600", "700"],
+  weight: "500 700",
+  display: "swap",
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://village-ride.vercel.app";

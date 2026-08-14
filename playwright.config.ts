@@ -59,7 +59,7 @@ export default defineConfig({
   webServer: isProd
     ? undefined
     : {
-        command: `npx next build && npx next start --hostname 127.0.0.1 --port ${PORT}`,
+        command: `npx next build --webpack && npx next start --hostname 127.0.0.1 --port ${PORT}`,
         url: BASE_URL,
         reuseExistingServer: !process.env.CI,
         timeout: 300_000,
