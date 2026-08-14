@@ -18,7 +18,7 @@ import {
 import { calculateFare } from "../src/lib/fares";
 import { getCountry } from "../src/lib/countries";
 import { VILLAGE_PASS_BOOKING_FEE_ZAR } from "../src/lib/village-pass";
-import { distanceKm } from "../src/lib/geo";
+import { distanceKm, jitterLatLng } from "../src/lib/geo";
 import {
   checkBookingServiceArea,
   isInServiceArea,
@@ -350,6 +350,16 @@ test("fares: farm weight + Pass waives platform fee only", () => {
   });
   assert(pass.booking_fee === 0, "Pass waived");
   assert(pass.driver_fare_amount === open.driver_fare_amount, "driver sacred");
+});
+
+test("geo: jitter is stable and stays within ~150m", () => {
+  const a = jitterLatLng("d1", -31.588, 28.784);
+  const b = jitterLatLng("d1", -31.588, 28.784);
+  assert(a.lat === b.lat && a.lng === b.lng, "stable per id");
+  const other = jitterLatLng("d2", -31.588, 28.784);
+  assert(other.lat !== a.lat || other.lng !== a.lng, "different ids differ");
+  const km = distanceKm({ lat: -31.588, lng: 28.784 }, a);
+  assert(km < 0.25, `jitter ${km}km should be under 250m`);
 });
 
 test("fares: route km wins over straight-line pins", () => {

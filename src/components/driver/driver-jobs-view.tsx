@@ -130,6 +130,7 @@ export function DriverJobsView() {
               dropoffLng={active.dropoff_lng}
               customerPhone={active.customer_phone}
               customerName={active.customer_name}
+              countryCode={active.country_code}
             />
           </div>
           {active.service_type === "ride" ? (

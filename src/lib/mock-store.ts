@@ -27,7 +27,7 @@ import type {
   CreateFuelRequestInput,
   FuelRequest,
 } from "./types";
-import { distanceKm } from "./geo";
+import { distanceKm, jitterLatLng } from "./geo";
 import { calculateFare } from "./fares";
 import { isValidMobileForCountry } from "./phone";
 import { DEFAULT_COUNTRY, getCountry } from "./countries";
@@ -801,6 +801,42 @@ export const mockRepo = {
     return store().drivers.filter(
       (d) => d.is_active && d.approval_status === "approved",
     );
+  },
+
+  listNearbySupplyPins(
+    lat: number,
+    lng: number,
+  ): { id: string; lat: number; lng: number; label: string }[] {
+    const origin = { lat, lng };
+    return store()
+      .drivers.filter(
+        (d) =>
+          d.is_active &&
+          d.approval_status === "approved" &&
+          d.is_online &&
+          d.last_lat != null &&
+          d.last_lng != null,
+      )
+      .map((d) => ({
+        d,
+        km: distanceKm(origin, { lat: d.last_lat!, lng: d.last_lng! }),
+      }))
+      .filter((row) => row.km <= 18)
+      .sort((a, b) => a.km - b.km)
+      .slice(0, 8)
+      .map((row, i) => {
+        const jittered = jitterLatLng(
+          row.d.id,
+          row.d.last_lat!,
+          row.d.last_lng!,
+        );
+        return {
+          id: `car-${i}`,
+          lat: jittered.lat,
+          lng: jittered.lng,
+          label: "Nearby driver",
+        };
+      });
   },
 
   listPendingDriverHires(): Driver[] {

@@ -817,6 +817,16 @@ html[data-theme="dark"] .ru-skeleton {
   cursor: pointer;
 }
 
+.vr-map-pin-car {
+  width: 10px;
+  height: 16px;
+  border-radius: 3px;
+  background: #111;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 35%);
+  transform: rotate(-22deg);
+}
+
 @keyframes vr-map-pulse {
   0% {
     transform: scale(1);

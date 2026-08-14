@@ -23,3 +23,22 @@ export function osmEmbedUrl(lat: number, lng: number) {
   const d = 0.025;
   return `https://www.openstreetmap.org/export/embed.html?bbox=${lng - d}%2C${lat - d}%2C${lng + d}%2C${lat + d}&layer=mapnik&marker=${lat}%2C${lng}`;
 }
+
+/** Stable ~80–150 m offset so public maps never show exact driver GPS. */
+export function jitterLatLng(
+  id: string,
+  lat: number,
+  lng: number,
+): { lat: number; lng: number } {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const metersLat = (h % 201) - 100;
+  const metersLng = ((h >>> 8) % 201) - 100;
+  const dLat = metersLat / 111_320;
+  const cos = Math.max(0.2, Math.cos((lat * Math.PI) / 180));
+  const dLng = metersLng / (111_320 * cos);
+  return { lat: lat + dLat, lng: lng + dLng };
+}

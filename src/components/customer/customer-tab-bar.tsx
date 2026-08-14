@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clock, Home, User } from "lucide-react";
+import { Clock, Grid2X2, Home, User } from "lucide-react";
 
 const TABS = [
   {
@@ -17,8 +17,13 @@ const TABS = [
       p.startsWith("/farm") ||
       p.startsWith("/shops") ||
       p.startsWith("/shop") ||
-      p.startsWith("/group") ||
-      p.startsWith("/services"),
+      p.startsWith("/group"),
+  },
+  {
+    href: "/services",
+    label: "Services",
+    icon: Grid2X2,
+    match: (p: string) => p.startsWith("/services"),
   },
   {
     href: "/activity",
@@ -59,12 +64,18 @@ export function CustomerTabBar() {
                     : "font-medium text-gray-500"
                 }`}
               >
-                <Icon
-                  className="h-[22px] w-[22px]"
-                  strokeWidth={active ? 2.5 : 1.75}
-                  fill={active ? "currentColor" : "none"}
-                  aria-hidden
-                />
+                <span
+                  className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                    active ? "bg-gray-100" : ""
+                  }`}
+                >
+                  <Icon
+                    className="h-[22px] w-[22px]"
+                    strokeWidth={active ? 2.5 : 1.75}
+                    fill={active ? "currentColor" : "none"}
+                    aria-hidden
+                  />
+                </span>
                 <span className="text-[10px] leading-none tracking-wide">
                   {tab.label}
                 </span>

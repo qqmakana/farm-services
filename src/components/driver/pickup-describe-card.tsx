@@ -1,4 +1,10 @@
-/** Pickup / dropoff for drivers — landmark, address text, Maps, Call rider. */
+/** Pickup / dropoff for drivers — landmark, address text, Maps, Call / Message rider. */
+
+import { TripQuickReplies } from "@/components/trip/trip-quick-replies";
+import {
+  DRIVER_QUICK_REPLIES,
+  tripWhatsAppHref,
+} from "@/lib/trip-quick-replies";
 
 function mapsHref(lat: number, lng: number) {
   return `https://www.google.com/maps?q=${lat},${lng}`;
@@ -19,6 +25,7 @@ export function PickupDescribeCard({
   dropoffLng,
   customerPhone,
   customerName,
+  countryCode,
 }: {
   pickup: string;
   dropoff?: string | null;
@@ -29,12 +36,18 @@ export function PickupDescribeCard({
   dropoffLng?: number | null;
   customerPhone?: string | null;
   customerName?: string | null;
+  countryCode?: string | null;
 }) {
   const hasPickupPin =
     typeof pickupLat === "number" && typeof pickupLng === "number";
   const hasDropoffPin =
     typeof dropoffLat === "number" && typeof dropoffLng === "number";
   const callHref = customerPhone ? telHref(customerPhone) : null;
+  const messageHref = tripWhatsAppHref(
+    customerPhone,
+    `Hi ${customerName?.trim() || "there"} — I'm your Village Ride driver. I'm heading to ${pickup}.`,
+    countryCode,
+  );
 
   return (
     <div className="rounded-xl border border-black/10 bg-[#f5f5f5] px-3 py-3">
@@ -84,17 +97,44 @@ export function PickupDescribeCard({
           className="mt-3 max-h-40 w-full rounded-lg object-cover"
         />
       ) : null}
-      {callHref ? (
-        <a
-          href={callHref}
-          className="mt-3 flex w-full items-center justify-center rounded-full bg-black px-4 py-2.5 text-sm font-bold text-white transition active:scale-[0.99]"
-        >
-          Call {customerName?.trim() || "rider"}
-        </a>
+
+      <div className="mt-3 flex gap-2">
+        {callHref ? (
+          <a
+            href={callHref}
+            className="uber-press flex flex-1 items-center justify-center rounded-full bg-black px-4 py-2.5 text-sm font-bold text-white"
+          >
+            Call {customerName?.trim() || "rider"}
+          </a>
+        ) : null}
+        {messageHref ? (
+          <a
+            href={messageHref}
+            target="_blank"
+            rel="noreferrer"
+            className="uber-press flex flex-1 items-center justify-center rounded-full bg-white px-4 py-2.5 text-sm font-bold text-black ring-1 ring-gray-200"
+          >
+            Message
+          </a>
+        ) : null}
+      </div>
+
+      {customerPhone ? (
+        <div className="mt-3 space-y-2">
+          <p className="text-[11px] font-semibold text-slate-500">
+            Quick message
+          </p>
+          <TripQuickReplies
+            phone={customerPhone}
+            countryCode={countryCode}
+            replies={DRIVER_QUICK_REPLIES}
+          />
+        </div>
       ) : null}
+
       <p className="mt-2 text-[11px] text-slate-500">
-        Description works offline and without GPS. Call the rider if you can&apos;t
-        find the place.
+        Description works offline and without GPS. Call or message the rider if
+        you can&apos;t find the place.
       </p>
     </div>
   );

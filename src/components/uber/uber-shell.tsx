@@ -14,7 +14,9 @@ import { HelpCircle, MapPin } from "lucide-react";
 import { ShareAppButton } from "@/components/share-app-button";
 import { ServicePills } from "@/components/uber/service-pills";
 import { useCountry } from "@/components/country/country-provider";
+import { listNearbySupplyPins } from "@/lib/actions-supply";
 import { BRAND } from "@/lib/brand";
+import type { JobMapPin } from "@/components/maps/ride-map-canvas";
 
 const VillageMap = dynamic(
   () =>
@@ -61,6 +63,7 @@ export function UberShell({
   initialSnap?: "peek" | "mid";
 }) {
   const { country } = useCountry();
+  const [cars, setCars] = useState<JobMapPin[]>([]);
   const bottomInset = showTabBar
     ? "calc(4rem + env(safe-area-inset-bottom, 0px))"
     : "0px";
@@ -84,6 +87,28 @@ export function UberShell({
     }
     sawDropoff.current = Boolean(dropoffPin);
   }, [dropoffPin]);
+
+  useEffect(() => {
+    const origin = pin ?? country.mapCenter;
+    if (!origin) return;
+    let cancelled = false;
+    const load = () => {
+      void listNearbySupplyPins(origin.lat, origin.lng)
+        .then((next) => {
+          if (!cancelled) setCars(next);
+        })
+        .catch(() => {
+          if (!cancelled) setCars([]);
+        });
+    };
+    const delay = window.setTimeout(load, 400);
+    const poll = window.setInterval(load, 30_000);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(delay);
+      window.clearInterval(poll);
+    };
+  }, [pin?.lat, pin?.lng, country.mapCenter.lat, country.mapCenter.lng]);
 
   const applySnapFromDrag = useCallback((dy: number, from: SheetSnap) => {
     const order: SheetSnap[] = ["peek", "mid", "full"];
@@ -129,6 +154,7 @@ export function UberShell({
           pin={pin}
           dropoff={dropoffPin}
           center={country.mapCenter}
+          cars={cars}
           onSelect={(next) => {
             if (snap === "full") setSnap("mid");
             onMapPin?.(next);

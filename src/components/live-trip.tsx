@@ -1,10 +1,12 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, useCallback } from "react";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
 import { DriverVehiclePhotos } from "@/components/driver-vehicle-photos";
 import { RiderSafetyTips } from "@/components/trip/rider-safety-tips";
+import { TripQuickReplies } from "@/components/trip/trip-quick-replies";
 import { isDriverTrustVerified } from "@/lib/trust";
 import {
   getJobByReference,
@@ -32,14 +34,31 @@ import {
   STATUS_LABELS,
   VEHICLE_LABELS,
 } from "@/lib/format";
-import { distanceKm, etaMinutes, osmEmbedUrl } from "@/lib/geo";
+import { distanceKm, etaMinutes } from "@/lib/geo";
 import {
   isActiveTripStatus,
   isConfirmedStatus,
   isSearchingStatus,
 } from "@/lib/job-status";
-import { toWhatsAppNumber } from "@/lib/whatsapp";
+import {
+  leaveByLabel,
+  RIDER_QUICK_REPLIES,
+  tripWhatsAppHref,
+} from "@/lib/trip-quick-replies";
 import type { JobStatus, JobWithDriver, Rating } from "@/lib/types";
+
+const TripLiveMap = dynamic(
+  () =>
+    import("@/components/maps/trip-live-map").then((m) => m.TripLiveMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-64 w-full items-center justify-center bg-[#1b2433] text-sm text-white/70">
+        Loading map…
+      </div>
+    ),
+  },
+);
 
 const STEPS: JobStatus[] = [
   "searching_driver",
@@ -107,8 +126,10 @@ export function LiveTrip({
   }, [job.id, job.status]);
 
   const active = stepIndex(job.status);
-  const mapLat = job.driver_lat ?? job.pickup_lat;
-  const mapLng = job.driver_lng ?? job.pickup_lng;
+  const hasMap =
+    job.pickup_lat != null ||
+    job.dropoff_lat != null ||
+    job.driver_lat != null;
   const isActiveTrip = isActiveTripStatus(job.status);
   const searching = isSearchingStatus(job.status) && !job.dispatch_exhausted;
   const noDrivers =
@@ -128,6 +149,12 @@ export function LiveTrip({
           ),
         )
       : null;
+  const leaveBy = leaveByLabel(eta);
+  const driverChatHref = tripWhatsAppHref(
+    job.drivers?.phone,
+    `Hi ${job.drivers?.full_name?.split(" ")[0] || "there"} — I'm your Village Ride rider for ${job.reference_code}. Pickup: ${job.pickup_landmark}`,
+    job.country_code,
+  );
 
   function submitRating() {
     setMsg(null);
@@ -231,7 +258,7 @@ export function LiveTrip({
           </p>
           {eta != null && confirmed ? (
             <h1 className="mt-1 font-[family-name:var(--font-display)] text-4xl font-bold tracking-tight text-black">
-              {eta} min away
+              Pick-up in {eta} min
             </h1>
           ) : (
             <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-black">
@@ -240,18 +267,25 @@ export function LiveTrip({
                 : STATUS_LABELS[job.status]}
             </h1>
           )}
-          <p className="mt-1 text-sm text-[var(--ru-muted)]">
-            {SERVICE_LABELS[job.service_type]} · {job.reference_code}
-          </p>
+          {leaveBy && confirmed && job.drivers ? (
+            <p className="mt-1 text-sm font-medium text-black">
+              Leave by {leaveBy} to meet {job.drivers.full_name.split(" ")[0]}
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-[var(--ru-muted)]">
+              {SERVICE_LABELS[job.service_type]} · {job.reference_code}
+            </p>
+          )}
         </div>
         {isActiveTrip ? (
           <button
             type="button"
             disabled={pending}
             onClick={runSos}
-            className="uber-press shrink-0 rounded-full !min-h-11 bg-[var(--ru-error)] !px-4 text-sm font-bold text-white hover:opacity-90"
+            className="uber-press shrink-0 rounded-full !min-h-11 bg-white !px-4 text-sm font-bold text-black ring-1 ring-gray-200 hover:bg-gray-50"
+            aria-label="Safety SOS"
           >
-            SOS
+            Safety
           </button>
         ) : null}
       </div>
@@ -388,22 +422,42 @@ export function LiveTrip({
       ) : null}
 
       {confirmed && job.drivers ? (
-        <div className="rounded-2xl bg-gray-50 space-y-3 p-4">
-          <DriverVehiclePhotos driver={job.drivers} />
-          <div className="flex items-center justify-between gap-3 border-t border-[var(--ru-line)] pt-3">
+        <div className="space-y-3 rounded-2xl bg-gray-50 p-4">
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
+              <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                {SERVICE_LABELS[job.service_type]} details
+              </p>
+              <p className="mt-1 text-base font-bold text-black">
+                Meet at {job.pickup_landmark}
+              </p>
+              <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-black ring-1 ring-gray-200">
+                {job.payment_method === "cash" || !job.payment_method
+                  ? "Cash"
+                  : "Card"}
+              </span>
+            </div>
+          </div>
+
+          <DriverVehiclePhotos driver={job.drivers} />
+
+          <div className="flex items-center gap-3 border-t border-gray-200 pt-3">
+            <div className="min-w-0 flex-1">
               <p className="font-bold text-black">
                 {job.drivers.full_name}
-                <span className="ml-1 font-normal text-[var(--ru-muted)]">
+                <span className="ml-1.5 font-normal text-gray-500">
                   ★{job.drivers.rating_avg.toFixed(1)}
+                  {job.drivers.rating_count
+                    ? ` · ${job.drivers.rating_count} trips`
+                    : ""}
                 </span>
               </p>
-              <p className="text-xs text-[var(--ru-muted)]">
-                {VEHICLE_LABELS[job.drivers.vehicle_type]}
+              <p className="text-sm text-gray-600">
                 {job.drivers.vehicle_registration
-                  ? ` · ${job.drivers.vehicle_registration}`
+                  ? `${job.drivers.vehicle_registration} · `
                   : ""}
-                {eta != null ? ` · ${eta} min away` : " · on the way"}
+                {VEHICLE_LABELS[job.drivers.vehicle_type]}
+                {eta != null ? ` · ${eta} min` : ""}
               </p>
               <div className="mt-1">
                 <DriverVerifiedBadge
@@ -413,27 +467,42 @@ export function LiveTrip({
                 />
               </div>
             </div>
-            <div className="flex shrink-0 flex-col gap-1.5">
-              {job.drivers.phone ? (
+            <div className="flex shrink-0 gap-2">
+              {driverChatHref ? (
                 <a
-                  href={`tel:${job.drivers.phone}`}
-                  className="uber-press uber-btn-black !min-h-10 !px-3 !text-xs"
+                  href={driverChatHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="uber-press flex h-11 w-11 items-center justify-center rounded-full bg-white text-black ring-1 ring-gray-200"
+                  aria-label="Send a message"
                 >
-                  Call driver
+                  💬
                 </a>
               ) : null}
               {job.drivers.phone ? (
                 <a
-                  href={`https://wa.me/${toWhatsAppNumber(job.drivers.phone, job.country_code)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="uber-press rounded-full !min-h-10 !bg-[#25D366] !px-3 !text-xs text-white hover:!bg-[#1ebe57]"
+                  href={`tel:${job.drivers.phone}`}
+                  className="uber-press flex h-11 w-11 items-center justify-center rounded-full bg-black text-white"
+                  aria-label="Call driver"
                 >
-                  Chat driver
+                  📞
                 </a>
               ) : null}
             </div>
           </div>
+
+          {job.drivers.phone ? (
+            <div className="space-y-2 border-t border-gray-200 pt-3">
+              <p className="text-xs font-semibold text-gray-500">
+                Quick message
+              </p>
+              <TripQuickReplies
+                phone={job.drivers.phone}
+                countryCode={job.country_code}
+                replies={RIDER_QUICK_REPLIES}
+              />
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -466,20 +535,34 @@ export function LiveTrip({
         </a>
       ) : null}
 
-      {mapLat != null && mapLng != null && (
-        <div className="rounded-2xl bg-gray-50 overflow-hidden">
-          <iframe
-            title="Live map"
-            className="h-64 w-full border-0"
-            src={osmEmbedUrl(mapLat, mapLng)}
-          />
-          <p className="px-3 py-2 text-xs text-[var(--ru-muted)]">
+      {hasMap ? (
+        <div className="overflow-hidden rounded-2xl bg-[#1b2433]">
+          <div className="h-64 w-full">
+            <TripLiveMap
+              pickup={
+                job.pickup_lat != null && job.pickup_lng != null
+                  ? { lat: job.pickup_lat, lng: job.pickup_lng }
+                  : null
+              }
+              dropoff={
+                job.dropoff_lat != null && job.dropoff_lng != null
+                  ? { lat: job.dropoff_lat, lng: job.dropoff_lng }
+                  : null
+              }
+              driver={
+                job.driver_lat != null && job.driver_lng != null
+                  ? { lat: job.driver_lat, lng: job.driver_lng }
+                  : null
+              }
+            />
+          </div>
+          <p className="bg-gray-50 px-3 py-2 text-xs text-[var(--ru-muted)]">
             {job.driver_lat != null
               ? "Live driver location (updates every few seconds)"
-              : "Pickup area — driver GPS appears when assigned"}
+              : "Pickup to drop-off — driver appears when assigned"}
           </p>
         </div>
-      )}
+      ) : null}
 
       <div className="flex flex-wrap gap-2">
         {isActiveTrip ? (

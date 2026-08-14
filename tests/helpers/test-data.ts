@@ -2,10 +2,12 @@
 
 export const testUsers = {
   driver: {
-    /** Mock-store seed id used by local E2E */
-    id: "d1",
-    name: "Thabo Mbeki Bakkie",
-    phone: "27821234567",
+    /** Mock-store seed — sedan so Ride matching fits (d1 is bakkie-only). */
+    id: "d2",
+    name: "Nomsa Lift Club",
+    phone: "27829876543",
+    vehicle: "Sedan",
+    plate: "EC 987-654",
   },
   rider: {
     name: "E2E Rider",
@@ -18,12 +20,41 @@ export const testUsers = {
   },
 };
 
+/**
+ * In-service Mthatha / Engcobo pins (ZA geofence).
+ * Do not use Johannesburg — outside Village Ride service area.
+ */
 export const testLocations = {
-  pickup: "House with green gate, next to the mango tree",
-  dropoff: "Blue house after the church",
+  pickup: "Mthatha Taxi Rank",
+  dropoff: "Engcobo Main Street",
   shop: "Qunu Spaza, next to the clinic",
   wearing: "Nike tracksuit",
+  /** Road pins near mock online drivers (d1/d2/d3). */
+  pickupPin: { lat: -31.588, lng: 28.784 },
+  dropoffPin: { lat: -31.595, lng: 28.795 },
 };
+
+/** Build /ride deep-link with pinned coords so fare quote is ready. */
+export function rideBookingUrl(opts?: {
+  pickup?: string;
+  dropoff?: string;
+  pickupPin?: { lat: number; lng: number };
+  dropoffPin?: { lat: number; lng: number };
+}) {
+  const pickup = opts?.pickup ?? testLocations.pickup;
+  const dropoff = opts?.dropoff ?? testLocations.dropoff;
+  const from = opts?.pickupPin ?? testLocations.pickupPin;
+  const to = opts?.dropoffPin ?? testLocations.dropoffPin;
+  const q = new URLSearchParams({
+    from: pickup,
+    to: dropoff,
+    fromLat: String(from.lat),
+    fromLng: String(from.lng),
+    toLat: String(to.lat),
+    toLng: String(to.lng),
+  });
+  return `/ride?${q.toString()}`;
+}
 
 export const FEATURE_ROUTES = [
   { path: "/", name: "Home" },
