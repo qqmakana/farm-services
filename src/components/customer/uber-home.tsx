@@ -19,13 +19,23 @@ import { CaptureReferral } from "@/components/referral/capture-referral";
 import { DriveSignupCard } from "@/components/driver/drive-signup-card";
 import { Suspense } from "react";
 
-type HomeChip = "for_you" | "trip" | "reserve" | "delivery" | "shops" | "groups";
+type HomeChip =
+  | "for_you"
+  | "trip"
+  | "reserve"
+  | "delivery"
+  | "farm"
+  | "courier"
+  | "shops"
+  | "groups";
 
 const CHIPS: { id: HomeChip; label: string }[] = [
   { id: "for_you", label: "For you" },
   { id: "trip", label: "Trip" },
   { id: "reserve", label: "Reserve" },
   { id: "delivery", label: "Delivery" },
+  { id: "farm", label: "Farm" },
+  { id: "courier", label: "Courier" },
   { id: "shops", label: "Shops" },
   { id: "groups", label: "Groups" },
 ];
@@ -54,13 +64,13 @@ const ALL_SERVICES = [
     href: "/courier",
     label: "Courier",
     Icon: Package,
-    chips: ["for_you", "delivery"] as HomeChip[],
+    chips: ["for_you", "courier", "delivery"] as HomeChip[],
   },
   {
     href: "/farm",
     label: "Farm",
     Icon: Tractor,
-    chips: ["for_you", "delivery"] as HomeChip[],
+    chips: ["for_you", "farm"] as HomeChip[],
   },
   {
     href: "/shops",
@@ -100,7 +110,7 @@ const SUGGESTIONS: {
   },
   {
     href: "/group",
-    title: "Family &\nteens",
+    title: "Village\ngroups",
     image: "/home/sug-family.jpg",
     bg: "bg-[#EAF0FF]",
     chips: ["for_you", "groups", "trip"],
@@ -110,14 +120,14 @@ const SUGGESTIONS: {
     title: "Send a\npackage",
     image: "/home/sug-courier.jpg",
     bg: "bg-[#F3F0EA]",
-    chips: ["for_you", "delivery"],
+    chips: ["for_you", "courier", "delivery"],
   },
   {
     href: "/farm",
     title: "Farm\nloads",
     image: "/home/sug-farm.jpg",
     bg: "bg-[#EAF6E8]",
-    chips: ["for_you", "delivery"],
+    chips: ["for_you", "farm"],
   },
 ];
 
@@ -300,8 +310,8 @@ export function UberHome() {
           />
           <WayRow
             href="/group"
-            title="Family & teens"
-            body="Share rides safely with people you trust"
+            title="Village groups"
+            body="Share rides with people you trust"
             image="/home/sug-family.jpg"
           />
           <WayRow

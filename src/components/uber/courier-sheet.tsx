@@ -3,9 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckoutBlock } from "@/components/uber/checkout-block";
+import { BookingWhereTo } from "@/components/uber/booking-where-to";
 import {
-  GpsButton,
-  LandmarkField,
   LandmarkHelperText,
   type Loc,
 } from "@/components/uber/landmark-field";
@@ -51,10 +50,12 @@ function weightLabel(id: CourierWeight) {
 
 export function CourierSheet({
   onPinChange,
+  onDropoffPinChange,
   mapTapPin = null,
   mapTapToken = 0,
 }: {
   onPinChange?: (pin: { lat: number; lng: number } | null) => void;
+  onDropoffPinChange?: (pin: { lat: number; lng: number } | null) => void;
   mapTapPin?: { lat: number; lng: number } | null;
   mapTapToken?: number;
 }) {
@@ -106,6 +107,14 @@ export function CourierSheet({
         : null,
     );
   }, [pickup.lat, pickup.lng, onPinChange]);
+
+  useEffect(() => {
+    onDropoffPinChange?.(
+      dropoff.lat != null && dropoff.lng != null
+        ? { lat: dropoff.lat, lng: dropoff.lng }
+        : null,
+    );
+  }, [dropoff.lat, dropoff.lng, onDropoffPinChange]);
 
   useEffect(() => {
     if (!mapTapPin || !mapTapToken) return;
@@ -206,16 +215,15 @@ export function CourierSheet({
         nowLabel="Send Now"
       />
 
-      <GpsButton
-        onPin={(coords) => setPickup((p) => ({ ...p, ...coords }))}
+      <BookingWhereTo
+        pickup={pickup}
+        dropoff={dropoff}
+        onPickup={setPickup}
+        onDropoff={setDropoff}
+        pickupPlaceholder="e.g., Shoprite Mthatha, 12 Main Rd, or taxi rank"
+        dropoffPlaceholder="e.g., 45 Commissioner St — or Qunu Clinic, school gate"
       />
 
-      <LandmarkField
-        label="Pickup location (address or landmark)"
-        placeholder="e.g., Shoprite Mthatha, 12 Main Rd, or taxi rank"
-        loc={pickup}
-        onChange={setPickup}
-      />
       <div className="grid grid-cols-2 gap-3">
         <label className="block text-sm font-semibold text-[#000000]">
           Your name
@@ -237,12 +245,6 @@ export function CourierSheet({
         </label>
       </div>
 
-      <LandmarkField
-        label="Dropoff location (address or landmark)"
-        placeholder="e.g., 45 Commissioner St — or Qunu Clinic, school gate"
-        loc={dropoff}
-        onChange={setDropoff}
-      />
       <div className="grid grid-cols-2 gap-3">
         <label className="block text-sm font-semibold text-[#000000]">
           Recipient name

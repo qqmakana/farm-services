@@ -3,10 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckoutBlock } from "@/components/uber/checkout-block";
+import { BookingWhereTo } from "@/components/uber/booking-where-to";
 import { SaveLocationPrompt } from "@/components/location/save-location-prompt";
 import {
-  GpsButton,
-  LandmarkField,
   LandmarkHelperText,
   type Loc,
 } from "@/components/uber/landmark-field";
@@ -34,10 +33,12 @@ import { FareBreakdownCard } from "@/components/uber/fare-breakdown-card";
 
 export function DeliverySheet({
   onPinChange,
+  onDropoffPinChange,
   mapTapPin = null,
   mapTapToken = 0,
 }: {
   onPinChange?: (pin: { lat: number; lng: number } | null) => void;
+  onDropoffPinChange?: (pin: { lat: number; lng: number } | null) => void;
   mapTapPin?: { lat: number; lng: number } | null;
   mapTapToken?: number;
 }) {
@@ -93,6 +94,14 @@ export function DeliverySheet({
         : null,
     );
   }, [pickup.lat, pickup.lng, onPinChange]);
+
+  useEffect(() => {
+    onDropoffPinChange?.(
+      dropoff.lat != null && dropoff.lng != null
+        ? { lat: dropoff.lat, lng: dropoff.lng }
+        : null,
+    );
+  }, [dropoff.lat, dropoff.lng, onDropoffPinChange]);
 
   useEffect(() => {
     if (!mapTapPin || !mapTapToken) return;
@@ -187,18 +196,13 @@ export function DeliverySheet({
         nowLabel="Deliver Now"
       />
 
-      <SenderTypeField value={senderType} onChange={setSenderType} />
-
-      <GpsButton
-        onPin={(coords) => setPickup((p) => ({ ...p, ...coords }))}
-      />
-
-      <LandmarkField
-        label="Describe pickup place"
-        placeholder="e.g., Farm gate next to the blue water tank"
-        loc={pickup}
-        onChange={setPickup}
-        showExamples
+      <BookingWhereTo
+        pickup={pickup}
+        dropoff={dropoff}
+        onPickup={setPickup}
+        onDropoff={setDropoff}
+        pickupPlaceholder="e.g., Farm gate next to the blue water tank"
+        dropoffPlaceholder="e.g., Blue house after the church"
       />
       {pickup.landmark.trim() ? (
         <SaveLocationPrompt
@@ -207,6 +211,8 @@ export function DeliverySheet({
           lng={pickup.lng}
         />
       ) : null}
+
+      <SenderTypeField value={senderType} onChange={setSenderType} />
       <div className="grid grid-cols-2 gap-3">
         <label className="block text-sm font-semibold text-[#000000]">
           Sender name
@@ -228,12 +234,6 @@ export function DeliverySheet({
         </label>
       </div>
 
-      <LandmarkField
-        label="Describe dropoff place"
-        placeholder="e.g., Blue house after the church"
-        loc={dropoff}
-        onChange={setDropoff}
-      />
       {dropoff.landmark.trim() ? (
         <SaveLocationPrompt
           label={dropoff.landmark}

@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { BookingTabChrome } from "@/components/customer/booking-tab-chrome";
 import { RideSheet } from "@/components/uber/ride-sheet";
 import { UberShell } from "@/components/uber/uber-shell";
 import { useBookingMapPin } from "@/components/uber/use-booking-map-pin";
@@ -14,25 +13,22 @@ function RideInner() {
   } | null>(null);
 
   return (
-    <BookingTabChrome>
-      <UberShell
-        showTabBar
-        showServicePills
-        initialSnap="mid"
-        pin={pin}
-        dropoffPin={dropoffPin}
-        onMapPin={onMapPin}
-        backHref="/"
-        title="Village Ride"
-      >
-        <RideSheet
-          onPinChange={setPin}
-          onDropoffPinChange={setDropoffPin}
-          mapTapPin={mapTapPin}
-          mapTapToken={mapTapToken}
-        />
-      </UberShell>
-    </BookingTabChrome>
+    <UberShell
+      showServicePills
+      initialSnap="mid"
+      pin={pin}
+      dropoffPin={dropoffPin}
+      onMapPin={onMapPin}
+      backHref="/"
+      title="Village Ride"
+    >
+      <RideSheet
+        onPinChange={setPin}
+        onDropoffPinChange={setDropoffPin}
+        mapTapPin={mapTapPin}
+        mapTapToken={mapTapToken}
+      />
+    </UberShell>
   );
 }
 

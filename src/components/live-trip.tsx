@@ -9,12 +9,14 @@ import { RiderSafetyTips } from "@/components/trip/rider-safety-tips";
 import { TripQuickReplies } from "@/components/trip/trip-quick-replies";
 import { isDriverTrustVerified } from "@/lib/trust";
 import {
+  cancelRiderJobAction,
   getJobByReference,
   getRatingForJob,
   rateTrip,
   saveCustomerFcmToken,
   triggerSos,
 } from "@/lib/actions";
+import { MessageCircle, Phone, Star } from "lucide-react";
 import { ContactSupportActions } from "@/components/support/contact-support";
 import {
   BRAND,
@@ -53,7 +55,7 @@ const TripLiveMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-64 w-full items-center justify-center bg-[#1b2433] text-sm text-white/70">
+      <div className="flex h-full min-h-[220px] w-full items-center justify-center bg-[#1b2433] text-sm text-white/70">
         Loading map…
       </div>
     ),
@@ -170,6 +172,33 @@ export function LiveTrip({
     });
   }
 
+  function cancelTrip() {
+    if (!job.customer_phone) {
+      setMsg("Add your phone on this trip to cancel.");
+      return;
+    }
+    if (
+      !window.confirm(
+        "Cancel this trip? You can book again from Home.",
+      )
+    ) {
+      return;
+    }
+    setMsg(null);
+    startTransition(async () => {
+      try {
+        await cancelRiderJobAction({
+          jobId: job.id,
+          customerPhone: job.customer_phone,
+        });
+        router.push("/");
+        router.refresh();
+      } catch (e) {
+        setMsg(e instanceof Error ? e.message : "Could not cancel");
+      }
+    });
+  }
+
   function runSos() {
     setMsg(null);
     startTransition(async () => {
@@ -244,7 +273,42 @@ export function LiveTrip({
       job.status === "completed");
 
   return (
-    <div className="relative touch-manipulation space-y-4 text-black">
+    <div className="relative touch-manipulation text-black">
+      {hasMap ? (
+        <div className="relative h-[38vh] min-h-[220px] w-full overflow-hidden bg-[#1b2433]">
+          <TripLiveMap
+            className="h-full w-full"
+            pickup={
+              job.pickup_lat != null && job.pickup_lng != null
+                ? { lat: job.pickup_lat, lng: job.pickup_lng }
+                : null
+            }
+            dropoff={
+              job.dropoff_lat != null && job.dropoff_lng != null
+                ? { lat: job.dropoff_lat, lng: job.dropoff_lng }
+                : null
+            }
+            driver={
+              job.driver_lat != null && job.driver_lng != null
+                ? { lat: job.driver_lat, lng: job.driver_lng }
+                : null
+            }
+          />
+          <p className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent px-3 py-2 text-xs text-white">
+            {job.driver_lat != null
+              ? "Live driver location (updates every few seconds)"
+              : "Pickup to drop-off — driver appears when assigned"}
+          </p>
+        </div>
+      ) : null}
+
+      <div
+        className={`space-y-4 px-4 pb-4 ${
+          hasMap
+            ? "-mt-4 rounded-t-3xl bg-white pt-5 shadow-[0_-8px_24px_rgba(0,0,0,0.08)]"
+            : "pt-4"
+        }`}
+      >
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold tracking-[0.16em] text-[var(--ru-muted)] uppercase">
@@ -358,6 +422,15 @@ export function LiveTrip({
             . If they don&apos;t accept in 30 seconds, we try the next one.
           </p>
           <div className="mt-1 flex flex-wrap justify-center gap-2">
+            <button
+              type="button"
+              data-testid="cancel-trip"
+              disabled={pending}
+              onClick={cancelTrip}
+              className="uber-press uber-btn-soft !min-h-11 !px-4 !text-sm"
+            >
+              Cancel trip
+            </button>
             <a
               href="/"
               className="uber-press uber-btn-soft !min-h-11 !px-4 !text-sm"
@@ -476,7 +549,7 @@ export function LiveTrip({
                   className="uber-press flex h-11 w-11 items-center justify-center rounded-full bg-white text-black ring-1 ring-gray-200"
                   aria-label="Send a message"
                 >
-                  💬
+                  <MessageCircle className="h-5 w-5" aria-hidden />
                 </a>
               ) : null}
               {job.drivers.phone ? (
@@ -485,7 +558,7 @@ export function LiveTrip({
                   className="uber-press flex h-11 w-11 items-center justify-center rounded-full bg-black text-white"
                   aria-label="Call driver"
                 >
-                  📞
+                  <Phone className="h-5 w-5" aria-hidden />
                 </a>
               ) : null}
             </div>
@@ -504,6 +577,18 @@ export function LiveTrip({
             </div>
           ) : null}
         </div>
+      ) : null}
+
+      {confirmed ? (
+        <button
+          type="button"
+          data-testid="cancel-trip"
+          disabled={pending}
+          onClick={cancelTrip}
+          className="uber-press w-full rounded-full !min-h-11 bg-white text-sm font-semibold text-black ring-1 ring-gray-200 hover:bg-gray-50"
+        >
+          Cancel trip
+        </button>
       ) : null}
 
       <section className="rounded-2xl bg-gray-50 p-4">
@@ -533,35 +618,6 @@ export function LiveTrip({
           <span aria-hidden>WhatsApp</span>
           Share trip details via WhatsApp
         </a>
-      ) : null}
-
-      {hasMap ? (
-        <div className="overflow-hidden rounded-2xl bg-[#1b2433]">
-          <div className="h-64 w-full">
-            <TripLiveMap
-              pickup={
-                job.pickup_lat != null && job.pickup_lng != null
-                  ? { lat: job.pickup_lat, lng: job.pickup_lng }
-                  : null
-              }
-              dropoff={
-                job.dropoff_lat != null && job.dropoff_lng != null
-                  ? { lat: job.dropoff_lat, lng: job.dropoff_lng }
-                  : null
-              }
-              driver={
-                job.driver_lat != null && job.driver_lng != null
-                  ? { lat: job.driver_lat, lng: job.driver_lng }
-                  : null
-              }
-            />
-          </div>
-          <p className="bg-gray-50 px-3 py-2 text-xs text-[var(--ru-muted)]">
-            {job.driver_lat != null
-              ? "Live driver location (updates every few seconds)"
-              : "Pickup to drop-off — driver appears when assigned"}
-          </p>
-        </div>
       ) : null}
 
       <div className="flex flex-wrap gap-2">
@@ -685,19 +741,26 @@ export function LiveTrip({
           <p className="text-xs text-[var(--ru-muted)]">
             Honest ratings keep Village Ride safe for everyone.
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2" role="group" aria-label="Star rating">
             {[1, 2, 3, 4, 5].map((n) => (
               <button
                 key={n}
                 type="button"
+                aria-label={`${n}`}
+                aria-pressed={stars === n}
                 onClick={() => setStars(n)}
-                className={`h-10 w-10 rounded-full text-sm font-bold ${
+                className={`flex h-11 w-11 items-center justify-center rounded-full ${
                   stars >= n
                     ? "bg-black text-white"
                     : "bg-[var(--ru-elevated)] text-[var(--ru-muted)]"
                 }`}
               >
-                {n}
+                <Star
+                  className="h-5 w-5"
+                  fill={stars >= n ? "currentColor" : "none"}
+                  aria-hidden
+                />
+                <span className="sr-only">{n}</span>
               </button>
             ))}
           </div>
@@ -733,6 +796,7 @@ export function LiveTrip({
         </div>
       )}
       {msg && <p className="text-sm text-[var(--ru-muted)]">{msg}</p>}
+      </div>
     </div>
   );
 }

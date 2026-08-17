@@ -6,11 +6,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ChevronDown, Clock, LocateFixed, User } from "lucide-react";
 import { CheckoutBlock } from "@/components/uber/checkout-block";
-import {
-  LandmarkField,
-  type Loc,
-} from "@/components/uber/landmark-field";
-import { WhereToBar } from "@/components/uber/where-to-bar";
+import { BookingWhereTo } from "@/components/uber/booking-where-to";
+import { type Loc } from "@/components/uber/landmark-field";
 import { PickupPhotoField } from "@/components/location/pickup-photo-field";
 import { RiderPhotoField } from "@/components/rider/rider-photo-field";
 import { getGuestProfile } from "@/lib/guest-profile";
@@ -245,29 +242,11 @@ export function RideSheet({
 
   return (
     <div className="space-y-3 touch-manipulation">
-      <WhereToBar
-        pickupSlot={
-          <LandmarkField
-            compact
-            showSaved={false}
-            showGps={false}
-            label="Pickup"
-            placeholder="Current location"
-            loc={pickup}
-            onChange={setPickup}
-          />
-        }
-        dropoffSlot={
-          <LandmarkField
-            compact
-            showSaved={false}
-            showGps={false}
-            label="Dropoff"
-            placeholder="Where to?"
-            loc={dropoff}
-            onChange={setDropoff}
-          />
-        }
+      <BookingWhereTo
+        pickup={pickup}
+        dropoff={dropoff}
+        onPickup={setPickup}
+        onDropoff={setDropoff}
       />
 
       {quoteError ? (

@@ -22,10 +22,10 @@ export default async function TripPage({
   return (
     <div className="ru-force-light min-h-dvh bg-white text-slate-900">
       <TripChrome referenceCode={job.reference_code} />
-      <main className="mx-auto max-w-lg px-4 py-6 pb-16">
+      <main className="mx-auto max-w-lg pb-16">
         <LiveTrip initialJob={job} initialRating={rating} />
         {!stillSearching ? (
-          <div className="mt-6 flex flex-col gap-2">
+          <div className="mt-6 flex flex-col gap-2 px-4">
             <Link
               href={
                 job.service_type === "delivery"

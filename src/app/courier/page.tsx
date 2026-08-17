@@ -1,31 +1,33 @@
 "use client";
 
-import { Suspense } from "react";
-import { BookingTabChrome } from "@/components/customer/booking-tab-chrome";
+import { Suspense, useState } from "react";
 import { CourierSheet } from "@/components/uber/courier-sheet";
 import { UberShell } from "@/components/uber/uber-shell";
 import { useBookingMapPin } from "@/components/uber/use-booking-map-pin";
 
 function CourierInner() {
   const { pin, setPin, mapTapPin, mapTapToken, onMapPin } = useBookingMapPin();
+  const [dropoffPin, setDropoffPin] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   return (
-    <BookingTabChrome>
-      <UberShell
-        showTabBar
-        showServicePills
-        initialSnap="mid"
-        pin={pin}
-        onMapPin={onMapPin}
-        backHref="/"
-        title="Courier"
-      >
-        <CourierSheet
-          onPinChange={setPin}
-          mapTapPin={mapTapPin}
-          mapTapToken={mapTapToken}
-        />
-      </UberShell>
-    </BookingTabChrome>
+    <UberShell
+      showServicePills
+      initialSnap="mid"
+      pin={pin}
+      dropoffPin={dropoffPin}
+      onMapPin={onMapPin}
+      backHref="/"
+      title="Courier"
+    >
+      <CourierSheet
+        onPinChange={setPin}
+        onDropoffPinChange={setDropoffPin}
+        mapTapPin={mapTapPin}
+        mapTapToken={mapTapToken}
+      />
+    </UberShell>
   );
 }
 

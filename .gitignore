@@ -53,3 +53,5 @@ next-env.d.ts
 /android-twa/
 
 .vercel
+
+.env*.local

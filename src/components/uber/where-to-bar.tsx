@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { ArrowUpDown } from "lucide-react";
 
 /**
  * Classic Uber "Where to?" — black circle (pickup) + black square (dropoff)
@@ -9,11 +10,13 @@ import type { ReactNode } from "react";
 export function WhereToBar({
   pickupSlot,
   dropoffSlot,
+  onSwap,
   className = "",
   floating = true,
 }: {
   pickupSlot: ReactNode;
   dropoffSlot: ReactNode;
+  onSwap?: () => void;
   className?: string;
   /** White floating card (default on for native look) */
   floating?: boolean;
@@ -50,6 +53,17 @@ export function WhereToBar({
             {dropoffSlot}
           </div>
         </div>
+        {onSwap ? (
+          <button
+            type="button"
+            onClick={onSwap}
+            className="uber-press mt-6 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-black hover:bg-gray-200"
+            aria-label="Swap pickup and dropoff"
+            data-testid="swap-locations"
+          >
+            <ArrowUpDown className="h-4 w-4" aria-hidden />
+          </button>
+        ) : null}
       </div>
     </div>
   );

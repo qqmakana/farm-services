@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useCountry } from "@/components/country/country-provider";
 import {
   PaymentSelector,
@@ -139,6 +139,24 @@ export function CheckoutBlock({
   const [formError, setFormError] = useState<string | null>(null);
   const [queuedOffline, setQueuedOffline] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("village_ride_last_pay_method");
+      if (saved === "cash" || saved === "card") setPayMethod(saved);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  function choosePay(next: CheckoutPaymentChoice) {
+    setPayMethod(next);
+    try {
+      window.localStorage.setItem("village_ride_last_pay_method", next);
+    } catch {
+      /* ignore */
+    }
+  }
 
   const displayCurrency = currency || country.currency;
 
@@ -300,7 +318,7 @@ export function CheckoutBlock({
       <PaymentSelector
         compact={compact}
         value={payMethod}
-        onChange={setPayMethod}
+        onChange={choosePay}
         currencyLabel={country.currencySymbol}
       />
 
@@ -329,13 +347,23 @@ export function CheckoutBlock({
       ) : null}
 
       {!compact && payMethod === "card" ? (
-        <div className="rounded-2xl bg-gray-50 px-3 py-3">
-          <p className="text-sm font-semibold text-black">Pay with PayPal</p>
+        <div
+          data-testid="card-payment-message"
+          className="rounded-2xl bg-gray-50 px-3 py-3"
+        >
+          <p className="text-sm font-semibold text-black">Pay with card</p>
           <p className="mt-1 text-xs leading-relaxed text-gray-500">
-            You pay the full fare now. When the trip completes, the driver is
-            credited the fare minus the platform fee.
+            Pay the full fare now with PayPal. When the trip completes, the
+            driver is credited the fare minus the platform fee — same split as
+            cash.
           </p>
         </div>
+      ) : null}
+
+      {compact && payMethod === "card" ? (
+        <p data-testid="card-payment-message" className="sr-only">
+          Pay with card via PayPal
+        </p>
       ) : null}
 
       {queuedOffline ? (

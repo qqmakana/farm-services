@@ -3,9 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckoutBlock } from "@/components/uber/checkout-block";
+import { BookingWhereTo } from "@/components/uber/booking-where-to";
 import {
-  GpsButton,
-  LandmarkField,
   LandmarkHelperText,
   type Loc,
 } from "@/components/uber/landmark-field";
@@ -39,10 +38,12 @@ const TRANSPORT_TYPES = [
 
 export function FarmSheet({
   onPinChange,
+  onDropoffPinChange,
   mapTapPin = null,
   mapTapToken = 0,
 }: {
   onPinChange?: (pin: { lat: number; lng: number } | null) => void;
+  onDropoffPinChange?: (pin: { lat: number; lng: number } | null) => void;
   mapTapPin?: { lat: number; lng: number } | null;
   mapTapToken?: number;
 }) {
@@ -91,6 +92,14 @@ export function FarmSheet({
         : null,
     );
   }, [pickup.lat, pickup.lng, onPinChange]);
+
+  useEffect(() => {
+    onDropoffPinChange?.(
+      dropoff.lat != null && dropoff.lng != null
+        ? { lat: dropoff.lat, lng: dropoff.lng }
+        : null,
+    );
+  }, [dropoff.lat, dropoff.lng, onDropoffPinChange]);
 
   useEffect(() => {
     if (!mapTapPin || !mapTapToken) return;
@@ -205,21 +214,13 @@ export function FarmSheet({
         />
       </label>
 
-      <GpsButton
-        onPin={(coords) => setPickup((p) => ({ ...p, ...coords }))}
-      />
-
-      <LandmarkField
-        label="Pickup landmark"
-        placeholder="e.g., Town hardware store, Village main road, or Farm gate"
-        loc={pickup}
-        onChange={setPickup}
-      />
-      <LandmarkField
-        label="Dropoff landmark"
-        placeholder="e.g., Home address, Village landmark, or Town market"
-        loc={dropoff}
-        onChange={setDropoff}
+      <BookingWhereTo
+        pickup={pickup}
+        dropoff={dropoff}
+        onPickup={setPickup}
+        onDropoff={setDropoff}
+        pickupPlaceholder="e.g., Town hardware store, Village main road, or Farm gate"
+        dropoffPlaceholder="e.g., Home address, Village landmark, or Town market"
       />
       <LandmarkHelperText />
 

@@ -14,6 +14,7 @@ import {
 import { useDriverApp } from "@/components/driver/driver-app-provider";
 import { OutOfFuelPanel } from "@/components/driver/out-of-fuel-panel";
 import { FoundingBanner } from "@/components/driver/founding-banner";
+import { OfferCountdown } from "@/components/driver/offer-countdown";
 import { PickupDescribeCard } from "@/components/driver/pickup-describe-card";
 import { RiderSpottingCard } from "@/components/driver/rider-spotting-card";
 import { DriverPushPrompt } from "@/components/driver-push-prompt";
@@ -402,6 +403,7 @@ export function DriverHomeView() {
                 {formatMoney(Number(job.fee_amount))}
               </p>
             </div>
+            <OfferCountdown expiresAt={job.offer_expires_at} />
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
