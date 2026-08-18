@@ -1,25 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { HelpCircle, Menu, X, User, Bell } from "lucide-react";
-import { ShareAppButton } from "@/components/share-app-button";
-import { ThemeToggle } from "@/components/theme-provider";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown, Globe, Menu, X } from "lucide-react";
+import { useCountry } from "@/components/country/country-provider";
+import { getGuestProfile } from "@/lib/guest-profile";
 import { BRAND } from "@/lib/brand";
 
-const links = [
-  { href: "/", label: "Home", key: "home" },
+const PRIMARY = [
   { href: "/ride", label: "Ride", key: "book" },
+  { href: "/driver/join", label: "Earn", key: "driver" },
+  { href: "/partners", label: "Business", key: "partners" },
+  { href: "/shops", label: "Shops", key: "shops" },
+] as const;
+
+const ABOUT_LINKS = [
+  { href: "/onboarding", label: "About us" },
+  { href: "/pricing", label: "Our offerings" },
+  { href: "/countries", label: "Countries" },
+  { href: "/help", label: "Safety" },
+  { href: "/terms", label: "Legal" },
+  { href: "/privacy", label: "Privacy" },
+] as const;
+
+const MORE_LINKS = [
   { href: "/delivery", label: "Deliver", key: "delivery" },
-  { href: "/courier", label: "Courier", key: "courier" },
   { href: "/farm", label: "Farm", key: "farm" },
-  { href: "/shops", label: "Buy", key: "shops" },
-  { href: "/driver/join", label: "Drive", key: "driver" },
-  { href: "/partners", label: "Partners", key: "partners" },
-  { href: "/countries", label: "Global", key: "countries" },
+  { href: "/courier", label: "Courier", key: "courier" },
+  { href: "/shop", label: "Merchants", key: "shop" },
+  { href: "/partners", label: "Partners", key: "partners-more" },
+  { href: "/driver/join", label: "Drive", key: "driver-more" },
   { href: "/pricing", label: "Pricing", key: "pricing" },
-  { href: "/shop", label: "Sell", key: "shop" },
-  { href: "/help", label: "Support", key: "help" },
+  { href: "/help", label: "Help", key: "help" },
   { href: "/dispatch", label: "Ops", key: "dispatch" },
   { href: "/admin/dashboard", label: "Admin", key: "admin" },
 ] as const;
@@ -27,17 +39,17 @@ const links = [
 export function SiteNav({
   active,
 }: {
-  active?: (typeof links)[number]["key"];
+  active?: string;
 }) {
+  const { locale } = useCountry();
   const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const aboutRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    setGuestName(getGuestProfile()?.name?.trim().split(/\s+/)[0] ?? "");
   }, []);
 
   useEffect(() => {
@@ -46,6 +58,14 @@ export function SiteNav({
       document.body.style.overflow = "";
     };
   }, [open]);
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (!aboutRef.current?.contains(e.target as Node)) setAboutOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,95 +82,107 @@ export function SiteNav({
     };
   }, []);
 
-  const navLinks = links.filter((l) => {
+  const moreLinks = MORE_LINKS.filter((l) => {
     if (l.key === "admin" || l.key === "dispatch") return showAdmin;
     return true;
   });
 
+  const lang = (locale || "en").slice(0, 2).toUpperCase();
+
   return (
     <>
-      <header
-        className={`ru-force-light sticky top-0 z-40 border-b bg-white/95 text-black backdrop-blur transition-shadow ${
-          scrolled
-            ? "border-[var(--ru-line)] shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
-            : "border-transparent"
-        }`}
-      >
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-black">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/icons/icon-192.png"
-                alt=""
-                width={28}
-                height={28}
-                className="h-7 w-7"
-              />
-            </span>
-            <span className="font-[family-name:var(--font-display)] text-base font-bold tracking-tight sm:text-lg">
-              {BRAND.appName}
-            </span>
+      <header className="ru-force-light sticky top-0 z-40 bg-white text-[#0a0a0a]">
+        <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
+          <Link
+            href="/"
+            className="shrink-0 text-[1.15rem] font-bold tracking-tight text-[#0a0a0a]"
+          >
+            {BRAND.appName}
           </Link>
 
-          <nav className="hidden items-center gap-0.5 text-sm lg:flex">
-            {navLinks.slice(0, 8).map((link) => {
+          <nav
+            className="flex min-w-0 flex-1 items-center gap-1 text-sm font-medium"
+            aria-label="Primary"
+          >
+            {PRIMARY.map((link) => {
               const isActive = active === link.key;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`rounded-full px-3 py-2 font-semibold transition ${
+                  className={`rounded-full px-2.5 py-1.5 sm:px-3 ${
                     isActive
-                      ? "bg-black text-white"
-                      : "text-[var(--ru-muted)] hover:bg-[#f0f0f0] hover:text-black"
-                  }`}
+                      ? "bg-[#0a0a0a] font-semibold text-white"
+                      : "text-[#0a0a0a] hover:bg-[#f4f4f5]"
+                  } ${link.key === "partners" || link.key === "shops" ? "hidden min-[420px]:inline-flex" : ""}`}
                 >
                   {link.label}
                 </Link>
               );
             })}
+            <div className="relative hidden min-[420px]:block" ref={aboutRef}>
+              <button
+                type="button"
+                onClick={() => setAboutOpen((v) => !v)}
+                className="inline-flex items-center gap-0.5 rounded-full px-2.5 py-1.5 text-[#0a0a0a] hover:bg-[#f4f4f5]"
+                aria-expanded={aboutOpen}
+              >
+                About
+                <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} />
+              </button>
+              {aboutOpen ? (
+                <div className="absolute top-full left-0 z-50 mt-1 w-44 rounded-xl bg-white py-2 shadow-[0_8px_30px_rgba(0,0,0,0.12)] ring-1 ring-black/5">
+                  {ABOUT_LINKS.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setAboutOpen(false)}
+                      className="block px-4 py-2 text-sm text-[#0a0a0a] hover:bg-[#f4f4f5]"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           </nav>
 
-          <div className="flex items-center gap-1.5">
-            <ThemeToggle />
+          <div className="flex shrink-0 items-center gap-0.5">
+            <Link
+              href="/account"
+              className="hidden items-center gap-1 rounded-full px-2 py-1.5 text-sm font-medium text-[#0a0a0a] hover:bg-[#f4f4f5] min-[380px]:inline-flex"
+              aria-label="Language"
+            >
+              <Globe className="h-4 w-4" strokeWidth={2} aria-hidden />
+              {lang}
+            </Link>
             <Link
               href="/help"
-              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#f0f0f0]"
-              aria-label="Help"
+              className="hidden rounded-full px-2.5 py-1.5 text-sm font-medium text-[#0a0a0a] hover:bg-[#f4f4f5] sm:inline-flex"
             >
-              <HelpCircle className="h-5 w-5 text-[var(--ru-muted)]" />
+              Help
             </Link>
             <Link
-              href="/login"
-              className="hidden h-10 w-10 items-center justify-center rounded-full hover:bg-[#f0f0f0] sm:flex"
-              aria-label="Account"
+              href={guestName ? "/account" : "/login"}
+              className="inline-flex max-w-[7.5rem] items-center gap-1 rounded-full bg-[#0a0a0a] px-3 py-1.5 text-sm font-semibold text-white"
             >
-              <User className="h-5 w-5 text-[var(--ru-muted)]" />
+              <span className="truncate">{guestName || "Log in"}</span>
+              <ChevronDown className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
             </Link>
-            <Link
-              href="/merchant/dashboard"
-              className="hidden h-10 w-10 items-center justify-center rounded-full hover:bg-[#f0f0f0] md:flex"
-              aria-label="Notifications"
-            >
-              <Bell className="h-5 w-5 text-[var(--ru-muted)]" />
-            </Link>
-            <ShareAppButton className="hidden sm:inline-flex" />
             <button
               type="button"
-              className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-[#f0f0f0] lg:hidden"
+              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#f4f4f5]"
               aria-label={open ? "Close menu" : "Open menu"}
               onClick={() => setOpen((v) => !v)}
             >
-              {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
       </header>
 
-      {/* Mobile drawer */}
       <div
-        className={`fixed inset-0 z-50 lg:hidden ${open ? "pointer-events-auto" : "pointer-events-none"}`}
+        className={`fixed inset-0 z-50 ${open ? "pointer-events-auto" : "pointer-events-none"}`}
         aria-hidden={!open}
       >
         <button
@@ -160,51 +192,57 @@ export function SiteNav({
           onClick={() => setOpen(false)}
         />
         <aside
-          className={`ru-force-light absolute top-0 right-0 flex h-full w-[min(100%,320px)] flex-col bg-white text-slate-900 shadow-xl transition-transform duration-300 ${
+          className={`ru-force-light absolute top-0 right-0 flex h-full w-[min(100%,320px)] flex-col bg-white text-[#0a0a0a] shadow-xl transition-transform duration-300 ${
             open ? "translate-x-0" : "translate-x-full"
           }`}
         >
-          <div className="flex items-center justify-between border-b border-[var(--ru-line)] px-4 py-4">
-            <span className="font-[family-name:var(--font-display)] text-lg font-bold">
-              Menu
-            </span>
+          <div className="flex items-center justify-between px-4 py-4">
+            <span className="text-lg font-bold">{BRAND.appName}</span>
             <button
               type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#f0f0f0]"
+              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#f4f4f5]"
               onClick={() => setOpen(false)}
               aria-label="Close"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
-          <nav className="flex-1 overflow-y-auto px-2 py-3">
-            {navLinks.map((link) => {
-              const isActive = active === link.key;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setOpen(false)}
-                  className={`mb-1 block rounded-2xl px-4 py-3.5 text-base font-semibold transition ${
-                    isActive
-                      ? "bg-black text-white"
-                      : "text-black hover:bg-[#f5f5f5]"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
+          <nav className="flex-1 overflow-y-auto px-2 py-2">
+            {PRIMARY.map((link) => (
+              <Link
+                key={`m-${link.href}`}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className={`mb-1 block rounded-xl px-4 py-3.5 text-base font-medium ${
+                  active === link.key
+                    ? "bg-[#0a0a0a] font-semibold text-white"
+                    : "hover:bg-[#f4f4f5]"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+            {ABOUT_LINKS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setOpen(false)}
+                className="mb-1 block rounded-xl px-4 py-3 text-base font-medium hover:bg-[#f4f4f5]"
+              >
+                {item.label}
+              </Link>
+            ))}
+            {moreLinks.map((link) => (
+              <Link
+                key={link.key}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className="mb-1 block rounded-xl px-4 py-3 text-base font-medium hover:bg-[#f4f4f5]"
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
-          <div className="border-t border-[var(--ru-line)] p-4">
-            <Link
-              href="/login"
-              onClick={() => setOpen(false)}
-              className="ru-btn ru-btn-primary ru-btn-block"
-            >
-              Sign in
-            </Link>
-          </div>
         </aside>
       </div>
     </>

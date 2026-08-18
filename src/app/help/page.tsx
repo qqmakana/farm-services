@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
-import { SiteFooter } from "@/components/site-footer";
 import { ContactSupportActions } from "@/components/support/contact-support";
 import { BRAND, BRAND_TEL_HREF, BRAND_WHATSAPP_HREF } from "@/lib/brand";
 
@@ -111,7 +110,6 @@ export default function HelpPage() {
           ))}
         </ul>
       </main>
-      <SiteFooter />
     </>
   );
 }

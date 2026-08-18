@@ -58,9 +58,9 @@ test.describe("Public pages", () => {
     expect(body.length).toBeGreaterThan(20);
   });
 
-  test("nav includes Partners link", async ({ page }) => {
+  test("nav includes Business / Partners", async ({ page }) => {
     await page.goto("/partners");
-    const partners = page.getByRole("link", { name: "Partners" });
+    const partners = page.getByRole("link", { name: /^(Partners|Business)$/ });
     // Mobile: Partners lives in the hamburger drawer
     if (!(await partners.first().isVisible({ timeout: 2_000 }).catch(() => false))) {
       const menu = page.getByRole("button", { name: /Open menu|Close menu/i });

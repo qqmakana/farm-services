@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
-import { SiteFooter } from "@/components/site-footer";
 import { CopySocialCaption } from "@/components/wear/copy-social-caption";
 import { BRAND } from "@/lib/brand";
 import { getWearStats } from "@/lib/wear-stats";
@@ -136,7 +135,6 @@ export default async function WearStatsPage() {
             {" · add what you’re wearing"}
           </p>
         </div>
-        <SiteFooter />
       </main>
     </>
   );
