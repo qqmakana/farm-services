@@ -191,7 +191,7 @@ export function AccountView() {
             Village Pass
           </span>
           <span className="mt-0.5 block text-xs text-gray-500">
-            Waive the platform fee · driver keeps the fare
+            No booking fee · priority matching · cash or card
           </span>
         </span>
         <ChevronRight className="h-4 w-4 text-gray-400" />

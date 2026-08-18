@@ -9,21 +9,19 @@ const TABS = [
     href: "/",
     label: "Home",
     icon: Home,
-    match: (p: string) =>
-      p === "/" ||
-      p.startsWith("/ride") ||
-      p.startsWith("/delivery") ||
-      p.startsWith("/courier") ||
-      p.startsWith("/farm") ||
-      p.startsWith("/shops") ||
-      p.startsWith("/shop") ||
-      p.startsWith("/group"),
+    match: (p: string) => p === "/",
   },
   {
     href: "/services",
     label: "Services",
     icon: Grid2X2,
-    match: (p: string) => p.startsWith("/services"),
+    match: (p: string) =>
+      p.startsWith("/services") ||
+      p.startsWith("/farm") ||
+      p.startsWith("/courier") ||
+      p.startsWith("/shops") ||
+      p.startsWith("/shop") ||
+      p.startsWith("/group"),
   },
   {
     href: "/activity",

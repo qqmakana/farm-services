@@ -75,6 +75,19 @@ export function RideSheet({
     if (guest?.phone) setPhone((p) => p || guest.phone);
   }, []);
 
+  useEffect(() => {
+    const at = searchParams.get("at");
+    if (searchParams.get("when") === "later") {
+      setWhenMode("later");
+      if (at) {
+        const d = new Date(at);
+        if (!Number.isNaN(d.getTime())) {
+          setScheduledLocal(toLocalInputValue(d));
+        }
+      }
+    }
+  }, [searchParams]);
+
   const atIso = useMemo(
     () => (whenMode === "later" ? localInputToIso(scheduledLocal) : null),
     [whenMode, scheduledLocal],

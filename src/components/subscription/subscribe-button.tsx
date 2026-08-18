@@ -5,11 +5,7 @@ import { createPayPalSubscriptionAction } from "@/lib/actions-subscription";
 import { getGuestProfile } from "@/lib/guest-profile";
 import { useCountry } from "@/components/country/country-provider";
 import { useSubscription } from "@/hooks/use-subscription";
-import {
-  VILLAGE_PASS_BOOKING_FEE_ZAR,
-  VILLAGE_PASS_BREAKEVEN_TRIPS,
-  VILLAGE_PASS_PRICE_ZAR,
-} from "@/lib/village-pass";
+import { VILLAGE_PASS_BOOKING_FEE_ZAR } from "@/lib/village-pass";
 
 export function SubscribeButton({
   compact = false,
@@ -61,7 +57,6 @@ export function SubscribeButton({
   if (isSubscribed) {
     const saved = savings?.savedThisMonthZar ?? 0;
     const trips = savings?.tripsThisMonth ?? 0;
-    const net = savings?.netVsPassPriceZar ?? -VILLAGE_PASS_PRICE_ZAR;
     return (
       <div
         data-testid="village-pass"
@@ -75,8 +70,8 @@ export function SubscribeButton({
           Village Pass active
         </p>
         <p className="mt-1 text-xs text-[var(--ru-muted)]">
-          R{VILLAGE_PASS_BOOKING_FEE_ZAR} booking fee waived · priority matching
-          · free cancel
+          Booking fee waived on Ride, Delivery, Farm &amp; Courier · priority
+          matching · free cancel
           {expiresAt
             ? ` · renews ${expiresAt.toLocaleDateString("en-ZA")}`
             : ""}
@@ -86,12 +81,9 @@ export function SubscribeButton({
             You saved R{saved} this month
           </p>
           <p className="mt-0.5 text-[11px] text-[var(--ru-muted)]">
-            {trips} Pass trip{trips === 1 ? "" : "s"} · R
-            {VILLAGE_PASS_BOOKING_FEE_ZAR} fee waived each · driver fare
-            unchanged
-            {net >= 0
-              ? ` · ahead of your R${VILLAGE_PASS_PRICE_ZAR} Pass by R${net}`
-              : ` · R${Math.abs(net)} more in waived fees until Pass pays for itself`}
+            {trips} Village Ride trip{trips === 1 ? "" : "s"} · R
+            {VILLAGE_PASS_BOOKING_FEE_ZAR} booking fee waived each · driver still
+            keeps ~90%
           </p>
           {(savings?.savedLifetimeZar ?? 0) > saved ? (
             <p className="mt-1 text-[11px] text-[var(--ru-muted)]">
@@ -111,19 +103,17 @@ export function SubscribeButton({
       <div data-testid="subscription-benefits">
         <p className="ru-section-label">Village Pass</p>
         <p className="mt-1 font-[family-name:var(--font-display)] text-xl font-bold text-black">
-          R{VILLAGE_PASS_PRICE_ZAR}/month
+          Skip the booking fee
         </p>
         <p className="mt-1 text-xs text-[var(--ru-muted)]">
-          Free tier stays R15 + R10/km + R{VILLAGE_PASS_BOOKING_FEE_ZAR} fee.
-          Pass waives the fee only — driver rate stays sacred (cash-safe).
+          On Village Ride — Ride, Delivery, Farm and Courier. The driver still
+          keeps ~90%. Cash or card (PayPal).
         </p>
         <ul className="mt-2 space-y-1 text-xs text-[var(--ru-muted)]">
-          <li>✓ R0 booking fee (R{VILLAGE_PASS_BOOKING_FEE_ZAR} waived)</li>
-          <li>✓ Priority matching for your requests</li>
+          <li>✓ R0 booking fee on your trips</li>
+          <li>✓ Priority matching</li>
           <li>✓ Free cancellations</li>
-          <li>
-            ✓ Pays for itself after ~{VILLAGE_PASS_BREAKEVEN_TRIPS} trips/month
-          </li>
+          <li>✓ Works with cash and card</li>
         </ul>
       </div>
       {error ? (
@@ -146,8 +136,8 @@ export function SubscribeButton({
         {pending ? "Starting PayPal…" : "Get Village Pass"}
       </button>
       <p className="text-[11px] text-[var(--ru-muted)]">
-        Billed via PayPal on the web (not Google Play Billing). Cancel anytime in
-        PayPal.
+        PayPal on the web. Cancel anytime in PayPal. Does not discount the
+        driver fare.
       </p>
     </div>
   );

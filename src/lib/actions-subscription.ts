@@ -16,7 +16,6 @@ import { DEFAULT_COUNTRY } from "@/lib/countries";
 import {
   computeVillagePassSavings,
   VILLAGE_PASS_BOOKING_FEE_ZAR,
-  VILLAGE_PASS_PRICE_ZAR,
   type VillagePassSavings,
 } from "@/lib/village-pass";
 import { createAdminClient, hasServiceRole } from "@/lib/supabase/admin";
@@ -60,7 +59,7 @@ export async function createPayPalSubscriptionAction(params: {
       mode: "local" as const,
       approveUrl: `${origin}/account?village_pass=local_active`,
       subscriptionId: null as string | null,
-      message: `Local test: Village Pass activated (R${VILLAGE_PASS_PRICE_ZAR}/mo · waives R${VILLAGE_PASS_BOOKING_FEE_ZAR} booking fee). Add PAYPAL_PLAN_ID for live billing.`,
+      message: `Village Pass is on for this phone — booking fee waived on Ride, Delivery, Farm & Courier.`,
     };
   }
 

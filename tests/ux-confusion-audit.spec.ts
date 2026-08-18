@@ -103,7 +103,7 @@ test.describe("Phase 3 — Nav confusion & checkout clarity", () => {
     await prepareBrowserContext(context);
   });
 
-  test("rider bottom nav has exactly 3 tabs (Home · Activity · Account)", async ({
+  test("rider bottom nav has exactly 4 tabs (Home · Services · Activity · Account)", async ({
     page,
   }) => {
     await ready(page, "/");
@@ -111,11 +111,11 @@ test.describe("Phase 3 — Nav confusion & checkout clarity", () => {
     await expect(nav).toBeVisible({ timeout: 15_000 });
     const labels = await nav.locator("a").allTextContents();
     const cleaned = labels.map((t) => t.trim()).filter(Boolean);
-    expect(cleaned.length).toBe(3);
+    expect(cleaned.length).toBe(4);
     expect(cleaned.some((t) => /Home/i.test(t))).toBeTruthy();
+    expect(cleaned.some((t) => /Services/i.test(t))).toBeTruthy();
     expect(cleaned.some((t) => /Activity/i.test(t))).toBeTruthy();
     expect(cleaned.some((t) => /Account/i.test(t))).toBeTruthy();
-    expect(cleaned.some((t) => /Services/i.test(t))).toBeFalsy();
     await expect(page.getByTestId("uber-home")).toBeVisible();
     await expect(page.getByTestId("home-chips")).toBeVisible();
     await expect(page.getByTestId("service-circles")).toBeVisible();
