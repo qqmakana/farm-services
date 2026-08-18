@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clock, Grid2X2, Home, User } from "lucide-react";
+import { useEffect } from "react";
+import { Grid2X2, Home, Receipt, User } from "lucide-react";
+import { applySimpleModeClass } from "@/lib/simple-mode";
 
 const TABS = [
   {
@@ -26,7 +28,7 @@ const TABS = [
   {
     href: "/activity",
     label: "Activity",
-    icon: Clock,
+    icon: Receipt,
     match: (p: string) => p.startsWith("/activity"),
   },
   {
@@ -40,14 +42,17 @@ const TABS = [
 export function CustomerTabBar() {
   const pathname = usePathname() ?? "/";
 
+  useEffect(() => {
+    applySimpleModeClass();
+  }, []);
+
   return (
     <nav
-      className="fixed bottom-0 left-1/2 z-[60] w-full max-w-md -translate-x-1/2 touch-manipulation border-t border-gray-100 bg-white pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-sans)]"
-      style={{ height: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}
+      className="fixed bottom-3 left-1/2 z-[60] w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 touch-manipulation pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-sans)]"
       aria-label="Main"
       data-testid="customer-tab-bar"
     >
-      <ul className="mx-auto flex h-16 w-full items-stretch justify-around px-1">
+      <ul className="flex h-16 items-stretch justify-around rounded-full bg-[#F3F3F3] px-1 shadow-[0_8px_30px_rgba(0,0,0,0.12)] ring-1 ring-black/5">
         {TABS.map((tab) => {
           const active = tab.match(pathname);
           const Icon = tab.icon;
@@ -56,24 +61,18 @@ export function CustomerTabBar() {
               <Link
                 href={tab.href}
                 data-testid={`customer-tab-${tab.label.toLowerCase()}`}
-                className={`uber-press flex min-h-11 flex-1 flex-col items-center justify-center gap-1 rounded-none py-2 ${
+                className={`uber-press mx-0.5 flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1.5 ${
                   active
-                    ? "font-semibold text-black"
+                    ? "bg-white font-bold text-black shadow-sm"
                     : "font-medium text-gray-500"
                 }`}
               >
-                <span
-                  className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                    active ? "bg-gray-100" : ""
-                  }`}
-                >
-                  <Icon
-                    className="h-[22px] w-[22px]"
-                    strokeWidth={active ? 2.5 : 1.75}
-                    fill={active ? "currentColor" : "none"}
-                    aria-hidden
-                  />
-                </span>
+                <Icon
+                  className="h-[22px] w-[22px]"
+                  strokeWidth={active ? 2.5 : 1.75}
+                  fill={active ? "currentColor" : "none"}
+                  aria-hidden
+                />
                 <span className="text-[10px] leading-none tracking-wide">
                   {tab.label}
                 </span>

@@ -9,21 +9,22 @@ test.describe("Home Uber structure", () => {
     await prepareBrowserContext(context);
   });
 
-  test("request a ride + destination + See prices; Later opens Reserve modal", async ({
+  test("Where to? + recents + For you circles; Later opens Reserve modal", async ({
     page,
   }) => {
     await page.goto("/");
     await dismissCountryModalIfPresent(page);
 
     await expect(page.getByTestId("uber-home")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole("heading", { name: /Request a ride/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /For you/i })).toBeVisible();
     await expect(page.getByTestId("home-where-to")).toBeVisible();
-    await expect(page.getByTestId("home-see-prices")).toBeVisible();
-    await expect(page.getByTestId("service-circle-ride")).toHaveAttribute(
+    await expect(page.getByTestId("home-later")).toBeVisible();
+    await expect(page.getByTestId("home-recents")).toBeVisible();
+    await expect(page.getByTestId("service-circle-trip")).toHaveAttribute(
       "data-primary",
       "true",
     );
-    await expect(page.getByTestId("service-circle-courier")).toBeVisible();
+    await expect(page.getByTestId("service-circle-send-items")).toBeVisible();
     await expect(page.getByTestId("service-circle-farm")).toBeVisible();
 
     await page.getByTestId("home-later").click();

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import { Calendar, ChevronRight } from "lucide-react";
+import { Calendar, RotateCw } from "lucide-react";
 import { listJobsByCustomerPhone, cancelRiderJobAction } from "@/lib/actions";
 import { formatMoney, SERVICE_LABELS } from "@/lib/format";
 import {
@@ -49,6 +49,30 @@ function formatTripWhen(iso: string | null, createdAt: string): string {
   });
 }
 
+function formatPastWhen(iso: string | null, createdAt: string): string {
+  const d = new Date(iso || createdAt);
+  const day = d.toLocaleDateString("en-ZA", { day: "numeric", month: "short" });
+  const time = d.toLocaleTimeString("en-ZA", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return `${day} • ${time}`;
+}
+
+function formatFareCents(amount: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat("en-ZA", {
+      style: "currency",
+      currency: currency || "ZAR",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return formatMoney(amount, currency);
+  }
+}
+
 function rebookHref(job: JobWithDriver): string {
   const base =
     job.service_type === "delivery"
@@ -75,8 +99,6 @@ function thumbFor(service: ServiceType) {
   return "/home/sug-ride.jpg";
 }
 
-type Tab = "upcoming" | "past";
-
 export function ActivityView() {
   const [profile, setProfile] = useState<GuestProfile | null>(null);
   const [phoneInput, setPhoneInput] = useState("");
@@ -86,7 +108,6 @@ export function ActivityView() {
   const [pending, startTransition] = useTransition();
   const [hydrated, setHydrated] = useState(false);
   const [receiptJob, setReceiptJob] = useState<JobWithDriver | null>(null);
-  const [tab, setTab] = useState<Tab>("past");
 
   const loadTrips = useCallback((phone: string) => {
     startTransition(async () => {
@@ -132,13 +153,9 @@ export function ActivityView() {
     [jobs],
   );
 
-  useEffect(() => {
-    if (upcoming.length > 0) setTab("upcoming");
-  }, [upcoming.length]);
-
   if (!hydrated) {
     return (
-      <main className="min-h-dvh bg-white px-4 pb-28 pt-6">
+      <main className="mx-auto min-h-dvh max-w-md bg-white px-4 pb-28 pt-6">
         <p className="text-sm text-gray-500">Loading…</p>
       </main>
     );
@@ -146,9 +163,9 @@ export function ActivityView() {
 
   if (!profile?.phone) {
     return (
-      <main className="min-h-dvh touch-manipulation bg-white px-4 pb-28 pt-6">
+      <main className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-28 pt-6">
         <h1 className="text-3xl font-bold tracking-tight text-black">
-          Your account and activity
+          Activity
         </h1>
         <p className="mt-2 text-base text-gray-500">
           Enter your phone to see trips.
@@ -180,167 +197,180 @@ export function ActivityView() {
     );
   }
 
-  const list = tab === "upcoming" ? upcoming : past;
-
   return (
     <main
       data-testid="activity-view"
-      className="min-h-dvh touch-manipulation bg-white px-4 pb-28 pt-6"
+      className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-28 pt-6"
     >
       <h1 className="text-3xl font-bold tracking-tight text-black">
-        Your account and activity
+        Activity
       </h1>
 
-      {jobs[0] ? (
-        <section className="mt-5">
-          <p className="text-sm font-bold text-black">Most recent</p>
-          <Link
-            href={`/trip/${jobs[0].reference_code}`}
-            className="uber-press mt-2 block overflow-hidden rounded-2xl bg-gray-50"
-          >
-            <span className="relative block h-28 w-full overflow-hidden bg-gray-200">
-              <Image
-                src={thumbFor(jobs[0].service_type)}
-                alt=""
-                fill
-                className="object-cover"
-                sizes="400px"
-              />
+      <section className="mt-6">
+        <h2 className="text-base font-bold text-black">Upcoming</h2>
+        {upcoming.length === 0 ? (
+          <div className="mt-3 flex items-center gap-4 rounded-2xl bg-[#F5F5F5] p-4">
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white">
+              <Calendar className="h-6 w-6 text-gray-400" aria-hidden />
             </span>
-            <span className="block p-4">
-              <span className="block text-[15px] font-semibold text-black">
-                {jobs[0].dropoff_landmark || jobs[0].pickup_landmark}
-              </span>
-              <span className="mt-0.5 block text-sm text-gray-500">
-                {formatTripWhen(jobs[0].scheduled_for, jobs[0].created_at)}
-                {" · "}
-                {formatMoney(Number(jobs[0].fee_amount), jobs[0].fee_currency || "ZAR")}
-                {jobs[0].status === "cancelled" ? " · Cancelled" : ""}
-              </span>
-              <span className="mt-3 inline-flex min-h-10 items-center rounded-lg bg-gray-200 px-3 text-sm font-semibold text-black">
-                See details
-              </span>
-            </span>
-          </Link>
-        </section>
-      ) : null}
-
-      {/* Uber-style Upcoming / Past chips */}
-      <div
-        className="mt-5 flex gap-2"
-        role="tablist"
-        aria-label="Activity filters"
-      >
-        {(
-          [
-            { id: "upcoming" as const, label: "Upcoming" },
-            { id: "past" as const, label: "Past" },
-          ] as const
-        ).map((t) => {
-          const active = tab === t.id;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setTab(t.id)}
-              className={`uber-press rounded-full px-4 py-2 text-sm font-semibold ${
-                active
-                  ? "bg-black text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              {t.label}
-              {t.id === "upcoming" && upcoming.length > 0
-                ? ` · ${upcoming.length}`
-                : ""}
-            </button>
-          );
-        })}
-      </div>
-
-      {error ? (
-        <p className="mt-4 rounded-2xl bg-rose-50 px-3 py-2 text-sm text-rose-800">
-          {error}
-        </p>
-      ) : null}
-
-      {pending && jobs.length === 0 ? (
-        <p className="mt-10 text-center text-sm text-gray-500">Loading…</p>
-      ) : list.length === 0 ? (
-        <div className="mt-6 flex items-center gap-4 rounded-2xl bg-gray-50 p-4">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white">
-            <Calendar className="h-6 w-6 text-gray-400" aria-hidden />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold text-black">
-              {tab === "upcoming"
-                ? "You have no upcoming trips"
-                : "No past trips yet"}
-            </p>
-            <Link
-              href={tab === "upcoming" ? "/ride?when=later" : "/ride"}
-              className="uber-press mt-1 inline-block text-sm font-semibold text-black underline underline-offset-2"
-            >
-              {tab === "upcoming" ? "Reserve a trip" : "Book a ride"}
-            </Link>
+            <p className="font-semibold text-black">You have no upcoming trips</p>
           </div>
-          <ChevronRight className="h-5 w-5 text-gray-400" aria-hidden />
-        </div>
-      ) : (
-        <ul className="mt-4">
-          {list.map((job) => (
-            <TripRow
-              key={job.id}
-              job={job}
-              pending={pending}
-              showRebook={tab === "past" && job.status === "completed"}
-              onReceipt={
-                tab === "past" && job.status === "completed"
-                  ? () => setReceiptJob(job)
-                  : undefined
-              }
-              onCancel={
-                tab === "upcoming" &&
-                profile &&
-                ["new", "searching_driver", "assigned", "confirmed"].includes(
-                  job.status,
-                )
-                  ? () => {
-                      startTransition(async () => {
-                        try {
-                          await cancelRiderJobAction({
-                            jobId: job.id,
-                            customerPhone: profile.phone,
-                          });
-                          setJobs((prev) =>
-                            prev.map((j) =>
-                              j.id === job.id
-                                ? { ...j, status: "cancelled" }
-                                : j,
-                            ),
-                          );
-                        } catch (e) {
-                          setError(
-                            e instanceof Error
-                              ? e.message
-                              : "Could not cancel",
-                          );
-                        }
-                      });
-                    }
-                  : undefined
-              }
-            />
-          ))}
-        </ul>
-      )}
+        ) : (
+          <ul className="mt-3">
+            {upcoming.map((job) => (
+              <TripRow
+                key={job.id}
+                job={job}
+                pending={pending}
+                onCancel={
+                  profile &&
+                  ["new", "searching_driver", "assigned", "confirmed"].includes(
+                    job.status,
+                  )
+                    ? () => {
+                        startTransition(async () => {
+                          try {
+                            await cancelRiderJobAction({
+                              jobId: job.id,
+                              customerPhone: profile.phone,
+                            });
+                            setJobs((prev) =>
+                              prev.map((j) =>
+                                j.id === job.id
+                                  ? { ...j, status: "cancelled" }
+                                  : j,
+                              ),
+                            );
+                          } catch (e) {
+                            setError(
+                              e instanceof Error
+                                ? e.message
+                                : "Could not cancel",
+                            );
+                          }
+                        });
+                      }
+                    : undefined
+                }
+              />
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="mt-8">
+        <h2 className="text-base font-bold text-black">Past</h2>
+        {error ? (
+          <p className="mt-3 rounded-2xl bg-rose-50 px-3 py-2 text-sm text-rose-800">
+            {error}
+          </p>
+        ) : null}
+        {pending && jobs.length === 0 ? (
+          <p className="mt-4 text-sm text-gray-500">Loading…</p>
+        ) : past.length === 0 ? (
+          <p className="mt-3 text-sm text-gray-500">No past trips yet</p>
+        ) : (
+          <ul className="mt-3 space-y-3">
+            {past.map((job) => (
+              <PastTripCard
+                key={job.id}
+                job={job}
+                onReceipt={
+                  job.status === "completed"
+                    ? () => setReceiptJob(job)
+                    : undefined
+                }
+              />
+            ))}
+          </ul>
+        )}
+      </section>
 
       {receiptJob ? (
         <TripReceipt job={receiptJob} onClose={() => setReceiptJob(null)} />
       ) : null}
     </main>
+  );
+}
+
+function MapThumb() {
+  return (
+    <div
+      className="relative h-[4.5rem] w-[5.5rem] shrink-0 overflow-hidden rounded-xl bg-[#e5e1d4]"
+      aria-hidden
+    >
+      <svg
+        className="absolute inset-0 h-full w-full"
+        viewBox="0 0 88 72"
+        preserveAspectRatio="none"
+      >
+        <path
+          d="M8 58 Q28 20 48 36 T82 18"
+          stroke="#3b82f6"
+          strokeWidth="3.5"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <circle cx="12" cy="56" r="5" fill="#111" />
+        <circle cx="78" cy="18" r="5" fill="#111" />
+      </svg>
+    </div>
+  );
+}
+
+function PastTripCard({
+  job,
+  onReceipt,
+}: {
+  job: JobWithDriver;
+  onReceipt?: () => void;
+}) {
+  const title = job.dropoff_landmark || job.pickup_landmark || "Trip";
+  const fare = formatFareCents(
+    Number(job.fee_amount),
+    job.fee_currency || "ZAR",
+  );
+  const statusLabel =
+    job.status === "cancelled" ? "Cancelled" : "Completed";
+
+  return (
+    <li className="rounded-2xl bg-[#F5F5F5] p-3">
+      <Link
+        href={`/trip/${job.reference_code}`}
+        className="uber-press flex items-start gap-3 active:opacity-80"
+      >
+        <MapThumb />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[15px] font-bold text-black">
+            {title}
+          </span>
+          <span className="mt-0.5 block text-sm text-gray-500">
+            {formatPastWhen(job.scheduled_for, job.created_at)}
+          </span>
+          <span className="mt-0.5 block text-sm text-gray-500">
+            {fare} • {statusLabel}
+          </span>
+        </span>
+      </Link>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Link
+          href={rebookHref(job)}
+          className="uber-press inline-flex min-h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-bold text-black ring-1 ring-gray-200 hover:bg-gray-50"
+        >
+          <RotateCw className="h-3.5 w-3.5" aria-hidden />
+          Rebook
+        </Link>
+        {onReceipt ? (
+          <button
+            type="button"
+            onClick={onReceipt}
+            className="uber-press inline-flex min-h-10 items-center rounded-full bg-white px-4 text-sm font-bold text-black ring-1 ring-gray-200 hover:bg-gray-50"
+          >
+            Receipt
+          </button>
+        ) : null}
+      </div>
+    </li>
   );
 }
 

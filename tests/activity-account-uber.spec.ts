@@ -41,17 +41,13 @@ test.describe("Activity & Account — Uber-style functionality", () => {
       await page.getByRole("button", { name: /View activity/i }).click();
     }
 
-    await expect(page.getByRole("tab", { name: /Upcoming/i })).toBeVisible({
+    await expect(page.getByRole("heading", { name: /^Upcoming$/i })).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByRole("tab", { name: /Past/i })).toBeVisible();
-
-    await page.getByRole("tab", { name: /Past/i }).click();
-    // Either trips or empty state with Book a ride CTA
-    const emptyOrTrips = page
-      .getByText(/No past trips yet|Book a ride|R\s?\d+/i)
-      .first();
-    await expect(emptyOrTrips).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("heading", { name: /^Past$/i })).toBeVisible();
+    await expect(
+      page.getByText(/You have no upcoming trips|No past trips yet|R\s?\d+/i).first(),
+    ).toBeVisible({ timeout: 10_000 });
   });
 
   test("Account: profile, tiles, menu, sign out", async ({ page }) => {
@@ -76,7 +72,8 @@ test.describe("Activity & Account — Uber-style functionality", () => {
     });
     await expect(account.getByRole("link", { name: /^Help$/i })).toBeVisible();
     await expect(account.getByRole("link", { name: /^Wallet$/i })).toBeVisible();
-    await expect(account.getByRole("link", { name: /^Activity$/i })).toBeVisible();
+    await expect(account.getByRole("link", { name: /^Safety$/i })).toBeVisible();
+    await expect(account.getByRole("link", { name: /^Inbox$/i })).toBeVisible();
     await expect(account.getByRole("link", { name: /Saved places/i })).toBeVisible();
     await expect(
       account.getByRole("link", { name: /Payment methods/i }),

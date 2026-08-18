@@ -311,6 +311,10 @@ body {
 }
 
 /* Uber tap physics — use on every pressable control */
+html.vr-simple-mode {
+  font-size: 118%;
+}
+
 .uber-press {
   cursor: pointer;
   touch-action: manipulation;
