@@ -9,18 +9,22 @@ test.describe("Home Uber structure", () => {
     await prepareBrowserContext(context);
   });
 
-  test("Later opens schedule modal; pills change quick actions", async ({
+  test("request a ride + destination + See prices; Later opens Reserve modal", async ({
     page,
   }) => {
     await page.goto("/");
     await dismissCountryModalIfPresent(page);
 
     await expect(page.getByTestId("uber-home")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId("home-chip-for_you")).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Request a ride/i })).toBeVisible();
+    await expect(page.getByTestId("home-where-to")).toBeVisible();
+    await expect(page.getByTestId("home-see-prices")).toBeVisible();
     await expect(page.getByTestId("service-circle-ride")).toHaveAttribute(
       "data-primary",
       "true",
     );
+    await expect(page.getByTestId("service-circle-courier")).toBeVisible();
+    await expect(page.getByTestId("service-circle-farm")).toBeVisible();
 
     await page.getByTestId("home-later").click();
     await expect(page.getByTestId("home-later-datetime")).toBeVisible({
@@ -28,13 +32,6 @@ test.describe("Home Uber structure", () => {
     });
     await page.getByRole("button", { name: "Close" }).click();
     await expect(page.getByTestId("home-later-datetime")).toHaveCount(0);
-
-    await page.getByTestId("home-chip-delivery").click();
-    await expect(page.getByTestId("service-circle-delivery")).toHaveAttribute(
-      "data-primary",
-      "true",
-    );
-    await expect(page.getByTestId("service-circle-ride")).toHaveCount(0);
   });
 
   test("promo banner can be dismissed", async ({ page }) => {

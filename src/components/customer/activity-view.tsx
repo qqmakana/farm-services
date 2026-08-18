@@ -148,7 +148,7 @@ export function ActivityView() {
     return (
       <main className="min-h-dvh touch-manipulation bg-white px-4 pb-28 pt-6">
         <h1 className="text-3xl font-bold tracking-tight text-black">
-          Activity
+          Your account and activity
         </h1>
         <p className="mt-2 text-base text-gray-500">
           Enter your phone to see trips.
@@ -187,7 +187,43 @@ export function ActivityView() {
       data-testid="activity-view"
       className="min-h-dvh touch-manipulation bg-white px-4 pb-28 pt-6"
     >
-      <h1 className="text-3xl font-bold tracking-tight text-black">Activity</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-black">
+        Your account and activity
+      </h1>
+
+      {jobs[0] ? (
+        <section className="mt-5">
+          <p className="text-sm font-bold text-black">Most recent</p>
+          <Link
+            href={`/trip/${jobs[0].reference_code}`}
+            className="uber-press mt-2 block overflow-hidden rounded-2xl bg-gray-50"
+          >
+            <span className="relative block h-28 w-full overflow-hidden bg-gray-200">
+              <Image
+                src={thumbFor(jobs[0].service_type)}
+                alt=""
+                fill
+                className="object-cover"
+                sizes="400px"
+              />
+            </span>
+            <span className="block p-4">
+              <span className="block text-[15px] font-semibold text-black">
+                {jobs[0].dropoff_landmark || jobs[0].pickup_landmark}
+              </span>
+              <span className="mt-0.5 block text-sm text-gray-500">
+                {formatTripWhen(jobs[0].scheduled_for, jobs[0].created_at)}
+                {" · "}
+                {formatMoney(Number(jobs[0].fee_amount), jobs[0].fee_currency || "ZAR")}
+                {jobs[0].status === "cancelled" ? " · Cancelled" : ""}
+              </span>
+              <span className="mt-3 inline-flex min-h-10 items-center rounded-lg bg-gray-200 px-3 text-sm font-semibold text-black">
+                See details
+              </span>
+            </span>
+          </Link>
+        </section>
+      ) : null}
 
       {/* Uber-style Upcoming / Past chips */}
       <div
