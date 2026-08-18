@@ -12,7 +12,6 @@ import {
 // Recruitment belongs on marketing surfaces, never over a booking, sign-up,
 // checkout, or installed-app flow.
 const RECRUITMENT_PROMOTION_PATHS = new Set([
-  "/",
   "/activity",
   "/account",
   "/partners",

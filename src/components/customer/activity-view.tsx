@@ -163,32 +163,32 @@ export function ActivityView() {
 
   if (!profile?.phone) {
     return (
-      <main className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-28 pt-6">
-        <h1 className="text-3xl font-bold tracking-tight text-black">
+      <main className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white p-4 pb-28 pt-6 font-sans text-[#0a0a0a]">
+        <h1 className="text-3xl font-semibold tracking-tight text-[#0a0a0a]">
           Activity
         </h1>
-        <p className="mt-2 text-base text-gray-500">
+        <p className="mt-2 text-base font-medium text-[#71717a]">
           Enter your phone to see trips.
         </p>
         <form onSubmit={savePhone} className="mt-8 space-y-3">
           <input
-            className="ru-soft-field"
+            className="w-full rounded-[12px] border-none bg-[#f4f4f5] p-4 text-[#0a0a0a] outline-none"
             placeholder="Phone number"
             inputMode="tel"
             value={phoneInput}
             onChange={(e) => setPhoneInput(e.target.value)}
           />
           <input
-            className="ru-soft-field"
+            className="w-full rounded-[12px] border-none bg-[#f4f4f5] p-4 text-[#0a0a0a] outline-none"
             placeholder="Name (optional)"
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
           />
-          {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+          {error ? <p className="text-sm text-[#f02d3a]">{error}</p> : null}
           <button
             type="submit"
             disabled={pending}
-            className="uber-press uber-btn-black w-full"
+            className="uber-press w-full rounded-[9999px] bg-[#0a0a0a] py-4 font-bold text-white"
           >
             {pending ? "Loading…" : "View activity"}
           </button>
@@ -200,20 +200,20 @@ export function ActivityView() {
   return (
     <main
       data-testid="activity-view"
-      className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-28 pt-6"
+      className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white p-4 pb-28 pt-6 font-sans text-[#0a0a0a]"
     >
-      <h1 className="text-3xl font-bold tracking-tight text-black">
+      <h1 className="text-3xl font-semibold tracking-tight text-[#0a0a0a]">
         Activity
       </h1>
 
       <section className="mt-6">
-        <h2 className="text-base font-bold text-black">Upcoming</h2>
+        <h2 className="text-base font-semibold text-[#0a0a0a]">Upcoming</h2>
         {upcoming.length === 0 ? (
-          <div className="mt-3 flex items-center gap-4 rounded-2xl bg-[#F5F5F5] p-4">
+          <div className="mt-4 flex items-center gap-4 rounded-[24px] bg-[#f4f4f5] p-4">
             <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white">
-              <Calendar className="h-6 w-6 text-gray-400" aria-hidden />
+              <Calendar className="h-6 w-6 text-[#71717a]" strokeWidth={2} aria-hidden />
             </span>
-            <p className="font-semibold text-black">You have no upcoming trips</p>
+            <p className="font-semibold text-[#0a0a0a]">You have no upcoming trips</p>
           </div>
         ) : (
           <ul className="mt-3">
@@ -259,7 +259,7 @@ export function ActivityView() {
       </section>
 
       <section className="mt-8">
-        <h2 className="text-base font-bold text-black">Past</h2>
+        <h2 className="text-base font-semibold text-[#0a0a0a]">Past</h2>
         {error ? (
           <p className="mt-3 rounded-2xl bg-rose-50 px-3 py-2 text-sm text-rose-800">
             {error}
@@ -268,7 +268,7 @@ export function ActivityView() {
         {pending && jobs.length === 0 ? (
           <p className="mt-4 text-sm text-gray-500">Loading…</p>
         ) : past.length === 0 ? (
-          <p className="mt-3 text-sm text-gray-500">No past trips yet</p>
+          <p className="mt-3 text-sm font-medium text-[#71717a]">No past trips yet</p>
         ) : (
           <ul className="mt-3 space-y-3">
             {past.map((job) => (
@@ -334,20 +334,20 @@ function PastTripCard({
     job.status === "cancelled" ? "Cancelled" : "Completed";
 
   return (
-    <li className="rounded-2xl bg-[#F5F5F5] p-3">
+    <li className="rounded-[24px] bg-[#f4f4f5] p-4">
       <Link
         href={`/trip/${job.reference_code}`}
         className="uber-press flex items-start gap-3 active:opacity-80"
       >
         <MapThumb />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-bold text-black">
+          <span className="block truncate text-[15px] font-semibold text-[#0a0a0a]">
             {title}
           </span>
-          <span className="mt-0.5 block text-sm text-gray-500">
+          <span className="mt-0.5 block text-sm font-medium text-[#71717a]">
             {formatPastWhen(job.scheduled_for, job.created_at)}
           </span>
-          <span className="mt-0.5 block text-sm text-gray-500">
+          <span className="mt-0.5 block text-sm font-medium text-[#71717a]">
             {fare} • {statusLabel}
           </span>
         </span>
@@ -355,9 +355,9 @@ function PastTripCard({
       <div className="mt-3 flex flex-wrap gap-2">
         <Link
           href={rebookHref(job)}
-          className="uber-press inline-flex min-h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-bold text-black ring-1 ring-gray-200 hover:bg-gray-50"
+          className="uber-press inline-flex min-h-10 items-center gap-1.5 rounded-[9999px] bg-white px-4 text-sm font-bold text-[#0a0a0a]"
         >
-          <RotateCw className="h-3.5 w-3.5" aria-hidden />
+          <RotateCw className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
           Rebook
         </Link>
         {onReceipt ? (
@@ -403,13 +403,13 @@ function TripRow({
           />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-semibold text-black">
+          <span className="block truncate text-[15px] font-semibold text-[#0a0a0a]">
             {job.dropoff_landmark || job.pickup_landmark}
           </span>
-          <span className="mt-0.5 block text-sm text-gray-500">
+          <span className="mt-0.5 block text-sm font-medium text-[#71717a]">
             {formatTripWhen(job.scheduled_for, job.created_at)}
           </span>
-          <span className="mt-0.5 block text-xs text-gray-400">
+          <span className="mt-0.5 block text-xs font-medium text-[#71717a]">
             {SERVICE_LABELS[job.service_type]}
             {job.status === "completed"
               ? " · Completed"
@@ -420,7 +420,7 @@ function TripRow({
         </span>
         <span
           data-testid="trip-fare"
-          className="shrink-0 self-start pt-0.5 text-sm font-bold text-black"
+          className="shrink-0 self-start pt-0.5 text-sm font-bold text-[#0a0a0a]"
         >
           {formatMoney(Number(job.fee_amount), job.fee_currency || "ZAR")}
         </span>

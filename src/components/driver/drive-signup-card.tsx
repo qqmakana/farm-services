@@ -26,38 +26,40 @@ export function DriveSignupCard({
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    if (!dismissible) return;
     if (getSelectedDriverId()) {
       setVisible(false);
       return;
     }
-    setVisible(isDriverWantedBannerVisible());
+    if (dismissible) {
+      setVisible(isDriverWantedBannerVisible());
+    }
   }, [dismissible]);
 
-  if (dismissible && !visible) return null;
+  if (!visible) return null;
 
   if (variant === "compact") {
     return (
       <section
         data-testid="drive-signup-card"
         data-variant="compact"
-        className={`relative rounded-2xl bg-black px-4 py-3.5 text-white ${className}`}
+        className={`relative rounded-[24px] bg-[#0a0a0a] px-5 py-5 text-white ${className}`}
       >
-        <div className="flex items-center gap-3">
-          <div className="min-w-0 flex-1 pr-6">
-            <p className="text-[11px] font-semibold tracking-[0.12em] text-white/55 uppercase">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold tracking-[0.14em] text-neutral-400 uppercase">
               Drivers wanted
             </p>
-            <p className="mt-0.5 truncate text-sm font-bold tracking-tight text-white">
+            <p className="mt-1 text-[15px] font-bold leading-snug tracking-tight text-white">
               Earn with Village Ride — keep 90%
             </p>
           </div>
           <Link
             href="/driver/join"
-            className="uber-press inline-flex h-11 shrink-0 items-center gap-0.5 rounded-full bg-white px-4 text-sm font-bold text-black hover:bg-gray-100 active:bg-gray-200"
+            data-testid="drive-signup-cta"
+            className="uber-press inline-flex h-11 shrink-0 items-center gap-1 rounded-full bg-white px-5 text-sm font-bold text-[#0a0a0a]"
           >
             Sign up
-            <ChevronRight className="h-4 w-4" aria-hidden />
+            <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden />
           </Link>
         </div>
         {dismissible ? (

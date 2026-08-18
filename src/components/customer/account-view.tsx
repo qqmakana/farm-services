@@ -101,7 +101,9 @@ export function AccountView() {
   const nameParts = displayName.split(/\s+/);
   const firstName = nameParts[0] || "Guest";
   const lastName = nameParts.slice(1).join(" ");
-  const initial = (profile?.name || profile?.phone || "?").charAt(0).toUpperCase();
+  const avatarGlyph = profile?.name?.trim()
+    ? (profile.name || "?").charAt(0).toUpperCase()
+    : "?";
   const showForm = !profile?.phone || editing;
 
   const safetyDone = useMemo(() => {
@@ -128,7 +130,7 @@ export function AccountView() {
   return (
     <main
       data-testid="account-view"
-      className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-28 pt-6"
+      className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white p-4 pb-28 pt-6 font-sans text-[#0a0a0a]"
     >
       <div className="flex items-start justify-between gap-4">
         <button
@@ -136,7 +138,7 @@ export function AccountView() {
           onClick={() => setEditing(true)}
           className="min-w-0 flex-1 text-left"
         >
-          <h1 className="text-[2.15rem] font-bold leading-[1.05] tracking-tight text-black">
+          <h1 className="text-[2.15rem] font-semibold leading-[1.05] tracking-tight text-[#0a0a0a]">
             <span className="block">{firstName}</span>
             {lastName ? <span className="block">{lastName}</span> : null}
           </h1>
@@ -144,7 +146,7 @@ export function AccountView() {
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="uber-press flex h-[4.75rem] w-[4.75rem] shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-2xl font-bold text-black"
+          className="uber-press flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e5e7eb] text-2xl font-medium text-[#0a0a0a]"
           aria-label="Edit profile"
         >
           {profile?.photo_data_url ? (
@@ -155,36 +157,36 @@ export function AccountView() {
               className="h-full w-full object-cover"
             />
           ) : (
-            initial
+            avatarGlyph
           )}
         </button>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-1 rounded-full bg-[#F5F5F5] px-2.5 py-1 text-sm font-semibold text-black">
-          <Star className="h-3.5 w-3.5 fill-black text-black" aria-hidden />
+        <span className="inline-flex items-center gap-1 rounded-full bg-[#f4f4f5] px-2.5 py-1 text-sm font-medium text-[#0a0a0a]">
+          <Star className="h-3.5 w-3.5 fill-[#0a0a0a] text-[#0a0a0a]" strokeWidth={2} aria-hidden />
           4.72
         </span>
         {profile?.phone ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-[#F5F5F5] px-2.5 py-1 text-sm font-semibold text-black">
-            <BadgeCheck className="h-3.5 w-3.5 text-blue-600" aria-hidden />
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#f4f4f5] px-2.5 py-1 text-sm font-medium text-[#0a0a0a]">
+            <BadgeCheck className="h-3.5 w-3.5 text-blue-600" strokeWidth={2} aria-hidden />
             Verified
           </span>
         ) : (
-          <span className="text-sm text-gray-500">Add phone to verify</span>
+          <span className="text-sm font-medium text-[#71717a]">Add phone to verify</span>
         )}
       </div>
 
       {showForm ? (
         <form onSubmit={saveDetails} className="mt-6 space-y-3">
           <input
-            className="ru-soft-field"
+            className="w-full rounded-[12px] border-none bg-[#f4f4f5] p-4 text-[#0a0a0a] outline-none"
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
             placeholder="Name"
           />
           <input
-            className="ru-soft-field"
+            className="w-full rounded-[12px] border-none bg-[#f4f4f5] p-4 text-[#0a0a0a] outline-none"
             value={phoneInput}
             onChange={(e) => setPhoneInput(e.target.value)}
             placeholder={formatPhonePlaceholder(countryCode)}
@@ -201,7 +203,10 @@ export function AccountView() {
               onChange={() => refreshProfile()}
             />
           ) : null}
-          <button type="submit" className="uber-press uber-btn-black w-full">
+          <button
+            type="submit"
+            className="uber-press w-full rounded-[9999px] bg-[#0a0a0a] py-4 font-bold text-white"
+          >
             Save
           </button>
           {editing && profile?.phone ? (
@@ -225,13 +230,13 @@ export function AccountView() {
 
       <Link
         href="/account/payment"
-        className="uber-press mt-4 flex overflow-hidden rounded-2xl bg-[#F5F5F5]"
+        className="uber-press mt-4 flex overflow-hidden rounded-[24px] bg-[#f4f4f5]"
       >
         <span className="flex min-w-0 flex-1 flex-col justify-center p-4">
-          <span className="text-base font-bold text-black">
+          <span className="text-base font-semibold text-[#0a0a0a]">
             Try Village Pass free
           </span>
-          <span className="mt-1 text-xs text-gray-500">
+          <span className="mt-1 text-xs font-medium text-[#71717a]">
             Skip the booking fee · Ride, Delivery, Farm, Courier · cash or card
           </span>
         </span>
@@ -252,29 +257,29 @@ export function AccountView() {
 
       <Link
         href="/help"
-        className="uber-press mt-3 flex items-center gap-3 rounded-2xl bg-[#F5F5F5] p-4"
+        className="uber-press mt-4 flex items-center gap-3 rounded-[24px] bg-[#f4f4f5] p-4"
       >
         <SafetyRing done={safetyDone} total={7} />
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-bold text-black">
+          <span className="block text-sm font-semibold text-[#0a0a0a]">
             Safety check-up
           </span>
-          <span className="mt-0.5 block text-xs text-gray-500">
+          <span className="mt-0.5 block text-xs font-medium text-[#71717a]">
             {safetyDone}/7 complete · add photo and saved places
           </span>
         </span>
         <ChevronRight className="h-4 w-4 text-gray-400" />
       </Link>
 
-      <div className="mt-3 flex items-center gap-3 rounded-2xl bg-[#F5F5F5] p-4">
+      <div className="mt-4 flex items-center gap-3 rounded-[24px] bg-[#f4f4f5] p-4">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white">
-          <Leaf className="h-5 w-5 text-emerald-600" aria-hidden />
+          <Leaf className="h-5 w-5 text-emerald-600" strokeWidth={2} aria-hidden />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-bold text-black">
+          <span className="block text-sm font-semibold text-[#0a0a0a]">
             Estimated CO₂ saved
           </span>
-          <span className="mt-0.5 block text-xs text-gray-500">0g</span>
+          <span className="mt-0.5 block text-xs font-medium text-[#71717a]">0g</span>
         </span>
       </div>
 
@@ -294,16 +299,16 @@ export function AccountView() {
           <button
             type="button"
             onClick={toggleSimple}
-            className="uber-press flex min-h-14 w-full items-center gap-4 border-b border-gray-100 py-4 active:bg-gray-50"
+            className="uber-press flex min-h-14 w-full items-center gap-4 border-b border-[#f4f4f5] py-4"
           >
-            <ALargeSmall className="h-5 w-5 shrink-0 text-black" aria-hidden />
-            <span className="flex-1 text-left text-base font-medium text-black">
+            <ALargeSmall className="h-5 w-5 shrink-0 text-[#0a0a0a]" strokeWidth={2} aria-hidden />
+            <span className="flex-1 text-left text-base font-medium text-[#0a0a0a]">
               Simple mode
             </span>
-            <span className="rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-bold tracking-wide text-white">
+            <span className="rounded-full bg-blue-500 px-2 py-[1px] text-[10px] font-bold tracking-wide text-white">
               NEW
             </span>
-            <span className="text-sm font-semibold text-gray-500">
+            <span className="text-sm font-medium text-[#71717a]">
               {simple ? "On" : "Off"}
             </span>
           </button>
@@ -331,13 +336,13 @@ export function AccountView() {
         <button
           type="button"
           onClick={logout}
-          className="uber-press mt-8 w-full py-3 text-center text-sm font-semibold text-gray-600 hover:text-black"
+          className="uber-press mt-8 w-full py-3 text-center text-sm font-medium text-[#71717a]"
         >
           Sign out
         </button>
       ) : null}
 
-      <p className="mt-4 text-center text-xs text-gray-400">
+      <p className="mt-4 text-center text-xs font-medium text-[#71717a]">
         {country.flag} {country.name}
       </p>
     </main>
@@ -364,14 +369,14 @@ function SafetyRing({ done, total }: { done: number; total: number }) {
           cy="22"
           r={r}
           fill="none"
-          stroke="#111"
+          stroke="#0a0a0a"
           strokeWidth="4"
           strokeDasharray={c}
           strokeDashoffset={c * (1 - pct)}
           strokeLinecap="round"
         />
       </svg>
-      <span className="absolute text-[10px] font-bold text-black">
+      <span className="absolute text-[10px] font-bold text-[#0a0a0a]">
         {done}/{total}
       </span>
     </span>
@@ -390,10 +395,10 @@ function GridTile({
   return (
     <Link
       href={href}
-      className="uber-press flex min-h-[5.25rem] flex-col justify-between rounded-2xl bg-[#F5F5F5] p-4 hover:bg-gray-200 active:bg-gray-300"
+      className="uber-press flex min-h-[5.25rem] flex-col justify-between rounded-[24px] bg-[#f4f4f5] p-4"
     >
-      <Icon className="h-5 w-5 text-black" aria-hidden />
-      <span className="text-sm font-semibold text-black">{label}</span>
+      <Icon className="h-5 w-5 text-[#0a0a0a]" strokeWidth={2} aria-hidden />
+      <span className="text-sm font-semibold text-[#0a0a0a]">{label}</span>
     </Link>
   );
 }
@@ -411,10 +416,10 @@ function ListRow({
     <li>
       <Link
         href={href}
-        className="uber-press flex min-h-14 w-full items-center gap-4 border-b border-gray-100 py-4 last:border-b-0 active:bg-gray-50"
+        className="uber-press flex min-h-14 w-full items-center gap-4 border-b border-[#f4f4f5] py-4 last:border-b-0"
       >
-        <Icon className="h-5 w-5 shrink-0 text-black" aria-hidden />
-        <span className="flex-1 text-left text-base font-medium text-black">
+        <Icon className="h-5 w-5 shrink-0 text-[#0a0a0a]" strokeWidth={2} aria-hidden />
+        <span className="flex-1 text-left text-base font-medium text-[#0a0a0a]">
           {label}
         </span>
         <ChevronRight className="h-4 w-4 text-gray-400" aria-hidden />
@@ -437,10 +442,10 @@ function ListButton({
       <button
         type="button"
         onClick={onClick}
-        className="uber-press flex min-h-14 w-full items-center gap-4 border-b border-gray-100 py-4 active:bg-gray-50"
+        className="uber-press flex min-h-14 w-full items-center gap-4 border-b border-[#f4f4f5] py-4"
       >
-        <Icon className="h-5 w-5 shrink-0 text-black" aria-hidden />
-        <span className="flex-1 text-left text-base font-medium text-black">
+        <Icon className="h-5 w-5 shrink-0 text-[#0a0a0a]" strokeWidth={2} aria-hidden />
+        <span className="flex-1 text-left text-base font-medium text-[#0a0a0a]">
           {label}
         </span>
         <ChevronRight className="h-4 w-4 text-gray-400" aria-hidden />

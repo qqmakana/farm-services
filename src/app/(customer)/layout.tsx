@@ -7,7 +7,7 @@ export default function CustomerLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="ru-force-light min-h-dvh bg-white font-[family-name:var(--font-sans)] text-black">
+    <div className="ru-force-light min-h-dvh bg-white font-sans font-[family-name:var(--font-sans)] text-[#0a0a0a]">
       {children}
       <CustomerTabBar />
       <DriverWantedNotice />

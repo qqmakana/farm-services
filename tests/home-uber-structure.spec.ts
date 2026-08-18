@@ -35,13 +35,25 @@ test.describe("Home Uber structure", () => {
     await expect(page.getByTestId("home-later-datetime")).toHaveCount(0);
   });
 
-  test("promo banner can be dismissed", async ({ page }) => {
+  test("Drivers wanted banner is above the fold and Sign up opens join", async ({
+    page,
+  }) => {
     await page.goto("/");
     await dismissCountryModalIfPresent(page);
 
     const promo = page.getByTestId("drive-signup-card");
     await expect(promo).toBeVisible({ timeout: 15_000 });
-    await page.getByTestId("dismiss-home-promo").click();
-    await expect(promo).toHaveCount(0);
+    await expect(promo.getByText(/Drivers wanted/i)).toBeVisible();
+    await expect(promo.getByText(/keep 90%/i)).toBeVisible();
+
+    const box = await promo.boundingBox();
+    expect(box).toBeTruthy();
+    expect(box!.y).toBeLessThan(320);
+
+    await page.getByTestId("drive-signup-cta").click();
+    await expect(page).toHaveURL(/\/driver\/join/, { timeout: 45_000 });
+    await expect(
+      page.getByRole("heading", { name: /Drive with/i }),
+    ).toBeVisible({ timeout: 15_000 });
   });
 });

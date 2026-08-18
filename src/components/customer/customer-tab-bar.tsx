@@ -6,6 +6,8 @@ import { useEffect } from "react";
 import { Grid2X2, Home, Receipt, User } from "lucide-react";
 import { applySimpleModeClass } from "@/lib/simple-mode";
 
+const ICON = 2;
+
 const TABS = [
   {
     href: "/",
@@ -48,11 +50,11 @@ export function CustomerTabBar() {
 
   return (
     <nav
-      className="fixed bottom-3 left-1/2 z-[60] w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 touch-manipulation pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-sans)]"
+      className="fixed bottom-3 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 touch-manipulation pb-[env(safe-area-inset-bottom)] font-sans"
       aria-label="Main"
       data-testid="customer-tab-bar"
     >
-      <ul className="flex h-16 items-stretch justify-around rounded-full bg-[#F3F3F3] px-1 shadow-[0_8px_30px_rgba(0,0,0,0.12)] ring-1 ring-black/5">
+      <ul className="flex h-16 items-stretch justify-around rounded-[9999px] bg-[#f4f4f5] px-1.5 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
         {TABS.map((tab) => {
           const active = tab.match(pathname);
           const Icon = tab.icon;
@@ -61,16 +63,15 @@ export function CustomerTabBar() {
               <Link
                 href={tab.href}
                 data-testid={`customer-tab-${tab.label.toLowerCase()}`}
-                className={`uber-press mx-0.5 flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1.5 ${
+                className={`uber-press mx-0.5 flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-[9999px] py-1.5 ${
                   active
-                    ? "bg-white font-bold text-black shadow-sm"
-                    : "font-medium text-gray-500"
+                    ? "bg-white font-semibold text-[#0a0a0a]"
+                    : "font-medium text-[#71717a]"
                 }`}
               >
                 <Icon
                   className="h-[22px] w-[22px]"
-                  strokeWidth={active ? 2.5 : 1.75}
-                  fill={active ? "currentColor" : "none"}
+                  strokeWidth={ICON}
                   aria-hidden
                 />
                 <span className="text-[10px] leading-none tracking-wide">
