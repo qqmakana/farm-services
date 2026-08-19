@@ -28,6 +28,13 @@ import {
   writeSavedPlacesCache,
 } from "@/lib/saved-places-cache";
 import type { SavedLocation } from "@/lib/types";
+import {
+  UBER_BTN_BLACK,
+  UBER_GLOSS,
+  UBER_H1,
+  UBER_PAGE,
+  UBER_SUB,
+} from "@/components/customer/uber-chrome";
 
 export default function SavedPlacesPage() {
   const { countryCode } = useCountry();
@@ -139,17 +146,15 @@ export default function SavedPlacesPage() {
   }
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-28 pt-6">
+    <main className={UBER_PAGE}>
       <Link
         href="/account"
-        className="uber-press inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-2 text-sm font-semibold text-black hover:bg-gray-200"
+        className={`uber-press inline-flex items-center gap-1 rounded-full px-3 py-2 text-sm font-bold text-[#0a0a0a] ${UBER_GLOSS}`}
       >
         <ChevronLeft className="h-4 w-4" /> Account
       </Link>
-      <h1 className="mt-5 text-3xl font-bold tracking-tight text-black">
-        Saved places
-      </h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1 className={`mt-5 ${UBER_H1}`}>Saved places</h1>
+      <p className={UBER_SUB}>
         Home, Work, Farm — describe places in your own words. Works offline.
       </p>
 
@@ -188,7 +193,7 @@ export default function SavedPlacesPage() {
             return (
               <li
                 key={p.id}
-                className="flex items-center gap-3 rounded-xl border border-gray-100 bg-[#F9FAFB] px-4 py-3 shadow-sm"
+                className={`flex items-center gap-3 rounded-[28px] px-4 py-3 ${UBER_GLOSS}`}
               >
                 <Icon className="h-5 w-5 text-[#000000]" aria-hidden />
                 <div className="min-w-0 flex-1">
@@ -218,12 +223,12 @@ export default function SavedPlacesPage() {
         <button
           type="button"
           onClick={() => setAdding(true)}
-          className="uber-press uber-btn-black mt-6 flex w-full items-center justify-center gap-2"
+          className={`${UBER_BTN_BLACK} mt-6 flex items-center justify-center gap-2`}
         >
           <Plus className="h-4 w-4" /> Add new location
         </button>
       ) : (
-        <form onSubmit={onSave} className="ru-card mt-6 space-y-3 p-4">
+        <form onSubmit={onSave} className={`mt-6 space-y-3 rounded-[28px] p-4 ${UBER_GLOSS}`}>
           {error ? (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-800">
               {error}

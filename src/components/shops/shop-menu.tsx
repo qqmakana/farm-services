@@ -111,7 +111,7 @@ export function ShopMenu({
 
   if (success) {
     return (
-      <div className="flex min-h-dvh touch-manipulation flex-col bg-white px-4 pb-28 pt-8">
+      <div className="flex min-h-dvh touch-manipulation flex-col bg-[#f2f2f2] px-4 pb-28 pt-8 font-[family-name:var(--font-display)] tracking-[-0.02em]">
         <div className="mx-auto flex max-w-md flex-1 flex-col items-center justify-center text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
             <CheckCircle2 className="h-9 w-9 text-[#06c167]" />
@@ -142,7 +142,7 @@ export function ShopMenu({
   }
 
   return (
-    <div className="relative min-h-dvh touch-manipulation bg-white pb-28">
+    <div className="relative min-h-dvh touch-manipulation bg-[#f2f2f2] pb-28 font-[family-name:var(--font-display)] tracking-[-0.02em]">
       <div className="relative h-44 bg-gradient-to-br from-emerald-800 to-emerald-500">
         {shop.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -166,7 +166,7 @@ export function ShopMenu({
       </div>
 
       <div className="mx-auto max-w-md px-4 -mt-6">
-        <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="rounded-[28px] bg-white p-4 shadow-[0_12px_40px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.03]">
           <h1 className="text-2xl font-bold tracking-tight">{shop.name}</h1>
           <p className="mt-1 text-sm text-gray-500">
             {shop.description || shop.notes || shop.category}

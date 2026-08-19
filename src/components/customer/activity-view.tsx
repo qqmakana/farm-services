@@ -13,6 +13,14 @@ import {
 } from "@/lib/guest-profile";
 import type { JobStatus, JobWithDriver, ServiceType } from "@/lib/types";
 import { TripReceipt } from "@/components/customer/trip-receipt";
+import {
+  UBER_BTN_BLACK,
+  UBER_GLOSS,
+  UBER_H1,
+  UBER_INPUT,
+  UBER_PAGE,
+  UBER_SUB,
+} from "@/components/customer/uber-chrome";
 
 const UPCOMING: JobStatus[] = [
   "new",
@@ -155,41 +163,33 @@ export function ActivityView() {
 
   if (!hydrated) {
     return (
-      <main className="mx-auto min-h-dvh max-w-md bg-white px-4 pb-28 pt-6">
-        <p className="text-sm text-gray-500">Loading…</p>
+      <main className={UBER_PAGE}>
+        <p className="text-[15px] font-medium text-[#6b6b6b]">Loading…</p>
       </main>
     );
   }
 
   if (!profile?.phone) {
     return (
-      <main className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white p-4 pb-28 pt-6 font-sans text-[#0a0a0a]">
-        <h1 className="text-3xl font-semibold tracking-tight text-[#0a0a0a]">
-          Activity
-        </h1>
-        <p className="mt-2 text-base font-medium text-[#71717a]">
-          Enter your phone to see trips.
-        </p>
+      <main className={UBER_PAGE}>
+        <h1 className={UBER_H1}>Activity</h1>
+        <p className={UBER_SUB}>Enter your phone to see trips.</p>
         <form onSubmit={savePhone} className="mt-8 space-y-3">
           <input
-            className="w-full rounded-[12px] border-none bg-[#f4f4f5] p-4 text-[#0a0a0a] outline-none"
+            className={UBER_INPUT}
             placeholder="Phone number"
             inputMode="tel"
             value={phoneInput}
             onChange={(e) => setPhoneInput(e.target.value)}
           />
           <input
-            className="w-full rounded-[12px] border-none bg-[#f4f4f5] p-4 text-[#0a0a0a] outline-none"
+            className={UBER_INPUT}
             placeholder="Name (optional)"
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
           />
-          {error ? <p className="text-sm text-[#f02d3a]">{error}</p> : null}
-          <button
-            type="submit"
-            disabled={pending}
-            className="uber-press w-full rounded-[9999px] bg-[#0a0a0a] py-4 font-bold text-white"
-          >
+          {error ? <p className="text-sm font-medium text-[#f02d3a]">{error}</p> : null}
+          <button type="submit" disabled={pending} className={UBER_BTN_BLACK}>
             {pending ? "Loading…" : "View activity"}
           </button>
         </form>
@@ -200,16 +200,14 @@ export function ActivityView() {
   return (
     <main
       data-testid="activity-view"
-      className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white p-4 pb-28 pt-6 font-sans text-[#0a0a0a]"
+      className={UBER_PAGE}
     >
-      <h1 className="text-3xl font-semibold tracking-tight text-[#0a0a0a]">
-        Activity
-      </h1>
+      <h1 className={UBER_H1}>Activity</h1>
 
       <section className="mt-6">
-        <h2 className="text-base font-semibold text-[#0a0a0a]">Upcoming</h2>
+        <h2 className="text-[17px] font-bold text-[#0a0a0a]">Upcoming</h2>
         {upcoming.length === 0 ? (
-          <div className="mt-4 flex items-center gap-4 rounded-[24px] bg-[#f4f4f5] p-4">
+          <div className={`mt-4 flex items-center gap-4 rounded-[28px] p-4 ${UBER_GLOSS}`}>
             <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white">
               <Calendar className="h-6 w-6 text-[#71717a]" strokeWidth={2} aria-hidden />
             </span>
@@ -259,7 +257,7 @@ export function ActivityView() {
       </section>
 
       <section className="mt-8">
-        <h2 className="text-base font-semibold text-[#0a0a0a]">Past</h2>
+        <h2 className="text-[17px] font-bold text-[#0a0a0a]">Past</h2>
         {error ? (
           <p className="mt-3 rounded-2xl bg-rose-50 px-3 py-2 text-sm text-rose-800">
             {error}
@@ -268,7 +266,7 @@ export function ActivityView() {
         {pending && jobs.length === 0 ? (
           <p className="mt-4 text-sm text-gray-500">Loading…</p>
         ) : past.length === 0 ? (
-          <p className="mt-3 text-sm font-medium text-[#71717a]">No past trips yet</p>
+          <p className="mt-3 text-[15px] font-medium text-[#6b6b6b]">No past trips yet</p>
         ) : (
           <ul className="mt-3 space-y-3">
             {past.map((job) => (
@@ -334,7 +332,7 @@ function PastTripCard({
     job.status === "cancelled" ? "Cancelled" : "Completed";
 
   return (
-    <li className="rounded-[24px] bg-[#f4f4f5] p-4">
+    <li className={`rounded-[28px] p-4 ${UBER_GLOSS}`}>
       <Link
         href={`/trip/${job.reference_code}`}
         className="uber-press flex items-start gap-3 active:opacity-80"
@@ -355,7 +353,7 @@ function PastTripCard({
       <div className="mt-3 flex flex-wrap gap-2">
         <Link
           href={rebookHref(job)}
-          className="uber-press inline-flex min-h-10 items-center gap-1.5 rounded-[9999px] bg-white px-4 text-sm font-bold text-[#0a0a0a]"
+          className="uber-press inline-flex min-h-10 items-center gap-1.5 rounded-[9999px] bg-[#efefef] px-4 text-sm font-bold text-[#0a0a0a]"
         >
           <RotateCw className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
           Rebook
@@ -364,7 +362,7 @@ function PastTripCard({
           <button
             type="button"
             onClick={onReceipt}
-            className="uber-press inline-flex min-h-10 items-center rounded-full bg-white px-4 text-sm font-bold text-black ring-1 ring-gray-200 hover:bg-gray-50"
+            className="uber-press inline-flex min-h-10 items-center rounded-[9999px] bg-[#efefef] px-4 text-sm font-bold text-[#0a0a0a]"
           >
             Receipt
           </button>

@@ -17,14 +17,14 @@ export default async function ShopMenuPage({
   if (!shop || !shop.is_active) {
     return (
       <BookingTabChrome>
-        <main className="mx-auto max-w-md px-4 py-16 text-center">
-          <h1 className="text-2xl font-bold">Shop not found</h1>
-          <p className="mt-2 text-sm text-gray-500">
+        <main className="mx-auto max-w-md bg-[#f2f2f2] px-4 py-16 text-center font-[family-name:var(--font-display)]">
+          <h1 className="text-[32px] font-bold tracking-[-0.03em] text-[#0a0a0a]">Shop not found</h1>
+          <p className="mt-2 text-[15px] font-medium text-[#6b6b6b]">
             This shop is closed or unavailable.
           </p>
           <Link
             href="/shops"
-            className="mt-6 inline-block rounded-2xl bg-black px-5 py-3 text-sm font-semibold text-white"
+            className="uber-press mt-6 inline-block rounded-[9999px] bg-[#0a0a0a] px-5 py-3 text-sm font-bold text-white"
           >
             Back to shops
           </Link>

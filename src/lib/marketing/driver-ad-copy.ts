@@ -2,20 +2,19 @@ import { GLOBAL_COUNTRY_COUNT } from "@/lib/countries";
 
 export const DRIVER_AD_IMAGE = "/marketing/ads/village-ride-driver-ad.png";
 
-/** Play Store launch teaser — pair with village-ride-drivers-play-store-social.png */
+/** Square social teaser — pair with village-ride-drivers-play-store-social.png */
 export const DRIVER_PLAY_STORE_SOCIAL_IMAGE =
   "/marketing/village-ride-drivers-play-store-social.png";
 
-export const DRIVER_PLAY_STORE_CAPTION = `Drivers — get ready.
+/** Google Play listing feature graphic (1024×500) */
+export const DRIVER_PLAY_STORE_FEATURE_IMAGE =
+  "/marketing/village-ride-play-store-feature.png";
 
-Village Ride is coming to Google Play.
+export const DRIVER_PLAY_STORE_CAPTION = `Drivers wanted.
 
-Be first online. Keep ~90%. Cash to you.
+Village Ride is on Google Play.
 
-Apply now:
-https://village-ride.vercel.app/driver/join
-
-Google Play — coming soon.
+Apply in the app. Keep ~90%. Cash to you.
 
 #VillageRide #DriversWanted #GooglePlay #SandtonStreets`;
 
@@ -34,14 +33,9 @@ export const FEATURE_TOUR_CAPTION = `Swipe through Village Ride — same tour as
 3. Say what you’re wearing
 4. Fuel delivered to you
 
-Open the app:
-https://village-ride.vercel.app
+Now on Google Play. Apply in the app.
 
-Google Play — coming soon.
-Drivers, get ready. Be first online. Keep ~90%. Cash to you.
-
-Apply now:
-https://village-ride.vercel.app/driver/join
+Keep ~90%. Cash to you.
 
 #VillageRide #FeatureTour #GooglePlay #DriversWanted`;
 
@@ -52,9 +46,7 @@ Village Ride needs drivers for Ride, Delivery, Farm & Courier.
 Keep 90%
 Cash to the driver
 Work when you want
-Coming to Google Play — get ready
-
-Apply: https://village-ride.vercel.app/driver/join
+Now on Google Play — apply in the app
 
 #VillageRide #DriversWanted`;
 

@@ -3,11 +3,11 @@
 :root {
   /* Pixel tokens — Village Ride / Uber SA chrome */
   --ru-ink: #0a0a0a;
-  --ru-muted: #71717a;
+  --ru-muted: #6b6b6b;
   --ru-line: #eaeaea;
   --ru-surface: #ffffff;
-  --ru-canvas: #f4f4f5;
-  --ru-elevated: #f4f4f5;
+  --ru-canvas: #f2f2f2;
+  --ru-elevated: #ffffff;
   --ru-brand: #0a0a0a;
   --ru-brand-2: #0a0a0a;
   --ru-black: #0a0a0a;
@@ -16,7 +16,7 @@
   --ru-warning: #ff6b00;
   --ru-error: #f02d3a;
   --vr-red: #f02d3a;
-  --vr-card: #f4f4f5;
+  --vr-card: #ffffff;
   --ru-shadow: 0 4px 24px rgb(0 0 0 / 8%);
   --ru-shadow-sheet: 0 -4px 24px rgb(0 0 0 / 10%);
   --ru-radius: 16px;
@@ -74,10 +74,11 @@ body {
   margin-right: auto;
   min-height: 100dvh;
   max-width: 28rem;
-  background: #ffffff;
+  background: #f2f2f2;
   padding: 1.5rem 1rem calc(6rem + env(safe-area-inset-bottom, 0px));
-  color: #000;
-  font-family: var(--font-sans), system-ui, sans-serif;
+  color: #0a0a0a;
+  font-family: var(--font-display), system-ui, sans-serif;
+  letter-spacing: -0.02em;
 }
 
 .ru-page-title {

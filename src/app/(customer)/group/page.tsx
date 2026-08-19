@@ -6,6 +6,13 @@ import { listOpenGroupTrips } from "@/lib/actions-group";
 import { GroupTripCard } from "@/components/group/group-trip-card";
 import { ServicePills } from "@/components/uber/service-pills";
 import type { GroupTrip } from "@/lib/types";
+import {
+  UBER_BTN_BLACK,
+  UBER_GLOSS,
+  UBER_H1,
+  UBER_PAGE,
+  UBER_SUB,
+} from "@/components/customer/uber-chrome";
 
 export default function GroupRidesPage() {
   const [trips, setTrips] = useState<GroupTrip[]>([]);
@@ -19,18 +26,16 @@ export default function GroupRidesPage() {
   }, []);
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-28 pt-6">
+    <main className={UBER_PAGE}>
       <ServicePills className="mb-5" />
 
-      <h1 className="text-3xl font-bold tracking-tight text-black">
-        Groups near you
-      </h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1 className={UBER_H1}>Groups near you</h1>
+      <p className={UBER_SUB}>
         Split the cost with others going the same way. Drivers still earn the
         full fare.
       </p>
 
-      <div className="mt-4 rounded-2xl bg-gray-50 px-4 py-3 text-sm text-gray-700">
+      <div className={`mt-4 rounded-[28px] px-4 py-3 text-[13px] font-medium text-[#0a0a0a] ${UBER_GLOSS}`}>
         Drivers: publish a group from the{" "}
         <Link
           href="/driver/group"
@@ -43,13 +48,13 @@ export default function GroupRidesPage() {
 
       <section className="mt-6 space-y-3">
         {loading ? (
-          <p className="text-sm text-gray-500">Loading groups…</p>
+          <p className="text-[15px] font-medium text-[#6b6b6b]">Loading groups…</p>
         ) : trips.length === 0 ? (
-          <div className="rounded-2xl bg-gray-50 px-4 py-8 text-center">
-            <p className="text-sm font-medium text-gray-700">
+          <div className={`rounded-[28px] px-4 py-8 text-center ${UBER_GLOSS}`}>
+            <p className="text-[15px] font-bold text-[#0a0a0a]">
               No open groups right now
             </p>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-[13px] font-medium text-[#6b6b6b]">
               Check back soon, or book a private ride.
             </p>
           </div>
@@ -60,7 +65,7 @@ export default function GroupRidesPage() {
 
       <Link
         href="/ride"
-        className="uber-press uber-btn-black mt-8 flex w-full text-center"
+        className={`${UBER_BTN_BLACK} mt-8`}
       >
         Book a private ride instead
       </Link>

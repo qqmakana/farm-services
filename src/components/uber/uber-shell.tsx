@@ -145,7 +145,7 @@ export function UberShell({
 
   return (
     <div
-      className="ru-force-light fixed top-0 left-1/2 z-[45] w-full max-w-md -translate-x-1/2 overflow-hidden bg-[#1b2433] font-[family-name:var(--font-sans)] text-[var(--ru-ink)]"
+      className="ru-force-light fixed top-0 left-1/2 z-[45] w-full max-w-md -translate-x-1/2 overflow-hidden bg-[#1b2433] font-[family-name:var(--font-display)] tracking-[-0.02em] text-[var(--ru-ink)]"
       style={{ bottom: bottomInset }}
     >
       {/* Full-screen map foundation */}
@@ -215,7 +215,7 @@ export function UberShell({
           </div>
         </div>
         {showServicePills ? (
-          <div className="pointer-events-auto mt-3">
+          <div className="pointer-events-auto mt-3 rounded-[28px] bg-white/95 px-1 pt-1 shadow-[0_12px_40px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.04] backdrop-blur">
             <ServicePills />
           </div>
         ) : null}

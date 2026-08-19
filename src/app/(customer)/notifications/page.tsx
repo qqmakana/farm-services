@@ -10,6 +10,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { PageShell } from "@/components/ui/page-shell";
+import { UBER_GLOSS } from "@/components/customer/uber-chrome";
 import { Badge } from "@/components/ui/badge";
 import { listJobsByCustomerPhone } from "@/lib/actions";
 import { getGuestProfile } from "@/lib/guest-profile";
@@ -147,7 +148,7 @@ export default function NotificationsPage() {
       {notes == null ? (
         <p className="text-sm text-[var(--ru-muted)]">Loading…</p>
       ) : empty ? (
-        <div className="rounded-2xl bg-gray-50 px-4 py-8 text-center">
+        <div className={`rounded-[28px] px-4 py-8 text-center ${UBER_GLOSS}`}>
           <Bell className="mx-auto h-8 w-8 text-gray-400" aria-hidden />
           <p className="mt-3 text-sm font-semibold text-black">
             {hasPhone ? "No trip updates yet" : "Add your phone to see trips"}
@@ -165,7 +166,7 @@ export default function NotificationsPage() {
           </Link>
         </div>
       ) : (
-        <div className="ru-list">
+        <div className={`overflow-hidden rounded-[28px] ${UBER_GLOSS}`}>
           {notes.map((n) => {
             const Icon = n.Icon;
             const inner = (

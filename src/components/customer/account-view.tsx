@@ -40,6 +40,12 @@ import {
   isSimpleMode,
   setSimpleMode,
 } from "@/lib/simple-mode";
+import {
+  UBER_BTN_BLACK,
+  UBER_GLOSS,
+  UBER_INPUT,
+  UBER_PAGE,
+} from "@/components/customer/uber-chrome";
 
 /** Uber-style Account — split name, shortcuts, banners, menu. */
 export function AccountView() {
@@ -121,7 +127,7 @@ export function AccountView() {
 
   if (!hydrated) {
     return (
-      <main className="mx-auto min-h-dvh max-w-md bg-white px-4 pb-28 pt-6">
+      <main className={UBER_PAGE}>
         <DashboardSkeleton />
       </main>
     );
@@ -130,7 +136,7 @@ export function AccountView() {
   return (
     <main
       data-testid="account-view"
-      className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white p-4 pb-28 pt-6 font-sans text-[#0a0a0a]"
+      className={UBER_PAGE}
     >
       <div className="flex items-start justify-between gap-4">
         <button
@@ -163,12 +169,12 @@ export function AccountView() {
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-1 rounded-full bg-[#f4f4f5] px-2.5 py-1 text-sm font-medium text-[#0a0a0a]">
+        <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-sm font-medium text-[#0a0a0a] shadow-[0_4px_12px_rgba(0,0,0,0.06)] ring-1 ring-black/[0.04]">
           <Star className="h-3.5 w-3.5 fill-[#0a0a0a] text-[#0a0a0a]" strokeWidth={2} aria-hidden />
           4.72
         </span>
         {profile?.phone ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-[#f4f4f5] px-2.5 py-1 text-sm font-medium text-[#0a0a0a]">
+          <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-sm font-medium text-[#0a0a0a] shadow-[0_4px_12px_rgba(0,0,0,0.06)] ring-1 ring-black/[0.04]">
             <BadgeCheck className="h-3.5 w-3.5 text-blue-600" strokeWidth={2} aria-hidden />
             Verified
           </span>
@@ -180,13 +186,13 @@ export function AccountView() {
       {showForm ? (
         <form onSubmit={saveDetails} className="mt-6 space-y-3">
           <input
-            className="w-full rounded-[12px] border-none bg-[#f4f4f5] p-4 text-[#0a0a0a] outline-none"
+            className={UBER_INPUT}
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
             placeholder="Name"
           />
           <input
-            className="w-full rounded-[12px] border-none bg-[#f4f4f5] p-4 text-[#0a0a0a] outline-none"
+            className={UBER_INPUT}
             value={phoneInput}
             onChange={(e) => setPhoneInput(e.target.value)}
             placeholder={formatPhonePlaceholder(countryCode)}
@@ -205,7 +211,7 @@ export function AccountView() {
           ) : null}
           <button
             type="submit"
-            className="uber-press w-full rounded-[9999px] bg-[#0a0a0a] py-4 font-bold text-white"
+            className={UBER_BTN_BLACK}
           >
             Save
           </button>
@@ -230,7 +236,7 @@ export function AccountView() {
 
       <Link
         href="/account/payment"
-        className="uber-press mt-4 flex overflow-hidden rounded-[24px] bg-[#f4f4f5]"
+        className={`uber-press mt-4 flex overflow-hidden rounded-[28px] ${UBER_GLOSS}`}
       >
         <span className="flex min-w-0 flex-1 flex-col justify-center p-4">
           <span className="text-base font-semibold text-[#0a0a0a]">
@@ -257,7 +263,7 @@ export function AccountView() {
 
       <Link
         href="/help"
-        className="uber-press mt-4 flex items-center gap-3 rounded-[24px] bg-[#f4f4f5] p-4"
+        className={`uber-press mt-4 flex items-center gap-3 rounded-[28px] p-4 ${UBER_GLOSS}`}
       >
         <SafetyRing done={safetyDone} total={7} />
         <span className="min-w-0 flex-1">
@@ -271,7 +277,7 @@ export function AccountView() {
         <ChevronRight className="h-4 w-4 text-gray-400" />
       </Link>
 
-      <div className="mt-4 flex items-center gap-3 rounded-[24px] bg-[#f4f4f5] p-4">
+      <div className={`mt-4 flex items-center gap-3 rounded-[28px] p-4 ${UBER_GLOSS}`}>
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white">
           <Leaf className="h-5 w-5 text-emerald-600" strokeWidth={2} aria-hidden />
         </span>
@@ -289,7 +295,7 @@ export function AccountView() {
         </div>
       ) : null}
 
-      <ul className="mt-6">
+      <ul className={`mt-6 overflow-hidden rounded-[28px] px-4 ${UBER_GLOSS}`}>
         <ListButton
           label="Settings"
           Icon={Settings}
@@ -299,7 +305,7 @@ export function AccountView() {
           <button
             type="button"
             onClick={toggleSimple}
-            className="uber-press flex min-h-14 w-full items-center gap-4 border-b border-[#f4f4f5] py-4"
+            className="uber-press flex min-h-14 w-full items-center gap-4 border-b border-[#ececec] py-4"
           >
             <ALargeSmall className="h-5 w-5 shrink-0 text-[#0a0a0a]" strokeWidth={2} aria-hidden />
             <span className="flex-1 text-left text-base font-medium text-[#0a0a0a]">
@@ -395,7 +401,7 @@ function GridTile({
   return (
     <Link
       href={href}
-      className="uber-press flex min-h-[5.25rem] flex-col justify-between rounded-[24px] bg-[#f4f4f5] p-4"
+      className={`uber-press flex min-h-[5.25rem] flex-col justify-between rounded-[28px] p-4 ${UBER_GLOSS}`}
     >
       <Icon className="h-5 w-5 text-[#0a0a0a]" strokeWidth={2} aria-hidden />
       <span className="text-sm font-semibold text-[#0a0a0a]">{label}</span>
@@ -416,7 +422,7 @@ function ListRow({
     <li>
       <Link
         href={href}
-        className="uber-press flex min-h-14 w-full items-center gap-4 border-b border-[#f4f4f5] py-4 last:border-b-0"
+        className="uber-press flex min-h-14 w-full items-center gap-4 border-b border-[#ececec] py-4 last:border-b-0"
       >
         <Icon className="h-5 w-5 shrink-0 text-[#0a0a0a]" strokeWidth={2} aria-hidden />
         <span className="flex-1 text-left text-base font-medium text-[#0a0a0a]">
@@ -442,7 +448,7 @@ function ListButton({
       <button
         type="button"
         onClick={onClick}
-        className="uber-press flex min-h-14 w-full items-center gap-4 border-b border-[#f4f4f5] py-4"
+        className="uber-press flex min-h-14 w-full items-center gap-4 border-b border-[#ececec] py-4"
       >
         <Icon className="h-5 w-5 shrink-0 text-[#0a0a0a]" strokeWidth={2} aria-hidden />
         <span className="flex-1 text-left text-base font-medium text-[#0a0a0a]">

@@ -11,10 +11,9 @@ import { Suspense } from "react";
 import { getGuestProfile } from "@/lib/guest-profile";
 import { listJobsByCustomerPhone } from "@/lib/actions";
 import { DriveSignupCard } from "@/components/driver/drive-signup-card";
+import { UBER_GLOSS, UBER_H2, UBER_PAGE } from "@/components/customer/uber-chrome";
 
 const ICON = 2;
-const GLOSS =
-  "bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12),0_2px_6px_rgba(0,0,0,0.04)] ring-1 ring-black/[0.03]";
 
 type HomeMode = "ride" | "shops" | "courier";
 
@@ -85,7 +84,7 @@ export function UberHome() {
   return (
     <main
       data-testid="uber-home"
-      className="ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-[#f2f2f2] px-4 pb-28 pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-display)] tracking-[-0.02em] text-[#0a0a0a]"
+      className={UBER_PAGE}
     >
       <Suspense fallback={null}>
         <CaptureReferral />
@@ -137,7 +136,7 @@ export function UberHome() {
       </div>
 
       <div
-        className={`mt-5 flex items-center gap-2 rounded-[9999px] py-1.5 pl-5 pr-1.5 ${GLOSS}`}
+        className={`mt-5 flex items-center gap-2 rounded-[9999px] py-1.5 pl-5 pr-1.5 ${UBER_GLOSS}`}
       >
         <button
           type="button"
@@ -167,7 +166,7 @@ export function UberHome() {
 
       {recents.length > 0 ? (
         <ul
-          className={`mt-4 overflow-hidden rounded-[28px] ${GLOSS}`}
+          className={`mt-4 overflow-hidden rounded-[28px] ${UBER_GLOSS}`}
           data-testid="home-recents"
         >
           {recents.map((place, i) => (
@@ -213,12 +212,10 @@ export function UberHome() {
 
       <section className="mt-7">
         <div className="flex items-center justify-between">
-          <h2 className="text-[22px] font-bold tracking-[-0.03em] text-[#0a0a0a]">
-            For you
-          </h2>
+          <h2 className={UBER_H2}>For you</h2>
           <Link
             href="/services"
-            className={`uber-press flex h-8 w-8 items-center justify-center rounded-full ${GLOSS}`}
+            className={`uber-press flex h-8 w-8 items-center justify-center rounded-full ${UBER_GLOSS}`}
             aria-label="All services"
           >
             <ChevronRight className="h-4 w-4" strokeWidth={2} />
@@ -264,12 +261,10 @@ export function UberHome() {
       </section>
 
       <section className="mt-7">
-        <h2 className="text-[22px] font-bold tracking-[-0.03em] text-[#0a0a0a]">
-          More ways to use Village Ride
-        </h2>
+        <h2 className={UBER_H2}>More ways to use Village Ride</h2>
         <Link
           href="/ride?when=later"
-          className={`uber-press relative mt-4 block overflow-hidden rounded-[28px] ${GLOSS}`}
+          className={`uber-press relative mt-4 block overflow-hidden rounded-[28px] ${UBER_GLOSS}`}
         >
           <span className="relative block aspect-[16/7] w-full bg-[#f4f4f5]">
             <Image

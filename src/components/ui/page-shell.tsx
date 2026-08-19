@@ -1,4 +1,9 @@
 import type { ReactNode } from "react";
+import {
+  UBER_H1,
+  UBER_PAGE,
+  UBER_SUB,
+} from "@/components/customer/uber-chrome";
 
 /** Consistent Uber-style customer/driver page chrome. */
 export function PageShell({
@@ -15,20 +20,12 @@ export function PageShell({
   actions?: ReactNode;
 }) {
   return (
-    <main
-      className={`mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-28 pt-6 ${className}`}
-    >
+    <main className={`${UBER_PAGE} ${className}`}>
       {title || actions ? (
         <header className="mb-6 flex items-start justify-between gap-3">
           <div className="min-w-0">
-            {title ? (
-              <h1 className="text-3xl font-bold tracking-tight text-black">
-                {title}
-              </h1>
-            ) : null}
-            {subtitle ? (
-              <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
-            ) : null}
+            {title ? <h1 className={UBER_H1}>{title}</h1> : null}
+            {subtitle ? <p className={UBER_SUB}>{subtitle}</p> : null}
           </div>
           {actions}
         </header>

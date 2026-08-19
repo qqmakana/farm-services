@@ -11,6 +11,7 @@ import { ServicePills } from "@/components/uber/service-pills";
 import { formatMoney } from "@/lib/format";
 import { driverInitials } from "@/lib/driver-display";
 import type { GroupTrip } from "@/lib/types";
+import { UBER_GLOSS, UBER_PAGE } from "@/components/customer/uber-chrome";
 
 export default function GroupTripDetailPage() {
   const params = useParams();
@@ -28,7 +29,7 @@ export default function GroupTripDetailPage() {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-md px-4 py-10 text-sm text-gray-500">
+      <main className={`${UBER_PAGE} text-[15px] font-medium text-[#6b6b6b]`}>
         Loading group…
       </main>
     );
@@ -53,12 +54,12 @@ export default function GroupTripDetailPage() {
   );
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md touch-manipulation space-y-4 bg-white px-4 pb-28 pt-6">
-      <ServicePills />
+    <main className={`${UBER_PAGE} space-y-4`}>
+      <ServicePills className="mb-4" />
 
       <Link
         href="/group"
-        className="uber-press inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-2 text-sm font-semibold text-black hover:bg-gray-200"
+        className={`uber-press inline-flex items-center gap-1 rounded-full px-3 py-2 text-sm font-bold text-[#0a0a0a] ${UBER_GLOSS}`}
       >
         <ArrowLeft className="h-4 w-4" /> All groups
       </Link>
@@ -66,13 +67,13 @@ export default function GroupTripDetailPage() {
       <GroupTripCard trip={trip} />
 
       {trip.drivers ? (
-        <section className="rounded-2xl bg-gray-50 p-4">
+        <section className={`rounded-[28px] p-4 ${UBER_GLOSS}`}>
           <p className="mb-3 text-sm font-bold text-black">Your driver</p>
           <DriverVehiclePhotos driver={trip.drivers} />
         </section>
       ) : null}
 
-      <section className="rounded-2xl bg-gray-50 p-4">
+      <section className={`rounded-[28px] p-4 ${UBER_GLOSS}`}>
         <h2 className="text-sm font-bold text-black">Who&apos;s going</h2>
         {participants.length === 0 ? (
           <p className="mt-2 text-sm text-gray-500">No one joined yet.</p>

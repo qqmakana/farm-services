@@ -2,159 +2,132 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  ArrowUpRight,
-  Car,
-  Clock,
-  HeartPulse,
-  Package,
-  ShoppingBag,
-  Sprout,
-  Store,
-  Tractor,
-  Truck,
-  Users,
-  Wrench,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { OnboardingGate } from "@/components/onboarding/onboarding-gate";
 import { resetOnboardingForReplay } from "@/lib/onboarding";
+import {
+  UBER_BADGE,
+  UBER_GLOSS,
+  UBER_H1,
+  UBER_H2,
+  UBER_PAGE,
+} from "@/components/customer/uber-chrome";
+import { UberServiceCircle } from "@/components/customer/uber-service-circle";
+import { DriveSignupCard } from "@/components/driver/drive-signup-card";
 
-const GO_ANYWHERE: { href: string; title: string; Icon: LucideIcon }[] = [
-  { href: "/ride", title: "Trip", Icon: Car },
-  { href: "/ride?when=later", title: "Reserve", Icon: Clock },
-  { href: "/group", title: "Groups", Icon: Users },
-  { href: "/farm", title: "Farm", Icon: Tractor },
-];
+const GO_ANYWHERE = [
+  { href: "/ride", title: "Trip", src: "/home/icons/car.png" },
+  { href: "/ride?when=later", title: "Reserve", src: "/home/icons/car.png" },
+  { href: "/group", title: "Groups", src: "/home/icons/car.png" },
+  { href: "/farm", title: "Farm", src: "/home/icons/farm.png" },
+] as const;
 
-const DELIVERED: { href: string; title: string; Icon: LucideIcon }[] = [
-  { href: "/shops", title: "Shops", Icon: Store },
-  { href: "/delivery", title: "Delivery", Icon: Truck },
-  { href: "/courier", title: "Courier", Icon: Package },
-  { href: "/farm", title: "Farm", Icon: Tractor },
-  { href: "/shops", title: "Hardware", Icon: Wrench },
-  { href: "/shops", title: "Spaza", Icon: ShoppingBag },
-  { href: "/farm", title: "Feed", Icon: Sprout },
-  { href: "/shops", title: "Clinic run", Icon: HeartPulse },
-];
-
-function CircleService({
-  href,
-  title,
-  Icon,
-}: {
-  href: string;
-  title: string;
-  Icon: LucideIcon;
-}) {
-  return (
-    <Link
-      href={href}
-      className="uber-press flex flex-col items-center gap-2"
-    >
-      <span className="flex h-[64px] w-[64px] items-center justify-center rounded-full bg-[#f4f4f5] text-[#0a0a0a]">
-        <Icon className="h-7 w-7" strokeWidth={2} aria-hidden />
-      </span>
-      <span className="text-center text-xs font-medium text-[#0a0a0a]">
-        {title}
-      </span>
-    </Link>
-  );
-}
+const DELIVERED = [
+  { href: "/shops", title: "Shops", src: "/home/icons/shops.png" },
+  { href: "/delivery", title: "Delivery", src: "/home/icons/courier.png" },
+  { href: "/courier", title: "Courier", src: "/home/icons/courier.png" },
+  { href: "/farm", title: "Farm", src: "/home/icons/farm.png" },
+  { href: "/shops", title: "Hardware", src: "/home/icons/shops.png" },
+  { href: "/shops", title: "Spaza", src: "/home/icons/shops.png" },
+  { href: "/farm", title: "Feed", src: "/home/icons/farm.png" },
+  { href: "/shops", title: "Clinic run", src: "/home/icons/shops.png" },
+] as const;
 
 function ServicesContent() {
   const router = useRouter();
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md touch-manipulation bg-white p-4 pb-28 pt-6 font-sans text-[#0a0a0a]">
-      <h1 className="text-3xl font-semibold tracking-tight text-[#0a0a0a]">
-        Services
-      </h1>
+    <main className={UBER_PAGE}>
+      <h1 className={UBER_H1}>Services</h1>
 
       <section className="mt-6">
-        <h2 className="text-lg font-semibold text-[#0a0a0a]">Go anywhere</h2>
+        <h2 className={UBER_H2}>Go anywhere</h2>
         <Link
           href="/ride"
-          className="uber-press relative mt-4 block overflow-hidden rounded-[24px] bg-[#0a0a0a] p-5 text-white"
+          className={`uber-press relative mt-4 block overflow-hidden rounded-[28px] bg-[#0a0a0a] p-5 text-white ${UBER_GLOSS}`}
         >
-          <span className="absolute top-3 right-3 rounded-full bg-[#f02d3a] px-3 py-1 text-xs font-bold">
-            20%
-          </span>
-          <span className="block pr-16 text-sm font-semibold">
+          <span className={`absolute top-3 right-3 ${UBER_BADGE}`}>20%</span>
+          <span className="block pr-16 text-[15px] font-bold">
             Get 20% off 10 trips
           </span>
-          <span className="mt-1 block pr-16 text-xs font-medium text-white/70">
+          <span className="mt-1 block pr-16 text-[13px] font-medium text-white/70">
             Start with Village Pass · Ride, Delivery, Farm or Courier · cash or
             card
           </span>
         </Link>
-        <div className="mt-4 grid grid-cols-4 gap-2">
+        <div className="mt-5 grid grid-cols-4 gap-2">
           {GO_ANYWHERE.map((item) => (
-            <CircleService key={item.title} {...item} />
+            <UberServiceCircle
+              key={item.title}
+              href={item.href}
+              label={item.title}
+              src={item.src}
+              testId={`service-circle-${item.title.toLowerCase()}`}
+            />
           ))}
         </div>
       </section>
 
       <section className="mt-8">
-        <h2 className="text-lg font-semibold text-[#0a0a0a]">
-          Get anything delivered
-        </h2>
-        <div className="mt-4 grid grid-cols-4 gap-x-2 gap-y-5">
+        <h2 className={UBER_H2}>Get anything delivered</h2>
+        <div className="mt-5 grid grid-cols-4 gap-x-2 gap-y-5">
           {DELIVERED.map((item) => (
-            <CircleService key={item.title} {...item} />
+            <UberServiceCircle
+              key={item.title}
+              href={item.href}
+              label={item.title}
+              src={item.src}
+            />
           ))}
         </div>
       </section>
 
       <section className="mt-8">
-        <h2 className="text-lg font-semibold text-[#0a0a0a]">
-          Get Courier to help
-        </h2>
-        <div className="mt-4 grid grid-cols-2 gap-4">
+        <h2 className={UBER_H2}>Get Courier to help</h2>
+        <div className="mt-4 grid grid-cols-2 gap-3">
           <Link
             href="/courier"
-            className="uber-press relative flex min-h-[8.5rem] flex-col justify-between overflow-hidden rounded-[24px] bg-[#f4f4f5] p-4"
+            className={`uber-press relative flex min-h-[9rem] flex-col justify-between overflow-hidden rounded-[28px] p-4 ${UBER_GLOSS}`}
           >
-            <span className="absolute top-3 right-3 rounded-full bg-[#f02d3a] px-3 py-1 text-xs font-bold text-white">
-              20%
-            </span>
+            <span className={`absolute top-3 right-3 ${UBER_BADGE}`}>20%</span>
             <span>
-              <span className="block text-sm font-semibold text-[#0a0a0a]">Send items</span>
-              <span className="mt-1 block text-xs font-medium text-[#71717a]">
+              <span className="block text-[15px] font-bold text-[#0a0a0a]">
+                Send items
+              </span>
+              <span className="mt-1 block text-[13px] font-medium text-[#6b6b6b]">
                 Person-to-person courier
               </span>
             </span>
-            <Package className="h-8 w-8 text-[#0a0a0a]" strokeWidth={2} aria-hidden />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/home/icons/courier.png"
+              alt=""
+              className="h-12 w-12 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)]"
+            />
           </Link>
           <Link
             href="/shops"
-            className="uber-press flex min-h-[8.5rem] flex-col justify-between rounded-[24px] bg-[#f4f4f5] p-4"
+            className={`uber-press flex min-h-[9rem] flex-col justify-between rounded-[28px] p-4 ${UBER_GLOSS}`}
           >
             <span>
-              <span className="block text-sm font-semibold text-[#0a0a0a]">
+              <span className="block text-[15px] font-bold text-[#0a0a0a]">
                 Store pick-up
               </span>
-              <span className="mt-1 block text-xs font-medium text-[#71717a]">
+              <span className="mt-1 block text-[13px] font-medium text-[#6b6b6b]">
                 Order from a local shop
               </span>
             </span>
-            <ShoppingBag className="h-8 w-8 text-[#0a0a0a]" strokeWidth={2} aria-hidden />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/home/icons/shops.png"
+              alt=""
+              className="h-12 w-12 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)]"
+            />
           </Link>
         </div>
       </section>
 
-      <Link
-        href="/driver/join"
-        className="uber-press mt-8 flex items-center gap-3 rounded-[24px] bg-[#0a0a0a] p-5 text-white"
-      >
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-bold">Earn by driving</span>
-          <span className="mt-0.5 block text-xs text-white/70">
-            We humbly need a few more drivers · keep ~90%
-          </span>
-        </span>
-        <ArrowUpRight className="h-4 w-4 shrink-0 text-white/70" />
-      </Link>
+      <DriveSignupCard variant="compact" className="mt-8" />
 
       <button
         type="button"
@@ -162,9 +135,10 @@ function ServicesContent() {
           resetOnboardingForReplay();
           router.push("/onboarding?replay=1");
         }}
-        className="uber-press mt-4 w-full py-3 text-sm font-medium text-[#71717a]"
+        className="uber-press mt-4 flex w-full items-center justify-center gap-1 py-3 text-[13px] font-semibold text-[#6b6b6b]"
       >
         See how it works
+        <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden />
       </button>
     </main>
   );
