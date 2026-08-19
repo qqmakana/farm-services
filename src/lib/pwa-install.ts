@@ -97,6 +97,10 @@ export function getAppInstallUrl() {
   return `${window.location.origin}/get-app`;
 }
 
+export function getPlayStoreUrl() {
+  return "https://play.google.com/store/apps/details?id=app.villageride.twa";
+}
+
 /** Direct download for the signed Android app (APK) — no browser install prompt needed. */
 export function getApkUrl() {
   if (typeof window === "undefined") return "https://village-ride.vercel.app/village-ride.apk";

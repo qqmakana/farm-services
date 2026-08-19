@@ -8,11 +8,10 @@ import { SHARE_IMAGE_PATH, shareVillageRideImage } from "@/lib/share-qr";
 import {
   getAppInstallUrl,
   getDeferredPrompt,
+  getPlayStoreUrl,
   isAndroidDevice,
-  isInAppBrowser,
   isIosDevice,
   isStandaloneDisplay,
-  openInstallInChrome,
   promptNativeInstall,
   subscribeInstallReady,
 } from "@/lib/pwa-install";
@@ -56,7 +55,17 @@ export function useInstallActions() {
   }, []);
 
   const install = useCallback(async () => {
-    // Prefer the native browser PWA prompt (Chrome/Edge/Android).
+    if (isAndroidDevice()) {
+      window.location.href = getPlayStoreUrl();
+      return;
+    }
+
+    // iOS Safari never fires beforeinstallprompt — show Share instructions.
+    if (isIosDevice()) {
+      setHelpOpen(true);
+      return;
+    }
+
     if (deferred || getDeferredPrompt()) {
       setInstalling(true);
       try {
@@ -73,19 +82,6 @@ export function useInstallActions() {
       return;
     }
 
-    // WhatsApp / Instagram in-app browser — open real Chrome on Android.
-    if (isInAppBrowser() && isAndroidDevice()) {
-      openInstallInChrome();
-      return;
-    }
-
-    // iOS Safari never fires beforeinstallprompt — show Share instructions.
-    if (isIosDevice()) {
-      setHelpOpen(true);
-      return;
-    }
-
-    // Fall back to dedicated install page with clear steps.
     window.location.href = getAppInstallUrl();
   }, [deferred]);
 

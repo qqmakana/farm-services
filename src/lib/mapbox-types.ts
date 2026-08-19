@@ -7,7 +7,7 @@ export type AddressSuggestion = {
   accuracy: string | null;
   /** True when Mapbox is guessing — UI must confirm, not auto-pin. */
   needsConfirmation: boolean;
-  source: "mapbox" | "landmark";
+  source: "mapbox" | "landmark" | "typed";
   inServiceArea: boolean;
 };
 

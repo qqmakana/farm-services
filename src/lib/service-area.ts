@@ -38,8 +38,12 @@ export function zonesForCountry(countryCode?: string | null): ServiceZone[] {
   return SERVICE_ZONES.filter((z) => z.countryCode === code);
 }
 
-export function hasServiceGeofence(countryCode?: string | null): boolean {
-  return zonesForCountry(countryCode).length > 0;
+/**
+ * Town-lock is off. Search and book anywhere in the selected country
+ * (Uber-style). SERVICE_ZONES stay as search-proximity hints only.
+ */
+export function hasServiceGeofence(_countryCode?: string | null): boolean {
+  return false;
 }
 
 export function zoneContaining(

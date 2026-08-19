@@ -174,10 +174,24 @@ export function PlacesAutocomplete({
     void bumpLocationUsage(loc.id);
   }
 
+  function keepTypedPlace() {
+    const label = value.label.trim();
+    if (!label) return;
+    onChange({
+      label,
+      lat: value.lat,
+      lng: value.lng,
+      locationId: value.locationId,
+    });
+    pinnedLabelRef.current = label;
+    setFocused(false);
+    setNotFound(false);
+  }
+
   function onBlurCommit() {
     window.setTimeout(() => {
       setFocused(false);
-    }, 180);
+    }, 320);
   }
 
   function useGps() {
@@ -289,10 +303,10 @@ export function PlacesAutocomplete({
       {notFound && focused && !searchError ? (
         <p
           data-testid="address-not-found"
-          className="mt-1 text-xs font-medium text-rose-600"
+          className="mt-1 text-xs font-medium text-[#6b6b6b]"
         >
-          Address not found. Try a nearby shop, school, or landmark — we will
-          not guess a location.
+          No exact street match. Pick a suggestion, or keep this name and tap
+          the map to drop a pin.
         </p>
       ) : null}
       {showList ? (
@@ -302,8 +316,9 @@ export function PlacesAutocomplete({
               <li key={`m-${s.hit.id}`}>
                 <button
                   type="button"
-                  className="flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm hover:bg-[#f5f5f5]"
+                  className="flex min-h-12 w-full items-start gap-2 px-3 py-3 text-left text-sm hover:bg-[#f5f5f5]"
                   onMouseDown={(e) => e.preventDefault()}
+                  onPointerDown={(e) => e.preventDefault()}
                   onClick={() => selectHit(s.hit)}
                 >
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#000000]" />
@@ -314,13 +329,13 @@ export function PlacesAutocomplete({
                       {s.hit.needsConfirmation ? "?" : ""}
                     </span>
                     <span className="block text-xs text-slate-500">
-                      {s.hit.source === "landmark"
+                      {s.hit.source === "typed"
+                        ? "Use this name — then tap the map to pin"
+                        : s.hit.source === "landmark"
                         ? "Local landmark"
                         : s.hit.needsConfirmation
-                          ? "Low-confidence match — tap to confirm"
-                          : s.hit.inServiceArea
-                            ? "Address"
-                            : "Outside service area"}
+                          ? "Tap to confirm"
+                          : "Suggested place"}
                     </span>
                   </span>
                 </button>
@@ -329,8 +344,9 @@ export function PlacesAutocomplete({
               <li key={`c-${s.loc.id}`}>
                 <button
                   type="button"
-                  className="flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm hover:bg-[#f5f5f5]"
+                  className="flex min-h-12 w-full items-start gap-2 px-3 py-3 text-left text-sm hover:bg-[#f5f5f5]"
                   onMouseDown={(e) => e.preventDefault()}
+                  onPointerDown={(e) => e.preventDefault()}
                   onClick={() => selectCommunity(s.loc)}
                 >
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#000000]" />
@@ -358,6 +374,27 @@ export function PlacesAutocomplete({
               </li>
             ),
           )}
+          {notFound && value.label.trim().length >= 2 ? (
+            <li className="border-t border-gray-100">
+              <button
+                type="button"
+                className="flex min-h-12 w-full items-start gap-2 px-3 py-3 text-left text-sm hover:bg-[#f5f5f5]"
+                onMouseDown={(e) => e.preventDefault()}
+                onPointerDown={(e) => e.preventDefault()}
+                onClick={keepTypedPlace}
+              >
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#000000]" />
+                <span>
+                  <span className="font-medium text-slate-900">
+                    Use “{value.label.trim()}”
+                  </span>
+                  <span className="block text-xs text-slate-500">
+                    Keep this name, then tap the map to pin
+                  </span>
+                </span>
+              </button>
+            </li>
+          ) : null}
           {(showEmptyAdd ||
             (allowAddMissing &&
               focused &&

@@ -38,7 +38,9 @@ test.describe("Phase 1 — PWA / install surface", () => {
   test("/get-app install page loads with CTA", async ({ page }) => {
     await ready(page, "/get-app");
     await expect(
-      page.getByRole("button", { name: /Download app|Install app/i }),
+      page.getByRole("button", {
+        name: /Get it on Google Play|Install app|How to install/i,
+      }),
     ).toBeVisible({ timeout: 15_000 });
   });
 

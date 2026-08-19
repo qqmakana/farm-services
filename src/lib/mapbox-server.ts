@@ -1,8 +1,6 @@
 import { distanceKm } from "./geo";
 import {
   defaultProximity,
-  hasServiceGeofence,
-  serviceAreaBbox,
   zoneContaining,
 } from "./service-area";
 import type { AddressSuggestion, DrivingRoute } from "./mapbox-types";
@@ -22,7 +20,7 @@ export function mapboxServerToken(): string {
   );
 }
 
-export const GEOCODE_MIN_RELEVANCE = 0.5;
+export const GEOCODE_MIN_RELEVANCE = 0.3;
 export const GEOCODE_AUTO_ACCEPT_RELEVANCE = 0.72;
 
 type MapboxFeature = {
@@ -172,16 +170,14 @@ export async function geocodeAddressQuery(
 
   const country = (opts?.countryCode || "ZA").toLowerCase();
   const proximity = opts?.proximity ?? defaultProximity(opts?.countryCode);
-  const bbox = serviceAreaBbox(opts?.countryCode);
   const params = new URLSearchParams({
     access_token: token,
     autocomplete: "true",
     country,
-    limit: String(opts?.limit ?? 6),
-    types: "address,poi,place,locality,neighborhood,district",
+    limit: String(opts?.limit ?? 8),
+    types: "address,poi,place,locality,neighborhood,district,region",
     proximity: `${proximity.lng},${proximity.lat}`,
   });
-  if (bbox) params.set("bbox", bbox.join(","));
 
   const url =
     `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json?` +
@@ -196,9 +192,6 @@ export async function geocodeAddressQuery(
   for (const feature of body.features ?? []) {
     const mapped = classifyMapboxFeature(feature, opts?.countryCode);
     if (!mapped?.label) continue;
-    if (hasServiceGeofence(opts?.countryCode) && !mapped.inServiceArea) {
-      continue;
-    }
     out.push(mapped);
   }
   return out;

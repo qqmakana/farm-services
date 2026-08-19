@@ -79,12 +79,10 @@ export function LandmarkField({
         compact={compact}
       />
       {!compact && loc.lat != null && loc.lng != null ? (
-        <p className="text-[11px] font-medium text-emerald-700">
-          Map pin set
-        </p>
+        <p className="text-[11px] font-medium text-[#6b6b6b]">Pin set — drag the map to adjust</p>
       ) : !compact && loc.landmark.trim() ? (
-        <p className="text-[11px] font-medium text-rose-700">
-          Address not pinned — pick a search result or tap the map
+        <p className="text-[11px] font-medium text-[#6b6b6b]">
+          Tap the map to drop a pin for this place
         </p>
       ) : null}
     </div>

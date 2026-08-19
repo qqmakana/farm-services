@@ -6,6 +6,7 @@ import { BRAND } from "@/lib/brand";
 import {
   getAppInstallUrl,
   getDeferredPrompt,
+  getPlayStoreUrl,
   inAppBrowserName,
   isAndroidDevice,
   isInAppBrowser,
@@ -17,8 +18,8 @@ import {
 } from "@/lib/pwa-install";
 
 /**
- * One-tap install — PWA Add to Home Screen (no APK required).
- * Works for Chrome/Android, Safari/iOS, and WhatsApp in-app browsers.
+ * Install screen — Google Play for Android, home screen for iPhone.
+ * TWA/PWA files stay so the Play listing can wrap the site.
  */
 export function EasyInstallScreen() {
   const [standalone, setStandalone] = useState(false);
@@ -47,6 +48,11 @@ export function EasyInstallScreen() {
 
     if (isStandaloneDisplay()) {
       setNote("Already installed — open from your home screen.");
+      return;
+    }
+
+    if (isAndroidDevice()) {
+      window.location.href = getPlayStoreUrl();
       return;
     }
 
@@ -125,13 +131,17 @@ export function EasyInstallScreen() {
           {BRAND.appName}
         </h1>
         <p className="mt-4 max-w-sm text-lg text-gray-600">
-          {inApp
-            ? `Open in ${android ? "Chrome" : "Safari"} to install — one tap from there.`
+          {inApp && ios
+            ? `Open in Safari to add Village Ride to your home screen.`
+            : inApp && android
+              ? "Get Village Ride on Google Play — works on Samsung and other Android phones."
             : ios
               ? "Add Village Ride to your home screen in Safari."
-              : hasPrompt
+              : android
+                ? "Get Village Ride on Google Play — works on Samsung and other Android phones."
+                : hasPrompt
                 ? "Tap once to install on your home screen."
-                : "Install Village Ride — opens like an app, no Play Store needed."}
+                : "Add Village Ride to your iPhone home screen."}
         </p>
 
         <button
@@ -141,12 +151,10 @@ export function EasyInstallScreen() {
           className="uber-press uber-btn-black mt-12 w-full max-w-sm !min-h-14 !text-xl"
         >
           {installing
-            ? "Installing…"
-            : inApp && android
-              ? "Open in Chrome to install"
-              : ios
-                ? "How to install"
-                : "Install app"}
+            ? "Opening…"
+            : ios
+              ? "How to install"
+              : "Get it on Google Play"}
         </button>
 
         {iosHint ? (
@@ -201,7 +209,7 @@ export function EasyInstallScreen() {
           <p className="mt-4 text-sm font-semibold text-emerald-700">{note}</p>
         ) : !iosHint && !androidHint ? (
           <p className="mt-6 max-w-xs text-sm text-gray-500">
-            Free · Works offline after install · No app store needed
+            Free · Cash or card · Keep ~90% to drivers
           </p>
         ) : null}
       </div>

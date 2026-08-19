@@ -21,8 +21,7 @@ export const testUsers = {
 };
 
 /**
- * In-service Mthatha / Engcobo pins (ZA geofence).
- * Do not use Johannesburg — outside Village Ride service area.
+ * In-service pins (ZA). Johannesburg and Mthatha both work.
  */
 export const testLocations = {
   pickup: "Mthatha Taxi Rank",

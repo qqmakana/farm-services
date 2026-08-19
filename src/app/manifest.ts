@@ -7,13 +7,20 @@ export default function manifest(): MetadataRoute.Manifest {
     name: `${BRAND.appName} by ${BRAND.company}`,
     short_name: BRAND.appName,
     description: BRAND_TAGLINE,
-    start_url: "/?source=pwa",
+    start_url: "/",
     scope: "/",
     display: "standalone",
-    orientation: "portrait-primary",
+    orientation: "any",
     background_color: "#ffffff",
     theme_color: "#000000",
-    prefer_related_applications: false,
+    prefer_related_applications: true,
+    related_applications: [
+      {
+        platform: "play",
+        id: "app.villageride.twa",
+        url: "https://play.google.com/store/apps/details?id=app.villageride.twa",
+      },
+    ],
     categories: ["travel", "business", "shopping"],
     icons: [
       {
