@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Car, ChevronRight, X } from "lucide-react";
+import Image from "next/image";
+import { ChevronRight, X } from "lucide-react";
 import {
   dismissDriverWantedBanner,
   isDriverWantedBannerVisible,
@@ -49,7 +50,7 @@ export function DriveSignupCard({
             <p className="text-[11px] font-bold tracking-[0.12em] text-[#0a0a0a]/55 uppercase">
               Drivers wanted
             </p>
-            <p className="mt-1 text-[15px] font-bold leading-snug text-[#0a0a0a]">
+            <p className="mt-1 font-[family-name:var(--font-display)] text-[16px] font-bold leading-snug tracking-[-0.02em] text-[#0a0a0a]">
               Earn with Village Ride — keep 90%
             </p>
             <Link
@@ -61,12 +62,14 @@ export function DriveSignupCard({
               <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden />
             </Link>
           </div>
-          <div className="relative flex flex-1 items-center justify-center bg-[#f6d56a]">
-            <span className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.55)_0%,transparent_62%)]" />
-            <Car
-              className="relative h-10 w-10 text-[#0a0a0a]"
-              strokeWidth={1.75}
-              aria-hidden
+          <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-[#f6d56a]">
+            <span className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.7)_0%,transparent_62%)]" />
+            <Image
+              src="/home/icons/bell.png"
+              alt=""
+              width={88}
+              height={88}
+              className="relative h-[4.75rem] w-[4.75rem] object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.18)]"
             />
           </div>
         </div>

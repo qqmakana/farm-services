@@ -6,8 +6,6 @@ import { useEffect } from "react";
 import { Grid2X2, Home, Receipt, User } from "lucide-react";
 import { applySimpleModeClass } from "@/lib/simple-mode";
 
-const ICON = 2;
-
 const TABS = [
   {
     href: "/",
@@ -50,11 +48,11 @@ export function CustomerTabBar() {
 
   return (
     <nav
-      className="fixed bottom-3 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 touch-manipulation pb-[env(safe-area-inset-bottom)] font-sans"
+      className="fixed bottom-3 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 touch-manipulation pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-display)]"
       aria-label="Main"
       data-testid="customer-tab-bar"
     >
-      <ul className="flex h-[4.25rem] items-stretch justify-around rounded-[9999px] bg-white px-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.14),0_2px_8px_rgba(0,0,0,0.06)]">
+      <ul className="flex h-[4.35rem] items-stretch justify-around rounded-[9999px] bg-white px-1.5 shadow-[0_16px_50px_rgba(0,0,0,0.18),0_2px_8px_rgba(0,0,0,0.06)] ring-1 ring-black/[0.04]">
         {TABS.map((tab) => {
           const active = tab.match(pathname);
           const Icon = tab.icon;
@@ -65,13 +63,14 @@ export function CustomerTabBar() {
                 data-testid={`customer-tab-${tab.label.toLowerCase()}`}
                 className={`uber-press mx-0.5 flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-[9999px] py-1.5 ${
                   active
-                    ? "bg-[#eeeeee] font-semibold text-[#0a0a0a]"
-                    : "font-medium text-[#71717a]"
+                    ? "bg-[#0a0a0a] font-bold text-white"
+                    : "font-semibold text-[#6b6b6b]"
                 }`}
               >
                 <Icon
                   className="h-[22px] w-[22px]"
-                  strokeWidth={ICON}
+                  strokeWidth={active ? 2.4 : 1.75}
+                  fill={active ? "currentColor" : "none"}
                   aria-hidden
                 />
                 <span className="text-[10px] leading-none tracking-wide">
