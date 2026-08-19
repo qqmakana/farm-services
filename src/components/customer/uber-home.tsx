@@ -51,22 +51,13 @@ const FOR_YOU: {
   { href: "/farm", label: "Farm", Icon: Tractor, badge: "Promo" },
 ];
 
-const FALLBACK_RECENTS = [
-  {
-    title: "Bassonia Seventh-day Adventist Church",
-    subtitle: "Bassonia, Johannesburg",
-  },
-  {
-    title: "Engen Meyersdal Convenience Centre",
-    subtitle: "Meyersdal, Alberton",
-  },
-];
-
 export function UberHome() {
   const router = useRouter();
   const [mode, setMode] = useState<HomeMode>("ride");
   const [laterOpen, setLaterOpen] = useState(false);
-  const [recents, setRecents] = useState(FALLBACK_RECENTS);
+  const [recents, setRecents] = useState<
+    { title: string; subtitle: string }[]
+  >([]);
 
   useEffect(() => {
     const guest = getGuestProfile();
@@ -84,15 +75,7 @@ export function UberHome() {
         const unique = [
           ...new Map(places.map((p) => [p.title, p])).values(),
         ].slice(0, 2);
-        if (unique.length) {
-          const padded = [
-            ...unique,
-            ...FALLBACK_RECENTS.filter(
-              (p) => !unique.some((u) => u.title === p.title),
-            ),
-          ].slice(0, 2);
-          setRecents(padded);
-        }
+        setRecents(unique);
       })
       .catch(() => undefined);
   }, []);
@@ -183,6 +166,7 @@ export function UberHome() {
         </button>
       </div>
 
+      {recents.length > 0 ? (
       <ul
         className={`mt-4 overflow-hidden rounded-[24px] ${GLOSS}`}
         data-testid="home-recents"
@@ -220,6 +204,11 @@ export function UberHome() {
           </li>
         ))}
       </ul>
+      ) : (
+        <div data-testid="home-recents" className="sr-only">
+          No recent Village Ride trips
+        </div>
+      )}
 
       <DriveSignupCard variant="compact" className="mt-4" />
 

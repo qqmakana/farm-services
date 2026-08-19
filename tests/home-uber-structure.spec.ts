@@ -19,7 +19,8 @@ test.describe("Home Uber structure", () => {
     await expect(page.getByRole("heading", { name: /For you/i })).toBeVisible();
     await expect(page.getByTestId("home-where-to")).toBeVisible();
     await expect(page.getByTestId("home-later")).toBeVisible();
-    await expect(page.getByTestId("home-recents")).toBeVisible();
+    await expect(page.getByTestId("home-recents")).toBeAttached();
+    await expect(page.getByText(/Bassonia|Engen Meyersdal/i)).toHaveCount(0);
     await expect(page.getByTestId("service-circle-trip")).toHaveAttribute(
       "data-primary",
       "true",
