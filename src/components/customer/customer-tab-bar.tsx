@@ -54,7 +54,7 @@ export function CustomerTabBar() {
       aria-label="Main"
       data-testid="customer-tab-bar"
     >
-      <ul className="flex h-16 items-stretch justify-around rounded-[9999px] bg-[#f4f4f5] px-1.5 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+      <ul className="flex h-[4.25rem] items-stretch justify-around rounded-[9999px] bg-white px-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.14),0_2px_8px_rgba(0,0,0,0.06)]">
         {TABS.map((tab) => {
           const active = tab.match(pathname);
           const Icon = tab.icon;
@@ -65,7 +65,7 @@ export function CustomerTabBar() {
                 data-testid={`customer-tab-${tab.label.toLowerCase()}`}
                 className={`uber-press mx-0.5 flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-[9999px] py-1.5 ${
                   active
-                    ? "bg-white font-semibold text-[#0a0a0a]"
+                    ? "bg-[#eeeeee] font-semibold text-[#0a0a0a]"
                     : "font-medium text-[#71717a]"
                 }`}
               >

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ChevronRight, X } from "lucide-react";
+import { Car, ChevronRight, X } from "lucide-react";
 import {
   dismissDriverWantedBanner,
   isDriverWantedBannerVisible,
@@ -42,25 +42,33 @@ export function DriveSignupCard({
       <section
         data-testid="drive-signup-card"
         data-variant="compact"
-        className={`relative rounded-[24px] bg-[#0a0a0a] px-5 py-5 text-white ${className}`}
+        className={`relative overflow-hidden rounded-[24px] shadow-[0_8px_28px_rgba(0,0,0,0.08)] ${className}`}
       >
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold tracking-[0.14em] text-neutral-400 uppercase">
+        <div className="flex min-h-[5.5rem] items-stretch">
+          <div className="flex min-w-0 flex-[2] flex-col justify-center bg-[#f0c14b] px-5 py-4">
+            <p className="text-[11px] font-bold tracking-[0.12em] text-[#0a0a0a]/55 uppercase">
               Drivers wanted
             </p>
-            <p className="mt-1 text-[15px] font-bold leading-snug tracking-tight text-white">
+            <p className="mt-1 text-[15px] font-bold leading-snug text-[#0a0a0a]">
               Earn with Village Ride — keep 90%
             </p>
+            <Link
+              href="/driver/join"
+              data-testid="drive-signup-cta"
+              className="uber-press mt-3 inline-flex h-9 w-fit items-center gap-1 rounded-full bg-white px-4 text-sm font-bold text-[#0a0a0a] shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
+            >
+              Sign up
+              <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden />
+            </Link>
           </div>
-          <Link
-            href="/driver/join"
-            data-testid="drive-signup-cta"
-            className="uber-press inline-flex h-11 shrink-0 items-center gap-1 rounded-full bg-white px-5 text-sm font-bold text-[#0a0a0a]"
-          >
-            Sign up
-            <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden />
-          </Link>
+          <div className="relative flex flex-1 items-center justify-center bg-[#f6d56a]">
+            <span className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.55)_0%,transparent_62%)]" />
+            <Car
+              className="relative h-10 w-10 text-[#0a0a0a]"
+              strokeWidth={1.75}
+              aria-hidden
+            />
+          </div>
         </div>
         {dismissible ? (
           <button

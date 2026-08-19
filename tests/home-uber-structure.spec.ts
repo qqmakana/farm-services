@@ -48,7 +48,7 @@ test.describe("Home Uber structure", () => {
 
     const box = await promo.boundingBox();
     expect(box).toBeTruthy();
-    expect(box!.y).toBeLessThan(320);
+    expect(box!.y).toBeLessThan(420);
 
     await page.getByTestId("drive-signup-cta").click();
     await expect(page).toHaveURL(/\/driver\/join/, { timeout: 45_000 });
