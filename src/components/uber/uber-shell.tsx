@@ -10,7 +10,7 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
-import { HelpCircle, MapPin } from "lucide-react";
+import { ArrowLeft, HelpCircle, MapPin } from "lucide-react";
 import { ShareAppButton } from "@/components/share-app-button";
 import { ServicePills } from "@/components/uber/service-pills";
 import { useCountry } from "@/components/country/country-provider";
@@ -169,50 +169,60 @@ export function UberShell({
             {backHref ? (
               <Link
                 href={backHref}
-                className="uber-press flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-[0_4px_24px_rgba(0,0,0,0.08)]"
+                className="uber-press flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#0a0a0a] shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
                 aria-label="Back"
               >
-                ←
+                <ArrowLeft className="h-5 w-5" strokeWidth={2.2} />
               </Link>
-            ) : null}
-            <Link
-              href="/"
-              className="uber-press flex items-center gap-2 rounded-full bg-white/95 py-1.5 pr-3.5 pl-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/icons/icon-192.png"
-                alt=""
-                width={32}
-                height={32}
-                className="h-8 w-8 rounded-full bg-black object-cover"
-              />
-              <span className="min-w-0">
-                <span className="block text-sm font-bold tracking-tight text-[var(--ru-ink)]">
-                  {title ?? BRAND.appName}
+            ) : (
+              <Link
+                href="/"
+                className="uber-press flex items-center gap-2 rounded-full bg-white/95 py-1.5 pr-3.5 pl-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/icons/icon-192.png"
+                  alt=""
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 rounded-full bg-black object-cover"
+                />
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold tracking-tight text-[var(--ru-ink)]">
+                    {title ?? BRAND.appName}
+                  </span>
+                  <span
+                    data-testid="country-indicator"
+                    className="block text-[10px] font-medium tracking-wide text-[var(--ru-muted)] uppercase"
+                  >
+                    {country.flag} {country.currencySymbol}
+                    {country.currency}
+                  </span>
                 </span>
-                <span
-                  data-testid="country-indicator"
-                  className="block text-[10px] font-medium tracking-wide text-[var(--ru-muted)] uppercase"
-                >
-                  {country.flag} {country.currencySymbol}
-                  {country.currency}
-                </span>
-              </span>
-            </Link>
+              </Link>
+            )}
           </div>
-          <div className="flex items-center gap-1.5">
-            <Link
-              href="/help"
-              className="uber-press flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-black shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur"
-              aria-label="Help"
+          {backHref ? (
+            <span
+              data-testid="country-indicator"
+              className="rounded-full bg-white px-3 py-2 text-[12px] font-bold tracking-wide text-[#0a0a0a] shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
             >
-              <HelpCircle className="h-5 w-5" aria-hidden />
-            </Link>
-            <div className="rounded-full bg-white/95 p-1 shadow-[0_4px_24px_rgba(0,0,0,0.08)] [&_button]:rounded-full">
-              <ShareAppButton />
+              {country.flag} {country.currency}
+            </span>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <Link
+                href="/help"
+                className="uber-press flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-black shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur"
+                aria-label="Help"
+              >
+                <HelpCircle className="h-5 w-5" aria-hidden />
+              </Link>
+              <div className="rounded-full bg-white/95 p-1 shadow-[0_4px_24px_rgba(0,0,0,0.08)] [&_button]:rounded-full">
+                <ShareAppButton />
+              </div>
             </div>
-          </div>
+          )}
         </div>
         {showServicePills ? (
           <div className="pointer-events-auto mt-3 rounded-[28px] bg-white/95 px-1 pt-1 shadow-[0_12px_40px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.04] backdrop-blur">
@@ -276,12 +286,7 @@ export function UberShell({
             }
           }}
         >
-          <div className="ru-sheet-handle !my-3 !h-1.5 !w-12 !bg-gray-300" />
-          {snap !== "peek" ? (
-            <p className="pb-1 text-[10px] font-semibold tracking-wide text-gray-400 uppercase">
-              Pull down to see map
-            </p>
-          ) : null}
+          <div className="ru-sheet-handle !my-3 !h-1 !w-12 !bg-[#d0d0d0]" />
         </div>
         <div
           className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 ${

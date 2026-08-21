@@ -48,11 +48,11 @@ export function CustomerTabBar() {
 
   return (
     <nav
-      className="fixed bottom-3 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 touch-manipulation pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-display)]"
+      className="fixed inset-x-0 bottom-0 z-[60] mx-auto w-full max-w-md border-t border-[#e8e8e8] bg-white pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-display)]"
       aria-label="Main"
       data-testid="customer-tab-bar"
     >
-      <ul className="flex h-[4.35rem] items-stretch justify-around rounded-[9999px] bg-white px-1.5 shadow-[0_16px_50px_rgba(0,0,0,0.18),0_2px_8px_rgba(0,0,0,0.06)] ring-1 ring-black/[0.04]">
+      <ul className="flex h-[3.65rem] items-stretch justify-around px-2">
         {TABS.map((tab) => {
           const active = tab.match(pathname);
           const Icon = tab.icon;
@@ -61,10 +61,10 @@ export function CustomerTabBar() {
               <Link
                 href={tab.href}
                 data-testid={`customer-tab-${tab.label.toLowerCase()}`}
-                className={`uber-press mx-0.5 flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-[9999px] py-1.5 ${
+                className={`uber-press flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 py-1.5 ${
                   active
-                    ? "bg-[#0a0a0a] font-bold text-white"
-                    : "font-semibold text-[#6b6b6b]"
+                    ? "font-semibold text-[#0a0a0a]"
+                    : "font-medium text-[#6b6b6b]"
                 }`}
               >
                 <Icon
@@ -73,7 +73,7 @@ export function CustomerTabBar() {
                   fill={active ? "currentColor" : "none"}
                   aria-hidden
                 />
-                <span className="text-[10px] leading-none tracking-wide">
+                <span className="text-[10px] leading-none tracking-[0.01em]">
                   {tab.label}
                 </span>
               </Link>

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ChevronDown, Clock, LocateFixed, User } from "lucide-react";
+import { ChevronDown, User } from "lucide-react";
 import { CheckoutBlock } from "@/components/uber/checkout-block";
 import { BookingWhereTo } from "@/components/uber/booking-where-to";
 import { type Loc } from "@/components/uber/landmark-field";
@@ -235,24 +235,6 @@ export function RideSheet({
     })),
   ];
 
-  function refreshGps() {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setPickup((p) => ({
-          ...p,
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          landmark: p.landmark.trim() || "Current location",
-        }));
-      },
-      () => {
-        /* ignore */
-      },
-      { enableHighAccuracy: true, timeout: 12000 },
-    );
-  }
-
   return (
     <div className="space-y-3 touch-manipulation">
       <BookingWhereTo
@@ -260,6 +242,21 @@ export function RideSheet({
         dropoff={dropoff}
         onPickup={setPickup}
         onDropoff={setDropoff}
+        whenMode={whenMode}
+        whenLabel={
+          whenMode === "later"
+            ? new Date(scheduledLocal).toLocaleString("en-ZA", {
+                weekday: "short",
+                hour: "numeric",
+                minute: "2-digit",
+              })
+            : undefined
+        }
+        forMeLabel={name.trim() ? name.trim().split(" ")[0] : "For me"}
+        onToggleWhen={() =>
+          setWhenMode((m) => (m === "now" ? "later" : "now"))
+        }
+        onForMe={() => setMoreOpen(true)}
       />
 
       {quoteError ? (
@@ -271,41 +268,6 @@ export function RideSheet({
         </p>
       ) : null}
 
-      {/* Uber-style Now / Later + GPS row */}
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setWhenMode("now")}
-          className={`uber-press rounded-full px-3.5 py-2 text-sm font-semibold ${
-            whenMode === "now"
-              ? "bg-black text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
-        >
-          Now
-        </button>
-        <button
-          type="button"
-          onClick={() => setWhenMode("later")}
-          className={`uber-press inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold ${
-            whenMode === "later"
-              ? "bg-black text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
-        >
-          <Clock className="h-3.5 w-3.5" aria-hidden />
-          Later
-        </button>
-        <button
-          type="button"
-          onClick={refreshGps}
-          className="uber-press ml-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-black hover:bg-gray-200"
-          aria-label="Use my location"
-        >
-          <LocateFixed className="h-4 w-4" />
-        </button>
-      </div>
-
       {whenMode === "later" ? (
         <input
           type="datetime-local"
@@ -316,12 +278,12 @@ export function RideSheet({
         />
       ) : null}
 
-      {/* Choose a ride — Uber product list with photos */}
+      {/* Choose a ride — Uber product list */}
       <div>
-        <p className="mb-1 text-base font-bold tracking-tight text-black">
+        <p className="mb-2 text-[22px] font-bold tracking-[-0.04em] text-[#0a0a0a]">
           Choose a ride
         </p>
-        <ul className="-mx-1">
+        <ul>
           {vehicleOptions.map((opt) => {
             const selected =
               vehicle === opt.id && localModeId === opt.modeId;
@@ -329,6 +291,19 @@ export function RideSheet({
               vehicle === opt.id && localModeId === opt.modeId
                 ? fee
                 : opt.from;
+            const mins = Number.parseInt(String(opt.eta), 10);
+            const arrival =
+              Number.isFinite(mins) && mins > 0
+                ? (() => {
+                    const d = new Date();
+                    d.setMinutes(d.getMinutes() + mins);
+                    const time = d.toLocaleTimeString("en-ZA", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    });
+                    return `${time} · ${mins} min`;
+                  })()
+                : opt.eta;
             return (
               <li key={`${opt.id}-${opt.modeId ?? opt.label}`}>
                 <button
@@ -337,32 +312,34 @@ export function RideSheet({
                     setVehicle(opt.id);
                     setLocalModeId(opt.modeId);
                   }}
-                  className={`uber-press flex w-full items-center gap-3 rounded-2xl px-2 py-3 text-left ${
-                    selected ? "bg-gray-100" : "hover:bg-gray-50"
+                  className={`uber-press flex w-full items-center gap-3 rounded-[14px] px-2 py-3 text-left ${
+                    selected
+                      ? "ring-2 ring-[#0a0a0a] ring-inset"
+                      : ""
                   }`}
                 >
-                  <span className="relative h-14 w-[4.5rem] shrink-0 overflow-hidden">
+                  <span className="relative h-16 w-[4.75rem] shrink-0 overflow-hidden">
                     <Image
                       src={opt.image}
                       alt=""
                       fill
                       className="object-contain object-center"
-                      sizes="72px"
+                      sizes="76px"
                     />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2 text-[15px] font-semibold text-black">
+                    <span className="flex items-center gap-2 text-[16px] font-bold tracking-[-0.02em] text-[#0a0a0a]">
                       {opt.label}
-                      <span className="inline-flex items-center gap-0.5 text-xs font-normal text-gray-500">
-                        <User className="h-3 w-3" aria-hidden />
+                      <span className="inline-flex items-center gap-0.5 text-[12px] font-medium text-[#6b6b6b]">
+                        <User className="h-3.5 w-3.5" aria-hidden />
                         {opt.capacity}
                       </span>
                     </span>
-                    <span className="mt-0.5 block text-xs text-gray-500">
-                      {opt.eta} away
+                    <span className="mt-0.5 block text-[13px] font-medium text-[#6b6b6b]">
+                      {arrival}
                     </span>
                   </span>
-                  <span className="shrink-0 text-right text-[15px] font-bold text-black">
+                  <span className="shrink-0 text-right text-[16px] font-bold tracking-[-0.02em] text-[#0a0a0a]">
                     {formatMoney(showPrice, currency, countryCode)}
                   </span>
                 </button>
@@ -471,6 +448,7 @@ export function RideSheet({
         baseFee={baseFee}
         nightSurchargeAmount={nightExtra}
         buttonLabel={`Choose ${selectedLabel}`}
+        onSchedule={() => setWhenMode("later")}
         description={`Village Ride · ${selectedLabel}${isNight ? " · Night" : ""}`}
         draft={async () => {
           // Never send base64 data URLs through Server Actions — they blow the

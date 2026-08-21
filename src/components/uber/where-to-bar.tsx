@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import { ArrowUpDown } from "lucide-react";
 
 /**
- * Classic Uber "Where to?" — black circle (pickup) + black square (dropoff)
- * with a vertical connector. Floating white card over the map / in the sheet.
+ * Uber "Where to?" — hollow pickup circle + solid dropoff square
+ * inside a thin black-bordered card.
  */
 export function WhereToBar({
   pickupSlot,
@@ -21,43 +21,33 @@ export function WhereToBar({
   /** White floating card (default on for native look) */
   floating?: boolean;
 }) {
+  void floating;
   return (
     <div
       data-testid="search-bar"
-      className={`${
-        floating
-          ? "rounded-2xl bg-white p-4 shadow-lg"
-          : "rounded-2xl bg-white p-4 shadow-lg"
-      } ${className}`}
+      className={`rounded-xl border border-[#0a0a0a] bg-white p-3 ${className}`}
     >
       <div className="flex gap-3">
-        <div className="flex w-3 shrink-0 flex-col items-center pt-4 pb-4">
+        <div className="flex w-3 shrink-0 flex-col items-center pt-3.5 pb-3.5">
           <span
-            className="h-2.5 w-2.5 shrink-0 rounded-full bg-black"
+            className="h-2.5 w-2.5 shrink-0 rounded-full border-[2.5px] border-[#0a0a0a] bg-white"
             aria-hidden
           />
+          <span className="my-1 w-px flex-1 bg-[#d0d0d0]" aria-hidden />
           <span
-            className="my-1 w-px flex-1 bg-gray-300"
-            aria-hidden
-          />
-          <span
-            className="h-2.5 w-2.5 shrink-0 rounded-[2px] bg-black"
+            className="h-2.5 w-2.5 shrink-0 rounded-[2px] bg-[#0a0a0a]"
             aria-hidden
           />
         </div>
-        <div className="min-w-0 flex-1 space-y-2">
-          <div className="min-h-11 overflow-hidden rounded-lg bg-gray-100 p-3">
-            {pickupSlot}
-          </div>
-          <div className="min-h-11 overflow-hidden rounded-lg bg-gray-100 p-3">
-            {dropoffSlot}
-          </div>
+        <div className="min-w-0 flex-1 divide-y divide-[#e8e8e8]">
+          <div className="min-h-11 py-2.5 pr-1">{pickupSlot}</div>
+          <div className="min-h-11 py-2.5 pr-1">{dropoffSlot}</div>
         </div>
         {onSwap ? (
           <button
             type="button"
             onClick={onSwap}
-            className="uber-press mt-6 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-black hover:bg-gray-200"
+            className="uber-press mt-7 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#eeeeee] text-[#0a0a0a]"
             aria-label="Swap pickup and dropoff"
             data-testid="swap-locations"
           >

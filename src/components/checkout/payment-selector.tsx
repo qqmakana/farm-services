@@ -1,6 +1,6 @@
 "use client";
 
-import { Banknote, CreditCard } from "lucide-react";
+import { Banknote, ChevronRight, CreditCard } from "lucide-react";
 
 export type CheckoutPaymentChoice = "cash" | "card";
 
@@ -36,7 +36,7 @@ export function PaymentSelector({
   return (
     <div
       data-testid="payment-selector"
-      className={compact ? "grid grid-cols-2 gap-2" : "space-y-1"}
+      className={compact ? "" : "space-y-1"}
       role="radiogroup"
       aria-label="Payment method"
     >
@@ -48,6 +48,51 @@ export function PaymentSelector({
       {options.map((opt) => {
         const selected = value === opt.id;
         const Icon = opt.Icon;
+        if (compact) {
+          const other = options.find((o) => o.id !== value)!;
+          if (!selected) {
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                role="radio"
+                aria-checked="false"
+                data-testid={opt.testId}
+                data-selected="false"
+                onClick={() => onChange(opt.id)}
+                className="sr-only"
+              >
+                {opt.title}
+              </button>
+            );
+          }
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              role="radio"
+              aria-checked="true"
+              data-testid={opt.testId}
+              data-selected="true"
+              onClick={() => onChange(other.id)}
+              className="uber-press flex w-full items-center gap-3 py-1 text-left"
+            >
+              <span
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                  opt.id === "cash"
+                    ? "bg-[#06c167] text-white"
+                    : "bg-[#0a0a0a] text-white"
+                }`}
+              >
+                <Icon className="h-4 w-4" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1 text-[16px] font-semibold text-[#0a0a0a]">
+                {opt.title}
+              </span>
+              <ChevronRight className="h-5 w-5 text-[#c4c4c4]" aria-hidden />
+            </button>
+          );
+        }
         return (
           <button
             key={opt.id}
@@ -57,49 +102,33 @@ export function PaymentSelector({
             data-testid={opt.testId}
             data-selected={selected ? "true" : "false"}
             onClick={() => onChange(opt.id)}
-            className={`uber-press flex w-full items-center text-left ${
-              compact
-                ? `gap-2 rounded-xl px-3 py-2.5 ${
-                    selected
-                      ? "bg-black text-white"
-                      : "bg-gray-100 text-black hover:bg-gray-200"
-                  }`
-                : `gap-3 rounded-2xl px-3 py-3 ${
+            className={`uber-press flex w-full items-center text-left gap-3 rounded-2xl px-3 py-3 ${
                     selected ? "bg-gray-100" : "hover:bg-gray-50"
-                  }`
-            }`}
+                  }`}
           >
             <span
-              className={`flex shrink-0 items-center justify-center rounded-full ${
-                compact
-                  ? `h-8 w-8 ${selected ? "bg-white/15 text-white" : "bg-white text-black"}`
-                  : `h-9 w-9 ${selected ? "bg-black text-white" : "bg-gray-200 text-black"}`
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                selected ? "bg-black text-white" : "bg-gray-200 text-black"
               }`}
             >
               <Icon className="h-4 w-4" aria-hidden />
             </span>
             <span className="min-w-0 flex-1">
-              <span
-                className={`block text-sm font-bold ${compact ? "" : "text-black"}`}
-              >
+              <span className="block text-sm font-bold text-black">
                 {opt.title}
               </span>
-              {compact ? null : (
-                <span className="block text-xs text-gray-500">{opt.sub}</span>
-              )}
+              <span className="block text-xs text-gray-500">{opt.sub}</span>
             </span>
-            {compact ? null : (
-              <span
-                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                  selected ? "border-black bg-black" : "border-gray-300"
-                }`}
-                aria-hidden
-              >
-                {selected ? (
-                  <span className="h-2 w-2 rounded-full bg-white" />
-                ) : null}
-              </span>
-            )}
+            <span
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                selected ? "border-black bg-black" : "border-gray-300"
+              }`}
+              aria-hidden
+            >
+              {selected ? (
+                <span className="h-2 w-2 rounded-full bg-white" />
+              ) : null}
+            </span>
           </button>
         );
       })}

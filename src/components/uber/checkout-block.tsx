@@ -118,6 +118,7 @@ export function CheckoutBlock({
   nightSurchargeAmount = 0,
   currency,
   compact = false,
+  onSchedule,
 }: {
   fee: number;
   vehicle: VehicleType;
@@ -132,6 +133,7 @@ export function CheckoutBlock({
   currency?: string;
   /** Uber-style: payment + CTA only, no walls of text */
   compact?: boolean;
+  onSchedule?: () => void;
 }) {
   const router = useRouter();
   const { country, countryCode } = useCountry();
@@ -405,26 +407,49 @@ export function CheckoutBlock({
 
       <div
         className={`sticky bottom-0 z-10 space-y-2 bg-white pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] ${
-          compact ? "-mx-4 border-t border-gray-100 px-4" : "-mx-4 border-t border-gray-100 px-4"
+          compact ? "-mx-4 border-t border-[#e8e8e8] px-4" : "-mx-4 border-t border-gray-100 px-4"
         }`}
       >
         {payMethod === "cash" ? (
-          <button
-            type="button"
-            data-testid="book-button"
-            disabled={!ready || pending}
-            onClick={requestCashJob}
-            className="uber-press uber-btn-black w-full"
-          >
-            {pending ? (
-              <>
-                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Finding driver…
-              </>
-            ) : (
-              buttonLabel
-            )}
-          </button>
+          <div className={compact ? "flex items-center gap-2" : undefined}>
+            <button
+              type="button"
+              data-testid="book-button"
+              disabled={!ready || pending}
+              onClick={requestCashJob}
+              className="uber-press uber-btn-black min-w-0 flex-1"
+            >
+              {pending ? (
+                <>
+                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Finding driver…
+                </>
+              ) : (
+                buttonLabel
+              )}
+            </button>
+            {compact && onSchedule ? (
+              <button
+                type="button"
+                onClick={onSchedule}
+                className="uber-press flex h-13 w-13 shrink-0 items-center justify-center rounded-[10px] border border-[#d4d4d4] bg-white text-[#0a0a0a]"
+                style={{ height: "3.25rem", width: "3.25rem" }}
+                aria-label="Schedule for later"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden
+                >
+                  <rect x="3" y="5" width="18" height="16" rx="2" />
+                  <path d="M3 9h18M8 3v4M16 3v4" />
+                </svg>
+              </button>
+            ) : null}
+          </div>
         ) : (
           <PayPalCheckout
             amount={Number(fee) || 0}

@@ -3,6 +3,7 @@
 import { LandmarkField, type Loc } from "@/components/uber/landmark-field";
 import { SavedPlacesChips } from "@/components/location/saved-places-chips";
 import { WhereToBar } from "@/components/uber/where-to-bar";
+import { PlanYourRideHeader } from "@/components/uber/plan-your-ride-header";
 
 export function BookingWhereTo({
   pickup,
@@ -11,6 +12,11 @@ export function BookingWhereTo({
   onDropoff,
   pickupPlaceholder = "Current location",
   dropoffPlaceholder = "Where to?",
+  whenMode,
+  whenLabel,
+  forMeLabel,
+  onToggleWhen,
+  onForMe,
 }: {
   pickup: Loc;
   dropoff: Loc;
@@ -18,9 +24,23 @@ export function BookingWhereTo({
   onDropoff: (loc: Loc) => void;
   pickupPlaceholder?: string;
   dropoffPlaceholder?: string;
+  whenMode?: "now" | "later";
+  whenLabel?: string;
+  forMeLabel?: string;
+  onToggleWhen?: () => void;
+  onForMe?: () => void;
 }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
+      {whenMode ? (
+        <PlanYourRideHeader
+          whenMode={whenMode}
+          whenLabel={whenLabel}
+          forMeLabel={forMeLabel}
+          onToggleWhen={onToggleWhen}
+          onForMe={onForMe}
+        />
+      ) : null}
       <WhereToBar
         onSwap={() => {
           onPickup(dropoff);

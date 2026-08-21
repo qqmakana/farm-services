@@ -266,7 +266,7 @@ export function PlacesAutocomplete({
             required={required}
             className={
               compact
-                ? "w-full border-0 bg-transparent p-0 text-sm font-medium text-[var(--ru-ink)] outline-none ring-0 placeholder:text-gray-400 focus:border-0 focus:outline-none focus:ring-0"
+                ? "w-full border-0 bg-transparent p-0 text-[16px] font-semibold text-[#0a0a0a] outline-none ring-0 placeholder:font-medium placeholder:text-[#9a9a9a] focus:border-0 focus:outline-none focus:ring-0"
                 : "w-full rounded-xl border border-gray-200 bg-[#F9FAFB] py-3 pr-3 pl-10 text-sm outline-none focus:border-[#000000]"
             }
             autoComplete="off"
@@ -310,25 +310,27 @@ export function PlacesAutocomplete({
         </p>
       ) : null}
       {showList ? (
-        <ul className="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+        <ul className="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-xl bg-white shadow-[0_8px_28px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.06]">
           {suggestions.map((s) =>
             s.source === "mapbox" ? (
               <li key={`m-${s.hit.id}`}>
                 <button
                   type="button"
-                  className="flex min-h-12 w-full items-start gap-2 px-3 py-3 text-left text-sm hover:bg-[#f5f5f5]"
+                  className="flex min-h-14 w-full items-start gap-3 px-3 py-3 text-left hover:bg-[#f6f6f6]"
                   onMouseDown={(e) => e.preventDefault()}
                   onPointerDown={(e) => e.preventDefault()}
                   onClick={() => selectHit(s.hit)}
                 >
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#000000]" />
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#eeeeee]">
+                    <MapPin className="h-4 w-4 text-[#0a0a0a]" />
+                  </span>
                   <span>
-                    <span className="font-medium text-slate-900">
+                    <span className="block text-[15px] font-semibold text-[#0a0a0a]">
                       {s.hit.needsConfirmation ? "Did you mean " : ""}
                       {s.hit.label}
                       {s.hit.needsConfirmation ? "?" : ""}
                     </span>
-                    <span className="block text-xs text-slate-500">
+                    <span className="mt-0.5 block text-[13px] text-[#6b6b6b]">
                       {s.hit.source === "typed"
                         ? "Use this name — then tap the map to pin"
                         : s.hit.source === "landmark"
@@ -344,14 +346,16 @@ export function PlacesAutocomplete({
               <li key={`c-${s.loc.id}`}>
                 <button
                   type="button"
-                  className="flex min-h-12 w-full items-start gap-2 px-3 py-3 text-left text-sm hover:bg-[#f5f5f5]"
+                  className="flex min-h-14 w-full items-start gap-3 px-3 py-3 text-left hover:bg-[#f6f6f6]"
                   onMouseDown={(e) => e.preventDefault()}
                   onPointerDown={(e) => e.preventDefault()}
                   onClick={() => selectCommunity(s.loc)}
                 >
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#000000]" />
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#eeeeee]">
+                    <MapPin className="h-4 w-4 text-[#0a0a0a]" />
+                  </span>
                   <span className="min-w-0 flex-1">
-                    <span className="inline-flex items-center gap-1 font-medium text-slate-900">
+                    <span className="inline-flex items-center gap-1 text-[15px] font-semibold text-[#0a0a0a]">
                       {s.loc.name}
                       {s.loc.is_verified ? (
                         <Check

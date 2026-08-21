@@ -281,7 +281,7 @@ body {
   justify-content: center;
   gap: 0.5rem;
   min-height: 3.25rem;
-  border-radius: 9999px;
+  border-radius: 10px;
   background: #000;
   padding: 1rem 1.25rem;
   font-size: 1rem;
@@ -344,7 +344,7 @@ html.vr-simple-mode {
   justify-content: center;
   gap: 0.5rem;
   min-height: 3.25rem;
-  border-radius: 9999px;
+  border-radius: 10px;
   background: #0a0a0a;
   padding: 1rem 1.25rem;
   font-size: 1rem;

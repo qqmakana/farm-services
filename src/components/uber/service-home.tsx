@@ -10,6 +10,7 @@ import {
   type PlaceValue,
 } from "@/components/uber/places-autocomplete";
 import { WhereToBar } from "@/components/uber/where-to-bar";
+import { PlanYourRideHeader } from "@/components/uber/plan-your-ride-header";
 import { OpenGroupTripsPreview } from "@/components/group/driver-group-trips-view";
 import { SavedPlacesChips } from "@/components/location/saved-places-chips";
 
@@ -75,15 +76,12 @@ export function ServiceHomeSheet({
   }
 
   return (
-    <div className="space-y-5 pb-2">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-[var(--ru-ink)]">
-          Where to?
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Map shows your pin · landmark helps the driver find you.
-        </p>
-      </div>
+    <div className="space-y-4 pb-2">
+      <PlanYourRideHeader
+        whenMode="now"
+        forMeLabel="For me"
+        onToggleWhen={() => router.push("/ride?when=later")}
+      />
 
       <WhereToBar
         pickupSlot={
@@ -117,7 +115,7 @@ export function ServiceHomeSheet({
           type="button"
           data-testid="book-button"
           onClick={goRide}
-          className="ru-btn-book ru-btn-block"
+          className="uber-press uber-btn-black w-full"
         >
           Choose Village Ride
         </button>
@@ -126,7 +124,7 @@ export function ServiceHomeSheet({
           <Link
             href="/ride"
             data-testid="book-button"
-            className="ru-btn-book text-center text-base"
+            className="uber-press uber-btn-black text-center text-base"
           >
             Ride now
           </Link>
