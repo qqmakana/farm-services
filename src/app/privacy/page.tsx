@@ -57,7 +57,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: "Your choices",
     body: [
-      "You can update account details in the app, turn off location or notifications in device settings, and contact us to access, correct, or delete personal data.",
+      "You can update account details in the app, turn off location or notifications in device settings, and contact us to access, correct, or delete personal data. On Account, use Delete account to erase data on this phone, or email us to remove server records.",
       "Uninstalling the Android app stops local use; ask us if you also want your account removed from our systems.",
     ],
   },

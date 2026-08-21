@@ -319,7 +319,8 @@ export function AccountView() {
             </span>
           </button>
         </li>
-        <ListRow href="/driver/join" label="Earn by driving" Icon={Car} />
+        <ListRow href="/driver/join" label="Earn by driving" Icon={Car} testId="drive-signup-cta" />
+        <ListRow href="/account/delete" label="Delete account" Icon={Shield} />
         <ListRow href="/group" label="Saved groups" Icon={Users} />
         <ListRow
           href="/partners"
@@ -413,15 +414,18 @@ function ListRow({
   href,
   label,
   Icon,
+  testId,
 }: {
   href: string;
   label: string;
   Icon: typeof MapPin;
+  testId?: string;
 }) {
   return (
     <li>
       <Link
         href={href}
+        data-testid={testId}
         className="uber-press flex min-h-14 w-full items-center gap-4 border-b border-[#ececec] py-4 last:border-b-0"
       >
         <Icon className="h-5 w-5 shrink-0 text-[#0a0a0a]" strokeWidth={2} aria-hidden />

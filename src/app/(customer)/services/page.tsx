@@ -1,10 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ChevronRight } from "lucide-react";
 import { OnboardingGate } from "@/components/onboarding/onboarding-gate";
-import { resetOnboardingForReplay } from "@/lib/onboarding";
 import {
   UBER_BADGE,
   UBER_GLOSS,
@@ -13,7 +10,6 @@ import {
   UBER_PAGE,
 } from "@/components/customer/uber-chrome";
 import { UberServiceCircle } from "@/components/customer/uber-service-circle";
-import { DriveSignupCard } from "@/components/driver/drive-signup-card";
 
 const GO_ANYWHERE = [
   { href: "/ride", title: "Trip", src: "/home/icons/car.png" },
@@ -34,8 +30,6 @@ const DELIVERED = [
 ] as const;
 
 function ServicesContent() {
-  const router = useRouter();
-
   return (
     <main className={UBER_PAGE}>
       <h1 className={UBER_H1}>Services</h1>
@@ -126,20 +120,6 @@ function ServicesContent() {
           </Link>
         </div>
       </section>
-
-      <DriveSignupCard variant="compact" className="mt-8" />
-
-      <button
-        type="button"
-        onClick={() => {
-          resetOnboardingForReplay();
-          router.push("/onboarding?replay=1");
-        }}
-        className="uber-press mt-4 flex w-full items-center justify-center gap-1 py-3 text-[13px] font-semibold text-[#6b6b6b]"
-      >
-        See how it works
-        <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden />
-      </button>
     </main>
   );
 }

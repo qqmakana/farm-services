@@ -17,6 +17,7 @@ import {
 } from "@/lib/pwa-install";
 
 const HIDE_BANNER = new Set([
+  "/",
   "/services",
   "/activity",
   "/account",
@@ -282,7 +283,16 @@ export function InstallShareBar() {
     pathname.startsWith("/account/") ||
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/driver") ||
-    pathname.startsWith("/admin")
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/ride") ||
+    pathname.startsWith("/delivery") ||
+    pathname.startsWith("/farm") ||
+    pathname.startsWith("/courier") ||
+    pathname.startsWith("/shops") ||
+    pathname.startsWith("/shop") ||
+    pathname.startsWith("/group") ||
+    pathname.startsWith("/trip") ||
+    pathname.startsWith("/services")
   ) {
     return null;
   }

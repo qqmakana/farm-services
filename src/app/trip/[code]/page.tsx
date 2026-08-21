@@ -20,7 +20,7 @@ export default async function TripPage({
     isSearchingStatus(job.status) && !job.dispatch_exhausted;
 
   return (
-    <div className="ru-force-light min-h-dvh bg-white text-slate-900">
+    <div className="ru-force-light relative min-h-dvh bg-white text-slate-900">
       <TripChrome referenceCode={job.reference_code} />
       <main className="mx-auto max-w-lg pb-16">
         <LiveTrip initialJob={job} initialRating={rating} />

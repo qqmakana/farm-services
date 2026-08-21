@@ -502,18 +502,16 @@ export function CheckoutBlock({
           />
         )}
 
-        <button
-          type="button"
-          disabled={!ready || pending}
-          onClick={openWhatsAppBooking}
-          className={
-            compact
-              ? "uber-press w-full py-2 text-center text-sm font-semibold text-gray-500"
-              : "uber-press uber-btn-soft w-full"
-          }
-        >
-          Or send booking via WhatsApp
-        </button>
+        {compact ? null : (
+          <button
+            type="button"
+            disabled={!ready || pending}
+            onClick={openWhatsAppBooking}
+            className="uber-press uber-btn-soft w-full"
+          >
+            Or send booking via WhatsApp
+          </button>
+        )}
       </div>
     </div>
   );

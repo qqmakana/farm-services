@@ -1,51 +1,31 @@
 import Link from "next/link";
-import { HelpCircle } from "lucide-react";
-import { BRAND } from "@/lib/brand";
+import { ArrowLeft, HelpCircle } from "lucide-react";
 
-/** Focused trip-tracking header — no marketing mega-nav. */
+/** Uber-style trip header — back circle, no marketing. */
 export function TripChrome({ referenceCode }: { referenceCode?: string }) {
   return (
-    <header className="ru-force-light sticky top-0 z-40 border-b border-[var(--ru-line)] bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-lg items-center justify-between gap-3 px-4 py-3">
-        <Link href="/" className="flex min-w-0 items-center gap-2.5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/icons/icon-192.png"
-            alt=""
-            width={36}
-            height={36}
-            className="h-9 w-9 rounded-full bg-black object-cover"
-          />
-          <span className="min-w-0">
-            <span className="block font-[family-name:var(--font-display)] text-base font-bold tracking-tight text-black">
-              {BRAND.appName}
-            </span>
-            {referenceCode ? (
-              <span className="block truncate text-[11px] font-medium text-[var(--ru-muted)]">
-                Trip {referenceCode}
-              </span>
-            ) : (
-              <span className="block text-[11px] font-medium text-[var(--ru-muted)]">
-                Live tracking
-              </span>
-            )}
-          </span>
+    <header className="ru-force-light pointer-events-none absolute inset-x-0 top-0 z-40 mx-auto max-w-md px-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <div className="pointer-events-auto flex items-center justify-between">
+        <Link
+          href="/"
+          className="uber-press flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#0a0a0a] shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
+          aria-label="Back"
+        >
+          <ArrowLeft className="h-5 w-5" strokeWidth={2.2} />
         </Link>
-        <div className="flex shrink-0 items-center gap-1">
+        {referenceCode ? (
+          <span className="rounded-full bg-white px-3 py-2 text-[12px] font-bold text-[#0a0a0a] shadow-[0_2px_12px_rgba(0,0,0,0.12)]">
+            {referenceCode}
+          </span>
+        ) : (
           <Link
             href="/help"
-            className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--ru-elevated)]"
-            aria-label="Help & support"
+            className="uber-press flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#0a0a0a] shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
+            aria-label="Help"
           >
-            <HelpCircle className="h-5 w-5 text-[var(--ru-muted)]" />
+            <HelpCircle className="h-5 w-5" />
           </Link>
-          <Link
-            href="/"
-            className="ru-btn ru-btn-ghost !min-h-10 !px-3 !text-sm font-semibold text-black"
-          >
-            Home
-          </Link>
-        </div>
+        )}
       </div>
     </header>
   );

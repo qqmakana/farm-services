@@ -28,6 +28,7 @@ export function PlanYourRideHeader({
         <button
           type="button"
           onClick={onToggleWhen}
+          data-testid="home-later"
           className="uber-press flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-[#eeeeee] px-3 text-[14px] font-semibold text-[#0a0a0a]"
         >
           {whenMode === "later" ? (

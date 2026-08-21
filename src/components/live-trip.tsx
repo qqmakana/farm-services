@@ -275,7 +275,7 @@ export function LiveTrip({
   return (
     <div className="relative touch-manipulation text-black">
       {hasMap ? (
-        <div className="relative h-[38vh] min-h-[220px] w-full overflow-hidden bg-[#1b2433]">
+        <div className="relative h-[52vh] min-h-[280px] w-full overflow-hidden bg-[#1b2433]">
           <TripLiveMap
             className="h-full w-full"
             pickup={
