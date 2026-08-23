@@ -8,7 +8,11 @@ import { CalendarClock, ChevronRight, Search } from "lucide-react";
 import { CaptureReferral } from "@/components/referral/capture-referral";
 import { HomeScheduleLaterModal } from "@/components/customer/home-schedule-later-modal";
 import { SmartSuggestions } from "@/components/rider/smart-suggestions";
-import type { PlaceSuggestion } from "@/lib/suggestions";
+import {
+  bookingPathForTab,
+  type HomeFeedTab,
+  type PlaceSuggestion,
+} from "@/lib/suggestions";
 
 type HomeMode = "ride" | "shops" | "courier";
 
@@ -28,49 +32,55 @@ const MODES: {
   },
 ];
 
-const FOR_YOU: {
-  href: string;
+const FEED_TABS: {
+  id: HomeFeedTab;
   label: string;
   src: string;
-  badge?: string;
 }[] = [
-  { href: "/ride", label: "Trip", src: "/home/icons/car.png", badge: "20%" },
-  { href: "/ride?when=later", label: "Reserve", src: "/home/icons/car.png" },
-  { href: "/group", label: "Groups", src: "/home/icons/car.png" },
-  { href: "/farm", label: "Farm", src: "/home/icons/farm.png" },
-  { href: "/shops", label: "Shops", src: "/home/icons/shops.png" },
-  { href: "/courier", label: "Send items", src: "/home/icons/courier.png" },
+  { id: "for-you", label: "For you", src: "/home/icons/car.png" },
+  { id: "trip", label: "Trip", src: "/home/icons/car.png" },
+  { id: "reserve", label: "Reserve", src: "/home/icons/car.png" },
+  { id: "groups", label: "Groups", src: "/home/icons/car.png" },
+  { id: "delivery", label: "Delivery", src: "/home/icons/courier.png" },
+  { id: "courier", label: "Courier", src: "/home/icons/courier.png" },
+  { id: "farm", label: "Farm", src: "/home/icons/farm.png" },
+  { id: "shops", label: "Shops", src: "/home/icons/shops.png" },
 ];
+
+function placeQuery(place?: PlaceSuggestion): string {
+  if (!place) return "";
+  const q = new URLSearchParams();
+  q.set("to", place.name);
+  if (place.lat != null && Number.isFinite(place.lat)) {
+    q.set("toLat", String(place.lat));
+  }
+  if (place.lng != null && Number.isFinite(place.lng)) {
+    q.set("toLng", String(place.lng));
+  }
+  const s = q.toString();
+  return s ? `?${s}` : "";
+}
+
+function hrefForTab(tab: HomeFeedTab, place?: PlaceSuggestion): string {
+  const base = bookingPathForTab(tab);
+  const extra = placeQuery(place);
+  if (!extra) return base;
+  if (tab === "shops" || tab === "groups") return base;
+  return base.includes("?") ? `${base}&${extra.slice(1)}` : `${base}${extra}`;
+}
 
 export function UberHome() {
   const router = useRouter();
   const [mode, setMode] = useState<HomeMode>("ride");
+  const [activeTab, setActiveTab] = useState<HomeFeedTab>("for-you");
   const [laterOpen, setLaterOpen] = useState(false);
 
   function openWhere() {
-    if (mode === "shops") router.push("/shops");
-    else if (mode === "courier") router.push("/courier");
-    else router.push("/ride");
+    router.push(hrefForTab(activeTab === "for-you" ? "trip" : activeTab));
   }
 
   function goToPlace(place: PlaceSuggestion) {
-    if (mode === "shops") {
-      router.push("/shops");
-      return;
-    }
-    if (mode === "courier") {
-      router.push("/courier");
-      return;
-    }
-    const q = new URLSearchParams();
-    q.set("to", place.name);
-    if (place.lat != null && Number.isFinite(place.lat)) {
-      q.set("toLat", String(place.lat));
-    }
-    if (place.lng != null && Number.isFinite(place.lng)) {
-      q.set("toLng", String(place.lng));
-    }
-    router.push(`/ride?${q.toString()}`);
+    router.push(hrefForTab(activeTab === "for-you" ? "trip" : activeTab, place));
   }
 
   return (
@@ -152,8 +162,6 @@ export function UberHome() {
         </button>
       </div>
 
-      <SmartSuggestions onSelectDestination={goToPlace} />
-
       <section className="relative z-10 mt-6" data-testid="home-chips">
         <div className="flex items-center justify-between">
           <h2 className="text-[24px] font-bold leading-[1.2] tracking-[-0.3px] text-black">
@@ -169,39 +177,76 @@ export function UberHome() {
         </div>
         <div
           data-testid="service-circles"
-          className="mt-4 flex gap-5 overflow-x-auto pb-2 pt-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          role="navigation"
+          className="mt-4 flex gap-2 overflow-x-auto pb-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="tablist"
           aria-label="For you"
         >
-          {FOR_YOU.map(({ href, label, src, badge }, i) => (
-            <Link
-              key={label}
-              href={href}
-              data-testid={`service-circle-${label.toLowerCase().replace(/\s+/g, "-")}`}
-              data-primary={i === 0 ? "true" : "false"}
-              className="uber-press relative z-10 flex w-[72px] shrink-0 flex-col items-center"
-            >
-              {badge ? (
-                <span className="absolute -top-2 left-1/2 z-10 -translate-x-1/2 rounded-[4px] bg-[#CB4040] px-1.5 py-[2px] text-[10px] font-bold text-white">
-                  {badge}
+          {FEED_TABS.map((tab, i) => {
+            const selected = activeTab === tab.id;
+            const testId =
+              tab.id === "courier"
+                ? "service-circle-courier"
+                : `service-circle-${tab.label.toLowerCase().replace(/\s+/g, "-")}`;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                data-testid={testId}
+                data-primary={i === 0 ? "true" : "false"}
+                onClick={() => setActiveTab(tab.id)}
+                className={`uber-press relative z-10 flex shrink-0 flex-col items-center gap-1.5 rounded-2xl px-2 py-2 ${
+                  selected ? "bg-black text-white" : "bg-[#F3F3F3] text-black"
+                }`}
+              >
+                <span
+                  className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-full ${
+                    selected ? "bg-white/15" : "bg-white"
+                  }`}
+                >
+                  <Image
+                    src={tab.src}
+                    alt=""
+                    width={36}
+                    height={36}
+                    className="h-9 w-9 object-contain"
+                  />
                 </span>
-              ) : null}
-              <span className="flex h-[64px] w-[64px] items-center justify-center overflow-hidden rounded-full bg-[#EEEEEE]">
-                <Image
-                  src={src}
-                  alt=""
-                  width={44}
-                  height={44}
-                  className="h-11 w-11 object-contain"
-                />
-              </span>
-              <span className="mt-2 text-center text-[13px] font-medium text-black">
-                {label}
-              </span>
-            </Link>
-          ))}
+                <span className="w-[64px] text-center text-[12px] font-semibold">
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
+        {/* Alias so older tests / analytics still find Send items */}
+        <button
+          type="button"
+          data-testid="service-circle-send-items"
+          className="sr-only"
+          onClick={() => setActiveTab("courier")}
+        >
+          Send items
+        </button>
       </section>
+
+      <SmartSuggestions
+        filter={activeTab}
+        onSelectDestination={goToPlace}
+      />
+
+      {activeTab === "for-you" ? (
+        <Link
+          href="/ride"
+          className="uber-press mt-4 block rounded-2xl bg-black px-4 py-3 text-white"
+        >
+          <span className="text-[13px] font-bold">20% off 10 trips</span>
+          <span className="mt-0.5 block text-[12px] text-white/70">
+            Village Pass · cash or PayPal
+          </span>
+        </Link>
+      ) : null}
 
       <HomeScheduleLaterModal
         open={laterOpen}

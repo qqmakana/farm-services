@@ -15,7 +15,107 @@ export type PlaceSuggestion = {
   distance_km?: number;
   ride_count?: number;
   category?: string;
+  /** Job that created a recent, when known. */
+  service_hint?: "ride" | "delivery" | "farm" | "courier" | "shops" | "groups";
 };
+
+export type HomeFeedTab =
+  | "for-you"
+  | "trip"
+  | "reserve"
+  | "groups"
+  | "delivery"
+  | "courier"
+  | "farm"
+  | "shops";
+
+const TAB_NEARBY: Record<HomeFeedTab, string[] | null> = {
+  "for-you": null,
+  trip: [
+    "restaurant",
+    "fast_food",
+    "university",
+    "school",
+    "hospital",
+    "taxi",
+    "mall",
+    "bus_station",
+    "default",
+  ],
+  reserve: [
+    "restaurant",
+    "university",
+    "hospital",
+    "taxi",
+    "mall",
+    "bus_station",
+    "default",
+  ],
+  groups: ["university", "taxi", "mall", "bus_station", "default"],
+  delivery: ["shop", "grocery", "mall", "default"],
+  courier: ["shop", "mall", "university", "taxi", "default"],
+  farm: ["grocery", "shop", "default"],
+  shops: ["grocery", "mall", "restaurant", "fast_food", "shop"],
+};
+
+export function suggestionMatchesTab(
+  place: PlaceSuggestion,
+  tab: HomeFeedTab,
+): boolean {
+  if (tab === "for-you") return true;
+  if (place.type === "saved") {
+    if (tab === "farm") return place.label === "farm" || place.label === "other";
+    if (tab === "shops" || tab === "delivery" || tab === "courier") {
+      return place.label !== "farm";
+    }
+    return true;
+  }
+  if (place.type === "recent") {
+    const hint = place.service_hint;
+    if (tab === "trip" || tab === "reserve" || tab === "groups") {
+      return !hint || hint === "ride" || hint === "groups";
+    }
+    if (tab === "delivery") return hint === "delivery";
+    if (tab === "courier") return hint === "courier";
+    if (tab === "farm") return hint === "farm" || place.label === "farm";
+    if (tab === "shops") return hint === "shops" || hint === "delivery";
+    return true;
+  }
+  const allowed = TAB_NEARBY[tab];
+  if (!allowed) return true;
+  return allowed.includes(place.category || "default");
+}
+
+export function filterSuggestionsForTab(
+  data: SuggestionsPayload,
+  tab: HomeFeedTab,
+): SuggestionsPayload {
+  if (tab === "for-you") return data;
+  return {
+    saved: data.saved.filter((p) => suggestionMatchesTab(p, tab)),
+    recent: data.recent.filter((p) => suggestionMatchesTab(p, tab)),
+    nearby: data.nearby.filter((p) => suggestionMatchesTab(p, tab)),
+  };
+}
+
+export function bookingPathForTab(tab: HomeFeedTab): string {
+  switch (tab) {
+    case "reserve":
+      return "/ride?when=later";
+    case "groups":
+      return "/group";
+    case "delivery":
+      return "/delivery";
+    case "courier":
+      return "/courier";
+    case "farm":
+      return "/farm";
+    case "shops":
+      return "/shops";
+    default:
+      return "/ride";
+  }
+}
 
 export type SuggestionsPayload = {
   saved: PlaceSuggestion[];

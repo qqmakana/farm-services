@@ -97,7 +97,7 @@ async function recentsFromJobs(phone: string): Promise<PlaceSuggestion[]> {
           await createAdminClient()
             .from("rr_jobs")
             .select(
-              "id, dropoff_landmark, dropoff_lat, dropoff_lng, pickup_landmark",
+              "id, dropoff_landmark, dropoff_lat, dropoff_lng, pickup_landmark, service_type",
             )
             .in("customer_phone", variants)
             .order("created_at", { ascending: false })
@@ -110,6 +110,7 @@ async function recentsFromJobs(phone: string): Promise<PlaceSuggestion[]> {
       const name = String(job.dropoff_landmark || "").trim();
       if (!name || seen.has(name.toLowerCase())) continue;
       seen.add(name.toLowerCase());
+      const st = (job as { service_type?: string }).service_type;
       out.push({
         type: "recent",
         id: `job:${job.id}`,
@@ -120,6 +121,13 @@ async function recentsFromJobs(phone: string): Promise<PlaceSuggestion[]> {
         lat: job.dropoff_lat,
         lng: job.dropoff_lng,
         ride_count: 1,
+        service_hint:
+          st === "delivery" ||
+          st === "farm" ||
+          st === "courier" ||
+          st === "ride"
+            ? st
+            : undefined,
       });
       if (out.length >= 5) break;
     }

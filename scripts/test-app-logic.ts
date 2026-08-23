@@ -30,11 +30,13 @@ import { courierTooHeavyError } from "../src/lib/courier-limits";
 import { getCountry } from "../src/lib/countries";
 import { distanceKm, jitterLatLng } from "../src/lib/geo";
 import {
+  filterSuggestionsForTab,
   formatSuggestionDistance,
   isRecognizableName,
   mergeSuggestionLists,
   scoreNearbyPlace,
   samePlace,
+  suggestionMatchesTab,
 } from "../src/lib/suggestions";
 import { getBoostConfig } from "../src/lib/boost";
 import { placesNear } from "../src/lib/landmarks";
@@ -96,6 +98,51 @@ function test(name: string, fn: () => void) {
 }
 
 console.log("Running logic tests…");
+
+test("suggestions: For you keeps the mix; Trip hides grocery nearby", () => {
+  const grocery = {
+    type: "nearby" as const,
+    id: "g",
+    name: "Shoprite",
+    address: "Main Rd",
+    lat: -26.2,
+    lng: 28.0,
+    category: "grocery",
+  };
+  const campus = {
+    type: "nearby" as const,
+    id: "u",
+    name: "UJ APK",
+    address: "Auckland Park",
+    lat: -26.18,
+    lng: 28.0,
+    category: "university",
+  };
+  const fridge = {
+    type: "recent" as const,
+    id: "d",
+    name: "Hardware store",
+    address: "Town",
+    lat: -26.2,
+    lng: 28.0,
+    service_hint: "delivery" as const,
+  };
+  assert(suggestionMatchesTab(grocery, "for-you"), "grocery in mix");
+  assert(!suggestionMatchesTab(grocery, "trip"), "grocery not a trip dest");
+  assert(suggestionMatchesTab(campus, "trip"), "campus is a trip dest");
+  const filtered = filterSuggestionsForTab(
+    { saved: [], recent: [fridge], nearby: [grocery, campus] },
+    "trip",
+  );
+  assert(filtered.nearby.length === 1 && filtered.nearby[0].id === "u", "trip nearby");
+  assert(filtered.recent.length === 0, "delivery recent hidden on trip");
+  const shops = filterSuggestionsForTab(
+    { saved: [], recent: [fridge], nearby: [grocery, campus] },
+    "shops",
+  );
+  assert(shops.nearby.some((p) => p.id === "g"), "grocery on shops");
+  assert(shops.recent.some((p) => p.id === "d"), "delivery recent on shops");
+});
 
 test("suggestions: distance labels", () => {
   assert(formatSuggestionDistance(0.02) === "Nearby", "very close");

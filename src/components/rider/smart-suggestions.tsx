@@ -19,9 +19,11 @@ import {
 import { getGuestProfile } from "@/lib/guest-profile";
 import { useCountry } from "@/components/country/country-provider";
 import type {
+  HomeFeedTab,
   PlaceSuggestion,
   SuggestionsPayload,
 } from "@/lib/suggestions";
+import { filterSuggestionsForTab } from "@/lib/suggestions";
 import { SavePlaceSheet } from "@/components/rider/save-place-sheet";
 
 const CACHE_MS = 5 * 60 * 1000;
@@ -156,8 +158,10 @@ function RowButton({
 
 export function SmartSuggestions({
   onSelectDestination,
+  filter = "for-you",
 }: {
   onSelectDestination: (place: PlaceSuggestion) => void;
+  filter?: HomeFeedTab;
 }) {
   const { countryCode } = useCountry();
   const [data, setData] = useState<SuggestionsPayload>({
@@ -251,19 +255,20 @@ export function SmartSuggestions({
     };
   }, [countryCode]);
 
+  const shown = filterSuggestionsForTab(data, filter);
   const hasHome = data.saved.some((p) => p.label === "home");
   const hasWork = data.saved.some((p) => p.label === "work");
   const empty =
-    data.saved.length === 0 &&
-    data.recent.length === 0 &&
-    data.nearby.length === 0;
+    shown.saved.length === 0 &&
+    shown.recent.length === 0 &&
+    shown.nearby.length === 0;
 
   if (loading) return <SuggestionsSkeleton />;
 
   return (
     <div data-testid="smart-suggestions" className="mt-4 space-y-4">
       <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {data.saved.map((place) => {
+        {shown.saved.map((place) => {
           const Icon =
             place.label === "home"
               ? Home
@@ -306,7 +311,7 @@ export function SmartSuggestions({
         ) : null}
       </div>
 
-      {data.recent.length > 0 ? (
+      {shown.recent.length > 0 ? (
         <ul
           className="overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white"
           data-testid="home-recents"
@@ -314,7 +319,7 @@ export function SmartSuggestions({
           <li className="px-4 pt-3 text-[11px] font-semibold tracking-wide text-[#6B6B6B] uppercase">
             Recent
           </li>
-          {data.recent.map((place, i) => (
+          {shown.recent.map((place, i) => (
             <li key={place.id}>
               {i > 0 ? <div className="mx-4 h-px bg-[#EEEEEE]" /> : null}
               <RowButton
@@ -331,7 +336,7 @@ export function SmartSuggestions({
         </div>
       )}
 
-      {data.nearby.length > 0 ? (
+      {shown.nearby.length > 0 ? (
         <ul
           className="overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white"
           data-testid="home-nearby"
@@ -339,7 +344,7 @@ export function SmartSuggestions({
           <li className="px-4 pt-3 text-[11px] font-semibold tracking-wide text-[#6B6B6B] uppercase">
             Nearby
           </li>
-          {data.nearby.map((place, i) => (
+          {shown.nearby.map((place, i) => (
             <li key={place.id}>
               {i > 0 ? <div className="mx-4 h-px bg-[#EEEEEE]" /> : null}
               <RowButton
@@ -353,8 +358,13 @@ export function SmartSuggestions({
       ) : null}
 
       {empty ? (
-        <p className="px-1 py-6 text-center text-[14px] text-[#A6A6A6]">
-          Tap Where to? or add Home to start
+        <p
+          data-testid="for-you-empty"
+          className="px-1 py-6 text-center text-[14px] text-[#A6A6A6]"
+        >
+          {filter === "for-you"
+            ? "Tap Where to? or add Home to start"
+            : "No suggestions for this service yet — tap Where to? to book"}
         </p>
       ) : null}
 

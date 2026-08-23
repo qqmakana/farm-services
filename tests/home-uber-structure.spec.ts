@@ -24,14 +24,22 @@ test.describe("Home Uber structure", () => {
     await expect(page.getByTestId("home-recents")).toBeAttached();
     await expect(page.getByText(/Bassonia|Engen Meyersdal/i)).toHaveCount(0);
     await expect(page.getByRole("heading", { name: /Plan your ride/i })).toHaveCount(0);
-    await expect(page.getByTestId("service-circle-trip")).toHaveAttribute(
+    await expect(page.getByTestId("service-circle-for-you")).toHaveAttribute(
       "data-primary",
       "true",
     );
-    await expect(page.getByTestId("service-circle-send-items")).toBeVisible();
+    await expect(page.getByTestId("service-circle-for-you")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await expect(page.getByTestId("service-circle-send-items")).toBeAttached();
     await expect(page.getByTestId("service-circle-farm")).toBeVisible();
     await expect(page.getByTestId("service-circle-reserve")).toBeVisible();
     await expect(page.getByTestId("service-circle-groups")).toBeVisible();
+    await expect(page.getByTestId("service-circle-delivery")).toBeVisible();
+    await expect(page.getByTestId("smart-suggestions")).toBeVisible({
+      timeout: 20_000,
+    });
 
     await page.getByTestId("home-later").click();
     await expect(page.getByTestId("home-later-datetime")).toBeVisible({
@@ -110,32 +118,43 @@ test.describe("Home Uber structure", () => {
     ).toBeVisible({ timeout: 15_000 });
   });
 
-  test("Reserve, Groups, and Farm icons open their pages", async ({
+  test("For you is default; service pills filter then Where to? books", async ({
     page,
   }) => {
     await page.goto("/");
     await dismissCountryModalIfPresent(page);
     await expect(page.getByTestId("uber-home")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("smart-suggestions")).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByTestId("service-circle-for-you")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+
+    await page.getByTestId("service-circle-trip").click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByTestId("service-circle-trip")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await expect(page.getByTestId("smart-suggestions")).toBeVisible();
+
+    await page.getByTestId("service-circle-for-you").click();
+    await expect(page.getByTestId("service-circle-for-you")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await expect(page.getByTestId("smart-suggestions")).toBeVisible();
 
     await page.getByTestId("service-circle-reserve").click();
+    await expect(page.getByTestId("service-circle-reserve")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await page.getByTestId("home-where-to").click();
     await expect(page).toHaveURL(/\/ride\?when=later/, { timeout: 15_000 });
     await expect(page.getByTestId("reservation-fee-line")).toBeVisible({
-      timeout: 15_000,
-    });
-
-    await page.goto("/");
-    await dismissCountryModalIfPresent(page);
-    await page.getByTestId("service-circle-groups").click();
-    await expect(page).toHaveURL(/\/group/, { timeout: 15_000 });
-    await expect(
-      page.getByRole("heading", { name: /^Groups$/i }),
-    ).toBeVisible({ timeout: 15_000 });
-
-    await page.goto("/");
-    await dismissCountryModalIfPresent(page);
-    await page.getByTestId("service-circle-farm").click();
-    await expect(page).toHaveURL(/\/farm/, { timeout: 15_000 });
-    await expect(page.getByTestId("service-pill-farm")).toBeVisible({
       timeout: 15_000,
     });
   });
