@@ -66,7 +66,7 @@ export function HomeScheduleLaterModal({
             id="home-later-title"
             className="text-xl font-bold tracking-tight text-black"
           >
-            Get your ride right with Reserve
+            Schedule your ride
           </h2>
           <button
             type="button"

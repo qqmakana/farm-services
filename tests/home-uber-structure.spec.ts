@@ -9,19 +9,21 @@ test.describe("Home Uber structure", () => {
     await prepareBrowserContext(context);
   });
 
-  test("map home: Plan your ride, Where to, For you; Later opens Reserve", async ({
+  test("white home: Where to, Later, For you; Later opens schedule", async ({
     page,
   }) => {
     await page.goto("/");
     await dismissCountryModalIfPresent(page);
 
     await expect(page.getByTestId("uber-home")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole("heading", { name: /Plan your ride/i })).toBeVisible();
+    await expect(page.getByTestId("home-mode-tabs")).toBeVisible();
+    await expect(page.getByRole("tab", { name: /^Ride$/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: /For you/i })).toBeVisible();
     await expect(page.getByTestId("home-where-to")).toBeVisible();
     await expect(page.getByTestId("home-later")).toBeVisible();
     await expect(page.getByTestId("home-recents")).toBeAttached();
     await expect(page.getByText(/Bassonia|Engen Meyersdal/i)).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: /Plan your ride/i })).toHaveCount(0);
     await expect(page.getByTestId("service-circle-trip")).toHaveAttribute(
       "data-primary",
       "true",

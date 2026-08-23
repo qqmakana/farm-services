@@ -48,11 +48,11 @@ export function CustomerTabBar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-[60] mx-auto w-full max-w-md border-t border-[#EEEEEE] bg-white pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-sans)]"
+      className="fixed bottom-3 left-1/2 z-[60] w-[calc(100%-24px)] max-w-[calc(28rem-24px)] -translate-x-1/2 rounded-full bg-white pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-sans)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.04]"
       aria-label="Main"
       data-testid="customer-tab-bar"
     >
-      <ul className="flex h-16 items-stretch justify-around px-2">
+      <ul className="flex h-16 items-stretch justify-around px-3">
         {TABS.map((tab) => {
           const active = tab.match(pathname);
           const Icon = tab.icon;
