@@ -25,12 +25,13 @@ import { getGuestProfile } from "@/lib/guest-profile";
 import { useCountry } from "@/components/country/country-provider";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
 import type { VehicleType, WeightCategory } from "@/lib/types";
+import { SERVICE_COPY } from "@/lib/service-guide";
 import { vehicleForWeight } from "@/lib/pricing";
 import { WeightCategoryField } from "@/components/uber/weight-category-field";
 import { FareBreakdownCard } from "@/components/uber/fare-breakdown-card";
 
 const TRANSPORT_TYPES = [
-  "Produce (vegetables, fruits, maize)",
+  "Produce to market (vegetables, fruit, maize)",
   "Livestock (goats, chickens, cattle)",
   "Equipment (tractor, plow, tools)",
   "Supplies (feed, fertilizer, seed)",
@@ -60,6 +61,7 @@ export function FarmSheet({
     useState<(typeof TRANSPORT_TYPES)[number]>(TRANSPORT_TYPES[0]);
   const [weight, setWeight] = useState<WeightCategory>("medium");
   const [livestockTruck, setLivestockTruck] = useState(false);
+  const [loadingHelp, setLoadingHelp] = useState(true);
   const [quantity, setQuantity] = useState("");
   const [whenMode, setWhenMode] = useState<WhenMode>("now");
   const [scheduledLocal, setScheduledLocal] = useState(defaultLaterLocal);
@@ -84,6 +86,12 @@ export function FarmSheet({
       whenMode === "later" ? localInputToIso(scheduledLocal) : null,
     [whenMode, scheduledLocal],
   );
+
+  useEffect(() => {
+    const guest = getGuestProfile();
+    if (guest?.name) setName((n) => n || guest.name);
+    if (guest?.phone) setPhone((p) => p || guest.phone);
+  }, []);
 
   useEffect(() => {
     onPinChange?.(
@@ -184,10 +192,10 @@ export function FarmSheet({
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-black">Farm</h1>
-        <p className="text-sm text-slate-600">
-          Farm &amp; regional logistics anywhere — produce, livestock, equipment.
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight text-black">
+          {SERVICE_COPY.farm.title}
+        </h1>
+        <p className="text-sm text-slate-600">{SERVICE_COPY.farm.blurb}</p>
       </div>
 
       <ScheduleWhen
@@ -196,6 +204,7 @@ export function FarmSheet({
         scheduledLocal={scheduledLocal}
         onScheduledLocalChange={setScheduledLocal}
         nowLabel="Transport Now"
+        laterHint="Book for later today or the next day. Bakkie and truck drivers only."
       />
 
       <SenderTypeField
@@ -219,8 +228,8 @@ export function FarmSheet({
         dropoff={dropoff}
         onPickup={setPickup}
         onDropoff={setDropoff}
-        pickupPlaceholder="e.g., Town hardware store, Village main road, or Farm gate"
-        dropoffPlaceholder="e.g., Home address, Village landmark, or Town market"
+        pickupPlaceholder="Farm gate — landmark the driver can find"
+        dropoffPlaceholder="Market, processor, depot, or co-op"
       />
       <LandmarkHelperText />
 
@@ -267,6 +276,16 @@ export function FarmSheet({
         onChange={setWeight}
         serviceLabel="farm load"
       />
+
+      <label className="flex items-center gap-2 text-sm font-semibold text-[#000000]">
+        <input
+          type="checkbox"
+          checked={loadingHelp}
+          onChange={(e) => setLoadingHelp(e.target.checked)}
+          className="h-4 w-4 rounded border-slate-300"
+        />
+        Driver helps load and unload
+      </label>
 
       <label className="flex items-center gap-2 text-sm font-semibold text-[#000000]">
         <input
@@ -337,6 +356,9 @@ export function FarmSheet({
             [
               `Sender type: ${senderTypeLabel(senderType)}`,
               `Weight: ${weight}`,
+              loadingHelp && "Loading assistance included",
+              livestockTruck && "Needs livestock truck",
+              "Photo of load condition at pickup and drop-off",
               isNight &&
                 "Night Ride (Premium) — after-hours safety surcharge applied",
             ]
@@ -354,8 +376,15 @@ export function FarmSheet({
                 : []),
             ],
             weight_category: weight,
-            notes: livestockTruck ? "Needs livestock truck" : undefined,
+            notes: [
+              livestockTruck ? "Needs livestock truck" : "",
+              loadingHelp ? "Driver helps load/unload" : "",
+            ]
+              .filter(Boolean)
+              .join(" · ") || undefined,
             sender_type: senderType,
+            produce_type: transport,
+            loading_assistance: loadingHelp,
           },
           fee_amount: fee,
         })}

@@ -25,6 +25,8 @@ import {
   generateShopWeeklyReport,
 } from "../src/lib/partner";
 import { calculateFare } from "../src/lib/fares";
+import { reserveWindowError } from "../src/lib/reserve-window";
+import { courierTooHeavyError } from "../src/lib/courier-limits";
 import { getCountry } from "../src/lib/countries";
 import { distanceKm, jitterLatLng } from "../src/lib/geo";
 import {
@@ -56,6 +58,14 @@ import {
 } from "../src/lib/mapbox-server";
 import fs from "node:fs";
 import path from "node:path";
+
+/** Pin fare tests to daytime so the 40% night window doesn't flake after 18:00. */
+const DAY_AT = "2026-08-23T10:00:00+02:00";
+function dayQuote(
+  params: Parameters<typeof calculateFare>[0],
+): ReturnType<typeof calculateFare> {
+  return calculateFare({ at: DAY_AT, ...params });
+}
 
 let passed = 0;
 let failed = 0;
@@ -485,7 +495,7 @@ test("referral: code formula is 4-letter prefix + 3 random", () => {
 
 test("fares: ZA R15 under 2km; 90/10 split", () => {
   const za = getCountry("ZA");
-  const open = calculateFare({
+  const open = dayQuote({
     vehicle: "sedan",
     serviceType: "ride",
     countryCode: "ZA",
@@ -502,7 +512,7 @@ test("fares: ZA R15 under 2km; 90/10 split", () => {
     "total = driver + 10%",
   );
 
-  const pass = calculateFare({
+  const pass = dayQuote({
     vehicle: "sedan",
     serviceType: "ride",
     countryCode: "ZA",
@@ -518,7 +528,7 @@ test("fares: ZA R15 under 2km; 90/10 split", () => {
 test("fares: NG / KE / IN / BR scale from ZA bands", () => {
   for (const code of ["NG", "KE", "IN", "BR"] as const) {
     const c = getCountry(code);
-    const f = calculateFare({
+    const f = dayQuote({
       vehicle: "sedan",
       serviceType: "ride",
       countryCode: code,
@@ -536,7 +546,7 @@ test("fares: NG / KE / IN / BR scale from ZA bands", () => {
 });
 
 test("fares: 10km ZA includes km + fee", () => {
-  const f = calculateFare({
+  const f = dayQuote({
     vehicle: "sedan",
     serviceType: "ride",
     countryCode: "ZA",
@@ -555,8 +565,132 @@ test("fares: 10km ZA includes km + fee", () => {
   assert(f.booking_fee === 0, "no extra booking fee");
 });
 
+test("fares: Reserve adds R10 then 90/10 (PayPal charges the same quote)", () => {
+  const now = dayQuote({
+    vehicle: "sedan",
+    serviceType: "ride",
+    countryCode: "ZA",
+    pickup: { lat: -32.787, lng: 26.834 },
+    dropoff: { lat: -32.79, lng: 26.85 },
+    routeDistanceKm: 10,
+    quoteReady: true,
+    isSubscribed: false,
+  });
+  const reserved = dayQuote({
+    vehicle: "sedan",
+    serviceType: "ride",
+    countryCode: "ZA",
+    pickup: { lat: -32.787, lng: 26.834 },
+    dropoff: { lat: -32.79, lng: 26.85 },
+    routeDistanceKm: 10,
+    quoteReady: true,
+    isSubscribed: false,
+    applyReservationFee: true,
+  });
+  assert(now.fee_amount === 55, `now ${now.fee_amount}`);
+  assert(now.reservation_fee === 0, "no reservation on Ride Now");
+  assert(reserved.reservation_fee === 10, `fee ${reserved.reservation_fee}`);
+  assert(reserved.fee_amount === 65, `rider ${reserved.fee_amount}`);
+  assert(reserved.platform_commission === 7, "10% of 65");
+  assert(reserved.driver_fare_amount === 58, "90% of 65");
+});
+
+test("fares: courier express is 1.5× before 90/10", () => {
+  const std = dayQuote({
+    vehicle: "sedan",
+    serviceType: "courier",
+    countryCode: "ZA",
+    routeDistanceKm: 10,
+    quoteReady: true,
+  });
+  const exp = dayQuote({
+    vehicle: "sedan",
+    serviceType: "courier",
+    countryCode: "ZA",
+    routeDistanceKm: 10,
+    quoteReady: true,
+    isExpress: true,
+  });
+  assert(std.fee_amount === 55, `std ${std.fee_amount}`);
+  assert(exp.fee_amount === 83, `express ${exp.fee_amount}`);
+  assert(exp.express_extra === 28, `extra ${exp.express_extra}`);
+  assert(exp.platform_commission === 8, "10% of 83");
+  assert(exp.driver_fare_amount === 75, "90% of 83");
+  const rideExpressIgnored = dayQuote({
+    vehicle: "sedan",
+    serviceType: "ride",
+    countryCode: "ZA",
+    routeDistanceKm: 10,
+    quoteReady: true,
+    isExpress: true,
+  });
+  assert(rideExpressIgnored.fee_amount === 55, "express does not apply to trips");
+});
+
+test("reserve window: 30 minutes to 30 days", () => {
+  const now = Date.parse("2026-08-23T12:00:00.000Z");
+  const soon = new Date(now + 5 * 60 * 1000).toISOString();
+  const ok = new Date(now + 45 * 60 * 1000).toISOString();
+  const far = new Date(now + 31 * 24 * 60 * 60 * 1000).toISOString();
+  assert(reserveWindowError(soon, now) != null, "too soon");
+  assert(reserveWindowError(ok, now) == null, "45 min ok");
+  assert(reserveWindowError(far, now) != null, "over 30 days");
+  assert(reserveWindowError(null, now) == null, "unset ok");
+});
+
+test("courier: reject over 15kg, bakkie, and 10–20kg band", () => {
+  assert(
+    courierTooHeavyError({
+      service_type: "courier",
+      required_vehicle: "sedan",
+      details: { item_weight_kg: 16 },
+    }) != null,
+    "16kg rejected",
+  );
+  assert(
+    courierTooHeavyError({
+      service_type: "courier",
+      required_vehicle: "sedan",
+      details: { item_weight: "10_20" },
+    }) != null,
+    "10-20kg band rejected",
+  );
+  assert(
+    courierTooHeavyError({
+      service_type: "courier",
+      required_vehicle: "bakkie",
+      details: { package_type: "small_package" },
+    }) != null,
+    "bakkie courier rejected",
+  );
+  assert(
+    courierTooHeavyError({
+      service_type: "courier",
+      required_vehicle: "sedan",
+      details: { item_weight: "under_5", package_type: "documents" },
+    }) == null,
+    "documents ok",
+  );
+  assert(
+    courierTooHeavyError({
+      service_type: "courier",
+      required_vehicle: "sedan",
+      details: { item_description: "fridge" },
+    }) != null,
+    "fridge is delivery",
+  );
+  assert(
+    courierTooHeavyError({
+      service_type: "delivery",
+      required_vehicle: "bakkie",
+      details: { item_weight_kg: 80 },
+    }) == null,
+    "delivery not limited to 15kg",
+  );
+});
+
 test("fares: delivery weight bands (10km ZA)", () => {
-  const light = calculateFare({
+  const light = dayQuote({
     vehicle: "bakkie",
     serviceType: "delivery",
     countryCode: "ZA",
@@ -565,7 +699,7 @@ test("fares: delivery weight bands (10km ZA)", () => {
     weightCategory: "light",
     isSubscribed: false,
   });
-  const heavy = calculateFare({
+  const heavy = dayQuote({
     vehicle: "truck",
     serviceType: "delivery",
     countryCode: "ZA",
@@ -581,7 +715,7 @@ test("fares: delivery weight bands (10km ZA)", () => {
 });
 
 test("fares: farm weight still 90/10 of the quoted fare", () => {
-  const open = calculateFare({
+  const open = dayQuote({
     vehicle: "bakkie",
     serviceType: "farm",
     countryCode: "ZA",
@@ -609,7 +743,7 @@ test("fares: route km wins over straight-line pins", () => {
   const nearby = { lat: -32.81, lng: 26.86 };
   const straight = distanceKm(alice, nearby);
   assert(straight > 0 && straight < 6, `straight ${straight}`);
-  const f = calculateFare({
+  const f = dayQuote({
     vehicle: "sedan",
     serviceType: "ride",
     countryCode: "ZA",
@@ -626,7 +760,7 @@ test("fares: route km wins over straight-line pins", () => {
 test("fares: same pickup and dropoff is minimum fare, not a crash", () => {
   const pin = { lat: -32.787, lng: 26.834 };
   assert(isSameStop(pin, pin), "same stop helper");
-  const f = calculateFare({
+  const f = dayQuote({
     vehicle: "sedan",
     serviceType: "ride",
     countryCode: "ZA",
@@ -689,7 +823,7 @@ test("landmarks: national list can include Johannesburg", () => {
 });
 
 test("fares: R50 trip is R45 driver / R5 platform", () => {
-  const f = calculateFare({
+  const f = dayQuote({
     vehicle: "sedan",
     serviceType: "ride",
     countryCode: "ZA",

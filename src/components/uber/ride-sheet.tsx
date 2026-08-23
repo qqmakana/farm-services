@@ -15,15 +15,19 @@ import { compressPickupPhotoDataUrl } from "@/lib/pickup-photo";
 import {
   defaultLaterLocal,
   localInputToIso,
+  maxReserveLocal,
+  minReserveLocal,
   toLocalInputValue,
   type WhenMode,
 } from "@/components/uber/schedule-when";
+import { SERVICE_COPY } from "@/lib/service-guide";
 import { quoteFareAction } from "@/lib/actions";
 import { locsFromSearchParams } from "@/lib/booking-query";
 import { useCountry } from "@/components/country/country-provider";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
 import { formatMoney } from "@/lib/format";
 import type { VehicleType } from "@/lib/types";
+import { reservationFeeAmount } from "@/lib/pricing";
 
 /**
  * Uber-style Ride sheet: Where to? → Choose a ride (photos) → Confirm.
@@ -68,6 +72,7 @@ export function RideSheet({
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [quoteReady, setQuoteReady] = useState(false);
   const [etaLabel, setEtaLabel] = useState("Few min");
+  const [reservationFee, setReservationFee] = useState(0);
 
   useEffect(() => {
     const guest = getGuestProfile();
@@ -83,8 +88,19 @@ export function RideSheet({
       if (at) {
         const d = new Date(at);
         if (!Number.isNaN(d.getTime())) {
-          setScheduledLocal(toLocalInputValue(d));
+          const min = new Date(Date.now() + 30 * 60 * 1000);
+          const max = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          const clamped = d < min ? min : d > max ? max : d;
+          setScheduledLocal(toLocalInputValue(clamped));
+        } else {
+          setScheduledLocal(minReserveLocal());
         }
+      } else {
+        setScheduledLocal((cur) => {
+          const d = new Date(cur);
+          const min = new Date(Date.now() + 30 * 60 * 1000);
+          return d < min ? minReserveLocal() : cur;
+        });
       }
     }
   }, [searchParams]);
@@ -146,6 +162,7 @@ export function RideSheet({
             setBaseFee(fare.base_fee_amount);
             setIsNight(fare.is_night_ride);
             setNightExtra(fare.night_surcharge_amount);
+            setReservationFee(fare.reservation_fee);
             setCurrency(fare.currency);
             const mins = Math.max(
               1,
@@ -194,6 +211,13 @@ export function RideSheet({
     quoteReady &&
     !quoteError &&
     (whenMode === "now" || Boolean(atIso));
+
+  const reserveAddOn =
+    whenMode === "later"
+      ? reservationFee > 0
+        ? reservationFee
+        : reservationFeeAmount(countryCode)
+      : 0;
 
   const selectedLabel = useMemo(() => {
     if (localModeId) {
@@ -270,13 +294,23 @@ export function RideSheet({
       ) : null}
 
       {whenMode === "later" ? (
-        <input
-          type="datetime-local"
-          className="ru-soft-field text-sm"
-          value={scheduledLocal}
-          min={toLocalInputValue(new Date())}
-          onChange={(e) => setScheduledLocal(e.target.value)}
-        />
+        <div className="space-y-2">
+          <input
+            type="datetime-local"
+            className="ru-soft-field text-sm"
+            value={scheduledLocal}
+            min={minReserveLocal()}
+            max={maxReserveLocal()}
+            onChange={(e) => setScheduledLocal(e.target.value)}
+          />
+          <p className="text-xs text-gray-500">{SERVICE_COPY.reserve.blurb}</p>
+          {reserveAddOn > 0 ? (
+            <p className="text-xs font-medium text-gray-700">
+              Includes {formatMoney(reserveAddOn, currency, countryCode)}{" "}
+              reservation fee.
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
       {/* Choose a ride — Uber product list */}
@@ -289,9 +323,9 @@ export function RideSheet({
             const selected =
               vehicle === opt.id && localModeId === opt.modeId;
             const showPrice =
-              vehicle === opt.id && localModeId === opt.modeId
+              vehicle === opt.id && localModeId === opt.modeId && quoteReady
                 ? fee
-                : opt.from;
+                : opt.from + reserveAddOn;
             const mins = Number.parseInt(String(opt.eta), 10);
             const arrival =
               Number.isFinite(mins) && mins > 0
@@ -448,9 +482,10 @@ export function RideSheet({
         isNightRide={isNight}
         baseFee={baseFee}
         nightSurchargeAmount={nightExtra}
+        reservationFee={reserveAddOn}
         buttonLabel={`Choose ${selectedLabel}`}
         onSchedule={() => setWhenMode("later")}
-        description={`Village Ride · ${selectedLabel}${isNight ? " · Night" : ""}`}
+        description={`Village Ride · ${whenMode === "later" ? "Reserve · " : ""}${selectedLabel}${isNight ? " · Night" : ""}`}
         draft={async () => {
           // Only attach already-compressed JPEGs (~80–180KB). Raw camera
           // data URLs blow the Server Action body and fail in production.

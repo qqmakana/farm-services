@@ -123,11 +123,8 @@ async function bookVillageDelivery(page: Page) {
     timeout: 15_000,
   });
 
-  // Exact placeholders from delivery-sheet LandmarkField — avoid ambiguous locators
-  const pickup = page.getByPlaceholder(
-    "e.g., Farm gate next to the blue water tank",
-  );
-  const dropoff = page.getByPlaceholder("e.g., Blue house after the church");
+  const pickup = page.getByPlaceholder("Pickup — sender meets driver");
+  const dropoff = page.getByPlaceholder("Drop-off — recipient address");
   await expect(pickup).toBeVisible({ timeout: 15_000 });
   await pickup.fill("Mthatha Taxi Rank");
   await dropoff.fill("Qunu Clinic");
@@ -135,9 +132,17 @@ async function bookVillageDelivery(page: Page) {
   await page.getByLabel("Sender name").fill(CUSTOMER.name);
   await page.getByLabel("Sender phone").fill(CUSTOMER.phone);
 
+  await page
+    .getByPlaceholder("e.g. sealed box, microwave, building sand")
+    .fill("Fridge");
+
   // Weight categories are Uber-style chips (not a <select>)
   await page.getByTestId("weight-medium").click();
-  await page.getByPlaceholder("e.g., 2nd floor, fragile").fill("Fridge");
+  await page
+    .getByPlaceholder(
+      "e.g. 2nd floor, fragile. Driver photos load at pickup and drop-off.",
+    )
+    .fill("Handle with care");
 
   // Confirm React state picked up landmark text
   await expect(pickup).toHaveValue(/Mthatha/i);

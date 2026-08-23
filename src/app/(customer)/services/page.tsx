@@ -45,8 +45,8 @@ function ServicesContent() {
             Get 20% off 10 trips
           </span>
           <span className="mt-1 block pr-16 text-[13px] font-medium text-white/70">
-            Start with Village Pass · Ride, Delivery, Farm or Courier · cash or
-            card
+            Start with Village Pass · Trip, Delivery, Farm or Courier · cash or
+            PayPal
           </span>
         </Link>
         <div className="mt-5 grid grid-cols-4 gap-2">
@@ -89,7 +89,7 @@ function ServicesContent() {
                 Send items
               </span>
               <span className="mt-1 block text-[13px] font-medium text-[#6b6b6b]">
-                Person-to-person courier
+                Documents or small packages, curb-to-curb
               </span>
             </span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -108,7 +108,7 @@ function ServicesContent() {
                 Store pick-up
               </span>
               <span className="mt-1 block text-[13px] font-medium text-[#6b6b6b]">
-                Order from a local shop
+                Menu order or shop &amp; deliver
               </span>
             </span>
             {/* eslint-disable-next-line @next/next/no-img-element */}

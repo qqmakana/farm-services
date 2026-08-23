@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Clock, Star, Store } from "lucide-react";
 import type { Shop } from "@/lib/types";
+import { SERVICE_COPY } from "@/lib/service-guide";
 import { UBER_GLOSS, UBER_H1, UBER_SUB } from "@/components/customer/uber-chrome";
 
 const ACCENTS = [
@@ -21,11 +22,34 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
   return (
     <div className="touch-manipulation space-y-5">
       <header>
-        <h1 className={UBER_H1}>Shops near you</h1>
-        <p className={UBER_SUB}>
-          Order from local kitchens &amp; stores — delivered to your door.
-        </p>
+        <h1 className={UBER_H1}>Shops</h1>
+        <p className={UBER_SUB}>{SERVICE_COPY.shops.blurb}</p>
       </header>
+
+      <div className="grid grid-cols-1 gap-3">
+        <Link
+          href="/delivery?kind=shop"
+          className={`uber-press rounded-[28px] p-4 ${UBER_GLOSS}`}
+        >
+          <p className="text-[15px] font-bold text-[#0a0a0a]">
+            {SERVICE_COPY.shopAndDeliver.title}
+          </p>
+          <p className="mt-1 text-[13px] font-medium text-[#6b6b6b]">
+            Send a list. Pay for groceries at the till. Delivery fee via cash or
+            PayPal — nothing held in escrow.
+          </p>
+        </Link>
+        <div className={`rounded-[28px] p-4 ${UBER_GLOSS}`}>
+          <p className="text-[15px] font-bold text-[#0a0a0a]">
+            {SERVICE_COPY.restaurantPickup.title}
+          </p>
+          <p className="mt-1 text-[13px] font-medium text-[#6b6b6b]">
+            {SERVICE_COPY.restaurantPickup.blurb}
+          </p>
+        </div>
+      </div>
+
+      <h2 className="text-[17px] font-bold text-[#0a0a0a]">Menus near you</h2>
 
       {shops.length === 0 ? (
         <div className={`rounded-[28px] px-4 py-10 text-center ${UBER_GLOSS}`}>

@@ -6,8 +6,12 @@ import { Calendar, Clock, X } from "lucide-react";
 import {
   defaultLaterLocal,
   localInputToIso,
+  maxReserveLocal,
+  minReserveLocal,
   toLocalInputValue,
 } from "@/components/uber/schedule-when";
+import { reserveWindowError } from "@/lib/reserve-window";
+import { SERVICE_COPY } from "@/lib/service-guide";
 
 /** Mobile look-alike of Uber Reserve date/time pickers. */
 export function HomeScheduleLaterModal({
@@ -40,8 +44,9 @@ export function HomeScheduleLaterModal({
       setError("Pick a valid date and time.");
       return;
     }
-    if (new Date(iso).getTime() <= Date.now()) {
-      setError("Choose a time in the future.");
+    const windowErr = reserveWindowError(iso);
+    if (windowErr) {
+      setError(windowErr);
       return;
     }
     setError(null);
@@ -66,7 +71,7 @@ export function HomeScheduleLaterModal({
             id="home-later-title"
             className="text-xl font-bold tracking-tight text-black"
           >
-            Schedule your ride
+            Schedule a Reserve
           </h2>
           <button
             type="button"
@@ -88,7 +93,8 @@ export function HomeScheduleLaterModal({
                 type="date"
                 className="min-w-0 flex-1 bg-transparent text-sm text-black outline-none"
                 value={datePart || ""}
-                min={toLocalInputValue(new Date()).slice(0, 10)}
+                min={minReserveLocal().slice(0, 10)}
+                max={maxReserveLocal().slice(0, 10)}
                 onChange={(e) => setDate(e.target.value)}
               />
             </span>
@@ -113,9 +119,7 @@ export function HomeScheduleLaterModal({
         ) : null}
 
         <ul className="mt-4 space-y-1.5 text-xs text-gray-700">
-          <li>Choose your pickup time in advance.</li>
-          <li>Extra wait time included to meet your ride.</li>
-          <li>Cancel at no charge while still searching.</li>
+          <li>{SERVICE_COPY.reserve.blurb}</li>
         </ul>
 
         <button

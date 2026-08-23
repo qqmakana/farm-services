@@ -27,9 +27,7 @@ export function suggestVehicle(params: {
   weight_category?: "light" | "medium" | "heavy" | "extra_heavy";
 }): VehicleType {
   if (params.service_type === "ride") return "sedan";
-  if (params.service_type === "courier") {
-    return params.delivery_size === "medium" ? "bakkie" : "sedan";
-  }
+  if (params.service_type === "courier") return "sedan";
   const w = params.weight_category;
   if (w === "heavy" || w === "extra_heavy") return "truck";
   if (w === "light" || w === "medium") return "bakkie";

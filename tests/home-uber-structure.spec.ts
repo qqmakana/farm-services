@@ -119,13 +119,16 @@ test.describe("Home Uber structure", () => {
 
     await page.getByTestId("service-circle-reserve").click();
     await expect(page).toHaveURL(/\/ride\?when=later/, { timeout: 15_000 });
+    await expect(page.getByTestId("reservation-fee-line")).toBeVisible({
+      timeout: 15_000,
+    });
 
     await page.goto("/");
     await dismissCountryModalIfPresent(page);
     await page.getByTestId("service-circle-groups").click();
     await expect(page).toHaveURL(/\/group/, { timeout: 15_000 });
     await expect(
-      page.getByRole("heading", { name: /Groups near you/i }),
+      page.getByRole("heading", { name: /^Groups$/i }),
     ).toBeVisible({ timeout: 15_000 });
 
     await page.goto("/");
@@ -153,5 +156,39 @@ test.describe("Home Uber structure", () => {
     await page.goto("/services");
     await page.getByTestId("service-circle-farm").click();
     await expect(page).toHaveURL(/\/farm/, { timeout: 15_000 });
+  });
+
+  test("service sheets load; Reserve shows reservation fee", async ({
+    page,
+  }) => {
+    await page.goto("/ride?when=later");
+    await dismissCountryModalIfPresent(page);
+    await expect(page.getByTestId("reservation-fee-line")).toBeVisible({
+      timeout: 15_000,
+    });
+
+    await page.goto("/courier");
+    await dismissCountryModalIfPresent(page);
+    await expect(page.getByRole("heading", { name: /^Courier$/i })).toBeVisible({
+      timeout: 15_000,
+    });
+
+    await page.goto("/delivery");
+    await dismissCountryModalIfPresent(page);
+    await expect(page.getByRole("heading", { name: /^Delivery$/i })).toBeVisible(
+      { timeout: 15_000 },
+    );
+
+    await page.goto("/farm");
+    await dismissCountryModalIfPresent(page);
+    await expect(page.getByRole("heading", { name: /^Farm$/i })).toBeVisible({
+      timeout: 15_000,
+    });
+
+    await page.goto("/shops");
+    await dismissCountryModalIfPresent(page);
+    await expect(page.getByText(/Shop & Deliver/i).first()).toBeVisible({
+      timeout: 15_000,
+    });
   });
 });

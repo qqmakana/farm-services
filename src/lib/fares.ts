@@ -16,6 +16,11 @@ import {
   type WeightCategory,
 } from "./pricing";
 
+export function detailsIsExpress(details: unknown): boolean {
+  if (!details || typeof details !== "object") return false;
+  return Boolean((details as { is_express?: unknown }).is_express);
+}
+
 export type FareBreakdown = {
   /**
    * Total the rider pays (cash or card). 90/10 is taken from this, not added.
@@ -49,6 +54,9 @@ export type FareBreakdown = {
    * 0 km) was applied. Incomplete quotes must not be treated as a fare.
    */
   quote_ready: boolean;
+  reservation_fee: number;
+  express_extra: number;
+  express_multiplier: number;
 };
 
 /** Server-side fare — never trust client fee for charging. */
@@ -68,6 +76,8 @@ export function calculateFare(params: {
   routeDistanceKm?: number | null;
   routeDurationSeconds?: number | null;
   quoteReady?: boolean;
+  applyReservationFee?: boolean;
+  isExpress?: boolean;
   /** @deprecated Prefer unified pricing; ignored when serviceType set */
   rules?: {
     base_fare: number;
@@ -119,6 +129,8 @@ export function calculateFare(params: {
     countryCode,
     isSubscribed: params.isSubscribed,
     nightSurchargePct: night ? NIGHT_SURCHARGE_PCT : 0,
+    applyReservationFee: Boolean(params.applyReservationFee),
+    isExpress: Boolean(params.isExpress),
   });
 
   // Rider pays `total_fare`. Platform 10% is stored as platform_commission
@@ -146,5 +158,8 @@ export function calculateFare(params: {
     quote_ready: params.quoteReady ?? Boolean(
       params.routeDistanceKm != null && Number.isFinite(params.routeDistanceKm),
     ),
+    reservation_fee: unified.reservation_fee,
+    express_extra: unified.express_extra,
+    express_multiplier: unified.express_multiplier,
   };
 }

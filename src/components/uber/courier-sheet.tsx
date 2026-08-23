@@ -19,34 +19,26 @@ import { locsFromSearchParams } from "@/lib/booking-query";
 import { getGuestProfile } from "@/lib/guest-profile";
 import { useCountry } from "@/components/country/country-provider";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
-import type { CourierWeight, VehicleType } from "@/lib/types";
-import { suggestVehicle } from "@/lib/vehicles";
+import type { CourierPackageType, CourierWeight, VehicleType } from "@/lib/types";
+import { SERVICE_COPY } from "@/lib/service-guide";
 import { FareBreakdownCard } from "@/components/uber/fare-breakdown-card";
 
-const WEIGHT_OPTIONS = [
+const PACKAGE_OPTIONS = [
   {
-    id: "under_5" as const,
-    label: "Under 5 kg",
-    hint: "Keys, documents, small gifts",
+    id: "documents" as const,
+    label: "Documents",
+    hint: "Letters, IDs, contracts — curb handover",
+    weight: "under_5" as CourierWeight,
     size: "small" as const,
   },
   {
-    id: "5_10" as const,
-    label: "5–10 kg",
-    hint: "Clothes bag, shoes, books",
+    id: "small_package" as const,
+    label: "Small package",
+    hint: "Sealed bag or box, max 15 kg",
+    weight: "under_5" as CourierWeight,
     size: "small" as const,
-  },
-  {
-    id: "10_20" as const,
-    label: "10–20 kg",
-    hint: "Small box / appliance (max ~20 kg)",
-    size: "medium" as const,
   },
 ] as const;
-
-function weightLabel(id: CourierWeight) {
-  return WEIGHT_OPTIONS.find((o) => o.id === id)?.label ?? id;
-}
 
 export function CourierSheet({
   onPinChange,
@@ -66,8 +58,9 @@ export function CourierSheet({
   const [dropoff, setDropoff] = useState<Loc>(initial.dropoff);
   const [senderName, setSenderName] = useState("");
   const [senderPhone, setSenderPhone] = useState("");
-  const [itemDescription, setItemDescription] = useState("");
-  const [weight, setWeight] = useState<CourierWeight>("under_5");
+  const [packageType, setPackageType] =
+    useState<CourierPackageType>("documents");
+  const [isExpress, setIsExpress] = useState(false);
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [recipientPhone, setRecipientPhone] = useState("");
@@ -82,12 +75,13 @@ export function CourierSheet({
   const [villagePass, setVillagePass] = useState(false);
   const [isNight, setIsNight] = useState(false);
   const [nightExtra, setNightExtra] = useState(0);
+  const [expressExtra, setExpressExtra] = useState(0);
   const [currency, setCurrency] = useState(country.currency);
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [quoteReady, setQuoteReady] = useState(false);
 
-  const weightOpt = WEIGHT_OPTIONS.find((o) => o.id === weight)!;
-  const size = weightOpt.size;
+  const pack = PACKAGE_OPTIONS.find((o) => o.id === packageType)!;
+  const itemDescription = pack.label;
 
   const atIso = useMemo(
     () => (whenMode === "later" ? localInputToIso(scheduledLocal) : null),
@@ -95,10 +89,14 @@ export function CourierSheet({
   );
 
   useEffect(() => {
-    setVehicle(
-      suggestVehicle({ service_type: "courier", delivery_size: size }),
-    );
-  }, [size]);
+    const guest = getGuestProfile();
+    if (guest?.name) setSenderName((n) => n || guest.name);
+    if (guest?.phone) setSenderPhone((p) => p || guest.phone);
+  }, []);
+
+  useEffect(() => {
+    setVehicle("sedan");
+  }, []);
 
   useEffect(() => {
     onPinChange?.(
@@ -143,12 +141,12 @@ export function CourierSheet({
           dropoff_lng: dropoff.lng,
           at: atIso,
           customer_phone: senderPhone || getGuestProfile()?.phone || null,
+          is_express: isExpress,
         });
         if (!cancelled) {
           setQuoteError(null);
           setQuoteReady(fare.quote_ready);
           if (!fare.quote_ready) return;
-          // Unified courier pricing (same band as ride) — trust server quote
           setBaseFee(fare.base_fee_amount);
           setDistanceFare(fare.distance_fare);
           setDistanceKm(fare.distance_km);
@@ -156,6 +154,7 @@ export function CourierSheet({
           setVillagePass(fare.village_pass);
           setNightExtra(fare.night_surcharge_amount);
           setIsNight(fare.is_night_ride);
+          setExpressExtra(fare.express_extra);
           setFee(fare.fee_amount);
           setCurrency(fare.currency);
         }
@@ -180,14 +179,15 @@ export function CourierSheet({
     atIso,
     countryCode,
     senderPhone,
+    isExpress,
   ]);
 
   const ready =
     Boolean(senderName.trim()) &&
     Boolean(senderPhone.trim()) &&
+    Boolean(recipientPhone.trim()) &&
     Boolean(pickup.landmark.trim()) &&
     Boolean(dropoff.landmark.trim()) &&
-    Boolean(itemDescription.trim()) &&
     pickup.lat != null &&
     pickup.lng != null &&
     dropoff.lat != null &&
@@ -199,12 +199,10 @@ export function CourierSheet({
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-black">Courier</h1>
-        <p className="text-sm text-slate-600">
-          Person-to-person courier across villages, towns &amp; cities — keys,
-          gifts, documents, Marketplace items. Max ~20 kg, packaged &amp;
-          sealed. No hazardous or perishable food.
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight text-black">
+          {SERVICE_COPY.courier.title}
+        </h1>
+        <p className="text-sm text-slate-600">{SERVICE_COPY.courier.blurb}</p>
       </div>
 
       <ScheduleWhen
@@ -220,8 +218,8 @@ export function CourierSheet({
         dropoff={dropoff}
         onPickup={setPickup}
         onDropoff={setDropoff}
-        pickupPlaceholder="e.g., Shoprite Mthatha, 12 Main Rd, or taxi rank"
-        dropoffPlaceholder="e.g., 45 Commissioner St — or Qunu Clinic, school gate"
+        pickupPlaceholder="Meet at the curb — e.g. Shoprite entrance"
+        dropoffPlaceholder="Recipient curb — e.g. office gate, house"
       />
 
       <div className="grid grid-cols-2 gap-3">
@@ -261,43 +259,90 @@ export function CourierSheet({
             className="ru-soft-field mt-1.5 text-sm"
             value={recipientPhone}
             onChange={(e) => setRecipientPhone(e.target.value)}
-            placeholder="Optional"
+            placeholder={formatPhonePlaceholder(countryCode)}
+            inputMode="tel"
+            required
           />
         </label>
       </div>
+      <p className="text-xs text-gray-500">
+        After booking, share the trip link from Activity so they can track
+        without the app.
+      </p>
       <LandmarkHelperText />
 
-      <label className="block text-sm font-semibold text-[#000000]">
-        Item description
-        <input
-          className="ru-soft-field mt-1.5 text-sm"
-          value={itemDescription}
-          onChange={(e) => setItemDescription(e.target.value)}
-          placeholder='e.g., "Clothes in a bag", "Small sealed box"'
-        />
-      </label>
+      <div role="group" aria-label="Package type">
+        <p className="text-sm font-semibold text-black">What are you sending</p>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {PACKAGE_OPTIONS.map((o) => {
+            const selected = packageType === o.id;
+            return (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => setPackageType(o.id)}
+                className={`uber-press rounded-2xl border px-3 py-3 text-left ${
+                  selected
+                    ? "border-2 border-black bg-white"
+                    : "border border-transparent bg-gray-50"
+                }`}
+              >
+                <span className="block text-sm font-semibold text-black">
+                  {o.label}
+                </span>
+                <span className="mt-0.5 block text-xs text-gray-500">
+                  {o.hint}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-2 text-xs text-gray-500">
+          Curb-to-curb. Max 15 kg. No alcohol, medication, or dangerous goods.
+          Packages: agree a PIN with the recipient.
+        </p>
+      </div>
 
-      <label className="block text-sm font-semibold text-[#000000]">
-        Item weight
-        <select
-          className="ru-soft-field mt-1.5 text-sm"
-          value={weight}
-          onChange={(e) => setWeight(e.target.value as CourierWeight)}
-        >
-          {WEIGHT_OPTIONS.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.label} — {o.hint}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div>
+        <p className="text-sm font-semibold text-black">Speed</p>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setIsExpress(false)}
+            className={`uber-press min-h-12 rounded-full px-3 text-sm font-bold ${
+              !isExpress
+                ? "bg-black text-white"
+                : "bg-gray-100 text-gray-700"
+            }`}
+          >
+            Standard
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsExpress(true)}
+            className={`uber-press min-h-12 rounded-full px-3 text-sm font-bold ${
+              isExpress
+                ? "bg-black text-white"
+                : "bg-gray-100 text-gray-700"
+            }`}
+          >
+            Express (1.5×)
+          </button>
+        </div>
+        {isExpress ? (
+          <p className="mt-1 text-xs text-gray-500">
+            Priority dispatch — aim for under 30 minutes when a driver is
+            nearby.
+          </p>
+        ) : null}
+      </div>
 
       <label className="block text-sm font-semibold text-[#000000]">
         Special instructions
         <textarea
           rows={2}
           className="ru-soft-field mt-1.5 text-sm"
-          placeholder='e.g., "Call recipient when arriving"'
+          placeholder='e.g., "Meet at the gate, call when arriving"'
           value={specialInstructions}
           onChange={(e) => setSpecialInstructions(e.target.value)}
         />
@@ -311,6 +356,7 @@ export function CourierSheet({
         currency={currency}
         villagePass={villagePass}
         distanceKm={distanceKm}
+        expressExtra={expressExtra}
       />
 
       {quoteError ? (
@@ -329,7 +375,7 @@ export function CourierSheet({
         baseFee={baseFee}
         nightSurchargeAmount={nightExtra}
         buttonLabel="Request Courier"
-        description={`Courier · ${itemDescription.trim() || "Package"} · ${weightLabel(weight)}${isNight ? " · Night" : ""}`}
+        description={`Courier · ${itemDescription}${isExpress ? " · Express" : ""}${isNight ? " · Night" : ""}`}
         draft={() => ({
           service_type: "courier",
           required_vehicle: vehicle,
@@ -345,21 +391,26 @@ export function CourierSheet({
           country_code: countryCode,
           dispatcher_notes:
             [
+              "Curb-to-curb courier",
+              isExpress && "Express — aim under 30 min",
               isNight && "Night Ride (Premium) — after-hours safety surcharge",
               recipientName.trim() && `Recipient: ${recipientName.trim()}`,
-              recipientPhone.trim() &&
-                `Recipient phone: ${recipientPhone.trim()}`,
+              `Recipient phone: ${recipientPhone.trim()}`,
+              "Share trip link from Activity — do not send SMS from the app",
               specialInstructions.trim(),
             ]
               .filter(Boolean)
               .join(" · ") || null,
           details: {
-            item_description: itemDescription.trim(),
-            item_weight: weight,
-            size,
+            item_description: itemDescription,
+            item_weight: pack.weight,
+            size: pack.size,
             needs_helpers: false,
+            package_type: packageType,
+            is_express: isExpress,
+            curb_to_curb: true,
             recipient_name: recipientName.trim() || undefined,
-            recipient_phone: recipientPhone.trim() || undefined,
+            recipient_phone: recipientPhone.trim(),
             special_instructions: specialInstructions.trim() || undefined,
           },
           fee_amount: fee,

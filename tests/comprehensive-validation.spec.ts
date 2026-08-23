@@ -205,6 +205,32 @@ test.describe("Pricing Accuracy - All Services & Weight Categories", () => {
     });
     expect(fare.total_fare).toBe(15);
     expect(fare.driver_fare).toBe(13);
+    expect(fare.reservation_fee).toBe(0);
+  });
+
+  test("scheduled trip adds R10 reservation before 90/10", () => {
+    const fare = calculateUnifiedFare({
+      serviceType: "ride",
+      distanceKm: 10,
+      countryCode: "ZA",
+      applyReservationFee: true,
+    });
+    expect(fare.total_fare).toBe(65);
+    expect(fare.reservation_fee).toBe(10);
+    expect(fare.platform_fee).toBe(7);
+    expect(fare.driver_fare).toBe(58);
+  });
+
+  test("courier express is 1.5x before 90/10", () => {
+    const fare = calculateUnifiedFare({
+      serviceType: "courier",
+      distanceKm: 10,
+      countryCode: "ZA",
+      isExpress: true,
+    });
+    expect(fare.total_fare).toBe(83);
+    expect(fare.express_extra).toBe(28);
+    expect(fare.platform_fee).toBe(8);
   });
 
   test("negative distance treated as 0km", () => {

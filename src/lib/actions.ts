@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { mockRepo } from "./mock-store";
-import { calculateFare, type FareBreakdown } from "./fares";
+import { calculateFare, detailsIsExpress, type FareBreakdown } from "./fares";
 import { getDrivingRoute } from "./mapbox-server";
 import { assertBookingInServiceArea } from "./service-area";
 import { isValidMobileForCountry } from "./phone";
@@ -76,6 +76,8 @@ import {
   paypalCreateOrder,
 } from "./paypal";
 import { suggestVehicle, vehicleFitsJob } from "./vehicles";
+import { reserveWindowError } from "./reserve-window";
+import { assertCourierWithinLimit } from "./courier-limits";
 
 function refCode() {
   return `RU-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
@@ -174,6 +176,7 @@ async function resolveFare(params: {
   is_subscribed?: boolean | null;
   weight_category?: string | null;
   details?: unknown;
+  is_express?: boolean;
 }): Promise<FareBreakdown> {
   const countryCode = params.country_code || DEFAULT_COUNTRY;
 
@@ -201,6 +204,11 @@ async function resolveFare(params: {
       ? { lat: params.dropoff_lat, lng: params.dropoff_lng }
       : null;
 
+  const applyReservationFee =
+    params.service_type === "ride" && Boolean(params.at);
+  const isExpress =
+    Boolean(params.is_express) || detailsIsExpress(params.details);
+
   if (!pickup || !dropoff) {
     return calculateFare({
       vehicle: params.vehicle,
@@ -214,6 +222,8 @@ async function resolveFare(params: {
       routeDistanceKm: 0,
       routeDurationSeconds: 0,
       quoteReady: false,
+      applyReservationFee,
+      isExpress,
     });
   }
 
@@ -233,6 +243,8 @@ async function resolveFare(params: {
     routeDistanceKm: route.distanceKm,
     routeDurationSeconds: route.durationSeconds,
     quoteReady: true,
+    applyReservationFee,
+    isExpress,
   });
 }
 
@@ -247,6 +259,8 @@ export async function quoteFareAction(params: {
   at?: string | null;
   customer_phone?: string | null;
   weight_category?: string | null;
+  is_express?: boolean;
+  details?: unknown;
 }): Promise<FareBreakdown> {
   return resolveFare(params);
 }
@@ -1313,6 +1327,8 @@ export async function createPayPalOrderAction(params: {
   customer_phone?: string | null;
   country_code?: string | null;
   service_type?: ServiceType | null;
+  details?: unknown;
+  is_express?: boolean;
 }) {
   if (!isPayPalConfigured()) {
     throw new Error(
@@ -1332,6 +1348,8 @@ export async function createPayPalOrderAction(params: {
       dropoff_lng: params.dropoff_lng,
       at: params.at ?? null,
       customer_phone: params.customer_phone,
+      details: params.details,
+      is_express: params.is_express,
     });
     if (!fare.quote_ready) {
       throw new Error(
@@ -1389,6 +1407,17 @@ async function createJobInner(input: NewJobInput) {
   ) {
     throw new Error("Goods need a bakkie or truck — not a car.");
   }
+
+  if (input.service_type === "ride" && input.scheduled_for) {
+    const reserveErr = reserveWindowError(input.scheduled_for);
+    if (reserveErr) throw new Error(reserveErr);
+  }
+
+  assertCourierWithinLimit({
+    service_type: input.service_type,
+    required_vehicle: input.required_vehicle,
+    details: input.details,
+  });
 
   const isCash = input.payment.method === "cash";
   const onlinePayment =
@@ -1622,6 +1651,7 @@ export async function capturePayPalAndCreateJob(
     dropoff_lng: draft.dropoff_lng,
     at: draft.scheduled_for ?? null,
     customer_phone: draft.customer_phone,
+    details: draft.details,
   });
   if (!fare.quote_ready) {
     throw new Error(
@@ -2778,6 +2808,11 @@ export async function acceptOffer(jobId: string, driverId: string) {
 
   if (!jobRow || !driverRow) throw new Error("Job or driver not found");
   if (!isSearchingStatus(jobRow.status)) throw new Error("Offer already taken");
+  assertCourierWithinLimit({
+    service_type: jobRow.service_type,
+    required_vehicle: jobRow.required_vehicle,
+    details: jobRow.details,
+  });
   if (!driverEligibleForDispatch(driverRow as Driver)) {
     throw new Error(creditLimitBlockMessage((driverRow as Driver).country_code));
   }

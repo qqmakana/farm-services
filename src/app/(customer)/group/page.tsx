@@ -6,6 +6,7 @@ import { listOpenGroupTrips } from "@/lib/actions-group";
 import { GroupTripCard } from "@/components/group/group-trip-card";
 import { ServicePills } from "@/components/uber/service-pills";
 import type { GroupTrip } from "@/lib/types";
+import { SERVICE_COPY } from "@/lib/service-guide";
 import {
   UBER_BTN_BLACK,
   UBER_GLOSS,
@@ -29,11 +30,8 @@ export default function GroupRidesPage() {
     <main className={UBER_PAGE}>
       <ServicePills className="mb-5" />
 
-      <h1 className={UBER_H1}>Groups near you</h1>
-      <p className={UBER_SUB}>
-        Split the cost with others going the same way. Drivers still earn the
-        full fare.
-      </p>
+      <h1 className={UBER_H1}>{SERVICE_COPY.groups.title}</h1>
+      <p className={UBER_SUB}>{SERVICE_COPY.groups.blurb}</p>
 
       <div className={`mt-4 rounded-[28px] px-4 py-3 text-[13px] font-medium text-[#0a0a0a] ${UBER_GLOSS}`}>
         Drivers: publish a group from the{" "}

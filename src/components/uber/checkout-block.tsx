@@ -119,6 +119,7 @@ export function CheckoutBlock({
   currency,
   compact = false,
   onSchedule,
+  reservationFee = 0,
 }: {
   fee: number;
   vehicle: VehicleType;
@@ -134,6 +135,7 @@ export function CheckoutBlock({
   /** Uber-style: payment + CTA only, no walls of text */
   compact?: boolean;
   onSchedule?: () => void;
+  reservationFee?: number;
 }) {
   const router = useRouter();
   const { country, countryCode } = useCountry();
@@ -293,15 +295,36 @@ export function CheckoutBlock({
                 Includes 10% platform fee · driver keeps 90%
               </p>
             )}
+            {reservationFee > 0 ? (
+              <p
+                data-testid="reservation-fee-line"
+                className="mt-0.5 text-xs font-medium text-gray-700"
+              >
+                Includes{" "}
+                {formatMoney(reservationFee, displayCurrency, countryCode)}{" "}
+                reservation fee
+              </p>
+            ) : null}
           </div>
           <p className="text-xs text-gray-500">{VEHICLE_LABELS[vehicle]}</p>
         </div>
       ) : (
-        <p data-testid="price-display" className="sr-only">
-          {Number.isFinite(fee)
-            ? formatMoney(fee, displayCurrency, countryCode)
-            : "—"}
-        </p>
+        <>
+          <p data-testid="price-display" className="sr-only">
+            {Number.isFinite(fee)
+              ? formatMoney(fee, displayCurrency, countryCode)
+              : "—"}
+          </p>
+          {reservationFee > 0 ? (
+            <p
+              data-testid="reservation-fee-line"
+              className="text-xs font-medium text-gray-700"
+            >
+              Includes {formatMoney(reservationFee, displayCurrency, countryCode)}{" "}
+              reservation fee
+            </p>
+          ) : null}
+        </>
       )}
 
       {isNightRide ? (
@@ -471,6 +494,7 @@ export function CheckoutBlock({
                 dropoff_lng: d.dropoff_lng,
                 description: `Village Ride ${serviceType} · ${VEHICLE_LABELS[vehicle]}`,
                 at: d.scheduled_for ?? null,
+                details: d.details,
               });
               return orderId;
             }}

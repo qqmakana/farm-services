@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  reserveMaxMs,
+  reserveMinMs,
+} from "@/lib/reserve-window";
+
 export type WhenMode = "now" | "later";
 
 /** Ride Now vs Schedule for Later — Home-style black / gray-100 pills. */
@@ -9,12 +14,18 @@ export function ScheduleWhen({
   scheduledLocal,
   onScheduledLocalChange,
   nowLabel = "Ride Now",
+  laterHint,
+  minLocal,
+  maxLocal,
 }: {
   mode: WhenMode;
   onModeChange: (mode: WhenMode) => void;
   scheduledLocal: string;
   onScheduledLocalChange: (value: string) => void;
   nowLabel?: string;
+  laterHint?: string;
+  minLocal?: string;
+  maxLocal?: string;
 }) {
   return (
     <div className="space-y-2">
@@ -44,7 +55,8 @@ export function ScheduleWhen({
         </button>
       </div>
       <p className="text-xs text-gray-500">
-        Taxis not running? Book a verified ride or delivery in advance.
+        {laterHint ??
+          "Taxis not running? Book a verified ride or delivery in advance."}
       </p>
       {mode === "later" ? (
         <label className="block text-sm font-semibold text-black">
@@ -55,7 +67,8 @@ export function ScheduleWhen({
             className="ru-soft-field mt-1.5 text-sm"
             value={scheduledLocal}
             onChange={(e) => onScheduledLocalChange(e.target.value)}
-            min={toLocalInputValue(new Date())}
+            min={minLocal ?? toLocalInputValue(new Date())}
+            max={maxLocal}
           />
         </label>
       ) : null}
@@ -80,4 +93,12 @@ export function defaultLaterLocal(): string {
   d.setHours(d.getHours() + 2);
   d.setMinutes(0, 0, 0);
   return toLocalInputValue(d);
+}
+
+export function minReserveLocal(now = new Date()): string {
+  return toLocalInputValue(new Date(now.getTime() + reserveMinMs()));
+}
+
+export function maxReserveLocal(now = new Date()): string {
+  return toLocalInputValue(new Date(now.getTime() + reserveMaxMs()));
 }

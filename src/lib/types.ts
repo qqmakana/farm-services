@@ -51,6 +51,13 @@ export type DeliveryDetails = {
   needs_helpers: boolean;
   /** Who is sending — individual vs local store (ops analytics). */
   sender_type?: "individual" | "business";
+  recipient_name?: string;
+  recipient_phone?: string;
+  /** Shop & Deliver — list paid at the till, not held in escrow. */
+  shop_mode?: "shop_and_deliver";
+  shop_name?: string;
+  shopping_list?: string;
+  photo_proof_requested?: boolean;
 };
 
 export type FarmDetails = {
@@ -58,9 +65,12 @@ export type FarmDetails = {
   notes?: string;
   weight_category?: WeightCategory;
   sender_type?: "individual" | "business";
+  produce_type?: string;
+  loading_assistance?: boolean;
 };
 
 export type CourierWeight = "under_5" | "5_10" | "10_20";
+export type CourierPackageType = "documents" | "small_package";
 
 /** Person-to-person packages across villages, towns & cities (not shop furniture). */
 export type CourierDetails = {
@@ -71,6 +81,9 @@ export type CourierDetails = {
   recipient_name?: string;
   recipient_phone?: string;
   special_instructions?: string;
+  package_type?: CourierPackageType;
+  is_express?: boolean;
+  curb_to_curb?: boolean;
 };
 
 export type JobDetails =

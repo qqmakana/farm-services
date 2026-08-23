@@ -29,22 +29,22 @@ export const WEIGHT_CATEGORIES: readonly {
   {
     id: "light",
     label: "Light (Under 10kg)",
-    hint: "Groceries, small boxes",
+    hint: "Parcels, small boxes, a few bags",
   },
   {
     id: "medium",
     label: "Medium (10–30kg)",
-    hint: "Furniture, appliances",
+    hint: "Furniture, appliances, hardware",
   },
   {
     id: "heavy",
     label: "Heavy (30–100kg)",
-    hint: "Large furniture, equipment",
+    hint: "Large furniture, building materials",
   },
   {
     id: "extra_heavy",
     label: "Extra Heavy (100kg+)",
-    hint: "Very heavy items",
+    hint: "Very heavy loads — bakkie or truck",
   },
 ] as const;
 
@@ -52,6 +52,10 @@ export const PLATFORM_SHARE_PCT = 10;
 export const DRIVER_SHARE_PCT = 90;
 /** First N km included in the ride/courier flag drop. */
 export const RIDE_INCLUDED_KM = 2;
+/** Scheduled Trip (Reserve) — ZA rands, scaled per market. Applied before 90/10. */
+export const ZA_RESERVATION_FEE = 10;
+/** Courier express: 1.5× distance fare, under ~30 min target. */
+export const COURIER_EXPRESS_MULTIPLIER = 1.5;
 
 export type ServiceRate = {
   base_fare: number;
@@ -93,11 +97,15 @@ const ZA_FARM: Record<
 };
 
 /** Scale ZA amounts to another market using ride base ratio. */
-function scaleAmount(zarAmount: number, countryCode?: string | null): number {
+export function scaleAmount(zarAmount: number, countryCode?: string | null): number {
   const c = getCountry(countryCode);
   if (c.currency === "ZAR") return zarAmount;
   const ratio = c.pricing.ride.base / ZA_RIDE_COURIER.base_fare;
   return Math.max(1, Math.round(zarAmount * ratio));
+}
+
+export function reservationFeeAmount(countryCode?: string | null): number {
+  return scaleAmount(ZA_RESERVATION_FEE, countryCode);
 }
 
 export function normalizeWeightCategory(
@@ -199,6 +207,11 @@ export type UnifiedFareBreakdown = {
   is_night_ride: boolean;
   night_surcharge_amount: number;
   included_km: number;
+  /** Reserve add-on (0 unless scheduled Trip). */
+  reservation_fee: number;
+  /** Extra from courier express (0 unless 1.5×). */
+  express_extra: number;
+  express_multiplier: number;
 };
 
 /**
@@ -212,6 +225,10 @@ export function calculateUnifiedFare(params: {
   countryCode?: string | null;
   isSubscribed?: boolean;
   nightSurchargePct?: number;
+  /** Scheduled Trip — adds scaled R10 before 90/10. */
+  applyReservationFee?: boolean;
+  /** Courier express — 1.5× after reservation, before night. */
+  isExpress?: boolean;
 }): UnifiedFareBreakdown {
   const rate = getServiceRate({
     serviceType: params.serviceType,
@@ -223,6 +240,20 @@ export function calculateUnifiedFare(params: {
   const distanceFare = Math.round(rate.per_km_rate * billableKm);
   let riderRaw = rate.base_fare + distanceFare;
   if (riderRaw < rate.minimum_fare) riderRaw = rate.minimum_fare;
+
+  const reservationFee = params.applyReservationFee
+    ? scaleAmount(ZA_RESERVATION_FEE, params.countryCode)
+    : 0;
+  riderRaw += reservationFee;
+
+  let expressExtra = 0;
+  let expressMultiplier = 1;
+  if (params.isExpress && params.serviceType === "courier") {
+    expressMultiplier = COURIER_EXPRESS_MULTIPLIER;
+    const expressed = Math.round(riderRaw * expressMultiplier);
+    expressExtra = expressed - riderRaw;
+    riderRaw = expressed;
+  }
 
   const nightPct = params.nightSurchargePct ?? 0;
   const nightAmt =
@@ -245,6 +276,9 @@ export function calculateUnifiedFare(params: {
     is_night_ride: nightAmt > 0,
     night_surcharge_amount: nightAmt,
     included_km: rate.included_km,
+    reservation_fee: reservationFee,
+    express_extra: expressExtra,
+    express_multiplier: expressMultiplier,
   };
 }
 

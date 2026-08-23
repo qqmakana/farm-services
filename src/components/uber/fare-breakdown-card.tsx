@@ -12,6 +12,8 @@ export function FareBreakdownCard({
   currency,
   villagePass = false,
   distanceKm,
+  reservationFee = 0,
+  expressExtra = 0,
 }: {
   baseFare: number;
   distanceFare: number;
@@ -20,6 +22,8 @@ export function FareBreakdownCard({
   currency?: string;
   villagePass?: boolean;
   distanceKm?: number;
+  reservationFee?: number;
+  expressExtra?: number;
 }) {
   const { countryCode } = useCountry();
   const cur = currency;
@@ -56,6 +60,22 @@ export function FareBreakdownCard({
             {formatMoney(distanceFare, cur, countryCode)}
           </dd>
         </div>
+        {reservationFee > 0 ? (
+          <div className="flex justify-between gap-3">
+            <dt className="text-gray-500">Reservation</dt>
+            <dd className="font-medium text-[var(--ru-ink)]">
+              {formatMoney(reservationFee, cur, countryCode)}
+            </dd>
+          </div>
+        ) : null}
+        {expressExtra > 0 ? (
+          <div className="flex justify-between gap-3">
+            <dt className="text-gray-500">Express (1.5×)</dt>
+            <dd className="font-medium text-[var(--ru-ink)]">
+              {formatMoney(expressExtra, cur, countryCode)}
+            </dd>
+          </div>
+        ) : null}
         <div className="flex justify-between gap-3">
           <dt className="text-gray-500">
             Village Ride 10%

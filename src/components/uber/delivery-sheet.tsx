@@ -20,6 +20,7 @@ import {
   senderTypeLabel,
   type SenderType,
 } from "@/components/uber/sender-type-field";
+import { SERVICE_COPY } from "@/lib/service-guide";
 import { quoteFareAction } from "@/lib/actions";
 import { locsFromSearchParams } from "@/lib/booking-query";
 import { getGuestProfile } from "@/lib/guest-profile";
@@ -44,6 +45,7 @@ export function DeliverySheet({
 }) {
   const { countryCode, country } = useCountry();
   const searchParams = useSearchParams();
+  const shopMode = searchParams.get("kind") === "shop";
   const initial = locsFromSearchParams(searchParams);
   const [pickup, setPickup] = useState<Loc>(initial.pickup);
   const [dropoff, setDropoff] = useState<Loc>(initial.dropoff);
@@ -52,7 +54,12 @@ export function DeliverySheet({
   const [senderPhone, setSenderPhone] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [recipientPhone, setRecipientPhone] = useState("");
-  const [weight, setWeight] = useState<WeightCategory>("medium");
+  const [itemDescription, setItemDescription] = useState("");
+  const [shopName, setShopName] = useState("");
+  const [shoppingList, setShoppingList] = useState("");
+  const [weight, setWeight] = useState<WeightCategory>(
+    shopMode ? "light" : "medium",
+  );
   const [notes, setNotes] = useState("");
   const [vehicle, setVehicle] = useState<VehicleType>("bakkie");
   const [whenMode, setWhenMode] = useState<WhenMode>("now");
@@ -161,7 +168,11 @@ export function DeliverySheet({
   }, [vehicle, weight, pickup.lat, pickup.lng, dropoff.lat, dropoff.lng, atIso, countryCode, senderPhone]);
 
   const itemLabel =
-    WEIGHT_CATEGORIES.find((o) => o.id === weight)?.label ?? "Goods";
+    shopMode && shoppingList.trim()
+      ? shoppingList.trim().slice(0, 80)
+      : itemDescription.trim() ||
+        WEIGHT_CATEGORIES.find((o) => o.id === weight)?.label ||
+        "Goods";
 
   const ready =
     Boolean(senderName.trim()) &&
@@ -174,17 +185,23 @@ export function DeliverySheet({
     dropoff.lng != null &&
     quoteReady &&
     !quoteError &&
-    (whenMode === "now" || Boolean(atIso));
+    (whenMode === "now" || Boolean(atIso)) &&
+    (shopMode
+      ? Boolean(shoppingList.trim()) && Boolean(shopName.trim() || pickup.landmark.trim())
+      : Boolean(itemDescription.trim()));
 
   return (
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-black">
-          Village Delivery
+          {shopMode
+            ? SERVICE_COPY.shopAndDeliver.title
+            : SERVICE_COPY.delivery.title}
         </h1>
         <p className="text-sm text-slate-600">
-          Town &amp; village — store-to-home, person-to-person, town-to-town.
-          Fridges, furniture, building materials.
+          {shopMode
+            ? SERVICE_COPY.shopAndDeliver.blurb
+            : SERVICE_COPY.delivery.blurb}
         </p>
       </div>
 
@@ -201,8 +218,16 @@ export function DeliverySheet({
         dropoff={dropoff}
         onPickup={setPickup}
         onDropoff={setDropoff}
-        pickupPlaceholder="e.g., Farm gate next to the blue water tank"
-        dropoffPlaceholder="e.g., Blue house after the church"
+        pickupPlaceholder={
+          shopMode
+            ? "Shop name or supermarket — e.g. Shoprite Mthatha"
+            : "Pickup — sender meets driver"
+        }
+        dropoffPlaceholder={
+          shopMode
+            ? "Where to drop the shopping"
+            : "Drop-off — recipient address"
+        }
       />
       {pickup.landmark.trim() ? (
         <SaveLocationPrompt
@@ -263,6 +288,40 @@ export function DeliverySheet({
       </div>
       <LandmarkHelperText />
 
+      {shopMode ? (
+        <>
+          <label className="block text-sm font-semibold text-[#000000]">
+            Shop name
+            <input
+              className="ru-soft-field mt-1.5 text-sm"
+              value={shopName}
+              onChange={(e) => setShopName(e.target.value)}
+              placeholder='e.g. "any supermarket near me" or Checkers Sandton'
+            />
+          </label>
+          <label className="block text-sm font-semibold text-[#000000]">
+            Shopping list
+            <textarea
+              rows={4}
+              className="ru-soft-field mt-1.5 text-sm"
+              value={shoppingList}
+              onChange={(e) => setShoppingList(e.target.value)}
+              placeholder="2L milk, bread, 2kg maize… Driver pays at the till — you settle goods with them. Village Ride charges delivery only."
+            />
+          </label>
+        </>
+      ) : (
+        <label className="block text-sm font-semibold text-[#000000]">
+          What are you sending
+          <input
+            className="ru-soft-field mt-1.5 text-sm"
+            value={itemDescription}
+            onChange={(e) => setItemDescription(e.target.value)}
+            placeholder="e.g. sealed box, microwave, building sand"
+          />
+        </label>
+      )}
+
       <WeightCategoryField
         value={weight}
         onChange={setWeight}
@@ -274,7 +333,11 @@ export function DeliverySheet({
         <textarea
           rows={2}
           className="ru-soft-field mt-1.5 text-sm"
-          placeholder="e.g., 2nd floor, fragile"
+          placeholder={
+            shopMode
+              ? "Gate code, substitutions OK?"
+              : "e.g. 2nd floor, fragile. Driver photos load at pickup and drop-off."
+          }
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
         />
@@ -305,8 +368,8 @@ export function DeliverySheet({
         isNightRide={isNight}
         baseFee={baseFee}
         nightSurchargeAmount={nightExtra}
-        buttonLabel="Request Delivery"
-        description={`Village Delivery · ${itemLabel}${isNight ? " · Night" : ""}`}
+        buttonLabel={shopMode ? "Request Shop & Deliver" : "Request Delivery"}
+        description={`${shopMode ? "Shop & Deliver" : "Delivery"} · ${itemLabel}${isNight ? " · Night" : ""}`}
         draft={() => ({
           service_type: "delivery",
           required_vehicle: vehicle,
@@ -314,7 +377,12 @@ export function DeliverySheet({
           customer_phone: senderPhone.trim(),
           pickup_lat: pickup.lat,
           pickup_lng: pickup.lng,
-          pickup_landmark: pickup.landmark.trim(),
+          pickup_landmark: [
+            shopMode && shopName.trim() && `Shop: ${shopName.trim()}`,
+            pickup.landmark.trim(),
+          ]
+            .filter(Boolean)
+            .join(" · "),
           dropoff_lat: dropoff.lat,
           dropoff_lng: dropoff.lng,
           dropoff_landmark: dropoff.landmark.trim(),
@@ -324,6 +392,9 @@ export function DeliverySheet({
             [
               `Sender type: ${senderTypeLabel(senderType)}`,
               `Weight: ${weight}`,
+              shopMode &&
+                "Shop & Deliver — rider pays goods at till; Village Ride delivery fee only",
+              "Photo proof at pickup and drop-off",
               isNight && "Night Ride (Premium) — after-hours safety surcharge",
               recipientName.trim() && `Recipient: ${recipientName.trim()}`,
               recipientPhone.trim() && `Recipient phone: ${recipientPhone.trim()}`,
@@ -344,6 +415,16 @@ export function DeliverySheet({
                     : "xl",
             needs_helpers: weight === "heavy" || weight === "extra_heavy",
             sender_type: senderType,
+            recipient_name: recipientName.trim() || undefined,
+            recipient_phone: recipientPhone.trim() || undefined,
+            photo_proof_requested: true,
+            ...(shopMode
+              ? {
+                  shop_mode: "shop_and_deliver" as const,
+                  shop_name: shopName.trim(),
+                  shopping_list: shoppingList.trim(),
+                }
+              : {}),
           },
           fee_amount: fee,
         })}

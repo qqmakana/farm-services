@@ -41,6 +41,7 @@ import {
 import { jobNeedsFromJob } from "./job-needs";
 import { SHOP_DELIVERY_FEE } from "./shop-constants";
 import { suggestVehicle, vehicleFitsJob } from "./vehicles";
+import { assertCourierWithinLimit } from "./courier-limits";
 import {
   FOUNDING_CITIES,
   isWithinFoundingEra,
@@ -1241,6 +1242,11 @@ export const mockRepo = {
   },
 
   createJob(input: NewJobInput): JobWithDriver {
+    assertCourierWithinLimit({
+      service_type: input.service_type,
+      required_vehicle: input.required_vehicle,
+      details: input.details,
+    });
     const isCash = input.payment.method === "cash";
     const online =
       input.payment.method === "paypal" || input.payment.method === "card"
@@ -1401,6 +1407,11 @@ export const mockRepo = {
         `This job needs a ${job.required_vehicle}. You drive a ${driver.vehicle_type}.`,
       );
     }
+    assertCourierWithinLimit({
+      service_type: job.service_type,
+      required_vehicle: job.required_vehicle,
+      details: job.details,
+    });
 
     const nowIso = new Date().toISOString();
     let app = store().applications.find(
