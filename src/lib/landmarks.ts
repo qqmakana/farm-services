@@ -3,6 +3,8 @@
  * No Google/Mapbox key required. Filtered by country_code.
  */
 
+import { distanceKm } from "./geo";
+
 export type Place = {
   id: string;
   /** Display: "Engcobo · Main taxi rank" */
@@ -368,6 +370,22 @@ export function searchPlaces(
     .sort((a, b) => b.score - a.score);
 
   return scored.slice(0, limit).map((x) => x.p);
+}
+
+/** Landmarks and towns within `radiusKm` of a pin (offline-friendly nearby). */
+export function placesNear(
+  pin: { lat: number; lng: number },
+  radiusKm = 3,
+  countryCode = "ZA",
+  limit = 12,
+): Place[] {
+  const pool = PLACES.filter((p) => (p.country ?? "ZA") === countryCode);
+  return pool
+    .map((p) => ({ p, km: distanceKm(pin, { lat: p.lat, lng: p.lng }) }))
+    .filter((x) => x.km <= radiusKm)
+    .sort((a, b) => a.km - b.km)
+    .slice(0, limit)
+    .map((x) => x.p);
 }
 
 export function findPlaceByLabel(

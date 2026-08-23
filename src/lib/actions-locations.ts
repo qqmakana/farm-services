@@ -261,6 +261,69 @@ export async function savePersonalLocation(
   return data as SavedLocation;
 }
 
+/** One Home / Work / Farm pin per guest phone — update if it already exists. */
+export async function upsertPersonalPlace(
+  input: SavePersonalLocationInput,
+): Promise<SavedLocation> {
+  const phone = input.guest_phone.trim();
+  const existing = await listSavedLocations(phone);
+  const match = existing.find((p) => {
+    if (input.is_home) return p.is_home;
+    if (input.is_work) return p.is_work;
+    if (input.is_farm) return Boolean(p.is_farm);
+    return false;
+  });
+  if (!match) return savePersonalLocation(input);
+
+  const next: SavedLocation = {
+    ...match,
+    name: input.name.trim() || match.name,
+    label: (input.label?.trim() || input.name.trim() || match.label) as string,
+    latitude: input.latitude ?? match.latitude,
+    longitude: input.longitude ?? match.longitude,
+    is_home: Boolean(input.is_home) || match.is_home,
+    is_work: Boolean(input.is_work) || match.is_work,
+    is_farm: Boolean(input.is_farm) || Boolean(match.is_farm),
+    country_code: input.country_code || match.country_code,
+  };
+
+  if (!useAdmin()) {
+    mockRepo.replaceSavedLocation(next);
+    revalidateLocations();
+    return next;
+  }
+
+  const admin = createAdminClient();
+  const patch = {
+    name: next.name,
+    label: next.label,
+    latitude: next.latitude,
+    longitude: next.longitude,
+    is_home: next.is_home,
+    is_work: next.is_work,
+    country_code: next.country_code,
+  };
+  let { data, error } = await admin
+    .from("rr_saved_locations")
+    .update({ ...patch, is_farm: next.is_farm })
+    .eq("id", match.id)
+    .eq("guest_phone", phone)
+    .select("*")
+    .single();
+  if (error && /is_farm/i.test(error.message)) {
+    ({ data, error } = await admin
+      .from("rr_saved_locations")
+      .update(patch)
+      .eq("id", match.id)
+      .eq("guest_phone", phone)
+      .select("*")
+      .single());
+  }
+  if (error) throw new Error(error.message);
+  revalidateLocations();
+  return data as SavedLocation;
+}
+
 export async function deleteSavedLocation(id: string, guestPhone: string) {
   if (!useAdmin()) {
     mockRepo.deleteSavedLocation(id, guestPhone);

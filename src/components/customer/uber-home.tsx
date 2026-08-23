@@ -3,12 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
-import { CalendarClock, ChevronRight, Clock, Search } from "lucide-react";
+import { useState, Suspense } from "react";
+import { CalendarClock, ChevronRight, Search } from "lucide-react";
 import { CaptureReferral } from "@/components/referral/capture-referral";
 import { HomeScheduleLaterModal } from "@/components/customer/home-schedule-later-modal";
-import { getGuestProfile } from "@/lib/guest-profile";
-import { listJobsByCustomerPhone } from "@/lib/actions";
+import { SmartSuggestions } from "@/components/rider/smart-suggestions";
+import type { PlaceSuggestion } from "@/lib/suggestions";
 
 type HomeMode = "ride" | "shops" | "courier";
 
@@ -44,36 +44,31 @@ export function UberHome() {
   const router = useRouter();
   const [mode, setMode] = useState<HomeMode>("ride");
   const [laterOpen, setLaterOpen] = useState(false);
-  const [recents, setRecents] = useState<
-    { title: string; subtitle: string }[]
-  >([]);
-
-  useEffect(() => {
-    const guest = getGuestProfile();
-    if (!guest?.phone) return;
-    void listJobsByCustomerPhone(guest.phone)
-      .then((jobs) => {
-        const places = jobs
-          .map((j) => ({
-            title: j.dropoff_landmark || j.pickup_landmark,
-            subtitle:
-              j.pickup_landmark && j.dropoff_landmark
-                ? `From ${j.pickup_landmark}`
-                : "Recent trip",
-          }))
-          .filter((p) => p.title);
-        const unique = [
-          ...new Map(places.map((p) => [p.title, p])).values(),
-        ].slice(0, 2);
-        setRecents(unique);
-      })
-      .catch(() => undefined);
-  }, []);
 
   function openWhere() {
     if (mode === "shops") router.push("/shops");
     else if (mode === "courier") router.push("/courier");
     else router.push("/ride");
+  }
+
+  function goToPlace(place: PlaceSuggestion) {
+    if (mode === "shops") {
+      router.push("/shops");
+      return;
+    }
+    if (mode === "courier") {
+      router.push("/courier");
+      return;
+    }
+    const q = new URLSearchParams();
+    q.set("to", place.name);
+    if (place.lat != null && Number.isFinite(place.lat)) {
+      q.set("toLat", String(place.lat));
+    }
+    if (place.lng != null && Number.isFinite(place.lng)) {
+      q.set("toLng", String(place.lng));
+    }
+    router.push(`/ride?${q.toString()}`);
   }
 
   return (
@@ -155,49 +150,7 @@ export function UberHome() {
         </button>
       </div>
 
-      {recents.length > 0 ? (
-        <ul
-          className="mt-4 overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white"
-          data-testid="home-recents"
-        >
-          {recents.map((place, i) => (
-            <li key={place.title}>
-              {i > 0 ? <div className="mx-4 h-px bg-[#EEEEEE]" /> : null}
-              <button
-                type="button"
-                onClick={() =>
-                  router.push(`/ride?to=${encodeURIComponent(place.title)}`)
-                }
-                className="uber-press flex w-full items-center gap-4 px-4 py-4 text-left"
-              >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEEEEE]">
-                  <Clock
-                    className="h-4 w-4 text-[#6B6B6B]"
-                    strokeWidth={2}
-                    aria-hidden
-                  />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] font-medium text-black">
-                    {place.title}
-                  </span>
-                  <span className="mt-0.5 block truncate text-[13px] font-normal text-[#6B6B6B]">
-                    {place.subtitle}
-                  </span>
-                </span>
-                <ChevronRight
-                  className="h-5 w-5 shrink-0 text-[#A6A6A6]"
-                  strokeWidth={2}
-                />
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <div data-testid="home-recents" className="sr-only">
-          No recent Village Ride trips
-        </div>
-      )}
+      <SmartSuggestions onSelectDestination={goToPlace} />
 
       <section className="mt-6" data-testid="home-chips">
         <div className="flex items-center justify-between">

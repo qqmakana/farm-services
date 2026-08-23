@@ -28,6 +28,15 @@ import { calculateFare } from "../src/lib/fares";
 import { getCountry } from "../src/lib/countries";
 import { distanceKm, jitterLatLng } from "../src/lib/geo";
 import {
+  formatSuggestionDistance,
+  isRecognizableName,
+  mergeSuggestionLists,
+  scoreNearbyPlace,
+  samePlace,
+} from "../src/lib/suggestions";
+import { getBoostConfig } from "../src/lib/boost";
+import { placesNear } from "../src/lib/landmarks";
+import {
   riderPhotoFromDetails,
   riderPhotoStoragePathFromDetails,
   wearingFromDetails,
@@ -77,6 +86,119 @@ function test(name: string, fn: () => void) {
 }
 
 console.log("Running logic tests…");
+
+test("suggestions: distance labels", () => {
+  assert(formatSuggestionDistance(0.02) === "Nearby", "very close");
+  assert(formatSuggestionDistance(0.8) === "800m", "metres");
+  assert(formatSuggestionDistance(1.24) === "1.2km", "km");
+});
+
+test("suggestions: drop obscure POI names", () => {
+  assert(isRecognizableName("Shoprite Brixton"), "shoprite");
+  assert(!isRecognizableName("unnamed"), "unnamed");
+  assert(!isRecognizableName("12"), "digits");
+});
+
+test("suggestions: SA mall ranks above a random shop at the same distance", () => {
+  const mall = scoreNearbyPlace({
+    name: "Sandton City",
+    category: "mall",
+    distanceKm: 0.8,
+    countryCode: "ZA",
+  });
+  const shop = scoreNearbyPlace({
+    name: "Corner spaza",
+    category: "shop",
+    distanceKm: 0.8,
+    countryCode: "ZA",
+  });
+  assert(mall > shop, `mall ${mall} vs shop ${shop}`);
+  assert(getBoostConfig("ZA").names["sandton city"] === 10, "ZA boost loaded");
+  assert(Object.keys(getBoostConfig("XX").names).length === 0, "unknown country empty");
+});
+
+test("suggestions: merge saved first, recents win over matching nearby", () => {
+  const merged = mergeSuggestionLists({
+    saved: [
+      {
+        type: "saved",
+        id: "h",
+        label: "home",
+        name: "Home",
+        address: "Alice",
+        lat: -32.787,
+        lng: 26.834,
+      },
+    ],
+    recent: [
+      {
+        type: "recent",
+        id: "r",
+        name: "UJ APK Gate",
+        address: "Auckland Park",
+        lat: -26.182,
+        lng: 27.997,
+        ride_count: 3,
+      },
+    ],
+    nearby: [
+      {
+        type: "nearby",
+        id: "n1",
+        name: "UJ APK Gate",
+        address: "Auckland Park",
+        lat: -26.182,
+        lng: 27.997,
+        category: "university",
+      },
+      {
+        type: "nearby",
+        id: "n2",
+        name: "Shoprite Brixton",
+        address: "Brixton",
+        lat: -26.191,
+        lng: 27.971,
+        category: "grocery",
+      },
+    ],
+  });
+  assert(merged.saved[0]?.label === "home", "saved kept");
+  assert(merged.recent[0]?.name === "UJ APK Gate", "recent kept");
+  assert(
+    !merged.nearby.some((p) => p.name === "UJ APK Gate"),
+    "nearby dup dropped",
+  );
+  assert(
+    merged.nearby.some((p) => p.name === "Shoprite Brixton"),
+    "other nearby kept",
+  );
+});
+
+test("suggestions: same village pin with different names is not a duplicate", () => {
+  assert(
+    !samePlace(
+      { name: "Alice · Main taxi rank", lat: -32.787, lng: 26.834 },
+      { name: "Alice · Clinic", lat: -32.787, lng: 26.834 },
+    ),
+    "different landmarks",
+  );
+  assert(
+    samePlace(
+      { name: "Shoprite Brixton", lat: -26.191, lng: 27.971 },
+      { name: "Shoprite Brixton", lat: -26.191, lng: 27.971 },
+    ),
+    "same name",
+  );
+});
+
+test("suggestions: Joburg CBD has offline nearby landmarks", () => {
+  const near = placesNear({ lat: -26.2041, lng: 28.0473 }, 3, "ZA", 12);
+  assert(near.length >= 3, `got ${near.length}`);
+  assert(
+    near.some((p) => /johannesburg|park station/i.test(p.label)),
+    near.map((p) => p.label).join(", "),
+  );
+});
 
 test("rider spotting: data URL wins; storage path is not displayable", () => {
   const data = "data:image/jpeg;base64,/9j/4AAQ";
@@ -626,6 +748,33 @@ function loadLocalEnv() {
 }
 
 async function runAsync() {
+  try {
+    const { getNearbySuggestions } = await import(
+      "../src/lib/actions-suggestions"
+    );
+    const joburg = await getNearbySuggestions({
+      lat: -26.2041,
+      lng: 28.0473,
+      countryCode: "ZA",
+    });
+    assert(
+      joburg.nearby.length >= 1,
+      `Joburg nearby empty (${joburg.nearby.length})`,
+    );
+    ok(
+      `Joburg nearby ${joburg.nearby.length}: ${joburg.nearby
+        .slice(0, 3)
+        .map((p) => p.name)
+        .join(", ")}`,
+    );
+
+    const noPin = await getNearbySuggestions({ countryCode: "ZA" });
+    assert(noPin.nearby.length === 0, "no GPS must not invent nearby");
+    ok("suggestions without GPS return no nearby list");
+  } catch (e) {
+    fail("Joburg nearby suggestions", e);
+  }
+
   try {
     const shops = mockRepo.listShops();
     assert(shops.length >= 1, "need shop");

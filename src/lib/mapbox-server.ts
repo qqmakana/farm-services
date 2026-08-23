@@ -29,7 +29,11 @@ type MapboxFeature = {
   text?: string;
   relevance?: number;
   center?: [number, number];
-  properties?: { accuracy?: string };
+  properties?: {
+    accuracy?: string;
+    category?: string;
+    maki?: string;
+  };
 };
 
 export function classifyMapboxFeature(
@@ -196,3 +200,67 @@ export async function geocodeAddressQuery(
   }
   return out;
 }
+
+export type NearbyPoi = {
+  id: string;
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  category: string;
+};
+
+const nearbyCache = new Map<string, { at: number; value: NearbyPoi[] }>();
+const NEARBY_CACHE_MS = 5 * 60 * 1000;
+
+/** Reverse-geocode POIs around a pin. Cached 5 minutes per ~100m cell. */
+export async function geocodeNearbyPois(opts: {
+  lat: number;
+  lng: number;
+  countryCode?: string | null;
+  limit?: number;
+}): Promise<NearbyPoi[]> {
+  const token = mapboxServerToken();
+  if (!token) return [];
+  const lat = Number(opts.lat);
+  const lng = Number(opts.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return [];
+
+  const key = `${(opts.countryCode || "ZA").toUpperCase()}:${lat.toFixed(3)}:${lng.toFixed(3)}`;
+  const hit = nearbyCache.get(key);
+  if (hit && Date.now() - hit.at < NEARBY_CACHE_MS) return hit.value;
+
+  const params = new URLSearchParams({
+    access_token: token,
+    types: "poi",
+    limit: String(opts.limit ?? 10),
+    country: (opts.countryCode || "ZA").toLowerCase(),
+  });
+  const url =
+    `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?` +
+    params.toString();
+
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) return [];
+  const body = (await res.json()) as { features?: MapboxFeature[] };
+  const out: NearbyPoi[] = [];
+  for (const feature of body.features ?? []) {
+    const center = feature.center;
+    if (!center || center.length < 2) continue;
+    const name = String(feature.text || "").trim();
+    if (!name) continue;
+    out.push({
+      id: String(feature.id || `${center[1]},${center[0]}`),
+      name,
+      address: String(feature.place_name || name).trim(),
+      lat: center[1],
+      lng: center[0],
+      category: String(
+        feature.properties?.category || feature.properties?.maki || "",
+      ),
+    });
+  }
+  nearbyCache.set(key, { at: Date.now(), value: out });
+  return out;
+}
+

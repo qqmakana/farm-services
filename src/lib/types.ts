@@ -625,6 +625,19 @@ export type SavePersonalLocationInput = {
   country_code?: string;
 };
 
+export type RecentDestination = {
+  id: string;
+  guest_phone: string;
+  name: string;
+  address: string;
+  lat: number | null;
+  lng: number | null;
+  ride_count: number;
+  last_ridden_at: string;
+  country_code: string;
+  job_id?: string | null;
+};
+
 export type FuelAmount = "5L" | "10L" | "20L";
 
 export type FuelRequestStatus =

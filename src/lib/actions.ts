@@ -1546,6 +1546,12 @@ async function createJobInner(input: NewJobInput) {
         country: countryCode,
       });
     }
+    try {
+      const { recordRecentFromJob } = await import("./actions-suggestions");
+      await recordRecentFromJob(data as JobWithDriver);
+    } catch {
+      /* recents are best-effort */
+    }
     revalidateAll();
     return data as JobWithDriver;
   } catch (err) {
@@ -3081,6 +3087,12 @@ export async function completeTrip(
     } catch {
       /* founding bonus is best-effort */
     }
+    try {
+      const { recordRecentFromJob } = await import("./actions-suggestions");
+      await recordRecentFromJob(job);
+    } catch {
+      /* recents are best-effort */
+    }
     revalidateAll();
     return job;
   }
@@ -3213,6 +3225,13 @@ export async function completeTrip(
     await processFoundingBonusOnTripComplete(driverId, data as Job);
   } catch {
     /* founding bonus is best-effort */
+  }
+
+  try {
+    const { recordRecentFromJob } = await import("./actions-suggestions");
+    await recordRecentFromJob(data as Job);
+  } catch {
+    /* recents are best-effort */
   }
 
   revalidateAll();

@@ -18,6 +18,7 @@ import type {
   Rating,
   SavedLocation,
   SavePersonalLocationInput,
+  RecentDestination,
   Shop,
   ShopCartOrderInput,
   ShopOrder,
@@ -631,6 +632,7 @@ type Store = {
   groupParticipants: GroupTripParticipant[];
   communityLocations: CommunityLocation[];
   savedLocations: SavedLocation[];
+  recentDestinations: RecentDestination[];
   wearLogs: WearLog[];
   fuelRequests: FuelRequest[];
   monthlyCityRevenue: MonthlyCityRevenue[];
@@ -671,6 +673,7 @@ function store(): Store {
       groupParticipants: structuredClone(seedGroupParticipants),
       communityLocations: structuredClone(seedCommunityLocations),
       savedLocations: [],
+      recentDestinations: [],
       wearLogs: structuredClone(seedWearLogs),
       fuelRequests: [],
       monthlyCityRevenue: [],
@@ -699,6 +702,7 @@ function store(): Store {
     s.communityLocations = structuredClone(seedCommunityLocations);
   }
   if (!s.savedLocations) s.savedLocations = [];
+  if (!s.recentDestinations) s.recentDestinations = [];
   // Hot-reload: old seed missing Uber driver/job fields
   if (
     s.drivers.some(
@@ -1295,6 +1299,17 @@ export const mockRepo = {
       updated_at: nowIso,
     };
     store().jobs.unshift(job);
+    if (job.dropoff_landmark) {
+      mockRepo.upsertRecentDestination({
+        guest_phone: job.customer_phone,
+        name: job.dropoff_landmark,
+        address: job.dropoff_landmark,
+        lat: job.dropoff_lat,
+        lng: job.dropoff_lng,
+        country_code: job.country_code || DEFAULT_COUNTRY,
+        job_id: job.id,
+      });
+    }
     mockRepo.broadcastOffers(job);
     return mockRepo.autoMatchIfPossible(job);
   },
@@ -2039,10 +2054,68 @@ export const mockRepo = {
     return row;
   },
 
+  replaceSavedLocation(row: SavedLocation) {
+    store().savedLocations = [
+      row,
+      ...store().savedLocations.filter((s) => s.id !== row.id),
+    ];
+  },
+
   deleteSavedLocation(id: string, guestPhone: string) {
     store().savedLocations = store().savedLocations.filter(
       (s) => !(s.id === id && s.guest_phone === guestPhone),
     );
+  },
+
+  listRecentDestinations(guestPhone: string, limit = 5): RecentDestination[] {
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    return store()
+      .recentDestinations.filter((r) => r.guest_phone === guestPhone)
+      .filter((r) => new Date(r.last_ridden_at).getTime() >= weekAgo)
+      .sort((a, b) => b.last_ridden_at.localeCompare(a.last_ridden_at))
+      .slice(0, limit);
+  },
+
+  upsertRecentDestination(input: {
+    guest_phone: string;
+    name: string;
+    address?: string;
+    lat?: number | null;
+    lng?: number | null;
+    country_code?: string;
+    job_id?: string | null;
+  }): RecentDestination {
+    const phone = input.guest_phone.trim();
+    const name = input.name.trim();
+    const key = name.toLowerCase();
+    const existing = store().recentDestinations.find(
+      (r) => r.guest_phone === phone && r.name.toLowerCase() === key,
+    );
+    const now = new Date().toISOString();
+    if (existing) {
+      if (input.job_id && existing.job_id === input.job_id) return existing;
+      existing.ride_count += 1;
+      existing.last_ridden_at = now;
+      if (input.lat != null) existing.lat = input.lat;
+      if (input.lng != null) existing.lng = input.lng;
+      if (input.address) existing.address = input.address;
+      if (input.job_id) existing.job_id = input.job_id;
+      return existing;
+    }
+    const row: RecentDestination = {
+      id: uid(),
+      guest_phone: phone,
+      name,
+      address: input.address?.trim() || name,
+      lat: input.lat ?? null,
+      lng: input.lng ?? null,
+      ride_count: 1,
+      last_ridden_at: now,
+      country_code: input.country_code || DEFAULT_COUNTRY,
+      job_id: input.job_id ?? null,
+    };
+    store().recentDestinations.unshift(row);
+    return row;
   },
 
   createFuelRequest(input: CreateFuelRequestInput): FuelRequest {

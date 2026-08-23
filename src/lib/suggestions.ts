@@ -1,0 +1,143 @@
+import { distanceKm } from "./geo";
+import { getBoostConfig } from "./boost";
+
+export type SuggestionKind = "saved" | "recent" | "nearby";
+
+export type PlaceSuggestion = {
+  type: SuggestionKind;
+  id: string;
+  label?: "home" | "work" | "farm" | "other";
+  name: string;
+  address: string;
+  lat: number | null;
+  lng: number | null;
+  distance?: string;
+  distance_km?: number;
+  ride_count?: number;
+  category?: string;
+};
+
+export type SuggestionsPayload = {
+  saved: PlaceSuggestion[];
+  recent: PlaceSuggestion[];
+  nearby: PlaceSuggestion[];
+};
+
+const OBSCURE =
+  /^(unnamed|parking|lot|stop|node|null|\d+)$/i;
+
+export function isRecognizableName(name: string): boolean {
+  const t = name.trim();
+  if (t.length < 3) return false;
+  if (OBSCURE.test(t)) return false;
+  if (/^\d+\s*(st|rd|ave|street)?$/i.test(t)) return false;
+  return true;
+}
+
+export function formatSuggestionDistance(km: number): string {
+  if (!Number.isFinite(km) || km < 0) return "";
+  if (km < 0.05) return "Nearby";
+  if (km < 1) return `${Math.max(50, Math.round(km * 1000))}m`;
+  return `${km.toFixed(1)}km`;
+}
+
+export function samePlace(
+  a: { lat: number | null; lng: number | null; name: string },
+  b: { lat: number | null; lng: number | null; name: string },
+): boolean {
+  const na = normalizePlaceName(a.name);
+  const nb = normalizePlaceName(b.name);
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  const close =
+    a.lat != null &&
+    a.lng != null &&
+    b.lat != null &&
+    b.lng != null &&
+    distanceKm({ lat: a.lat, lng: a.lng }, { lat: b.lat, lng: b.lng }) < 0.12;
+  if (!close) return false;
+  return na.includes(nb) || nb.includes(na);
+}
+
+export function normalizePlaceName(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function nameHitsBoost(name: string, key: string): boolean {
+  if (!key) return false;
+  if (key.length <= 3) {
+    const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`(?:^|\\b)${escaped}(?:\\b|$)`, "i").test(name);
+  }
+  return name.includes(key);
+}
+
+export function scoreNearbyPlace(opts: {
+  name: string;
+  category?: string;
+  distanceKm: number;
+  countryCode?: string | null;
+}): number {
+  const boost = getBoostConfig(opts.countryCode);
+  let score = 0;
+  if (opts.distanceKm < 0.5) score += 10;
+  else if (opts.distanceKm < 1) score += 7;
+  else if (opts.distanceKm < 2) score += 4;
+  else if (opts.distanceKm < 3) score += 2;
+
+  const name = normalizePlaceName(opts.name);
+  for (const [key, value] of Object.entries(boost.names)) {
+    if (nameHitsBoost(name, key)) score += value;
+  }
+  if (opts.category) {
+    score += boost.categories[opts.category] ?? 0;
+  }
+  return score;
+}
+
+export function mergeSuggestionLists(opts: {
+  saved: PlaceSuggestion[];
+  recent: PlaceSuggestion[];
+  nearby: PlaceSuggestion[];
+}): SuggestionsPayload {
+  const saved = opts.saved.filter((p) => isRecognizableName(p.name));
+  const recent: PlaceSuggestion[] = [];
+  for (const p of opts.recent) {
+    if (!isRecognizableName(p.name)) continue;
+    if (saved.some((s) => samePlace(s, p))) continue;
+    if (recent.some((r) => samePlace(r, p))) continue;
+    recent.push(p);
+  }
+  const nearby: PlaceSuggestion[] = [];
+  for (const p of opts.nearby) {
+    if (!isRecognizableName(p.name)) continue;
+    if (saved.some((s) => samePlace(s, p))) continue;
+    if (recent.some((r) => samePlace(r, p))) continue;
+    if (nearby.some((n) => samePlace(n, p))) continue;
+    nearby.push(p);
+  }
+  return {
+    saved: saved.slice(0, 6),
+    recent: recent.slice(0, 5),
+    nearby: nearby.slice(0, 10),
+  };
+}
+
+export function categoryFromText(
+  name: string,
+  raw?: string | null,
+): string {
+  const blob = `${raw || ""} ${name}`.toLowerCase();
+  if (/taxi|rank/.test(blob)) return "taxi";
+  if (/mall|centre|center|waterfront/.test(blob)) return "mall";
+  if (/university|campus|uj|wits|unisa|uct/.test(blob)) return "university";
+  if (/school|college/.test(blob)) return "school";
+  if (/hospital|clinic|baragwanath/.test(blob)) return "hospital";
+  if (/shell|engen|bp |total |garage|petrol|fuel/.test(blob)) return "fuel";
+  if (/shoprite|checkers|spar|pick n pay|grocery/.test(blob)) return "grocery";
+  if (/kfc|mcdonald|steers|nando|hungry lion|fast/.test(blob)) return "fast_food";
+  if (/restaurant|cafe|eatery/.test(blob)) return "restaurant";
+  if (/bus|station|gautrain/.test(blob)) return "bus_station";
+  if (/shop|store/.test(blob)) return "shop";
+  return raw?.trim() || "default";
+}
