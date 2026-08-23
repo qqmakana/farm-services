@@ -117,6 +117,34 @@ export function bookingPathForTab(tab: HomeFeedTab): string {
   }
 }
 
+/** Tabs that open a dedicated screen instead of filtering the home feed. */
+export const HOME_NAV_TABS: HomeFeedTab[] = ["groups", "farm", "shops"];
+
+export function homeTabOpensPage(tab: HomeFeedTab): boolean {
+  return HOME_NAV_TABS.includes(tab);
+}
+
+export function homeTabLabel(tab: HomeFeedTab): string {
+  switch (tab) {
+    case "for-you":
+      return "For you";
+    case "trip":
+      return "Trip";
+    case "reserve":
+      return "Reserve";
+    case "groups":
+      return "Groups";
+    case "delivery":
+      return "Delivery";
+    case "courier":
+      return "Courier";
+    case "farm":
+      return "Farm";
+    case "shops":
+      return "Shops";
+  }
+}
+
 export type SuggestionsPayload = {
   saved: PlaceSuggestion[];
   recent: PlaceSuggestion[];

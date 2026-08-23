@@ -256,19 +256,28 @@ export function SmartSuggestions({
   }, [countryCode]);
 
   const shown = filterSuggestionsForTab(data, filter);
-  const hasHome = data.saved.some((p) => p.label === "home");
-  const hasWork = data.saved.some((p) => p.label === "work");
-  const empty =
+  const filteredEmpty =
+    filter !== "for-you" &&
     shown.saved.length === 0 &&
     shown.recent.length === 0 &&
     shown.nearby.length === 0;
+  const display =
+    filteredEmpty && data.nearby.length > 0
+      ? { saved: shown.saved, recent: shown.recent, nearby: data.nearby }
+      : shown;
+  const hasHome = data.saved.some((p) => p.label === "home");
+  const hasWork = data.saved.some((p) => p.label === "work");
+  const empty =
+    display.saved.length === 0 &&
+    display.recent.length === 0 &&
+    display.nearby.length === 0;
 
   if (loading) return <SuggestionsSkeleton />;
 
   return (
     <div data-testid="smart-suggestions" className="mt-4 space-y-4">
       <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {shown.saved.map((place) => {
+        {display.saved.map((place) => {
           const Icon =
             place.label === "home"
               ? Home
@@ -311,7 +320,7 @@ export function SmartSuggestions({
         ) : null}
       </div>
 
-      {shown.recent.length > 0 ? (
+      {display.recent.length > 0 ? (
         <ul
           className="overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white"
           data-testid="home-recents"
@@ -319,7 +328,7 @@ export function SmartSuggestions({
           <li className="px-4 pt-3 text-[11px] font-semibold tracking-wide text-[#6B6B6B] uppercase">
             Recent
           </li>
-          {shown.recent.map((place, i) => (
+          {display.recent.map((place, i) => (
             <li key={place.id}>
               {i > 0 ? <div className="mx-4 h-px bg-[#EEEEEE]" /> : null}
               <RowButton
@@ -336,15 +345,15 @@ export function SmartSuggestions({
         </div>
       )}
 
-      {shown.nearby.length > 0 ? (
+      {display.nearby.length > 0 ? (
         <ul
           className="overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white"
           data-testid="home-nearby"
         >
           <li className="px-4 pt-3 text-[11px] font-semibold tracking-wide text-[#6B6B6B] uppercase">
-            Nearby
+            {filteredEmpty ? "Nearby places" : "Nearby"}
           </li>
-          {shown.nearby.map((place, i) => (
+          {display.nearby.map((place, i) => (
             <li key={place.id}>
               {i > 0 ? <div className="mx-4 h-px bg-[#EEEEEE]" /> : null}
               <RowButton

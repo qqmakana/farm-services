@@ -10,6 +10,8 @@ import { HomeScheduleLaterModal } from "@/components/customer/home-schedule-late
 import { SmartSuggestions } from "@/components/rider/smart-suggestions";
 import {
   bookingPathForTab,
+  homeTabLabel,
+  homeTabOpensPage,
   type HomeFeedTab,
   type PlaceSuggestion,
 } from "@/lib/suggestions";
@@ -75,12 +77,24 @@ export function UberHome() {
   const [activeTab, setActiveTab] = useState<HomeFeedTab>("for-you");
   const [laterOpen, setLaterOpen] = useState(false);
 
-  function openWhere() {
-    router.push(hrefForTab(activeTab === "for-you" ? "trip" : activeTab));
+  const bookingTab = activeTab === "for-you" ? "trip" : activeTab;
+  const whereHref = hrefForTab(bookingTab);
+  const openServiceHref = bookingPathForTab(bookingTab);
+
+  function onFeedTabClick(tab: HomeFeedTab) {
+    if (homeTabOpensPage(tab)) {
+      router.push(bookingPathForTab(tab));
+      return;
+    }
+    if (activeTab === tab && tab !== "for-you") {
+      router.push(bookingPathForTab(tab));
+      return;
+    }
+    setActiveTab(tab);
   }
 
   function goToPlace(place: PlaceSuggestion) {
-    router.push(hrefForTab(activeTab === "for-you" ? "trip" : activeTab, place));
+    router.push(hrefForTab(bookingTab, place));
   }
 
   return (
@@ -135,10 +149,9 @@ export function UberHome() {
       </div>
 
       <div className="mt-5 flex items-center rounded-full bg-white py-1.5 pl-5 pr-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]">
-        <button
-          type="button"
+        <Link
+          href={whereHref}
           data-testid="home-where-to"
-          onClick={openWhere}
           className="uber-press flex min-h-12 flex-1 items-center gap-3 text-left"
         >
           <Search
@@ -149,7 +162,7 @@ export function UberHome() {
           <span className="text-[17px] font-normal text-[#A6A6A6]">
             Where to?
           </span>
-        </button>
+        </Link>
         <span className="mx-1 h-8 w-px bg-[#EEEEEE]" aria-hidden />
         <button
           type="button"
@@ -165,7 +178,7 @@ export function UberHome() {
       <section className="relative z-10 mt-6" data-testid="home-chips">
         <div className="flex items-center justify-between">
           <h2 className="text-[24px] font-bold leading-[1.2] tracking-[-0.3px] text-black">
-            For you
+            {homeTabLabel(activeTab)}
           </h2>
           <Link
             href="/services"
@@ -195,7 +208,7 @@ export function UberHome() {
                 aria-selected={selected}
                 data-testid={testId}
                 data-primary={i === 0 ? "true" : "false"}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => onFeedTabClick(tab.id)}
                 className={`uber-press relative z-10 flex shrink-0 flex-col items-center gap-1.5 rounded-2xl px-2 py-2 ${
                   selected ? "bg-black text-white" : "bg-[#F3F3F3] text-black"
                 }`}
@@ -235,6 +248,16 @@ export function UberHome() {
         filter={activeTab}
         onSelectDestination={goToPlace}
       />
+
+      {activeTab !== "for-you" && !homeTabOpensPage(activeTab) ? (
+        <Link
+          href={openServiceHref}
+          data-testid="home-open-service"
+          className="uber-press mt-4 flex min-h-12 w-full items-center justify-center rounded-full bg-black px-5 text-[17px] font-medium text-white"
+        >
+          Open {homeTabLabel(activeTab)}
+        </Link>
+      ) : null}
 
       {activeTab === "for-you" ? (
         <Link
