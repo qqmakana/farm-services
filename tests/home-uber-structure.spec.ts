@@ -30,6 +30,8 @@ test.describe("Home Uber structure", () => {
     );
     await expect(page.getByTestId("service-circle-send-items")).toBeVisible();
     await expect(page.getByTestId("service-circle-farm")).toBeVisible();
+    await expect(page.getByTestId("service-circle-reserve")).toBeVisible();
+    await expect(page.getByTestId("service-circle-groups")).toBeVisible();
 
     await page.getByTestId("home-later").click();
     await expect(page.getByTestId("home-later-datetime")).toBeVisible({
@@ -106,5 +108,50 @@ test.describe("Home Uber structure", () => {
     await expect(
       page.getByRole("heading", { name: /Drive with/i }),
     ).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("Reserve, Groups, and Farm icons open their pages", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await dismissCountryModalIfPresent(page);
+    await expect(page.getByTestId("uber-home")).toBeVisible({ timeout: 15_000 });
+
+    await page.getByTestId("service-circle-reserve").click();
+    await expect(page).toHaveURL(/\/ride\?when=later/, { timeout: 15_000 });
+
+    await page.goto("/");
+    await dismissCountryModalIfPresent(page);
+    await page.getByTestId("service-circle-groups").click();
+    await expect(page).toHaveURL(/\/group/, { timeout: 15_000 });
+    await expect(
+      page.getByRole("heading", { name: /Groups near you/i }),
+    ).toBeVisible({ timeout: 15_000 });
+
+    await page.goto("/");
+    await dismissCountryModalIfPresent(page);
+    await page.getByTestId("service-circle-farm").click();
+    await expect(page).toHaveURL(/\/farm/, { timeout: 15_000 });
+    await expect(page.getByTestId("service-pill-farm")).toBeVisible({
+      timeout: 15_000,
+    });
+  });
+
+  test("Services page Reserve, Groups, Farm also navigate", async ({
+    page,
+  }) => {
+    await page.goto("/services");
+    await dismissCountryModalIfPresent(page);
+
+    await page.getByTestId("service-circle-reserve").click();
+    await expect(page).toHaveURL(/\/ride\?when=later/, { timeout: 15_000 });
+
+    await page.goto("/services");
+    await page.getByTestId("service-circle-groups").click();
+    await expect(page).toHaveURL(/\/group/, { timeout: 15_000 });
+
+    await page.goto("/services");
+    await page.getByTestId("service-circle-farm").click();
+    await expect(page).toHaveURL(/\/farm/, { timeout: 15_000 });
   });
 });

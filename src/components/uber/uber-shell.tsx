@@ -163,7 +163,7 @@ export function UberShell({
       </div>
 
       {/* Top chrome + optional Where-to bar */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 px-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-30 px-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div className="pointer-events-auto flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
             {backHref ? (
@@ -234,8 +234,8 @@ export function UberShell({
         ) : null}
       </div>
 
-      {onMapPin && !floatingSearch && !showServicePills ? (
-        <div className="pointer-events-none absolute inset-x-0 top-[5.5rem] z-10 flex justify-center px-4">
+        {onMapPin && !floatingSearch && !showServicePills ? (
+        <div className="pointer-events-none absolute inset-x-0 top-[5.5rem] z-30 flex justify-center px-4">
           <p className="inline-flex items-center gap-1.5 rounded-full bg-black/80 px-3 py-1.5 text-[11px] font-semibold text-white shadow-md backdrop-blur">
             <MapPin className="h-3.5 w-3.5" aria-hidden />
             {pin

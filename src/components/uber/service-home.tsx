@@ -37,9 +37,11 @@ const FOR_YOU: {
   badge?: string;
 }[] = [
   { href: "/ride", label: "Trip", src: "/home/icons/car.png", badge: "20%" },
+  { href: "/ride?when=later", label: "Reserve", src: "/home/icons/car.png" },
+  { href: "/group", label: "Groups", src: "/home/icons/car.png" },
+  { href: "/farm", label: "Farm", src: "/home/icons/farm.png" },
   { href: "/shops", label: "Shops", src: "/home/icons/shops.png" },
   { href: "/courier", label: "Send items", src: "/home/icons/courier.png" },
-  { href: "/farm", label: "Farm", src: "/home/icons/farm.png" },
 ];
 
 export function ServiceHomeSheet({

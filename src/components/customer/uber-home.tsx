@@ -35,9 +35,11 @@ const FOR_YOU: {
   badge?: string;
 }[] = [
   { href: "/ride", label: "Trip", src: "/home/icons/car.png", badge: "20%" },
+  { href: "/ride?when=later", label: "Reserve", src: "/home/icons/car.png" },
+  { href: "/group", label: "Groups", src: "/home/icons/car.png" },
+  { href: "/farm", label: "Farm", src: "/home/icons/farm.png" },
   { href: "/shops", label: "Shops", src: "/home/icons/shops.png" },
   { href: "/courier", label: "Send items", src: "/home/icons/courier.png" },
-  { href: "/farm", label: "Farm", src: "/home/icons/farm.png" },
 ];
 
 export function UberHome() {
@@ -152,7 +154,7 @@ export function UberHome() {
 
       <SmartSuggestions onSelectDestination={goToPlace} />
 
-      <section className="mt-6" data-testid="home-chips">
+      <section className="relative z-10 mt-6" data-testid="home-chips">
         <div className="flex items-center justify-between">
           <h2 className="text-[24px] font-bold leading-[1.2] tracking-[-0.3px] text-black">
             For you
@@ -177,7 +179,7 @@ export function UberHome() {
               href={href}
               data-testid={`service-circle-${label.toLowerCase().replace(/\s+/g, "-")}`}
               data-primary={i === 0 ? "true" : "false"}
-              className="uber-press relative flex w-[72px] shrink-0 flex-col items-center"
+              className="uber-press relative z-10 flex w-[72px] shrink-0 flex-col items-center"
             >
               {badge ? (
                 <span className="absolute -top-2 left-1/2 z-10 -translate-x-1/2 rounded-[4px] bg-[#CB4040] px-1.5 py-[2px] text-[10px] font-bold text-white">

@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import { BookingTabChrome } from "@/components/customer/booking-tab-chrome";
 import { CourierSheet } from "@/components/uber/courier-sheet";
 import { UberShell } from "@/components/uber/uber-shell";
 import { useBookingMapPin } from "@/components/uber/use-booking-map-pin";
@@ -14,6 +15,7 @@ function CourierInner() {
   return (
     <UberShell
       showServicePills
+      showTabBar
       initialSnap="mid"
       pin={pin}
       dropoffPin={dropoffPin}
@@ -33,14 +35,16 @@ function CourierInner() {
 
 export default function CourierPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-dvh items-center justify-center bg-[#F5F5F5] text-[#000000]">
-          Loading courier…
-        </div>
-      }
-    >
-      <CourierInner />
-    </Suspense>
+    <BookingTabChrome>
+      <Suspense
+        fallback={
+          <div className="flex min-h-dvh items-center justify-center bg-[#F5F5F5] text-[#000000]">
+            Loading courier…
+          </div>
+        }
+      >
+        <CourierInner />
+      </Suspense>
+    </BookingTabChrome>
   );
 }

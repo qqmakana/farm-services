@@ -23,7 +23,9 @@ const TABS = [
       p.startsWith("/courier") ||
       p.startsWith("/shops") ||
       p.startsWith("/shop") ||
-      p.startsWith("/group"),
+      p.startsWith("/group") ||
+      p.startsWith("/ride") ||
+      p.startsWith("/delivery"),
   },
   {
     href: "/activity",
