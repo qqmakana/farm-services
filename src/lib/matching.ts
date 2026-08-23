@@ -1,5 +1,5 @@
 import { offerNextDriver } from "./dispatch/offer-chain";
-import { rankDriversForJob } from "./dispatch-score";
+import { rankDriversWithExpandingRadius } from "./dispatch-score";
 import { jobNeedsFromJob } from "./job-needs";
 import { incrementDriverOfferStat } from "./matching-stats";
 import { createAdminClient } from "./supabase/admin";
@@ -90,7 +90,7 @@ export async function matchJobAfterCreate(jobId: string) {
       (!d.country_code || d.country_code === jobCountry),
   );
 
-  const ranked = rankDriversForJob({
+  const { ranked, matchRadiusKm } = rankDriversWithExpandingRadius({
     drivers: approved,
     requiredVehicle: required,
     needs,
@@ -118,8 +118,12 @@ export async function matchJobAfterCreate(jobId: string) {
       // Boost stored match_score so ops / queues can sort Pass jobs first
       match_score: baseScore + (priority > 0 ? 1000 : 0),
       match_breakdown: top?.breakdown
-        ? { ...top.breakdown, village_pass_priority: priority }
-        : { village_pass_priority: priority },
+        ? {
+            ...top.breakdown,
+            village_pass_priority: priority,
+            match_radius_km: matchRadiusKm,
+          }
+        : { village_pass_priority: priority, match_radius_km: matchRadiusKm },
     })
     .eq("id", jobId)
     .in("status", ["searching_driver", "new"]);

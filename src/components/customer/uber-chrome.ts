@@ -1,27 +1,35 @@
-/** Shared Uber SA chrome — same tokens as Home. */
+/** Shared rider chrome — typography and buttons from the design tokens. */
 
 export const UBER_PAGE =
-  "ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-[#f2f2f2] px-4 pb-28 pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-display)] tracking-[-0.02em] text-[#0a0a0a]";
+  "ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-[#f3f3f3] px-4 pb-28 pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] tracking-[-0.02em] text-black";
+
+export const DRIVER_PAGE =
+  "mx-auto min-h-dvh max-w-md touch-manipulation bg-[#0E0E0E] px-4 pb-28 pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] text-white";
 
 export const UBER_GLOSS =
-  "bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12),0_2px_6px_rgba(0,0,0,0.04)] ring-1 ring-black/[0.03]";
+  "bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.03]";
 
 export const UBER_H1 =
-  "text-[32px] font-bold tracking-[-0.03em] text-[#0a0a0a]";
+  "text-[32px] font-bold leading-[1.1] tracking-[-0.5px] text-black";
+
+export const DRIVER_H1 =
+  "text-[32px] font-bold leading-[1.1] tracking-[-0.5px] text-white";
 
 export const UBER_H2 =
-  "text-[22px] font-bold tracking-[-0.03em] text-[#0a0a0a]";
+  "text-[24px] font-bold leading-[1.2] tracking-[-0.3px] text-black";
 
-export const UBER_SUB = "mt-1 text-[15px] font-medium text-[#6b6b6b]";
+export const UBER_SUB = "mt-1 text-[15px] font-normal leading-[1.5] text-[#6B6B6B]";
+
+export const DRIVER_SUB = "mt-1 text-[15px] font-normal leading-[1.5] text-[#A6A6A6]";
 
 export const UBER_INPUT =
-  "w-full rounded-[16px] border-none bg-white p-4 text-[15px] font-semibold text-[#0a0a0a] outline-none shadow-[0_8px_24px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04] placeholder:font-medium placeholder:text-[#6b6b6b]";
+  "w-full rounded-[12px] border-none bg-[#F3F3F3] p-4 text-[17px] font-normal text-black outline-none placeholder:font-normal placeholder:text-[#A6A6A6]";
 
 export const UBER_BTN_BLACK =
-  "uber-press w-full rounded-[10px] bg-[#0a0a0a] py-4 text-[16px] font-bold text-white";
+  "uber-press w-full rounded-full bg-black py-4 text-[17px] font-medium text-white";
 
 export const UBER_CIRCLE =
-  "flex items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.10),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-black/[0.04]";
+  "flex items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]";
 
 export const UBER_BADGE =
-  "rounded-md bg-[#f02d3a] px-1.5 py-[2px] text-[10px] font-bold text-white shadow-[0_2px_6px_rgba(240,45,58,0.35)]";
+  "rounded-full bg-[#CB4040] px-1.5 py-[2px] text-[11px] font-semibold tracking-[0.5px] text-white uppercase";

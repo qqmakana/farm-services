@@ -2,7 +2,16 @@
  * Logic tests — wallet, dispatch eligibility, trip complete, merchant shop.
  * Run via: npx tsx scripts/test-app-logic.ts
  */
+import {
+  MATCH_RADIUS_STEPS_KM,
+  rankDriversWithExpandingRadius,
+} from "../src/lib/dispatch-score";
+import {
+  driverHasArrived,
+  mergeDriverArrivedDetails,
+} from "../src/lib/job-status";
 import { mockRepo } from "../src/lib/mock-store";
+import type { Driver } from "../src/lib/types";
 import {
   applyCommissionToWallet,
   cashPlatformRemittance,
@@ -95,6 +104,89 @@ test("dispatch: post-paid credit limit -R100", () => {
   assert(
     creditLimitBlockMessage("ZA").includes("R100"),
     "block message mentions limit",
+  );
+});
+
+function testDriver(
+  id: string,
+  lat: number,
+  extras: Partial<Driver> = {},
+): Driver {
+  return {
+    id,
+    full_name: id,
+    phone: "27820000000",
+    vehicle_type: "sedan",
+    is_active: true,
+    approval_status: "approved",
+    id_verified: true,
+    is_online: true,
+    last_lat: lat,
+    last_lng: 0,
+    last_location_at: new Date().toISOString(),
+    rating_avg: 5,
+    rating_count: 10,
+    notes: null,
+    created_at: new Date().toISOString(),
+    ...extras,
+  };
+}
+
+test("dispatch: expanding radius prefers 5km then 10km then 20km", () => {
+  assert(MATCH_RADIUS_STEPS_KM[0] === 5, "first ring is 5km");
+  const pickup = { lat: 0, lng: 0 };
+  const needs = { night: false, heavy: false, village: false, scheduled: false };
+  const near = testDriver("near", 0.036); // ~4km
+  const mid = testDriver("mid", 0.072); // ~8km
+  const far = testDriver("far", 0.135); // ~15km
+  const rural = testDriver("rural", 0.27); // ~30km
+
+  const close = rankDriversWithExpandingRadius({
+    drivers: [rural, far, mid, near],
+    requiredVehicle: "sedan",
+    needs,
+    pickup,
+  });
+  assert(close.matchRadiusKm === 5, `radius ${close.matchRadiusKm}`);
+  assert(close.ranked.length === 1 && close.ranked[0].driver.id === "near", "5km only");
+
+  const ring10 = rankDriversWithExpandingRadius({
+    drivers: [rural, far, mid],
+    requiredVehicle: "sedan",
+    needs,
+    pickup,
+  });
+  assert(ring10.matchRadiusKm === 10, `radius ${ring10.matchRadiusKm}`);
+  assert(ring10.ranked[0].driver.id === "mid", "10km winner");
+
+  const ring20 = rankDriversWithExpandingRadius({
+    drivers: [rural, far],
+    requiredVehicle: "sedan",
+    needs,
+    pickup,
+  });
+  assert(ring20.matchRadiusKm === 20, `radius ${ring20.matchRadiusKm}`);
+  assert(ring20.ranked[0].driver.id === "far", "20km winner");
+
+  const village = rankDriversWithExpandingRadius({
+    drivers: [rural],
+    requiredVehicle: "sedan",
+    needs,
+    pickup,
+  });
+  assert(village.matchRadiusKm === null, "rural fallback has no hard ring");
+  assert(village.ranked[0].driver.id === "rural", "rural driver still offered");
+});
+
+test("trip: I've arrived is stored on job details, not a new status", () => {
+  const details = mergeDriverArrivedDetails(
+    { seats: 1, route_name: "test", direction: "to_town" },
+    "2026-08-23T08:00:00.000Z",
+  );
+  assert(driverHasArrived({ details }), "arrived flag set");
+  assert(
+    !driverHasArrived({ details: { seats: 1, route_name: "x", direction: "to_town" } }),
+    "plain ride details are not arrived",
   );
 });
 

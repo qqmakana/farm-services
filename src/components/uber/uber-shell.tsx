@@ -102,7 +102,7 @@ export function UberShell({
         });
     };
     const delay = window.setTimeout(load, 400);
-    const poll = window.setInterval(load, 30_000);
+    const poll = window.setInterval(load, 8_000);
     return () => {
       cancelled = true;
       window.clearTimeout(delay);
@@ -250,7 +250,9 @@ export function UberShell({
         data-testid="bottom-sheet"
         data-sheet-snap={snap}
         className={`ru-sheet absolute inset-x-0 bottom-0 z-20 flex flex-col overflow-hidden ${
-          dragPx !== 0 ? "" : "transition-[height] duration-300 ease-out"
+          dragPx !== 0
+            ? ""
+            : "transition-[height] duration-300 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]"
         }`}
         style={{
           height: sheetHeight,
@@ -286,7 +288,7 @@ export function UberShell({
             }
           }}
         >
-          <div className="ru-sheet-handle !my-3 !h-1 !w-12 !bg-[#d0d0d0]" />
+          <div className="ru-sheet-handle !my-3" />
         </div>
         <div
           className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 ${

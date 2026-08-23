@@ -6,6 +6,7 @@ import {
   completeTrip,
   listDriverActiveJob,
   listDriverJobs,
+  markDriverArrived,
   rateCustomerByDriver,
   rateShopByDriver,
   startTrip,
@@ -21,6 +22,7 @@ import {
   STATUS_LABELS,
 } from "@/lib/format";
 import { pickupPhotoFromDetails } from "@/lib/pickup-photo";
+import { driverHasArrived, isConfirmedStatus } from "@/lib/job-status";
 import { isCashPaymentMethod } from "@/lib/wallet";
 import type { JobStatus, JobWithDriver } from "@/lib/types";
 
@@ -82,7 +84,7 @@ export function DriverJobsView() {
   }
 
   return (
-    <PageShell title="Jobs" subtitle="Active trips and history">
+    <PageShell tone="driver" title="Jobs" subtitle="Active trips and history">
       <div
         className="ru-segment"
         style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}
@@ -110,7 +112,10 @@ export function DriverJobsView() {
         <section className="ru-card mt-5 p-4">
           <p className="ru-section-label">Current job</p>
           <h2 className="mt-1 font-[family-name:var(--font-display)] text-lg font-bold text-black">
-            {active.reference_code} · {STATUS_LABELS[active.status]}
+            {active.reference_code} ·{" "}
+            {isConfirmedStatus(active.status) && driverHasArrived(active)
+              ? "Arrived at pickup"
+              : STATUS_LABELS[active.status]}
           </h2>
           <p className="mt-2 text-sm text-[var(--ru-muted)]">
             {SERVICE_LABELS[active.service_type]} ·{" "}
@@ -142,8 +147,18 @@ export function DriverJobsView() {
             </div>
           ) : null}
           <div className="mt-4 flex flex-col gap-2">
-            {(active.status === "assigned" ||
-              active.status === "confirmed") && (
+            {isConfirmedStatus(active.status) &&
+              !driverHasArrived(active) && (
+              <button
+                type="button"
+                disabled={pending}
+                className="ru-btn ru-btn-primary ru-btn-block"
+                onClick={() => run(() => markDriverArrived(active.id, driverId!))}
+              >
+                I&apos;VE ARRIVED
+              </button>
+            )}
+            {isConfirmedStatus(active.status) && driverHasArrived(active) && (
               <button
                 type="button"
                 disabled={pending}

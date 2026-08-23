@@ -35,7 +35,7 @@ export function DriverTabBar() {
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 z-[60] w-full max-w-md -translate-x-1/2 border-t border-[var(--ru-line)] bg-white/95 font-[family-name:var(--font-sans)] backdrop-blur"
+      className="fixed bottom-0 left-1/2 z-[60] w-full max-w-md -translate-x-1/2 border-t border-[#2a2a2a] bg-[#0E0E0E] font-[family-name:var(--font-sans)]"
       style={{ height: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}
       aria-label="Driver"
       data-testid="driver-tab-bar"
@@ -49,10 +49,10 @@ export function DriverTabBar() {
               <Link
                 href={tab.href}
                 data-testid={`driver-tab-${tab.label.toLowerCase()}`}
-                className={`flex flex-1 flex-col items-center justify-center gap-0.5 transition active:scale-95 ${
+                className={`flex min-h-12 flex-1 flex-col items-center justify-center gap-0.5 transition active:scale-95 ${
                   active
-                    ? "font-bold text-black"
-                    : "font-medium text-[var(--ru-muted)]"
+                    ? "font-semibold text-white"
+                    : "font-medium text-[#A6A6A6]"
                 }`}
               >
                 <Icon

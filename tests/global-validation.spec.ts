@@ -4,7 +4,7 @@ import { dismissCountryModalIfPresent } from "./helpers/auth-helper";
 /**
  * Global validation — matches the *actual* Village Ride build.
  * Country lock uses localStorage (timezone detect + Account picker),
- * not browser geolocation. Book CTA is brand green, not black.
+ * not browser geolocation. Book CTA is a black pill.
  */
 
 async function lockCountry(context: BrowserContext, code: string) {
@@ -100,14 +100,13 @@ test.describe("Uber-style UI", () => {
     await expect(page.getByTestId("book-button").first()).toBeVisible();
   });
 
-  test("book CTA is brand green", async ({ page }) => {
+  test("book CTA is black pill", async ({ page }) => {
     await gotoReady(page, "/ride");
     const book = page.getByTestId("book-button").first();
     await expect(book).toBeVisible({ timeout: 15_000 });
 
     const bg = await book.evaluate((el) => getComputedStyle(el).backgroundColor);
-    // #0ECB81 → rgb(14, 203, 129)
-    expect(bg).toMatch(/rgb\(14,\s*203,\s*129\)/);
+    expect(bg).toMatch(/rgb\(0,\s*0,\s*0\)/);
   });
 
   test("ride sheet vehicle list selectable", async ({ page }) => {

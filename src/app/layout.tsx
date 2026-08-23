@@ -1,5 +1,4 @@
-import { Source_Sans_3 } from "next/font/google";
-import localFont from "next/font/local";
+import { Inter } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 import { ConditionalFooter } from "@/components/conditional-footer";
 import { CountryProvider } from "@/components/country/country-provider";
@@ -20,17 +19,11 @@ import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 import "./globals.css";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-const sans = Source_Sans_3({
+const sans = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
-  weight: ["400", "500", "600", "700"],
-});
-
-/** Self-hosted — Google CDN woff2 hashes for Space Grotesk break next/font builds. */
-const display = localFont({
-  src: "./fonts/space-grotesk.woff2",
-  variable: "--font-display",
-  weight: "500 700",
+  weight: ["400", "500", "600", "700", "800"],
+  fallback: ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
   display: "swap",
 });
 
@@ -96,8 +89,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en-ZA" className={`${sans.variable} ${display.variable} h-full`}>
-      <body className="min-h-full bg-gray-100 font-[family-name:var(--font-sans)] text-[var(--ru-ink)] antialiased">
+    <html lang="en-ZA" className={`${sans.variable} h-full`}>
+      <body className="min-h-full bg-[#F3F3F3] font-[family-name:var(--font-sans)] text-[var(--ru-ink)] antialiased">
         <CountryProvider>
           <ThemeProvider>
             <ToastProvider>

@@ -432,7 +432,7 @@ export function CheckoutBlock({
               <button
                 type="button"
                 onClick={onSchedule}
-                className="uber-press flex h-13 w-13 shrink-0 items-center justify-center rounded-[10px] border border-[#d4d4d4] bg-white text-[#0a0a0a]"
+                className="uber-press flex h-13 w-13 shrink-0 items-center justify-center rounded-full border border-[#D2D2D2] bg-white text-black"
                 style={{ height: "3.25rem", width: "3.25rem" }}
                 aria-label="Schedule for later"
               >

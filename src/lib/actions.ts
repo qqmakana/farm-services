@@ -13,13 +13,19 @@ import {
 } from "./trust";
 import {
   buildCustomerConfirmPush,
+  buildCustomerDriverArrivedPush,
   buildCustomerTripCompletedPush,
   buildCustomerTripStartedPush,
   expireStaleOffers,
   offerNextDriver,
 } from "./dispatch/offer-chain";
 import { sendPushToToken } from "./firebase/admin";
-import { isConfirmedStatus, isSearchingStatus } from "./job-status";
+import {
+  driverHasArrived,
+  isConfirmedStatus,
+  isSearchingStatus,
+  mergeDriverArrivedDetails,
+} from "./job-status";
 import {
   applyCommissionToWallet,
   cashPlatformRemittance,
@@ -2907,6 +2913,69 @@ export async function declineOffer(jobId: string, driverId: string) {
 
   revalidateAll();
   return data as JobApplication;
+}
+
+export async function markDriverArrived(jobId: string, driverId: string) {
+  if (!useAdmin()) {
+    const already = driverHasArrived(mockRepo.getJob(jobId));
+    const job = mockRepo.markDriverArrived(jobId, driverId);
+    const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
+    if (!already && driver && job.customer_fcm_token) {
+      await sendPushToToken(
+        job.customer_fcm_token,
+        buildCustomerDriverArrivedPush(job, driver),
+      );
+    }
+    revalidateAll();
+    return job;
+  }
+
+  const admin = createAdminClient();
+  const { data: jobRow, error: fetchErr } = await admin
+    .from("rr_jobs")
+    .select("*")
+    .eq("id", jobId)
+    .single();
+
+  if (fetchErr || !jobRow) throw new Error(fetchErr?.message ?? "Job not found");
+  if (jobRow.driver_id !== driverId) throw new Error("Not your job");
+  if (!isConfirmedStatus(jobRow.status)) {
+    throw new Error("Confirm the job before marking arrival");
+  }
+
+  if (driverHasArrived(jobRow as Job)) {
+    const { data: existing } = await admin
+      .from("rr_jobs")
+      .select(JOB_WITH_RELATIONS)
+      .eq("id", jobId)
+      .single();
+    return (existing ?? jobRow) as JobWithDriver;
+  }
+
+  const now = new Date().toISOString();
+  const { data, error } = await admin
+    .from("rr_jobs")
+    .update({
+      details: mergeDriverArrivedDetails((jobRow as Job).details, now),
+    })
+    .eq("id", jobId)
+    .eq("driver_id", driverId)
+    .select(JOB_WITH_RELATIONS)
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  const typed = data as JobWithDriver;
+  const driverRow = typed.drivers;
+  if (driverRow && (jobRow as Job).customer_fcm_token) {
+    await sendPushToToken(
+      (jobRow as Job).customer_fcm_token,
+      buildCustomerDriverArrivedPush(typed, driverRow),
+    );
+  }
+
+  revalidateAll();
+  return typed;
 }
 
 export async function startTrip(jobId: string, driverId: string) {

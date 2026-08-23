@@ -248,6 +248,10 @@ test.describe.serial("Uber-style Village Ride E2E", () => {
       driverPage.getByText(/Confirmed — driver on the way|Trip in progress|on the way/i).first(),
     ).toBeVisible();
 
+    await driverPage.getByRole("button", { name: /I'?ve arrived/i }).click();
+    await expect(
+      driverPage.getByText(/Arrived at pickup/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
     await driverPage.getByRole("button", { name: "Start Trip" }).click();
     await expect(driverPage.getByText(/Trip in progress|In progress/i).first()).toBeVisible({
       timeout: 15_000,

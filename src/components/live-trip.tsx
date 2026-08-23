@@ -38,6 +38,7 @@ import {
 } from "@/lib/format";
 import { distanceKm, etaMinutes } from "@/lib/geo";
 import {
+  driverHasArrived,
   isActiveTripStatus,
   isConfirmedStatus,
   isSearchingStatus,
@@ -137,13 +138,15 @@ export function LiveTrip({
   const noDrivers =
     Boolean(job.dispatch_exhausted) && isSearchingStatus(job.status);
   const confirmed = isConfirmedStatus(job.status);
+  const arrived = confirmed && driverHasArrived(job);
 
   const eta =
     job.driver_lat != null &&
     job.driver_lng != null &&
     job.pickup_lat != null &&
     job.pickup_lng != null &&
-    confirmed
+    confirmed &&
+    !arrived
       ? etaMinutes(
           distanceKm(
             { lat: job.driver_lat, lng: job.driver_lng },
@@ -295,9 +298,11 @@ export function LiveTrip({
             }
           />
           <p className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent px-3 py-2 text-xs text-white">
-            {job.driver_lat != null
-              ? "Live driver location (updates every few seconds)"
-              : "Pickup to drop-off — driver appears when assigned"}
+            {arrived
+              ? "Your driver is at the pickup point"
+              : job.driver_lat != null
+                ? "Live driver location (updates every few seconds)"
+                : "Pickup to drop-off — driver appears when assigned"}
           </p>
         </div>
       ) : null}
@@ -316,11 +321,17 @@ export function LiveTrip({
               ? "Unavailable"
               : searching
                 ? "Searching"
-                : confirmed
-                  ? "On the way"
-                  : "Live trip"}
+                : arrived
+                  ? "Driver is here"
+                  : confirmed
+                    ? "On the way"
+                    : "Live trip"}
           </p>
-          {eta != null && confirmed ? (
+          {arrived ? (
+            <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-black">
+              Your driver has arrived
+            </h1>
+          ) : eta != null && confirmed ? (
             <h1 className="mt-1 font-[family-name:var(--font-display)] text-4xl font-bold tracking-tight text-black">
               Pick-up in {eta} min
             </h1>
@@ -331,7 +342,12 @@ export function LiveTrip({
                 : STATUS_LABELS[job.status]}
             </h1>
           )}
-          {leaveBy && confirmed && job.drivers ? (
+          {arrived && job.drivers ? (
+            <p className="mt-1 text-sm font-medium text-black">
+              Look for {job.drivers.full_name.split(" ")[0]} at{" "}
+              {job.pickup_landmark}
+            </p>
+          ) : leaveBy && confirmed && job.drivers ? (
             <p className="mt-1 text-sm font-medium text-black">
               Leave by {leaveBy} to meet {job.drivers.full_name.split(" ")[0]}
             </p>

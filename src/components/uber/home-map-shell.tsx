@@ -15,7 +15,7 @@ export function HomeMapShell({ trust }: { trust?: ReactNode }) {
   } | null>(null);
 
   return (
-    <div data-testid="uber-home">
+    <div data-testid="uber-home" className="min-h-dvh">
       <UberShell
         showTabBar
         showServicePills

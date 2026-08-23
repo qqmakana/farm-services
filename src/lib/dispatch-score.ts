@@ -172,12 +172,17 @@ export function scoreDriverForJob(params: {
   };
 }
 
+/** Nearest ring first; widen only if nobody is in range. */
+export const MATCH_RADIUS_STEPS_KM = [5, 10, 20] as const;
+
 /** Rank candidates highest score first; ties → closer → higher rating. */
 export function rankDriversForJob(params: {
   drivers: Driver[];
   requiredVehicle: VehicleType;
   needs: JobNeeds;
   pickup: { lat: number; lng: number } | null;
+  /** When set, drop drivers with no GPS or farther than this. */
+  maxDistanceKm?: number;
 }): ScoredDriver[] {
   return params.drivers
     .map((driver) =>
@@ -188,7 +193,12 @@ export function rankDriversForJob(params: {
         pickup: params.pickup,
       }),
     )
-    .filter((s) => Number.isFinite(s.score))
+    .filter((s) => {
+      if (!Number.isFinite(s.score)) return false;
+      if (params.maxDistanceKm == null) return true;
+      const km = s.breakdown.distance_km;
+      return km != null && km <= params.maxDistanceKm;
+    })
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
       const da = a.breakdown.distance_km ?? 9999;
@@ -198,4 +208,26 @@ export function rankDriversForJob(params: {
         (Number(b.driver.rating_avg) || 0) - (Number(a.driver.rating_avg) || 0)
       );
     });
+}
+
+/**
+ * Offer the closest ring first (5km → 10km → 20km). If a village has
+ * nobody inside 20km, keep the current score ranking so rural jobs still
+ * reach a driver.
+ */
+export function rankDriversWithExpandingRadius(params: {
+  drivers: Driver[];
+  requiredVehicle: VehicleType;
+  needs: JobNeeds;
+  pickup: { lat: number; lng: number } | null;
+}): { ranked: ScoredDriver[]; matchRadiusKm: number | null } {
+  if (params.pickup) {
+    for (const maxDistanceKm of MATCH_RADIUS_STEPS_KM) {
+      const ranked = rankDriversForJob({ ...params, maxDistanceKm });
+      if (ranked.length > 0) {
+        return { ranked, matchRadiusKm: maxDistanceKm };
+      }
+    }
+  }
+  return { ranked: rankDriversForJob(params), matchRadiusKm: null };
 }

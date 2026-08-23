@@ -21,7 +21,7 @@ export function PlanYourRideHeader({
 
   return (
     <div className="space-y-3">
-      <h1 className="text-center text-[22px] font-bold tracking-[-0.04em] text-[#0a0a0a]">
+      <h1 className="text-center text-[24px] font-bold leading-[1.2] tracking-[-0.3px] text-black">
         Plan your ride
       </h1>
       <div className="flex gap-2">

@@ -30,6 +30,8 @@ export type RideDetails = {
   /** Storage path or signed URL in rider-photos bucket. */
   rider_photo_url?: string;
   local_mode?: string;
+  /** Driver tapped "I've arrived" at pickup (ISO timestamp). */
+  driver_arrived_at?: string;
 };
 
 /** Delivery / Farm load band — self-selected, no scale. */

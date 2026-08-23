@@ -31,7 +31,12 @@ import { distanceKm, jitterLatLng } from "./geo";
 import { calculateFare } from "./fares";
 import { isValidMobileForCountry } from "./phone";
 import { DEFAULT_COUNTRY, getCountry } from "./countries";
-import { rankDriversForJob } from "./dispatch-score";
+import { rankDriversWithExpandingRadius } from "./dispatch-score";
+import {
+  driverHasArrived,
+  isConfirmedStatus,
+  mergeDriverArrivedDetails,
+} from "./job-status";
 import { jobNeedsFromJob } from "./job-needs";
 import { SHOP_DELIVERY_FEE } from "./shop-constants";
 import { suggestVehicle, vehicleFitsJob } from "./vehicles";
@@ -783,6 +788,11 @@ export const mockRepo = {
       );
   },
 
+  getJob(jobId: string): JobWithDriver | null {
+    const job = store().jobs.find((j) => j.id === jobId);
+    return job ? withDriver(job) : null;
+  },
+
   getJobByReference(code: string): JobWithDriver | null {
     const job = store().jobs.find(
       (j) => j.reference_code.toUpperCase() === code.toUpperCase(),
@@ -821,7 +831,7 @@ export const mockRepo = {
         d,
         km: distanceKm(origin, { lat: d.last_lat!, lng: d.last_lng! }),
       }))
-      .filter((row) => row.km <= 18)
+      .filter((row) => row.km <= 10)
       .sort((a, b) => a.km - b.km)
       .slice(0, 8)
       .map((row, i) => {
@@ -1137,7 +1147,7 @@ export const mockRepo = {
       job.pickup_lat != null && job.pickup_lng != null
         ? { lat: job.pickup_lat, lng: job.pickup_lng }
         : null;
-    const ranked = rankDriversForJob({
+    const { ranked, matchRadiusKm } = rankDriversWithExpandingRadius({
       drivers: online,
       requiredVehicle: job.required_vehicle,
       needs,
@@ -1147,10 +1157,12 @@ export const mockRepo = {
     job.dispatch_rank = ranked.map((r) => r.driver.id);
     job.dispatch_index = 0;
     job.match_score = ranked[0]?.score ?? null;
-    job.match_breakdown = (ranked[0]?.breakdown as unknown as Record<
-      string,
-      unknown
-    >) ?? null;
+    job.match_breakdown = ranked[0]
+      ? {
+          ...(ranked[0].breakdown as unknown as Record<string, unknown>),
+          match_radius_km: matchRadiusKm,
+        }
+      : { match_radius_km: matchRadiusKm };
 
     return mockRepo.offerNextMock(job);
   },
@@ -1430,6 +1442,20 @@ export const mockRepo = {
       drivers: store().drivers.find((d) => d.id === driverId) ?? null,
       jobs: store().jobs.find((j) => j.id === jobId) ?? null,
     };
+  },
+
+  markDriverArrived(jobId: string, driverId: string): JobWithDriver {
+    const job = store().jobs.find((j) => j.id === jobId);
+    if (!job) throw new Error("Job not found");
+    if (job.driver_id !== driverId) throw new Error("Not your job");
+    if (!isConfirmedStatus(job.status)) {
+      throw new Error("Confirm the job before marking arrival");
+    }
+    if (driverHasArrived(job)) return withDriver(job);
+    const nowIso = new Date().toISOString();
+    job.details = mergeDriverArrivedDetails(job.details, nowIso);
+    job.updated_at = nowIso;
+    return withDriver(job);
   },
 
   startTrip(jobId: string, driverId: string): JobWithDriver {

@@ -48,11 +48,11 @@ export function CustomerTabBar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-[60] mx-auto w-full max-w-md border-t border-[#e8e8e8] bg-white pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-display)]"
+      className="fixed inset-x-0 bottom-0 z-[60] mx-auto w-full max-w-md border-t border-[#EEEEEE] bg-white pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-sans)]"
       aria-label="Main"
       data-testid="customer-tab-bar"
     >
-      <ul className="flex h-[3.65rem] items-stretch justify-around px-2">
+      <ul className="flex h-16 items-stretch justify-around px-2">
         {TABS.map((tab) => {
           const active = tab.match(pathname);
           const Icon = tab.icon;
@@ -61,19 +61,19 @@ export function CustomerTabBar() {
               <Link
                 href={tab.href}
                 data-testid={`customer-tab-${tab.label.toLowerCase()}`}
-                className={`uber-press flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 py-1.5 ${
+                className={`uber-press flex min-h-12 flex-1 flex-col items-center justify-center gap-0.5 py-1.5 ${
                   active
-                    ? "font-semibold text-[#0a0a0a]"
-                    : "font-medium text-[#6b6b6b]"
+                    ? "font-semibold text-black"
+                    : "font-medium text-[#6B6B6B]"
                 }`}
               >
                 <Icon
-                  className="h-[22px] w-[22px]"
-                  strokeWidth={active ? 2.4 : 1.75}
+                  className="h-6 w-6"
+                  strokeWidth={2}
                   fill={active ? "currentColor" : "none"}
                   aria-hidden
                 />
-                <span className="text-[10px] leading-none tracking-[0.01em]">
+                <span className="text-[11px] font-semibold leading-none tracking-[0.5px]">
                   {tab.label}
                 </span>
               </Link>

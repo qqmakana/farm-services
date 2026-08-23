@@ -399,25 +399,24 @@ test.describe("Uber-Style UI/UX Quality Checks", () => {
     expect(parseFloat(radius)).toBeGreaterThanOrEqual(16);
   });
 
-  test("Book CTA is brand green (#0ECB81), not black Uber clone", async ({
-    page,
-  }) => {
+  test("Book CTA is black pill", async ({ page }) => {
     await gotoReady(page, "/ride");
     const book = page.getByTestId("book-button").first();
     await expect(book).toBeVisible({ timeout: 15_000 });
-    const bg = await book.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bg).toMatch(/rgb\(14,\s*203,\s*129\)/);
+    const style = await book.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { bg: s.backgroundColor, radius: s.borderRadius };
+    });
+    expect(style.bg).toMatch(/rgb\(0,\s*0,\s*0\)/);
+    expect(Number.parseFloat(style.radius)).toBeGreaterThanOrEqual(20);
   });
 
-  test("uses Source Sans / Space Grotesk (not Inter)", async ({ page }) => {
+  test("uses Inter", async ({ page }) => {
     await gotoReady(page, "/ride");
     const font = await page.locator("body").evaluate((el) =>
       getComputedStyle(el).fontFamily,
     );
-    expect(font.toLowerCase()).not.toContain("inter");
-    expect(
-      /source|grotesk|sans/i.test(font),
-    ).toBeTruthy();
+    expect(font.toLowerCase()).toContain("inter");
   });
 });
 

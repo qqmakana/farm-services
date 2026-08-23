@@ -202,7 +202,7 @@ export function DriverHomeView() {
 
   return (
     <div
-      className="fixed top-0 left-1/2 z-[45] flex w-full max-w-md -translate-x-1/2 flex-col bg-[#F9FAFB]"
+      className="fixed top-0 left-1/2 z-[45] flex w-full max-w-md -translate-x-1/2 flex-col bg-[#0E0E0E]"
       style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}
     >
       {driverId ? <DriverPushPrompt driverId={driverId} /> : null}
@@ -225,17 +225,17 @@ export function DriverHomeView() {
               ? VERIFICATION_BLOCK_MESSAGE
               : undefined
           }
-          className={`absolute top-4 left-1/2 z-[500] flex min-h-12 min-w-[200px] -translate-x-1/2 items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-bold shadow-lg transition active:scale-95 disabled:opacity-60 ${
+          className={`absolute top-4 left-1/2 z-[500] flex min-h-12 min-w-[200px] -translate-x-1/2 items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[17px] font-medium shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition active:scale-[0.98] disabled:opacity-60 ${
             driver?.is_online
-              ? "bg-[var(--ru-success)] text-white"
+              ? "bg-[#05944F] text-white"
               : verificationBlocked
-                ? "bg-black/50 text-white"
-                : "bg-black text-white"
+                ? "bg-[#3D3D3D] text-white"
+                : "bg-[#A6A6A6] text-white"
           }`}
         >
           <span
-            className={`h-2.5 w-2.5 rounded-full ${
-              driver?.is_online ? "bg-white" : "bg-[var(--ru-muted)]"
+            className={`h-2 w-2 rounded-full ${
+              driver?.is_online ? "vr-online-dot" : "bg-white/70"
             }`}
             aria-hidden
           />
@@ -251,7 +251,7 @@ export function DriverHomeView() {
         ) : null}
       </div>
 
-      <div className="ru-sheet z-[500] shrink-0 border-t border-[var(--ru-line)] px-4 pb-4 pt-3">
+      <div className="ru-sheet z-[500] shrink-0 border-t border-[#2a2a2a] bg-[#1C1C1C] px-4 pb-4 pt-3 text-white">
         <div className="ru-sheet-handle mb-3" />
         {driver ? (
           <div className="mb-3 space-y-2">
@@ -334,8 +334,8 @@ export function DriverHomeView() {
 
         {!driver?.is_online ? (
           <p className="py-4 text-center text-sm text-[var(--ru-muted)]">
-            You&apos;re offline. Tap <strong className="text-black">ONLINE</strong>{" "}
-            to see requests.
+                You&apos;re offline. Tap <strong className="text-white">ONLINE</strong>{" "}
+                to see requests.
           </p>
         ) : !job ? (
           <p className="py-4 text-center text-sm text-[var(--ru-muted)]">
@@ -399,7 +399,7 @@ export function DriverHomeView() {
                   </div>
                 ) : null}
               </div>
-              <p className="text-lg font-bold text-black">
+              <p className="text-[24px] font-bold tracking-[-0.3px] text-white">
                 {formatMoney(Number(job.fee_amount))}
               </p>
             </div>
@@ -421,7 +421,7 @@ export function DriverHomeView() {
                   }
                   run(() => acceptOffer(job.id, driverId!));
                 }}
-                className={`ru-btn ru-btn-brand !rounded-full py-3.5 text-sm font-bold ${
+                className={`ru-btn !rounded-full !bg-[#05944F] !text-white py-3.5 text-[17px] font-medium ${
                   verificationBlocked ? "opacity-50" : ""
                 }`}
               >
@@ -431,7 +431,7 @@ export function DriverHomeView() {
                 type="button"
                 disabled={pending}
                 onClick={() => run(() => declineOffer(job.id, driverId!))}
-                className="ru-btn ru-btn-secondary !rounded-full py-3.5 text-sm font-bold"
+                className="ru-btn ru-btn-ghost !rounded-full border border-white/30 py-3.5 text-[17px] font-medium !text-white"
               >
                 DECLINE
               </button>
@@ -441,14 +441,14 @@ export function DriverHomeView() {
         <p className="mt-3 text-center text-xs text-[var(--ru-muted)]">
           <Link
             href="/driver/group"
-            className="font-semibold text-black underline underline-offset-2"
+            className="font-semibold text-white underline underline-offset-2"
           >
             Group rides
           </Link>
           {" · "}
           <Link
             href="/driver/jobs"
-            className="font-semibold text-black underline underline-offset-2"
+            className="font-semibold text-white underline underline-offset-2"
           >
             Trip history
           </Link>

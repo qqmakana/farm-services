@@ -10,7 +10,7 @@ export default function DriverAppLayout({
 }) {
   return (
     <DriverAppProvider>
-      <div className="ru-force-light min-h-dvh bg-[var(--ru-canvas)] font-[family-name:var(--font-sans)] text-[var(--ru-ink)]">
+      <div className="vr-driver min-h-dvh bg-[#0E0E0E] font-[family-name:var(--font-sans)] text-white">
         <DriverGate>
           <DriverOnboardingGate>{children}</DriverOnboardingGate>
         </DriverGate>

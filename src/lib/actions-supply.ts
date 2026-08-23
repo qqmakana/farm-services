@@ -5,7 +5,7 @@ import { mockRepo } from "./mock-store";
 import { createAdminClient, hasServiceRole } from "./supabase/admin";
 import { isSupabaseConfigured } from "./supabase/server";
 
-const SUPPLY_RADIUS_KM = 18;
+const SUPPLY_RADIUS_KM = 10;
 const SUPPLY_LIMIT = 8;
 
 export type SupplyMapPin = {

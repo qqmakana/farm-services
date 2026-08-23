@@ -1,27 +1,48 @@
 @import "tailwindcss";
 
 :root {
-  /* Pixel tokens — Village Ride / Uber SA chrome */
-  --ru-ink: #0a0a0a;
+  --ru-ink: #000000;
   --ru-muted: #6b6b6b;
-  --ru-line: #eaeaea;
+  --ru-line: #eeeeee;
   --ru-surface: #ffffff;
-  --ru-canvas: #f2f2f2;
+  --ru-canvas: #f3f3f3;
   --ru-elevated: #ffffff;
-  --ru-brand: #0a0a0a;
-  --ru-brand-2: #0a0a0a;
-  --ru-black: #0a0a0a;
-  --ru-accent: #0ecb81;
-  --ru-success: #0ecb81;
-  --ru-warning: #ff6b00;
-  --ru-error: #f02d3a;
-  --vr-red: #f02d3a;
+  --ru-brand: #000000;
+  --ru-brand-2: #000000;
+  --ru-black: #000000;
+  --ru-dark: #0e0e0e;
+  --ru-gray-50: #f3f3f3;
+  --ru-gray-100: #eeeeee;
+  --ru-gray-200: #d2d2d2;
+  --ru-gray-300: #a6a6a6;
+  --ru-gray-400: #6b6b6b;
+  --ru-gray-500: #3d3d3d;
+  --ru-accent: #05944f;
+  --ru-success: #05944f;
+  --ru-warning: #ffb300;
+  --ru-error: #cb4040;
+  --ru-info: #276ef1;
+  --vr-red: #cb4040;
   --vr-card: #ffffff;
-  --ru-shadow: 0 4px 24px rgb(0 0 0 / 8%);
-  --ru-shadow-sheet: 0 -4px 24px rgb(0 0 0 / 10%);
+  --ru-shadow: 0 4px 12px rgb(0 0 0 / 8%);
+  --ru-shadow-sm: 0 1px 2px rgb(0 0 0 / 5%);
+  --ru-shadow-md: 0 4px 12px rgb(0 0 0 / 8%);
+  --ru-shadow-lg: 0 8px 24px rgb(0 0 0 / 12%);
+  --ru-shadow-float: 0 12px 32px rgb(0 0 0 / 15%);
+  --ru-shadow-sheet: 0 -8px 24px rgb(0 0 0 / 12%);
+  --ru-radius-sm: 8px;
   --ru-radius: 16px;
+  --ru-radius-md: 12px;
   --ru-radius-lg: 24px;
   --ru-radius-pill: 9999px;
+  --ru-space-1: 4px;
+  --ru-space-2: 8px;
+  --ru-space-3: 12px;
+  --ru-space-4: 16px;
+  --ru-space-5: 20px;
+  --ru-space-6: 24px;
+  --ru-space-8: 32px;
+  --ru-space-10: 40px;
   --ru-touch: 48px;
   --background: var(--ru-canvas);
   --foreground: var(--ru-ink);
@@ -37,7 +58,7 @@ html[data-theme="dark"] {
   --ru-black: #ffffff;
   --ru-brand: #ffffff;
   --ru-brand-2: #e5e5e5;
-  --ru-accent: #0ecb81;
+  --ru-accent: #05944f;
   --background: var(--ru-canvas);
   --foreground: var(--ru-ink);
   --ru-shadow: 0 2px 12px rgb(0 0 0 / 40%);
@@ -46,6 +67,7 @@ html[data-theme="dark"] {
 }
 
 html {
+  --font-display: var(--font-sans);
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
@@ -55,12 +77,40 @@ html {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-display: var(--font-display);
+  --font-display: var(--font-sans);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family:
+    var(--font-sans),
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ru-info);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    transition: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 ::selection {
@@ -74,19 +124,19 @@ body {
   margin-right: auto;
   min-height: 100dvh;
   max-width: 28rem;
-  background: #f2f2f2;
+  background: var(--ru-canvas);
   padding: 1.5rem 1rem calc(6rem + env(safe-area-inset-bottom, 0px));
-  color: #0a0a0a;
-  font-family: var(--font-display), system-ui, sans-serif;
+  color: var(--ru-ink);
+  font-family: var(--font-sans), Inter, system-ui, sans-serif;
   letter-spacing: -0.02em;
 }
 
 .ru-page-title {
-  font-family: var(--font-display), system-ui, sans-serif;
-  font-size: 1.75rem;
+  font-family: var(--font-sans), Inter, system-ui, sans-serif;
+  font-size: 32px;
   font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
   color: var(--ru-ink);
 }
 
@@ -106,10 +156,10 @@ body {
 }
 
 .ru-card {
-  background: #fff;
-  border: 1px solid #f0f0f0;
-  border-radius: 1rem;
-  box-shadow: none;
+  background: var(--ru-surface);
+  border: none;
+  border-radius: var(--ru-radius);
+  box-shadow: var(--ru-shadow-md);
 }
 
 .ru-list {
@@ -161,24 +211,26 @@ body {
   width: 100%;
   min-height: var(--ru-touch);
   border: none;
-  border-radius: 12px;
-  background: #f4f4f5;
-  padding: 1rem;
-  font-size: 1rem;
-  color: #0a0a0a;
+  border-radius: var(--ru-radius-md);
+  background: var(--ru-gray-50);
+  padding: 16px;
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--ru-ink);
   transition:
-    border-color 0.15s ease,
+    box-shadow 0.2s ease,
     background 0.15s ease;
 }
 
 .ru-soft-field:focus {
   outline: none;
-  background: #f4f4f5;
-  box-shadow: 0 0 0 2px rgb(10 10 10 / 10%);
+  background: var(--ru-gray-50);
+  box-shadow: var(--ru-shadow-md);
 }
 
 .ru-soft-field::placeholder {
-  color: #9a9a9a;
+  color: var(--ru-gray-300);
+  font-size: 17px;
 }
 
 .ru-sheet {
@@ -188,11 +240,11 @@ body {
 }
 
 .ru-sheet-handle {
-  margin: 0.5rem auto 0;
-  height: 0.25rem;
-  width: 2.5rem;
-  border-radius: var(--ru-radius-pill);
-  background: #d4d4d4;
+  margin: 0 auto 16px;
+  height: 4px;
+  width: 40px;
+  border-radius: 2px;
+  background: var(--ru-gray-200);
 }
 
 .ru-segment {
@@ -243,16 +295,20 @@ body {
   gap: 0.5rem;
   min-height: 48px;
   border-radius: var(--ru-radius-pill);
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  padding: 16px 24px;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0;
   touch-action: manipulation;
   transition:
-    background 0.15s ease-out,
-    color 0.15s ease-out,
-    transform 0.15s ease-out,
-    opacity 0.15s ease-out;
+    background 0.2s ease-out,
+    color 0.2s ease-out,
+    transform 100ms ease-out,
+    opacity 0.2s ease-out;
+}
+
+.ru-btn:hover:not(:disabled) {
+  opacity: 0.85;
 }
 
 .ru-btn:active {
@@ -260,7 +316,9 @@ body {
 }
 
 .ru-btn:disabled {
-  opacity: 0.45;
+  background: var(--ru-gray-100);
+  color: var(--ru-gray-300);
+  opacity: 1;
   pointer-events: none;
 }
 
@@ -280,22 +338,21 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  min-height: 3.25rem;
-  border-radius: 10px;
+  min-height: 48px;
+  border-radius: var(--ru-radius-pill);
   background: #000;
-  padding: 1rem 1.25rem;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  padding: 16px 24px;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0;
   color: #fff;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 4px 16px rgb(0 0 0 / 18%);
+  box-shadow: var(--ru-shadow-md);
   transition:
-    background 0.15s ease-out,
-    transform 0.15s ease-out,
-    opacity 0.15s ease-out;
+    opacity 0.2s ease-out,
+    transform 100ms ease-out;
 }
 
 .ru-btn-book:hover {
@@ -331,7 +388,7 @@ html.vr-simple-mode {
     border-color 0.15s ease-out;
 }
 .uber-press:active:not(:disabled) {
-  transform: scale(0.96);
+  transform: scale(0.98);
 }
 .uber-press:disabled {
   opacity: 0.45;
@@ -343,13 +400,13 @@ html.vr-simple-mode {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  min-height: 3.25rem;
-  border-radius: 10px;
-  background: #0a0a0a;
-  padding: 1rem 1.25rem;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  min-height: 48px;
+  border-radius: var(--ru-radius-pill);
+  background: #000000;
+  padding: 16px 24px;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0;
   color: #fff;
 }
 .uber-btn-black:hover:not(:disabled) {
@@ -498,8 +555,23 @@ html.vr-simple-mode {
 .ru-btn-ghost {
   background: transparent;
   color: #000;
-  min-height: 40px;
-  padding: 0.5rem 0.75rem;
+  min-height: 48px;
+  padding: 12px 16px;
+  border-radius: var(--ru-radius-md);
+}
+
+.ru-btn-danger {
+  background: var(--ru-error);
+  color: #fff;
+}
+
+.ru-btn-small {
+  min-height: 36px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--ru-gray-50);
+  color: #000;
 }
 
 .ru-btn-ghost:active {
@@ -704,12 +776,12 @@ a.ru-btn {
 .ru-skeleton {
   background: linear-gradient(
     90deg,
-    #ececec 0%,
-    #f5f5f5 50%,
-    #ececec 100%
+    #f3f3f3 25%,
+    #eeeeee 50%,
+    #f3f3f3 75%
   );
   background-size: 200% 100%;
-  animation: ru-shimmer 1.2s ease-in-out infinite;
+  animation: ru-shimmer 1.5s linear infinite;
   border-radius: 8px;
 }
 
@@ -778,12 +850,21 @@ html[data-theme="dark"] .ru-skeleton {
 }
 
 .vr-map-pin-pickup {
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   border-radius: 9999px;
-  background: #111;
-  border: 3px solid #fff;
-  box-shadow: 0 2px 10px rgb(0 0 0 / 40%);
+  background: #000;
+  border: 7px solid #000;
+  box-shadow: var(--ru-shadow-float);
+  box-sizing: border-box;
+}
+
+.vr-map-pin-pickup::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 9999px;
+  background: #fff;
 }
 
 .vr-map-pin-pickup::after {
@@ -791,16 +872,26 @@ html[data-theme="dark"] .ru-skeleton {
   position: absolute;
   inset: 0;
   border-radius: 9999px;
-  border: 2px solid rgb(14 203 129 / 70%);
+  border: 2px solid rgb(0 0 0 / 28%);
   animation: vr-map-pulse 2.1s ease-out infinite;
 }
 
 .vr-map-pin-dropoff {
-  width: 14px;
-  height: 14px;
-  background: #111;
-  border: 2.5px solid #fff;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 35%);
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: #000;
+  border: 7px solid #000;
+  box-shadow: var(--ru-shadow-float);
+  box-sizing: border-box;
+}
+
+.vr-map-pin-dropoff::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 2px;
+  background: #fff;
 }
 
 .vr-map-pin-you {
@@ -841,6 +932,79 @@ html[data-theme="dark"] .ru-skeleton {
     transform: scale(2.8);
     opacity: 0;
   }
+}
+
+@keyframes vr-online-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(5 148 79 / 55%);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgb(5 148 79 / 0%);
+  }
+}
+
+.vr-online-dot {
+  background: var(--ru-success);
+  animation: vr-online-pulse 1.8s ease-out infinite;
+}
+
+.vr-toast-enter {
+  animation: uber-cart-up 300ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* Driver app — dark chrome, scoped so riders stay light */
+.vr-driver {
+  color-scheme: dark;
+  background: #0e0e0e;
+  color: #ffffff;
+  --ru-ink: #ffffff;
+  --ru-muted: #a6a6a6;
+  --ru-line: #2a2a2a;
+  --ru-surface: #1c1c1c;
+  --ru-canvas: #0e0e0e;
+  --ru-elevated: #1c1c1c;
+  --ru-black: #ffffff;
+  --ru-brand: #ffffff;
+  --ru-brand-2: #e5e5e5;
+  --background: #0e0e0e;
+  --foreground: #ffffff;
+  --ru-shadow: 0 4px 12px rgb(0 0 0 / 40%);
+  --ru-shadow-md: 0 4px 12px rgb(0 0 0 / 40%);
+  --ru-shadow-sheet: 0 -8px 24px rgb(0 0 0 / 45%);
+}
+
+.vr-driver .ru-card,
+.vr-driver .ru-list {
+  background: #1c1c1c;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.vr-driver .ru-soft-field {
+  background: #2a2a2a;
+  color: #ffffff;
+}
+
+.vr-driver .ru-btn-primary,
+.vr-driver .ru-btn-brand,
+.vr-driver .uber-btn-black,
+.vr-driver .ru-btn-book {
+  background: #ffffff;
+  color: #000000;
+}
+
+.vr-driver .ru-btn-secondary {
+  background: #2a2a2a;
+  color: #ffffff;
+}
+
+.vr-driver .ru-btn-ghost {
+  color: #ffffff;
+}
+
+.vr-driver .text-black {
+  color: #ffffff;
 }
 
 /* Printable pamphlet — /marketing/pamphlet */

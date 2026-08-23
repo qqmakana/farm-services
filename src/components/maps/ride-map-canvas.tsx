@@ -85,7 +85,7 @@ function ensureRouteLayer(map: mapboxgl.Map) {
     paint: {
       "line-width": 12,
       "line-opacity": 0.28,
-      "line-color": "#0ecb81",
+      "line-color": "#276EF1",
       "line-blur": 6,
     },
   });
@@ -103,7 +103,7 @@ function ensureRouteLayer(map: mapboxgl.Map) {
         0,
         "#111111",
         1,
-        "#0ecb81",
+        "#276EF1",
       ],
     },
   });

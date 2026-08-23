@@ -122,7 +122,7 @@ export function DriverAccountView() {
   }
 
   return (
-    <PageShell title="Account">
+    <PageShell tone="driver" title="Account">
       <div className="ru-card space-y-4 p-5">
         <DriverVehiclePhotos driver={driver} variant="profile" />
         <div className="flex items-center justify-between gap-2 border-t border-[var(--ru-line)] pt-3">

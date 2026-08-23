@@ -53,6 +53,9 @@ export async function acceptOffer(page: Page) {
 
 export async function startAndCompleteTrip(page: Page) {
   await page.goto("/driver/jobs");
+  const arrived = page.getByRole("button", { name: /I'?ve arrived/i });
+  await expect(arrived).toBeVisible({ timeout: 15_000 });
+  await arrived.click();
   await expect(page.getByRole("button", { name: "Start Trip" })).toBeVisible({
     timeout: 15_000,
   });

@@ -200,7 +200,7 @@ export function ServiceHomeSheet({
 
       <div>
         <div className="flex items-center justify-between">
-          <h2 className="text-[18px] font-bold tracking-[-0.03em] text-[#0a0a0a]">
+          <h2 className="text-[24px] font-bold leading-[1.2] tracking-[-0.3px] text-black">
             For you
           </h2>
         </div>

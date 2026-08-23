@@ -77,13 +77,7 @@ export function PaymentSelector({
               onClick={() => onChange(other.id)}
               className="uber-press flex w-full items-center gap-3 py-1 text-left"
             >
-              <span
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                  opt.id === "cash"
-                    ? "bg-[#06c167] text-white"
-                    : "bg-[#0a0a0a] text-white"
-                }`}
-              >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black text-white">
                 <Icon className="h-4 w-4" aria-hidden />
               </span>
               <span className="min-w-0 flex-1 text-[16px] font-semibold text-[#0a0a0a]">

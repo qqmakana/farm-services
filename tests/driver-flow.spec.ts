@@ -85,6 +85,12 @@ test.describe.serial("Driver flow", () => {
     await page.getByRole("button", { name: "ACCEPT" }).click();
 
     await page.goto("/driver/jobs");
+    await expect(
+      page.getByRole("button", { name: /I'?ve arrived/i }),
+    ).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.getByRole("button", { name: /I'?ve arrived/i }).click();
     await expect(page.getByRole("button", { name: "Start Trip" })).toBeVisible({
       timeout: 15_000,
     });

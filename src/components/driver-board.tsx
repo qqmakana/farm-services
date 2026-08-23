@@ -8,6 +8,7 @@ import {
   declineOffer,
   listIncomingOffers,
   listDriverActiveJob,
+  markDriverArrived,
   saveDriverFcmToken,
   setDriverOnline,
   startTrip,
@@ -31,6 +32,7 @@ import {
 import { CashCollectModal } from "@/components/driver/cash-collect-modal";
 import type { Driver, JobApplication, JobWithDriver } from "@/lib/types";
 import { distanceKm, etaMinutes } from "@/lib/geo";
+import { driverHasArrived, isConfirmedStatus } from "@/lib/job-status";
 import { useDriverOffersRealtime } from "@/lib/use-driver-offers-realtime";
 import {
   buildSimpleWalletTopUpMessage,
@@ -410,8 +412,18 @@ export function DriverBoard({
             <strong>Dropoff:</strong> {active.dropoff_landmark}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            {(active.status === "assigned" ||
-              active.status === "confirmed") && (
+            {isConfirmedStatus(active.status) &&
+              !driverHasArrived(active) && (
+              <button
+                type="button"
+                disabled={pending}
+                className="ru-btn ru-btn-primary"
+                onClick={() => run(() => markDriverArrived(active.id, driverId))}
+              >
+                I&apos;ve arrived
+              </button>
+            )}
+            {isConfirmedStatus(active.status) && driverHasArrived(active) && (
               <button
                 type="button"
                 disabled={pending}

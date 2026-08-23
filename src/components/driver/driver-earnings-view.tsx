@@ -185,6 +185,7 @@ export function DriverEarningsView() {
 
   return (
     <PageShell
+      tone="driver"
       title="Earnings"
       subtitle="Post-paid: start at R0. Cash trips deduct the platform fee. Credit limit stops new jobs."
     >

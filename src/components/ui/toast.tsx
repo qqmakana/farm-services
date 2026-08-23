@@ -28,10 +28,10 @@ type ToastApi = {
 const ToastContext = createContext<ToastApi | null>(null);
 
 const TONE_CLASS: Record<ToastTone, string> = {
-  success: "bg-[#0ecb81] text-white",
-  error: "bg-[#e11900] text-white",
-  info: "bg-black text-white",
-  warning: "bg-[#ff6b00] text-white",
+  success: "bg-[#05944F] text-white",
+  error: "bg-[#CB4040] text-white",
+  info: "bg-[#0E0E0E] text-white",
+  warning: "bg-[#0E0E0E] text-white",
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -45,7 +45,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     (message: string, tone: ToastTone = "info") => {
       const id = `t-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       setItems((prev) => [...prev.slice(-4), { id, message, tone }]);
-      window.setTimeout(() => dismiss(id), 4000);
+      window.setTimeout(() => dismiss(id), 3000);
     },
     [dismiss],
   );
@@ -65,14 +65,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={api}>
       {children}
       <div
-        className="pointer-events-none fixed bottom-24 left-1/2 z-[100] flex w-full max-w-md -translate-x-1/2 flex-col items-center gap-2 px-4"
+        className="pointer-events-none fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-1/2 z-[100] flex w-full max-w-md -translate-x-1/2 flex-col items-center gap-3 px-4"
         aria-live="polite"
       >
         {items.map((t) => (
           <div
             key={t.id}
             role="status"
-            className={`pointer-events-auto flex max-w-sm items-start gap-3 rounded-2xl px-4 py-3 text-sm font-semibold shadow-lg ${TONE_CLASS[t.tone]}`}
+            className={`vr-toast-enter pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-[12px] px-5 py-3.5 text-[15px] font-medium shadow-[0_8px_24px_rgba(0,0,0,0.2)] ${TONE_CLASS[t.tone]}`}
           >
             <span className="flex-1 text-center">{t.message}</span>
             <button

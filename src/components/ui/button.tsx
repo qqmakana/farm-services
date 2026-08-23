@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-type Variant = "primary" | "brand" | "secondary" | "ghost";
+type Variant = "primary" | "brand" | "secondary" | "ghost" | "danger" | "small";
 
 export function Button({
   children,
@@ -18,6 +18,8 @@ export function Button({
     brand: "ru-btn-brand",
     secondary: "ru-btn-secondary",
     ghost: "ru-btn-ghost",
+    danger: "ru-btn-danger",
+    small: "ru-btn-small",
   };
   return (
     <button
