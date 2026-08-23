@@ -5,8 +5,6 @@ import { createPayPalSubscriptionAction } from "@/lib/actions-subscription";
 import { getGuestProfile } from "@/lib/guest-profile";
 import { useCountry } from "@/components/country/country-provider";
 import { useSubscription } from "@/hooks/use-subscription";
-import { VILLAGE_PASS_BOOKING_FEE_ZAR } from "@/lib/village-pass";
-
 export function SubscribeButton({
   compact = false,
 }: {
@@ -70,8 +68,7 @@ export function SubscribeButton({
           Village Pass active
         </p>
         <p className="mt-1 text-xs text-[var(--ru-muted)]">
-          Booking fee waived on Ride, Delivery, Farm &amp; Courier · priority
-          matching · free cancel
+          Priority matching · free cancel
           {expiresAt
             ? ` · renews ${expiresAt.toLocaleDateString("en-ZA")}`
             : ""}
@@ -81,9 +78,8 @@ export function SubscribeButton({
             You saved R{saved} this month
           </p>
           <p className="mt-0.5 text-[11px] text-[var(--ru-muted)]">
-            {trips} Village Ride trip{trips === 1 ? "" : "s"} · R
-            {VILLAGE_PASS_BOOKING_FEE_ZAR} booking fee waived each · driver still
-            keeps ~90%
+            {trips} Village Ride trip{trips === 1 ? "" : "s"} · driver still
+            keeps 90%
           </p>
           {(savings?.savedLifetimeZar ?? 0) > saved ? (
             <p className="mt-1 text-[11px] text-[var(--ru-muted)]">
@@ -103,14 +99,13 @@ export function SubscribeButton({
       <div data-testid="subscription-benefits">
         <p className="ru-section-label">Village Pass</p>
         <p className="mt-1 font-[family-name:var(--font-display)] text-xl font-bold text-black">
-          Skip the booking fee
+          Priority matching
         </p>
         <p className="mt-1 text-xs text-[var(--ru-muted)]">
-          On Village Ride — Ride, Delivery, Farm and Courier. The driver still
-          keeps ~90%. Cash or card (PayPal).
+          On Village Ride — Ride, Delivery, Farm and Courier. Fares stay the
+          same: driver keeps 90%, Village Ride 10%. Cash or card (PayPal).
         </p>
         <ul className="mt-2 space-y-1 text-xs text-[var(--ru-muted)]">
-          <li>✓ R0 booking fee on your trips</li>
           <li>✓ Priority matching</li>
           <li>✓ Free cancellations</li>
           <li>✓ Works with cash and card</li>

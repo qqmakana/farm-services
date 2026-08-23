@@ -77,8 +77,8 @@ export function FoundingDriverCard() {
             Bonus Pool
           </h1>
           <p className="mt-[3%] max-w-[92%] text-[clamp(0.75rem,2.8vw,1.35rem)] leading-snug text-gray-200">
-            Complete your first trip before {cutoffLabel} and lock in a monthly
-            city bonus reward.
+            Complete your first trip before {cutoffLabel} and share 2% of your
+            city&apos;s trip revenue each month.
           </p>
 
           <div className="mt-[5%] inline-flex max-w-fit items-baseline gap-2 rounded-2xl bg-amber-500 px-[4%] py-[2.5%] text-black">

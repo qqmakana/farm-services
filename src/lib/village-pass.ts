@@ -1,6 +1,6 @@
 /**
  * Village Pass — R99/month PayPal subscription.
- * Waives the R5 platform booking fee only. Driver fare (base + km) is sacred.
+ * Priority matching subscription. Trip split stays 90% driver / 10% Village Ride.
  */
 
 export const VILLAGE_PASS_PRICE_ZAR = 99;

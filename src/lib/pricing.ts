@@ -1,19 +1,19 @@
 /**
  * Unified Village Ride pricing — source of truth (ZA bands).
  *
- * Ride & Courier: distance only.
- * Delivery & Farm: weight category + distance.
+ * Ride & Courier: R15 covers the first 2 km; then R5/km after that.
+ * Delivery & Farm: weight category + distance (all km).
  *
- * Payment scenarios (platform_fee = booking fee):
- * A) CASH — rider pays total to driver; on complete deduct platform_fee from wallet.
- * B) CARD — rider pays total via PayPal (capture in src/lib/paypal.ts); on complete
- *    credit driver (total − platform_fee).
- * C) VILLAGE PASS — platform_fee = 0; rider pays driver fare only; driver keeps 100%.
+ * Rider pays the quoted fare (cash or card). Split is always:
+ *   Driver 90% · Village Ride 10%.
+ * Founding drivers also share a 2% city-revenue pool at month-end (ops).
+ *
+ * A) CASH — rider pays total to driver; on complete deduct 10% from wallet.
+ * B) CARD — rider pays total via PayPal; on complete credit driver 90%.
  */
 
 import type { ServiceType } from "./types";
 import { getCountry } from "./countries";
-import { VILLAGE_PASS_BOOKING_FEE_ZAR } from "./village-pass";
 
 export type WeightCategory =
   | "light"
@@ -48,21 +48,28 @@ export const WEIGHT_CATEGORIES: readonly {
   },
 ] as const;
 
+export const PLATFORM_SHARE_PCT = 10;
+export const DRIVER_SHARE_PCT = 90;
+/** First N km included in the ride/courier flag drop. */
+export const RIDE_INCLUDED_KM = 2;
+
 export type ServiceRate = {
   base_fare: number;
   per_km_rate: number;
+  /** @deprecated Take is 10% of rider fare, not a flat booking fee. */
   platform_fee: number;
   minimum_fare: number;
   currency: string;
   weight_category: WeightCategory | null;
+  included_km: number;
 };
 
 /** ZA tables from product spec */
 const ZA_RIDE_COURIER = {
   base_fare: 15,
-  per_km_rate: 10,
-  platform_fee: VILLAGE_PASS_BOOKING_FEE_ZAR,
-  minimum_fare: 25,
+  per_km_rate: 5,
+  included_km: RIDE_INCLUDED_KM,
+  minimum_fare: 15,
 };
 
 const ZA_DELIVERY: Record<
@@ -119,6 +126,16 @@ export function vehicleForWeight(weight: WeightCategory): "bakkie" | "truck" {
   return weight === "heavy" || weight === "extra_heavy" ? "truck" : "bakkie";
 }
 
+/** Rider fare → Village Ride 10% / driver 90%. */
+export function splitRiderFare(riderPays: number): {
+  platform: number;
+  driver: number;
+} {
+  const total = Math.max(0, Math.round(Number(riderPays) || 0));
+  const platform = Math.round((total * PLATFORM_SHARE_PCT) / 100);
+  return { platform, driver: Math.max(0, total - platform) };
+}
+
 /**
  * Resolve rate row for a service (+ weight for delivery/farm).
  */
@@ -138,10 +155,11 @@ export function getServiceRate(params: {
     return {
       base_fare: scaleAmount(ZA_RIDE_COURIER.base_fare, params.countryCode),
       per_km_rate: scaleAmount(ZA_RIDE_COURIER.per_km_rate, params.countryCode),
-      platform_fee: scaleAmount(ZA_RIDE_COURIER.platform_fee, params.countryCode),
+      platform_fee: 0,
       minimum_fare: scaleAmount(ZA_RIDE_COURIER.minimum_fare, params.countryCode),
       currency,
       weight_category: null,
+      included_km: ZA_RIDE_COURIER.included_km,
     };
   }
 
@@ -155,10 +173,11 @@ export function getServiceRate(params: {
   return {
     base_fare: base,
     per_km_rate: perKm,
-    platform_fee: scaleAmount(VILLAGE_PASS_BOOKING_FEE_ZAR, params.countryCode),
-    minimum_fare: base, // min = band base
+    platform_fee: 0,
+    minimum_fare: base,
     currency,
     weight_category: weight,
+    included_km: 0,
   };
 }
 
@@ -168,16 +187,18 @@ export type UnifiedFareBreakdown = {
   distance_km: number;
   base_fare: number;
   distance_fare: number;
-  /** Driver fare before platform fee (min-enforced, + night). Sacred. */
+  /** Driver keep (90% of rider fare). */
   driver_fare: number;
-  /** Platform booking fee — 0 with Village Pass */
+  /** Village Ride take (10% of rider fare). */
   platform_fee: number;
+  /** What the rider pays (cash or card). */
   total_fare: number;
   currency: string;
   village_pass: boolean;
   minimum_fare: number;
   is_night_ride: boolean;
   night_surcharge_amount: number;
+  included_km: number;
 };
 
 /**
@@ -198,17 +219,16 @@ export function calculateUnifiedFare(params: {
     weightCategory: params.weightCategory,
   });
   const km = Math.max(0, Number(params.distanceKm) || 0);
-  const distanceFare = Math.round(rate.per_km_rate * km);
-  let driverRaw = rate.base_fare + distanceFare;
-  if (driverRaw < rate.minimum_fare) driverRaw = rate.minimum_fare;
+  const billableKm = Math.max(0, km - rate.included_km);
+  const distanceFare = Math.round(rate.per_km_rate * billableKm);
+  let riderRaw = rate.base_fare + distanceFare;
+  if (riderRaw < rate.minimum_fare) riderRaw = rate.minimum_fare;
 
   const nightPct = params.nightSurchargePct ?? 0;
   const nightAmt =
-    nightPct > 0 ? Math.round((driverRaw * nightPct) / 100) : 0;
-  const driverFare = driverRaw + nightAmt;
-
-  // Scenario C: Village Pass → platform_fee = 0
-  const platformFee = params.isSubscribed ? 0 : rate.platform_fee;
+    nightPct > 0 ? Math.round((riderRaw * nightPct) / 100) : 0;
+  const riderPays = riderRaw + nightAmt;
+  const { platform, driver } = splitRiderFare(riderPays);
 
   return {
     service_type: params.serviceType,
@@ -216,14 +236,15 @@ export function calculateUnifiedFare(params: {
     distance_km: Math.round(km * 10) / 10,
     base_fare: rate.base_fare,
     distance_fare: distanceFare,
-    driver_fare: driverFare,
-    platform_fee: platformFee,
-    total_fare: driverFare + platformFee,
+    driver_fare: driver,
+    platform_fee: platform,
+    total_fare: riderPays,
     currency: rate.currency,
     village_pass: Boolean(params.isSubscribed),
     minimum_fare: rate.minimum_fare,
     is_night_ride: nightAmt > 0,
     night_surcharge_amount: nightAmt,
+    included_km: rate.included_km,
   };
 }
 

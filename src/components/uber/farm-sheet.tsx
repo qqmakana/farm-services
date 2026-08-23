@@ -137,7 +137,7 @@ export function FarmSheet({
           setBaseFee(fare.base_fee_amount);
           setDistanceFare(fare.distance_fare);
           setDistanceKm(fare.distance_km);
-          setBookingFee(fare.booking_fee);
+          setBookingFee(fare.platform_commission || fare.booking_fee);
           setVillagePass(fare.village_pass);
           setNightExtra(fare.night_surcharge_amount);
           setIsNight(fare.is_night_ride);

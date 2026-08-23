@@ -17,7 +17,7 @@ export function PhotoUploadField({
   label,
   required,
   hint,
-  accept = "image/jpeg,image/png,image/webp",
+  accept = "image/jpeg,image/png,image/webp,image/heic,image/heif,image/*",
 }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

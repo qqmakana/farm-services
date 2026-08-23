@@ -70,8 +70,9 @@ export function applyCommissionToWallet(params: {
 /**
  * Cash Scenario A — amount to deduct from driver prepaid wallet on complete.
  *
- * Flat-fee model (new quotes): deduct `booking_fee` only (0 with Village Pass).
- * Legacy jobs: deduct stored `platform_commission`, else ~10% of fee.
+ * New quotes: stored `platform_commission` is 10% of the rider fare.
+ * Legacy flat-fee jobs: deduct `booking_fee` only (0 with old Village Pass).
+ * Oldest jobs: ~10% of fee.
  */
 export function cashPlatformRemittance(job: {
   fee_amount?: number | null;
@@ -86,6 +87,8 @@ export function cashPlatformRemittance(job: {
   const storedCommission = Number(job.platform_commission) || 0;
   const bookingFee = Math.max(0, Math.round(Number(job.booking_fee) || 0));
 
+  if (storedCommission > 0) return Math.round(storedCommission);
+
   const flatFeeModel =
     job.village_pass === true ||
     job.base_fare != null ||
@@ -95,10 +98,7 @@ export function cashPlatformRemittance(job: {
       Number(job.platform_commission) === 0 &&
       job.booking_fee != null);
 
-  if (flatFeeModel) {
-    return bookingFee + (storedCommission > 0 ? Math.round(storedCommission) : 0);
-  }
-  if (storedCommission > 0) return Math.round(storedCommission);
+  if (flatFeeModel) return bookingFee;
   return Math.round((fee * DEFAULT_COMMISSION_PCT) / 100);
 }
 

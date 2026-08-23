@@ -290,8 +290,7 @@ export function CheckoutBlock({
               </p>
             ) : (
               <p className="mt-0.5 text-xs text-gray-500">
-                Includes driver fare · booking fee may apply (waived with
-                Village Pass)
+                Includes 10% platform fee · driver keeps 90%
               </p>
             )}
           </div>

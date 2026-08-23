@@ -395,6 +395,9 @@ export function DriverHomeView() {
                     <RiderSpottingCard
                       customerName={job.customer_name}
                       details={job.details}
+                      jobId={job.id}
+                      driverId={driverId}
+                      storagePath={job.customer_photo_url}
                     />
                   </div>
                 ) : null}

@@ -9,7 +9,6 @@ import {
   normalizeHomeCity,
   randsToCents,
 } from "@/lib/founding-driver";
-import { cashPlatformRemittance } from "@/lib/wallet";
 import { createAdminClient, hasServiceRole } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 import { mockRepo } from "@/lib/mock-store";
@@ -28,7 +27,8 @@ function revalidateFounding() {
 
 /**
  * After a trip completes: qualify founding driver (first trip in era) +
- * accrue platform fee into that city's monthly revenue bucket.
+ * accrue the rider fare into that city's monthly revenue bucket.
+ * Month-end pool = 2% of city trip revenue, split among founding drivers.
  * Safe to call from completeTrip (mock + live).
  */
 export async function processFoundingBonusOnTripComplete(
@@ -37,8 +37,11 @@ export async function processFoundingBonusOnTripComplete(
 ): Promise<void> {
   if (!driverId || !job) return;
 
-  const remitRands = cashPlatformRemittance(job);
-  const feeCents = randsToCents(remitRands);
+  const grossRands = Math.max(
+    0,
+    Math.round(Number(job.fee_amount ?? job.total_fare) || 0),
+  );
+  const feeCents = randsToCents(grossRands);
   const month = monthYearKey(
     job.completed_at ? new Date(job.completed_at) : new Date(),
   );

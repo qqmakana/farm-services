@@ -35,6 +35,27 @@ test.describe("Rider photo", () => {
       page.getByText(/only shared with your driver/i).first(),
     ).toBeVisible();
     await expect(page.getByText(/Add photo|Change/i).first()).toBeVisible();
+    await expect(page.getByText(/^Upload$/i).first()).toBeVisible();
+
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    );
+    await page
+      .locator('input[type="file"]:not([capture])')
+      .first()
+      .setInputFiles({
+        name: "face.png",
+        mimeType: "image/png",
+        buffer: png,
+      });
+
+    await expect(page.getByAltText("Your photo")).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(
+      page.getByText(/Could not read that photo/i),
+    ).toHaveCount(0);
   });
 
   test("ride booking shows optional rider photo next to wearing", async ({

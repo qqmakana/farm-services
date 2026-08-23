@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
-import { Camera, Trash2, User } from "lucide-react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { Camera, ImagePlus, Trash2, User } from "lucide-react";
 import {
   deleteRiderPhoto,
   uploadRiderPhoto,
@@ -9,8 +9,10 @@ import {
 import {
   clearGuestRiderPhoto,
   getGuestProfile,
+  setGuestProfile,
   setGuestRiderPhoto,
 } from "@/lib/guest-profile";
+import { dataUrlToFile } from "@/lib/compress-image";
 import { compressRiderPhotoDataUrl } from "@/lib/rider-photo";
 
 type Props = {
@@ -24,9 +26,12 @@ type Props = {
   compact?: boolean;
 };
 
+const ACCEPT =
+  "image/jpeg,image/png,image/webp,image/heic,image/heif,image/*";
+
 /**
  * Optional rider face photo — camera or gallery.
- * Saves compressed data URL locally; uploads to rider-photos when possible.
+ * Saves a compressed JPEG locally; uploads that same file when a phone exists.
  */
 export function RiderPhotoField({
   previewUrl,
@@ -36,57 +41,92 @@ export function RiderPhotoField({
   onChange,
   compact = false,
 }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(previewUrl ?? null);
   const [error, setError] = useState<string | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (previewUrl !== undefined) setPreview(previewUrl ?? null);
+  }, [previewUrl]);
 
   function applyPreview(url: string | null) {
     setPreview(url);
     onChange?.(url);
   }
 
+  function resetInputs() {
+    if (cameraRef.current) cameraRef.current.value = "";
+    if (galleryRef.current) galleryRef.current.value = "";
+  }
+
+  function ensureGuest(usePhone: string) {
+    if (getGuestProfile()?.phone) return;
+    setGuestProfile({
+      name: name.trim() || "Guest",
+      phone: usePhone,
+      country_code: countryCode,
+    });
+  }
+
   function onFile(file: File | null) {
     if (!file) return;
     setError(null);
+    setHint(null);
     startTransition(async () => {
       try {
         const dataUrl = await compressRiderPhotoDataUrl(file);
         if (!dataUrl) {
-          setError("Could not read that photo. Try another JPEG or PNG.");
+          setError(
+            "Could not read that photo. Choose a JPEG or PNG, or take a new photo.",
+          );
+          resetInputs();
           return;
         }
 
-        let storagePath: string | null = null;
         const guest = getGuestProfile();
         const usePhone = phone.trim() || guest?.phone || "";
-        if (usePhone) {
-          const fd = new FormData();
-          fd.set("phone", usePhone);
-          fd.set("name", name.trim() || guest?.name || "");
-          fd.set("country_code", countryCode);
-          fd.set("photo", file);
-          try {
-            const res = await uploadRiderPhoto(fd);
-            storagePath = res.photo_url;
-          } catch {
-            // Local data URL still works for booking / mock.
-          }
+        applyPreview(dataUrl);
+
+        if (!usePhone) {
+          setHint("Add your phone number so we can keep this photo.");
+          return;
         }
 
+        ensureGuest(usePhone);
         setGuestRiderPhoto({
           photo_data_url: dataUrl,
-          photo_url: storagePath,
+          photo_url: guest?.photo_url ?? null,
         });
-        applyPreview(dataUrl);
+
+        const jpeg = dataUrlToFile(dataUrl, file.name || "face.jpg");
+        const fd = new FormData();
+        fd.set("phone", usePhone);
+        fd.set("name", name.trim() || guest?.name || "");
+        fd.set("country_code", countryCode);
+        fd.set("photo", jpeg);
+        try {
+          const res = await uploadRiderPhoto(fd);
+          setGuestRiderPhoto({
+            photo_data_url: dataUrl,
+            photo_url: res.photo_url,
+          });
+        } catch {
+          setHint("Saved on this phone. Driver will still see it on this trip.");
+        }
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Upload failed");
+        setError(e instanceof Error ? e.message : "Could not save that photo.");
+      } finally {
+        resetInputs();
       }
     });
   }
 
   function remove() {
     setError(null);
+    setHint(null);
     startTransition(async () => {
       const guest = getGuestProfile();
       const usePhone = phone.trim() || guest?.phone || "";
@@ -99,7 +139,7 @@ export function RiderPhotoField({
       }
       clearGuestRiderPhoto();
       applyPreview(null);
-      if (inputRef.current) inputRef.current.value = "";
+      resetInputs();
     });
   }
 
@@ -139,10 +179,22 @@ export function RiderPhotoField({
               <Camera className="h-3.5 w-3.5" aria-hidden />
               {pending ? "Saving…" : preview ? "Change" : "Add photo"}
               <input
-                ref={inputRef}
+                ref={cameraRef}
                 type="file"
-                accept="image/*"
+                accept={ACCEPT}
                 capture="user"
+                className="sr-only"
+                disabled={pending}
+                onChange={(e) => onFile(e.target.files?.[0] ?? null)}
+              />
+            </label>
+            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition active:scale-95">
+              <ImagePlus className="h-3.5 w-3.5" aria-hidden />
+              Upload
+              <input
+                ref={galleryRef}
+                type="file"
+                accept={ACCEPT}
                 className="sr-only"
                 disabled={pending}
                 onChange={(e) => onFile(e.target.files?.[0] ?? null)}
@@ -164,6 +216,8 @@ export function RiderPhotoField({
       </div>
       {error ? (
         <p className="mt-2 text-xs text-rose-600">{error}</p>
+      ) : hint ? (
+        <p className="mt-2 text-xs text-slate-500">{hint}</p>
       ) : null}
     </div>
   );

@@ -1,12 +1,16 @@
 /** Rider face photo helpers — profile + per-trip spotting (with wearing). */
 
-import { compressPickupPhotoDataUrl } from "@/lib/pickup-photo";
+import { fileToJpegDataUrl } from "@/lib/compress-image";
 
 export async function compressRiderPhotoDataUrl(
   file: File,
 ): Promise<string | null> {
-  // Smaller than pickup spot — face recognition at arm's length.
-  return compressPickupPhotoDataUrl(file, 90_000);
+  return fileToJpegDataUrl(file, {
+    maxSide: 720,
+    maxBytes: 180_000,
+    quality: 0.72,
+    minQuality: 0.32,
+  });
 }
 
 export function riderPhotoFromDetails(details: unknown): string | null {
@@ -23,6 +27,28 @@ export function riderPhotoFromDetails(details: unknown): string | null {
       url.startsWith("https://") ||
       url.startsWith("data:image/"))
   ) {
+    return url;
+  }
+  return null;
+}
+
+/** Storage path in rider-photos (not a displayable URL). */
+export function riderPhotoStoragePathFromDetails(
+  details: unknown,
+  jobPath?: string | null,
+): string | null {
+  for (const raw of [jobPath, (details as { rider_photo_url?: unknown } | null)?.rider_photo_url]) {
+    if (typeof raw !== "string") continue;
+    const url = raw.trim();
+    if (!url) continue;
+    if (
+      url.startsWith("data:") ||
+      url.startsWith("http://") ||
+      url.startsWith("https://") ||
+      url.startsWith("mock://")
+    ) {
+      continue;
+    }
     return url;
   }
   return null;

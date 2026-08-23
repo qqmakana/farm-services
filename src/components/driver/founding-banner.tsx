@@ -54,7 +54,7 @@ export function FoundingBanner() {
       >
         <p className="text-sm font-bold">Founding Driver status active</p>
         <p className="mt-0.5 text-xs font-medium text-black/80">
-          You are earning from the {homeCity} monthly bonus pool.
+          You share 2% of {homeCity} trip revenue at month-end.
         </p>
         <Link
           href="/driver/earnings"
@@ -77,8 +77,9 @@ export function FoundingBanner() {
         Founding Era: {daysLeft} day{daysLeft === 1 ? "" : "s"} left
       </p>
       <p className="mt-0.5 text-xs font-medium text-black/85">
-        Complete your first trip in {homeCity === "your city" ? "your city" : homeCity}{" "}
-        to lock in your Bonus Pool status.
+        Complete your first trip by 30 Aug in{" "}
+        {homeCity === "your city" ? "your city" : homeCity} to lock in a 2%
+        city revenue bonus at month-end.
       </p>
 
       {!driver.home_city ? (

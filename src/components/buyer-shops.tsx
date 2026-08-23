@@ -212,7 +212,7 @@ export function BuyerShops({
         <FareBreakdownCard
           baseFare={quote.base_fee_amount}
           distanceFare={quote.distance_fare + quote.night_surcharge_amount}
-          platformFee={quote.booking_fee}
+          platformFee={quote.platform_commission || quote.booking_fee}
           total={quote.fee_amount}
           currency={quote.currency}
           villagePass={quote.village_pass}

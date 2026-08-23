@@ -29,6 +29,8 @@ export type RideDetails = {
   rider_photo_data_url?: string;
   /** Storage path or signed URL in rider-photos bucket. */
   rider_photo_url?: string;
+  /** Compressed pickup-spot data URL so the driver can find the place. */
+  pickup_photo_data_url?: string;
   local_mode?: string;
   /** Driver tapped "I've arrived" at pickup (ISO timestamp). */
   driver_arrived_at?: string;
@@ -402,7 +404,7 @@ export type Job = {
   fee_amount: number;
   platform_commission?: number;
   driver_payout?: number;
-  /** Platform booking fee (R5). 0 with Village Pass. */
+  /** Legacy flat booking fee. New quotes store the 10% take on platform_commission. */
   booking_fee?: number;
   /** Delivery/Farm weight band */
   weight_category?: WeightCategory | string | null;

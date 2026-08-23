@@ -19,11 +19,20 @@ export function PickupPhotoField({ file, onChange }: Props) {
       </p>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <label className="inline-flex cursor-pointer items-center rounded-xl bg-black px-3 py-2 text-xs font-semibold text-white">
-          {file ? "Change photo" : "Add photo"}
+          {file ? "Change photo" : "Take photo"}
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/*"
             capture="environment"
+            className="sr-only"
+            onChange={(e) => onChange(e.target.files?.[0] ?? null)}
+          />
+        </label>
+        <label className="inline-flex cursor-pointer items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
+          Upload
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/*"
             className="sr-only"
             onChange={(e) => onChange(e.target.files?.[0] ?? null)}
           />

@@ -26,8 +26,13 @@ import {
 } from "../src/lib/partner";
 import { calculateFare } from "../src/lib/fares";
 import { getCountry } from "../src/lib/countries";
-import { VILLAGE_PASS_BOOKING_FEE_ZAR } from "../src/lib/village-pass";
 import { distanceKm, jitterLatLng } from "../src/lib/geo";
+import {
+  riderPhotoFromDetails,
+  riderPhotoStoragePathFromDetails,
+  wearingFromDetails,
+} from "../src/lib/rider-photo";
+import { pickupPhotoFromDetails } from "../src/lib/pickup-photo";
 import {
   checkBookingServiceArea,
   isInServiceArea,
@@ -72,6 +77,36 @@ function test(name: string, fn: () => void) {
 }
 
 console.log("Running logic tests…");
+
+test("rider spotting: data URL wins; storage path is not displayable", () => {
+  const data = "data:image/jpeg;base64,/9j/4AAQ";
+  assert(
+    riderPhotoFromDetails({ rider_photo_data_url: data }) === data,
+    "data URL",
+  );
+  assert(
+    riderPhotoFromDetails({ rider_photo_url: "0825550199/profile-1.jpg" }) ===
+      null,
+    "storage path is not a display URL",
+  );
+  assert(
+    riderPhotoStoragePathFromDetails(
+      { rider_photo_url: "0825550199/profile-1.jpg" },
+      null,
+    ) === "0825550199/profile-1.jpg",
+    "extract storage path",
+  );
+  assert(
+    riderPhotoStoragePathFromDetails({}, "0825550199/from-job.jpg") ===
+      "0825550199/from-job.jpg",
+    "job column fallback",
+  );
+  assert(wearingFromDetails({ wearing: " red jacket " }) === "red jacket", "wear");
+  assert(
+    pickupPhotoFromDetails({ pickup_photo_data_url: data }) === data,
+    "pickup data URL",
+  );
+});
 
 test("wallet: commission deducts and sets commission_owed when negative", () => {
   const r = applyCommissionToWallet({ walletBalance: 10, commission: 37 });
@@ -326,7 +361,7 @@ test("referral: code formula is 4-letter prefix + 3 random", () => {
   assert(code.length === 7, `length ${code.length}`);
 });
 
-test("fares: ZA base + booking fee; Pass waives fee only", () => {
+test("fares: ZA R15 under 2km; 90/10 split", () => {
   const za = getCountry("ZA");
   const open = calculateFare({
     vehicle: "sedan",
@@ -334,13 +369,15 @@ test("fares: ZA base + booking fee; Pass waives fee only", () => {
     countryCode: "ZA",
     isSubscribed: false,
   });
-  // 0km quote: base R15, min fare R25 → driver gets minimum
+  // 0km quote: R15 flat (first 2 km included)
   assert(open.base_fee_amount === za.pricing.ride.base, "base component");
-  assert(open.driver_fare_amount === 25, "minimum fare R25");
-  assert(open.booking_fee === VILLAGE_PASS_BOOKING_FEE_ZAR, "R5 fee");
+  assert(open.fee_amount === 15, "rider pays R15");
+  assert(open.platform_commission === 2, "10% of R15 rounded");
+  assert(open.driver_fare_amount === 13, "driver 90%");
+  assert(open.booking_fee === 0, "no extra booking fee");
   assert(
-    open.fee_amount === open.driver_fare_amount + open.booking_fee,
-    "total = driver + fee",
+    open.fee_amount === open.driver_fare_amount + open.platform_commission,
+    "total = driver + 10%",
   );
 
   const pass = calculateFare({
@@ -349,10 +386,10 @@ test("fares: ZA base + booking fee; Pass waives fee only", () => {
     countryCode: "ZA",
     isSubscribed: true,
   });
-  assert(pass.booking_fee === 0, "Pass fee waived");
+  assert(pass.fee_amount === open.fee_amount, "Pass does not change the fare");
   assert(
-    pass.driver_fare_amount === open.driver_fare_amount,
-    "driver fare sacred",
+    pass.platform_commission === open.platform_commission,
+    "Pass still 10%",
   );
 });
 
@@ -365,17 +402,14 @@ test("fares: NG / KE / IN / BR scale from ZA bands", () => {
       countryCode: code,
       isSubscribed: false,
     });
-    // Local ride.base scales ZA R15; min fare scales ZA R25
+    // Local ride.base scales ZA R15; rider pays base on a 0 km quote
     assert(
       f.base_fee_amount === c.pricing.ride.base,
       `${code} base ${f.base_fee_amount} != ${c.pricing.ride.base}`,
     );
-    assert(
-      f.driver_fare_amount >= f.base_fee_amount,
-      `${code} min fare enforced`,
-    );
+    assert(f.fee_amount === f.base_fee_amount, `${code} 0 km is flag drop`);
     assert(f.currency === c.currency, `${code} currency`);
-    assert(f.booking_fee > 0, `${code} has platform fee`);
+    assert(f.platform_commission > 0, `${code} has 10% take`);
   }
 });
 
@@ -390,12 +424,13 @@ test("fares: 10km ZA includes km + fee", () => {
     quoteReady: true,
     isSubscribed: false,
   });
-  // R15 base + R10/km * 10 = R115 driver, + R5 fee
+  // R15 + R5 × (10 − 2) = R55 rider → R50 driver / R5? 10% of 55 = R6
   assert(f.distance_km === 10, `km ${f.distance_km}`);
-  assert(f.driver_fare_amount === 115, `driver ${f.driver_fare_amount}`);
-  assert(f.fee_amount === 120, `total ${f.fee_amount}`);
+  assert(f.fee_amount === 55, `rider ${f.fee_amount}`);
+  assert(f.platform_commission === 6, `10% ${f.platform_commission}`);
+  assert(f.driver_fare_amount === 49, `driver ${f.driver_fare_amount}`);
   assert(f.quote_ready === true, "quote ready");
-  assert(f.platform_commission === 0, "flat fee model — no % commission");
+  assert(f.booking_fee === 0, "no extra booking fee");
 });
 
 test("fares: delivery weight bands (10km ZA)", () => {
@@ -423,7 +458,7 @@ test("fares: delivery weight bands (10km ZA)", () => {
   assert(light.weight_category === "light", "weight stored");
 });
 
-test("fares: farm weight + Pass waives platform fee only", () => {
+test("fares: farm weight still 90/10 of the quoted fare", () => {
   const open = calculateFare({
     vehicle: "bakkie",
     serviceType: "farm",
@@ -432,16 +467,9 @@ test("fares: farm weight + Pass waives platform fee only", () => {
     isSubscribed: false,
   });
   assert(open.base_fee_amount === 40, "farm medium base");
-  assert(open.booking_fee === VILLAGE_PASS_BOOKING_FEE_ZAR, "fee");
-  const pass = calculateFare({
-    vehicle: "bakkie",
-    serviceType: "farm",
-    countryCode: "ZA",
-    weightCategory: "medium",
-    isSubscribed: true,
-  });
-  assert(pass.booking_fee === 0, "Pass waived");
-  assert(pass.driver_fare_amount === open.driver_fare_amount, "driver sacred");
+  assert(open.fee_amount === 40, "0 km is band base");
+  assert(open.platform_commission === 4, "10% of R40");
+  assert(open.driver_fare_amount === 36, "90%");
 });
 
 test("geo: jitter is stable and stays within ~150m", () => {
@@ -470,7 +498,7 @@ test("fares: route km wins over straight-line pins", () => {
     isSubscribed: false,
   });
   assert(f.distance_km === 6, `used route km ${f.distance_km} not ${straight}`);
-  assert(f.driver_fare_amount === 75, `15+10*6 ${f.driver_fare_amount}`);
+  assert(f.fee_amount === 35, `R15 + R5×4 ${f.fee_amount}`);
 });
 
 test("fares: same pickup and dropoff is minimum fare, not a crash", () => {
@@ -487,8 +515,8 @@ test("fares: same pickup and dropoff is minimum fare, not a crash", () => {
     isSubscribed: false,
   });
   assert(f.distance_km === 0, "0 km");
-  assert(f.driver_fare_amount === 25, "min driver fare");
-  assert(f.fee_amount === 30, "min total with booking fee");
+  assert(f.fee_amount === 15, "R15 flat under 2 km");
+  assert(f.driver_fare_amount === 13, "90% of R15");
 });
 
 test("service area: country-wide booking (no Alice/Mthatha lock)", () => {
@@ -538,6 +566,19 @@ test("landmarks: national list can include Johannesburg", () => {
   assert(alice.length >= 1, "Alice landmark fallback still works");
 });
 
+test("fares: R50 trip is R45 driver / R5 platform", () => {
+  const f = calculateFare({
+    vehicle: "sedan",
+    serviceType: "ride",
+    countryCode: "ZA",
+    routeDistanceKm: 9,
+    quoteReady: true,
+  });
+  assert(f.fee_amount === 50, `rider ${f.fee_amount}`);
+  assert(f.driver_fare_amount === 45, `driver ${f.driver_fare_amount}`);
+  assert(f.platform_commission === 5, `platform ${f.platform_commission}`);
+});
+
 test("wallet: flat-fee cash remittance uses booking_fee not 10%", () => {
   const remit = cashPlatformRemittance({
     fee_amount: 145,
@@ -554,7 +595,14 @@ test("wallet: flat-fee cash remittance uses booking_fee not 10%", () => {
     driver_payout: 140,
     village_pass: true,
   });
-  assert(passRemit === 0, "Pass cash deducts 0");
+  assert(passRemit === 0, "legacy Pass cash deducts 0");
+  const split = cashPlatformRemittance({
+    fee_amount: 50,
+    booking_fee: 0,
+    platform_commission: 5,
+    driver_payout: 45,
+  });
+  assert(split === 5, `90/10 remit ${split}`);
 });
 
 function loadLocalEnv() {

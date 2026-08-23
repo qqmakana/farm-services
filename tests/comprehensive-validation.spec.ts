@@ -7,7 +7,6 @@ import {
   driverEligibleForDispatch,
   WALLET_ONLINE_FLOOR,
 } from "../src/lib/wallet";
-import { VILLAGE_PASS_BOOKING_FEE_ZAR } from "../src/lib/village-pass";
 import type { ServiceType } from "../src/lib/types";
 import type { WeightCategory } from "../src/lib/pricing";
 
@@ -17,8 +16,8 @@ import type { WeightCategory } from "../src/lib/pricing";
  * Pricing accuracy is asserted via `calculateUnifiedFare` (source of truth).
  * UI checks use real data-testids (no window.mockDistance / Inter / black CTA).
  *
- * Totals = base + (per_km × distance) + platform fee (R5), unless Village Pass.
- * Ride/Courier also enforce minimum driver fare R25 before the fee.
+ * Ride/Courier: R15 covers first 2 km, then R5/km. Rider total is the fare;
+ * Village Ride keeps 10%, driver 90%.
  */
 
 async function lockCountry(context: BrowserContext, code: string) {
@@ -55,59 +54,56 @@ test.describe("Pricing Accuracy - All Services & Weight Categories", () => {
     weight: WeightCategory | null;
     expectedBase: number;
     expectedPerKm: number;
-    /** Rider total including R5 platform fee */
+    /** What the rider pays (10% is taken from this, not added). */
     expectedTotal: number;
   }> = [
-    // Ride (no weight) — total includes R5 fee
     {
       service: "ride",
       distance: 5,
       weight: null,
       expectedBase: 15,
-      expectedPerKm: 10,
-      expectedTotal: 70, // 15+50+5
+      expectedPerKm: 5,
+      expectedTotal: 30, // 15 + 5×3
     },
     {
       service: "ride",
       distance: 10,
       weight: null,
       expectedBase: 15,
-      expectedPerKm: 10,
-      expectedTotal: 120, // 15+100+5
+      expectedPerKm: 5,
+      expectedTotal: 55, // 15 + 5×8
     },
     {
       service: "ride",
       distance: 20,
       weight: null,
       expectedBase: 15,
-      expectedPerKm: 10,
-      expectedTotal: 220, // 15+200+5
+      expectedPerKm: 5,
+      expectedTotal: 105, // 15 + 5×18
     },
-    // Courier (no weight)
     {
       service: "courier",
       distance: 5,
       weight: null,
       expectedBase: 15,
-      expectedPerKm: 10,
-      expectedTotal: 70,
+      expectedPerKm: 5,
+      expectedTotal: 30,
     },
     {
       service: "courier",
       distance: 10,
       weight: null,
       expectedBase: 15,
-      expectedPerKm: 10,
-      expectedTotal: 120,
+      expectedPerKm: 5,
+      expectedTotal: 55,
     },
-    // Delivery bands @ 10km
     {
       service: "delivery",
       distance: 10,
       weight: "light",
       expectedBase: 20,
       expectedPerKm: 12,
-      expectedTotal: 145,
+      expectedTotal: 140,
     },
     {
       service: "delivery",
@@ -115,7 +111,7 @@ test.describe("Pricing Accuracy - All Services & Weight Categories", () => {
       weight: "medium",
       expectedBase: 35,
       expectedPerKm: 15,
-      expectedTotal: 190,
+      expectedTotal: 185,
     },
     {
       service: "delivery",
@@ -123,7 +119,7 @@ test.describe("Pricing Accuracy - All Services & Weight Categories", () => {
       weight: "heavy",
       expectedBase: 60,
       expectedPerKm: 20,
-      expectedTotal: 265,
+      expectedTotal: 260,
     },
     {
       service: "delivery",
@@ -131,16 +127,15 @@ test.describe("Pricing Accuracy - All Services & Weight Categories", () => {
       weight: "extra_heavy",
       expectedBase: 100,
       expectedPerKm: 30,
-      expectedTotal: 405,
+      expectedTotal: 400,
     },
-    // Farm bands @ 10km
     {
       service: "farm",
       distance: 10,
       weight: "light",
       expectedBase: 25,
       expectedPerKm: 15,
-      expectedTotal: 180,
+      expectedTotal: 175,
     },
     {
       service: "farm",
@@ -148,7 +143,7 @@ test.describe("Pricing Accuracy - All Services & Weight Categories", () => {
       weight: "medium",
       expectedBase: 40,
       expectedPerKm: 18,
-      expectedTotal: 225,
+      expectedTotal: 220,
     },
     {
       service: "farm",
@@ -156,7 +151,7 @@ test.describe("Pricing Accuracy - All Services & Weight Categories", () => {
       weight: "heavy",
       expectedBase: 70,
       expectedPerKm: 25,
-      expectedTotal: 325,
+      expectedTotal: 320,
     },
     {
       service: "farm",
@@ -164,7 +159,7 @@ test.describe("Pricing Accuracy - All Services & Weight Categories", () => {
       weight: "extra_heavy",
       expectedBase: 120,
       expectedPerKm: 35,
-      expectedTotal: 475, // 120+350+5
+      expectedTotal: 470,
     },
   ];
 
@@ -177,34 +172,39 @@ test.describe("Pricing Accuracy - All Services & Weight Categories", () => {
         countryCode: "ZA",
         isSubscribed: false,
       });
+      const billable =
+        c.service === "ride" || c.service === "courier"
+          ? Math.max(0, c.distance - 2)
+          : c.distance;
       expect(fare.base_fare).toBe(c.expectedBase);
-      expect(fare.distance_fare).toBe(c.expectedPerKm * c.distance);
-      expect(fare.platform_fee).toBe(VILLAGE_PASS_BOOKING_FEE_ZAR);
+      expect(fare.distance_fare).toBe(c.expectedPerKm * billable);
       expect(fare.total_fare).toBe(c.expectedTotal);
+      expect(fare.platform_fee).toBe(Math.round(c.expectedTotal * 0.1));
+      expect(fare.driver_fare).toBe(c.expectedTotal - fare.platform_fee);
     });
   }
 
-  test("enforces minimum driver fare R25 on short ride (then +R5 fee)", () => {
+  test("short ride under 2km is R15 flat; driver keeps 90%", () => {
     const fare = calculateUnifiedFare({
       serviceType: "ride",
       distanceKm: 1,
       countryCode: "ZA",
       isSubscribed: false,
     });
-    // 15+10=25 → already at min; total 30 with fee
-    expect(fare.driver_fare).toBe(25);
-    expect(fare.total_fare).toBe(30);
+    expect(fare.total_fare).toBe(15);
+    expect(fare.platform_fee).toBe(2);
+    expect(fare.driver_fare).toBe(13);
   });
 
-  test("0km ride still hits minimum fare R25 + fee", () => {
+  test("0km ride is R15 flat", () => {
     const fare = calculateUnifiedFare({
       serviceType: "ride",
       distanceKm: 0,
       countryCode: "ZA",
       isSubscribed: false,
     });
-    expect(fare.driver_fare).toBe(25);
-    expect(fare.total_fare).toBe(30);
+    expect(fare.total_fare).toBe(15);
+    expect(fare.driver_fare).toBe(13);
   });
 
   test("negative distance treated as 0km", () => {
@@ -215,7 +215,7 @@ test.describe("Pricing Accuracy - All Services & Weight Categories", () => {
       isSubscribed: false,
     });
     expect(fare.distance_km).toBe(0);
-    expect(fare.driver_fare).toBe(25);
+    expect(fare.total_fare).toBe(15);
   });
 });
 
@@ -246,25 +246,25 @@ test.describe("Payment Flow - Cash, Card, Village Pass", () => {
     expect(payout).toBe(115);
   });
 
-  test("Village Pass: platform fee R0; cash remittance 0", () => {
+  test("9km ride is R50 → R45 driver / R5 platform", () => {
     const fare = calculateUnifiedFare({
       serviceType: "ride",
-      distanceKm: 10,
+      distanceKm: 9,
       countryCode: "ZA",
       isSubscribed: true,
     });
-    expect(fare.platform_fee).toBe(0);
-    expect(fare.total_fare).toBe(115); // driver only
-    expect(fare.driver_fare).toBe(115);
+    expect(fare.total_fare).toBe(50);
+    expect(fare.platform_fee).toBe(5);
+    expect(fare.driver_fare).toBe(45);
 
     const remit = cashPlatformRemittance({
       fee_amount: fare.total_fare,
       booking_fee: 0,
-      platform_commission: 0,
+      platform_commission: fare.platform_fee,
       driver_payout: fare.driver_fare,
       village_pass: true,
     });
-    expect(remit).toBe(0);
+    expect(remit).toBe(5);
   });
 
   test("legacy job without flat-fee fields still uses ~10%", () => {

@@ -200,15 +200,6 @@ export function AccountView() {
             required
           />
           <CountrySelector compact showLanguage={false} />
-          {profile?.phone ? (
-            <RiderPhotoField
-              previewUrl={profile.photo_data_url}
-              name={profile.name}
-              phone={profile.phone}
-              countryCode={profile.country_code || countryCode}
-              onChange={() => refreshProfile()}
-            />
-          ) : null}
           <button
             type="submit"
             className={UBER_BTN_BLACK}
@@ -227,6 +218,18 @@ export function AccountView() {
         </form>
       ) : null}
 
+      {profile?.phone ? (
+        <div className="mt-6">
+          <RiderPhotoField
+            previewUrl={profile.photo_data_url}
+            name={profile.name}
+            phone={profile.phone}
+            countryCode={profile.country_code || countryCode}
+            onChange={() => refreshProfile()}
+          />
+        </div>
+      ) : null}
+
       <div className="mt-6 grid grid-cols-2 gap-3">
         <GridTile href="/help" label="Help" Icon={LifeBuoy} />
         <GridTile href="/account/payment" label="Wallet" Icon={Wallet} />
@@ -243,7 +246,7 @@ export function AccountView() {
             Try Village Pass free
           </span>
           <span className="mt-1 text-xs font-medium text-[#71717a]">
-            Skip the booking fee · Ride, Delivery, Farm, Courier · cash or card
+            Priority matching · Ride, Delivery, Farm, Courier · cash or card
           </span>
         </span>
         <span className="relative h-[5.5rem] w-28 shrink-0">

@@ -3,7 +3,8 @@
  * Do NOT describe as equity, shares, ownership, or dividends.
  */
 
-export const FOUNDING_ERA_CUTOFF_ISO = "2029-08-05T23:59:59+02:00";
+/** First completed trip on or before 30 Aug 2026 qualifies. */
+export const FOUNDING_ERA_CUTOFF_ISO = "2026-08-30T23:59:59+02:00";
 
 /** Canonical SA home cities for the bonus pool. */
 export const FOUNDING_CITIES = [

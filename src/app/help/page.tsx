@@ -24,7 +24,7 @@ const FAQS = [
   },
   {
     q: "Who pays the 10% commission?",
-    a: "Customers pay the driver the delivery fee. Village Ride deducts ~10% from the driver’s prepaid wallet when the trip completes — not as a separate shop invoice.",
+    a: "The rider pays the fare (cash or card). The driver keeps 90%. Village Ride keeps 10% — on cash trips that 10% comes from the driver’s prepaid wallet when the trip completes, not as a shop invoice. Founding drivers also share a 2% city revenue pool at month-end.",
   },
   {
     q: "What if no drivers are online?",

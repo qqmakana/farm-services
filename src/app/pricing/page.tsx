@@ -16,7 +16,8 @@ export default function PricingPage() {
           Simple pricing
         </h1>
         <p className="mt-2 text-sm text-slate-600">
-          No monthly fees. No WhatsApp Business API costs.
+          Rider pays a simple fare. Driver keeps 90%. Village Ride keeps 10%.
+          Cash or card.
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -53,11 +54,18 @@ export default function PricingPage() {
         </div>
 
         <section className="mt-10 rounded-xl border bg-slate-50 p-5">
-          <h2 className="font-bold">Example</h2>
+          <h2 className="font-bold">What the rider pays</h2>
+          <ul className="mt-3 space-y-2 text-sm text-slate-700">
+            <li>Under 2 km: <strong>R15</strong> flat</li>
+            <li>Over 2 km: <strong>R15 + R5/km</strong> after the first 2 km</li>
+            <li>Cash or card (PayPal)</li>
+          </ul>
+          <h2 className="mt-6 font-bold">Who gets what</h2>
           <p className="mt-2 text-sm text-slate-700">
-            Customer pays <strong>R300</strong> → Driver keeps{" "}
-            <strong>R270</strong> → {BRAND.appName} keeps <strong>R30</strong>{" "}
-            (10% from driver wallet).
+            Example: <strong>R50</strong> trip → driver gets{" "}
+            <strong>R45</strong>, {BRAND.appName} keeps <strong>R5</strong>.
+            Founding drivers (first trip by 30 Aug) also share a 2% city
+            revenue pool at month-end. Card payouts settle weekly.
           </p>
         </section>
 

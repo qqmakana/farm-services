@@ -1405,7 +1405,7 @@ async function createJobInner(input: NewJobInput) {
   }
 
   // Never trust client fee_amount for charging (includes night surcharge).
-  // Driver rate is sacred. Village Pass only waives platform booking fee.
+  // Rider pays the quote. Driver 90% / Village Ride 10%.
   const countryCode = input.country_code || DEFAULT_COUNTRY;
   const fare = await resolveFare({
     vehicle: input.required_vehicle,
@@ -3039,10 +3039,10 @@ export type CompleteTripOptions = {
 
 /**
  * Complete a trip and settle the wallet:
- * A) Cash + confirmed: deduct platform_fee (booking_fee) from driver prepaid wallet
+ * A) Cash + confirmed: deduct 10% platform take from driver prepaid wallet
  * A') Cash + not collected: complete + flag ops, no wallet change
- * B) Card/PayPal: credit driver's (total − platform_fee) — stored driver_payout
- * C) Village Pass: platform_fee was 0 at booking — cash deducts 0; card credits full driver fare
+ * B) Card/PayPal: credit driver's 90% — stored driver_payout
+ * Founding drivers share a 2% city-revenue pool at month-end (ops / weekly payout)
  */
 export async function completeTrip(
   jobId: string,

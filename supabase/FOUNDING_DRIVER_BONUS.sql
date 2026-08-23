@@ -4,7 +4,7 @@
 --
 -- Legal: Do NOT describe this as equity, shares, ownership, or dividends.
 -- Language: Bonus / Points / Reward / Incentive only.
--- Cutoff (app-enforced): 2029-08-05 — first completed trip before then qualifies.
+-- Cutoff (app-enforced): 2026-08-30 — first completed trip on or before then qualifies.
 -- =============================================================================
 
 -- ---------- DRIVER COLUMNS ----------

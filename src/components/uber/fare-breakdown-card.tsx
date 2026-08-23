@@ -3,7 +3,7 @@
 import { formatMoney } from "@/lib/format";
 import { useCountry } from "@/components/country/country-provider";
 
-/** Exact fare lines: base + km + platform fee (or waived). */
+/** Exact fare lines: base + km = what the rider pays. 10% is included, not added. */
 export function FareBreakdownCard({
   baseFare,
   distanceFare,
@@ -58,20 +58,18 @@ export function FareBreakdownCard({
         </div>
         <div className="flex justify-between gap-3">
           <dt className="text-gray-500">
-            Platform fee
-            {villagePass ? " (Village Pass)" : ""}
+            Village Ride 10%
+            {villagePass ? " · Pass priority" : ""}
           </dt>
           <dd
             data-testid="platform-fee"
             className="font-medium text-[var(--ru-ink)]"
           >
-            {platformFee === 0
-              ? formatMoney(0, cur, countryCode)
-              : formatMoney(platformFee, cur, countryCode)}
+            {formatMoney(platformFee, cur, countryCode)}
           </dd>
         </div>
         <div className="flex justify-between gap-3 border-t border-gray-200 pt-1.5">
-          <dt className="font-semibold text-[var(--ru-ink)]">Total</dt>
+          <dt className="font-semibold text-[var(--ru-ink)]">You pay</dt>
           <dd
             data-testid="total-fare"
             className="font-bold text-[var(--ru-ink)]"
@@ -81,8 +79,11 @@ export function FareBreakdownCard({
         </div>
       </dl>
       <p className="mt-2 text-[11px] text-gray-500">
-        Cash: pay driver the total. Card: pay online. Village Pass: fee
-        waived — driver keeps the fare.
+        Cash or card. Driver keeps 90%
+        {platformFee > 0
+          ? ` (${formatMoney(total - platformFee, cur, countryCode)})`
+          : ""}
+        . The 10% is included in the fare, not added on top.
       </p>
     </div>
   );

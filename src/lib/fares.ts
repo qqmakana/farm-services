@@ -18,20 +18,18 @@ import {
 
 export type FareBreakdown = {
   /**
-   * Total the rider pays (driver fare + platform booking fee).
-   * Payment A/B/C: see src/lib/pricing.ts comments.
+   * Total the rider pays (cash or card). 90/10 is taken from this, not added.
    */
   fee_amount: number;
-  /** Sacred driver fare: base + km (+ night), min-enforced. */
+  /** Driver keep — 90% of the rider fare. */
   driver_fare_amount: number;
-  /** Platform booking fee. 0 with Village Pass. */
-  booking_fee: number;
   /**
-   * Legacy % commission (0 under flat-fee model).
-   * Kept for old jobs; new quotes set 0 so wallet uses booking_fee.
+   * No extra booking fee on new quotes (0). Legacy jobs may still have R5.
    */
+  booking_fee: number;
+  /** Village Ride take — 10% of the rider fare. */
   platform_commission: number;
-  /** Amount credited to driver on card complete (= driver fare). */
+  /** Amount credited to driver on card complete (90%). */
   driver_payout: number;
   currency: string;
   /** Base fare component (before km / night) */
@@ -123,13 +121,13 @@ export function calculateFare(params: {
     nightSurchargePct: night ? NIGHT_SURCHARGE_PCT : 0,
   });
 
-  // Flat platform-fee model: no % commission on new quotes.
-  // driver_payout = sacred driver fare (card Scenario B: total − platform_fee).
+  // Rider pays `total_fare`. Platform 10% is stored as platform_commission
+  // (wallet remittance / card keep). No extra booking fee on new quotes.
   return {
     fee_amount: unified.total_fare,
     driver_fare_amount: unified.driver_fare,
-    booking_fee: unified.platform_fee,
-    platform_commission: 0,
+    booking_fee: 0,
+    platform_commission: unified.platform_fee,
     driver_payout: unified.driver_fare,
     currency: unified.currency,
     base_fee_amount: unified.base_fare,

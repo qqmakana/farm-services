@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { User } from "lucide-react";
+import { getRiderPhotoSignedUrlForDriver } from "@/lib/actions";
 import {
   riderPhotoFromDetails,
+  riderPhotoStoragePathFromDetails,
   wearingFromDetails,
 } from "@/lib/rider-photo";
 
@@ -12,6 +15,10 @@ type Props = {
   /** Optional rating if available. */
   ratingAvg?: number | null;
   className?: string;
+  jobId?: string;
+  driverId?: string | null;
+  /** Job.customer_photo_url storage path fallback. */
+  storagePath?: string | null;
 };
 
 /**
@@ -22,9 +29,31 @@ export function RiderSpottingCard({
   details,
   ratingAvg,
   className = "",
+  jobId,
+  driverId,
+  storagePath,
 }: Props) {
-  const photo = riderPhotoFromDetails(details);
+  const inline = riderPhotoFromDetails(details);
+  const path = riderPhotoStoragePathFromDetails(details, storagePath);
   const wearing = wearingFromDetails(details);
+  const [photo, setPhoto] = useState<string | null>(inline);
+
+  useEffect(() => {
+    setPhoto(inline);
+    if (inline || !path || !jobId || !driverId) return;
+    let cancelled = false;
+    void getRiderPhotoSignedUrlForDriver({
+      storagePath: path,
+      jobId,
+      driverId,
+    }).then((url) => {
+      if (!cancelled && url) setPhoto(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [inline, path, jobId, driverId]);
+
   if (!photo && !wearing) return null;
 
   return (
