@@ -1,18 +1,31 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { createCashJob } from "@/lib/actions";
-import { bookingWhatsAppHref } from "@/lib/brand";
-import { getGuestProfile, setGuestProfile } from "@/lib/guest-profile";
+import {
+  PaymentSelector,
+  type CheckoutPaymentChoice,
+} from "@/components/checkout/payment-selector";
 import { useCountry } from "@/components/country/country-provider";
-import { formatPhonePlaceholder } from "@/lib/country-preference";
+import { SafeCardPay } from "@/components/uber/safe-card-pay";
 import { localInputToIso } from "@/components/uber/schedule-when";
+import {
+  capturePayPalAndCreateJob,
+  createCashJob,
+  createLocalPaidJob,
+  createPayPalOrderAction,
+} from "@/lib/actions";
+import { bookingWhatsAppHref } from "@/lib/brand";
+import { formatPhonePlaceholder } from "@/lib/country-preference";
+import { getGuestProfile, setGuestProfile } from "@/lib/guest-profile";
+import { getCapturedReferrer } from "@/lib/rider-referral";
+import type { NewJobInput } from "@/lib/types";
 
 type Pin = { lat: number; lng: number };
+type Draft = Omit<NewJobInput, "payment">;
 
 /**
- * Crash-proof Trip / Reserve form for older Android WebViews (Hisense).
- * No PayPal SDK, no Mapbox search widget, no next/image.
+ * Trip / Reserve form for older Android WebViews (Hisense).
+ * Card (PayPal) loads only after Card is selected. No Mapbox search widget.
  */
 export function SimpleRideSheet({
   onPinChange,
@@ -36,6 +49,7 @@ export function SimpleRideSheet({
   const [pickupPin, setPickupPin] = useState<Pin | null>(center);
   const [dropoffPin, setDropoffPin] = useState<Pin | null>(null);
   const [nextPinIsDropoff, setNextPinIsDropoff] = useState(false);
+  const [payMethod, setPayMethod] = useState<CheckoutPaymentChoice>("cash");
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
@@ -86,40 +100,53 @@ export function SimpleRideSheet({
     pickupPin != null &&
     dropoffPin != null;
 
+  function buildDraft(): Draft {
+    if (!pickupPin || !dropoffPin) {
+      throw new Error("Tap the map to set pickup and drop-off pins.");
+    }
+    const ref = getCapturedReferrer();
+    const tag = ref ? `Rider referral: ${ref}` : null;
+    return {
+      service_type: "ride",
+      required_vehicle: "sedan",
+      customer_name: name.trim(),
+      customer_phone: phone.trim(),
+      pickup_lat: pickupPin.lat,
+      pickup_lng: pickupPin.lng,
+      pickup_landmark: pickup.trim(),
+      dropoff_lat: dropoffPin.lat,
+      dropoff_lng: dropoffPin.lng,
+      dropoff_landmark: dropoff.trim(),
+      scheduled_for: whenLater ? localInputToIso(scheduledLocal) : null,
+      country_code: countryCode,
+      dispatcher_notes: tag,
+      details: {
+        seats: 1,
+        route_name: `${pickup.trim()} → ${dropoff.trim()}`,
+        direction: "to_village",
+      },
+      fee_amount: country.pricing?.ride?.base ?? 15,
+    };
+  }
+
+  function saveGuest() {
+    setGuestProfile({
+      name: name.trim(),
+      phone: phone.trim(),
+      country_code: countryCode,
+    });
+  }
+
   function bookCash() {
     setMsg(null);
-    if (!ready || !pickupPin || !dropoffPin) {
+    if (!ready) {
       setMsg("Fill name, phone, pickup and drop-off. Tap the map to set pins.");
       return;
     }
     start(async () => {
       try {
-        setGuestProfile({
-          name: name.trim(),
-          phone: phone.trim(),
-          country_code: countryCode,
-        });
-        const job = await createCashJob({
-          service_type: "ride",
-          required_vehicle: "sedan",
-          customer_name: name.trim(),
-          customer_phone: phone.trim(),
-          pickup_lat: pickupPin.lat,
-          pickup_lng: pickupPin.lng,
-          pickup_landmark: pickup.trim(),
-          dropoff_lat: dropoffPin.lat,
-          dropoff_lng: dropoffPin.lng,
-          dropoff_landmark: dropoff.trim(),
-          scheduled_for: whenLater ? localInputToIso(scheduledLocal) : null,
-          country_code: countryCode,
-          dispatcher_notes: null,
-          details: {
-            seats: 1,
-            route_name: `${pickup.trim()} → ${dropoff.trim()}`,
-            direction: "to_village",
-          },
-          fee_amount: country.pricing?.ride?.base ?? 15,
-        });
+        saveGuest();
+        const job = await createCashJob(buildDraft());
         window.location.assign(`/trip/${job.reference_code}`);
       } catch (err) {
         setMsg(err instanceof Error ? err.message : "Could not book. Use WhatsApp.");
@@ -127,6 +154,7 @@ export function SimpleRideSheet({
     });
   }
 
+  const estimate = country.pricing?.ride?.base ?? 15;
   const wa = bookingWhatsAppHref({
     service_type: "ride",
     pickup_landmark: pickup || "—",
@@ -134,8 +162,8 @@ export function SimpleRideSheet({
     customer_name: name || "—",
     customer_phone: phone || "—",
     detailsLine: whenLater ? "Reserve" : "Trip now",
-    paymentLabel: "Cash",
-    estimateZar: country.pricing?.ride?.base ?? 15,
+    paymentLabel: payMethod === "card" ? "Card (PayPal)" : "Cash",
+    estimateZar: estimate,
     currencySymbol: country.currencySymbol,
   });
 
@@ -216,20 +244,73 @@ export function SimpleRideSheet({
         </button>
       )}
 
+      <PaymentSelector
+        value={payMethod}
+        onChange={setPayMethod}
+        currencyLabel={country.currencySymbol}
+      />
+
       {msg ? (
         <p className="rounded-xl bg-[#fdecea] px-3 py-2 text-[13px] text-[#b01000]">
           {msg}
         </p>
       ) : null}
 
-      <button
-        type="button"
-        disabled={pending}
-        onClick={bookCash}
-        className="uber-press w-full rounded-full bg-black py-4 text-[17px] font-medium text-white disabled:opacity-50"
-      >
-        {pending ? "Finding driver…" : "Request Trip · Cash"}
-      </button>
+      {payMethod === "cash" ? (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={bookCash}
+          className="uber-press w-full rounded-full bg-black py-4 text-[17px] font-medium text-white disabled:opacity-50"
+        >
+          {pending ? "Finding driver…" : "Request Trip · Cash"}
+        </button>
+      ) : (
+        <SafeCardPay
+          amount={estimate}
+          description="Village Ride · Trip"
+          disabled={!ready}
+          submitLabel="Request Trip · Card"
+          onCreateOrder={async () => {
+            setMsg(null);
+            if (!ready) throw new Error("Complete the form first.");
+            saveGuest();
+            const d = buildDraft();
+            const { orderId } = await createPayPalOrderAction({
+              vehicle: "sedan",
+              service_type: "ride",
+              country_code: d.country_code || countryCode,
+              customer_phone: d.customer_phone,
+              pickup_lat: d.pickup_lat,
+              pickup_lng: d.pickup_lng,
+              dropoff_lat: d.dropoff_lat,
+              dropoff_lng: d.dropoff_lng,
+              description: "Village Ride trip · Go (car)",
+              at: d.scheduled_for ?? null,
+              details: d.details,
+            });
+            return orderId;
+          }}
+          onApprove={async (orderId) => {
+            setMsg(null);
+            try {
+              saveGuest();
+              const job = await capturePayPalAndCreateJob(orderId, buildDraft());
+              window.location.assign(`/trip/${job.reference_code}`);
+            } catch (err) {
+              setMsg(err instanceof Error ? err.message : "Payment failed");
+              throw err;
+            }
+          }}
+          onLocalPay={async () => {
+            setMsg(null);
+            if (!ready) throw new Error("Complete the form first.");
+            saveGuest();
+            const job = await createLocalPaidJob(buildDraft());
+            window.location.assign(`/trip/${job.reference_code}`);
+          }}
+        />
+      )}
       <a
         href={wa}
         className="flex min-h-12 w-full items-center justify-center rounded-full bg-[#25D366] text-[15px] font-semibold text-white"

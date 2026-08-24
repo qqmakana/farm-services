@@ -7,7 +7,7 @@ import {
   PaymentSelector,
   type CheckoutPaymentChoice,
 } from "@/components/checkout/payment-selector";
-import { PayPalCheckout } from "@/components/paypal-checkout";
+import { SafeCardPay } from "@/components/uber/safe-card-pay";
 import {
   bookingWhatsAppHref,
   type BookingWhatsAppDraft,
@@ -479,7 +479,7 @@ export function CheckoutBlock({
             ) : null}
           </div>
         ) : (
-          <PayPalCheckout
+          <SafeCardPay
             amount={Number(fee) || 0}
             description={`${VEHICLE_LABELS[vehicle]} · Village Ride`}
             disabled={!ready}

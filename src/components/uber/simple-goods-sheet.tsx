@@ -1,22 +1,34 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { createCashJob } from "@/lib/actions";
-import { bookingWhatsAppHref } from "@/lib/brand";
-import { getGuestProfile, setGuestProfile } from "@/lib/guest-profile";
+import {
+  PaymentSelector,
+  type CheckoutPaymentChoice,
+} from "@/components/checkout/payment-selector";
 import { useCountry } from "@/components/country/country-provider";
+import { SafeCardPay } from "@/components/uber/safe-card-pay";
+import {
+  capturePayPalAndCreateJob,
+  createCashJob,
+  createLocalPaidJob,
+  createPayPalOrderAction,
+} from "@/lib/actions";
+import { bookingWhatsAppHref } from "@/lib/brand";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
-import { SERVICE_COPY } from "@/lib/service-guide";
+import { getGuestProfile, setGuestProfile } from "@/lib/guest-profile";
 import {
   WEIGHT_CATEGORIES,
   vehicleForWeight,
   type WeightCategory,
 } from "@/lib/pricing";
-import { suggestVehicle } from "@/lib/vehicles";
-import type { CourierPackageType, JobDetails, ServiceType } from "@/lib/types";
+import { getCapturedReferrer } from "@/lib/rider-referral";
+import { SERVICE_COPY } from "@/lib/service-guide";
+import type { CourierPackageType, JobDetails, NewJobInput, ServiceType } from "@/lib/types";
+import { suggestVehicle, VEHICLE_LABELS } from "@/lib/vehicles";
 
 type Pin = { lat: number; lng: number };
 type GoodsService = "delivery" | "courier" | "farm";
+type Draft = Omit<NewJobInput, "payment">;
 
 const FARM_TYPES = [
   "Produce to market (vegetables, fruit, maize)",
@@ -26,8 +38,8 @@ const FARM_TYPES = [
 ] as const;
 
 /**
- * Crash-proof Delivery / Courier / Farm form for older Android WebViews.
- * No PayPal SDK, no Mapbox search widget, no next/image.
+ * Delivery / Courier / Farm form for older Android WebViews.
+ * Card (PayPal) loads only after Card is selected. No Mapbox search widget.
  */
 export function SimpleGoodsSheet({
   service,
@@ -63,6 +75,7 @@ export function SimpleGoodsSheet({
   const [pickupPin, setPickupPin] = useState<Pin | null>(center);
   const [dropoffPin, setDropoffPin] = useState<Pin | null>(null);
   const [nextPinIsDropoff, setNextPinIsDropoff] = useState(false);
+  const [payMethod, setPayMethod] = useState<CheckoutPaymentChoice>("cash");
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
@@ -187,43 +200,59 @@ export function SimpleGoodsSheet({
     };
   }
 
+  function buildDraft(): Draft {
+    if (!pickupPin || !dropoffPin) {
+      throw new Error("Tap the map to set pickup and drop-off pins.");
+    }
+    const notes = [
+      service === "courier" && express && "Express courier",
+      service === "delivery" && insured && "Goods insurance",
+      service === "farm" && farmType,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    const ref = getCapturedReferrer();
+    const tag = ref ? `Rider referral: ${ref}` : "";
+    const dispatcher = [notes, tag].filter(Boolean).join(" · ") || null;
+    return {
+      service_type: service as ServiceType,
+      required_vehicle: vehicle,
+      customer_name: name.trim(),
+      customer_phone: phone.trim(),
+      pickup_lat: pickupPin.lat,
+      pickup_lng: pickupPin.lng,
+      pickup_landmark:
+        shopMode && shopName.trim()
+          ? `Shop: ${shopName.trim()} · ${pickup.trim()}`
+          : pickup.trim(),
+      dropoff_lat: dropoffPin.lat,
+      dropoff_lng: dropoffPin.lng,
+      dropoff_landmark: dropoff.trim(),
+      country_code: countryCode,
+      dispatcher_notes: dispatcher,
+      details: details(),
+      fee_amount: estimate,
+    };
+  }
+
+  function saveGuest() {
+    setGuestProfile({
+      name: name.trim(),
+      phone: phone.trim(),
+      country_code: countryCode,
+    });
+  }
+
   function bookCash() {
     setMsg(null);
-    if (!ready || !pickupPin || !dropoffPin) {
+    if (!ready) {
       setMsg("Fill the form and tap the map for pickup and drop-off pins.");
       return;
     }
     start(async () => {
       try {
-        setGuestProfile({
-          name: name.trim(),
-          phone: phone.trim(),
-          country_code: countryCode,
-        });
-        const job = await createCashJob({
-          service_type: service as ServiceType,
-          required_vehicle: vehicle,
-          customer_name: name.trim(),
-          customer_phone: phone.trim(),
-          pickup_lat: pickupPin.lat,
-          pickup_lng: pickupPin.lng,
-          pickup_landmark: shopMode && shopName.trim()
-            ? `Shop: ${shopName.trim()} · ${pickup.trim()}`
-            : pickup.trim(),
-          dropoff_lat: dropoffPin.lat,
-          dropoff_lng: dropoffPin.lng,
-          dropoff_landmark: dropoff.trim(),
-          country_code: countryCode,
-          dispatcher_notes: [
-            service === "courier" && express && "Express courier",
-            service === "delivery" && insured && "Goods insurance",
-            service === "farm" && farmType,
-          ]
-            .filter(Boolean)
-            .join(" · ") || null,
-          details: details(),
-          fee_amount: estimate,
-        });
+        saveGuest();
+        const job = await createCashJob(buildDraft());
         window.location.assign(`/trip/${job.reference_code}`);
       } catch (err) {
         setMsg(err instanceof Error ? err.message : "Could not book. Use WhatsApp.");
@@ -244,7 +273,7 @@ export function SimpleGoodsSheet({
         : service === "farm"
           ? `${farmType} · ${weight}`
           : `${item} · ${weight}${insured ? " · insured" : ""}`,
-    paymentLabel: "Cash",
+    paymentLabel: payMethod === "card" ? "Card (PayPal)" : "Cash",
     estimateZar: estimate,
     currencySymbol: country.currencySymbol,
   });
@@ -446,20 +475,74 @@ export function SimpleGoodsSheet({
         />
       </div>
 
+      <PaymentSelector
+        value={payMethod}
+        onChange={setPayMethod}
+        currencyLabel={country.currencySymbol}
+      />
+
       {msg ? (
         <p className="rounded-xl bg-[#fdecea] px-3 py-2 text-[13px] text-[#b01000]">
           {msg}
         </p>
       ) : null}
 
-      <button
-        type="button"
-        disabled={pending}
-        onClick={bookCash}
-        className="uber-press w-full rounded-full bg-black py-4 text-[17px] font-medium text-white disabled:opacity-50"
-      >
-        {pending ? "Finding driver…" : `Request ${heading} · Cash`}
-      </button>
+      {payMethod === "cash" ? (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={bookCash}
+          className="uber-press w-full rounded-full bg-black py-4 text-[17px] font-medium text-white disabled:opacity-50"
+        >
+          {pending ? "Finding driver…" : `Request ${heading} · Cash`}
+        </button>
+      ) : (
+        <SafeCardPay
+          amount={estimate}
+          description={`Village Ride · ${heading}`}
+          disabled={!ready}
+          submitLabel={`Request ${heading} · Card`}
+          onCreateOrder={async () => {
+            setMsg(null);
+            if (!ready) throw new Error("Complete the form first.");
+            saveGuest();
+            const d = buildDraft();
+            const { orderId } = await createPayPalOrderAction({
+              vehicle,
+              service_type: service,
+              country_code: d.country_code || countryCode,
+              customer_phone: d.customer_phone,
+              pickup_lat: d.pickup_lat,
+              pickup_lng: d.pickup_lng,
+              dropoff_lat: d.dropoff_lat,
+              dropoff_lng: d.dropoff_lng,
+              description: `Village Ride ${service} · ${VEHICLE_LABELS[vehicle]}`,
+              at: d.scheduled_for ?? null,
+              details: d.details,
+              is_express: service === "courier" ? express : undefined,
+            });
+            return orderId;
+          }}
+          onApprove={async (orderId) => {
+            setMsg(null);
+            try {
+              saveGuest();
+              const job = await capturePayPalAndCreateJob(orderId, buildDraft());
+              window.location.assign(`/trip/${job.reference_code}`);
+            } catch (err) {
+              setMsg(err instanceof Error ? err.message : "Payment failed");
+              throw err;
+            }
+          }}
+          onLocalPay={async () => {
+            setMsg(null);
+            if (!ready) throw new Error("Complete the form first.");
+            saveGuest();
+            const job = await createLocalPaidJob(buildDraft());
+            window.location.assign(`/trip/${job.reference_code}`);
+          }}
+        />
+      )}
       <a
         href={wa}
         className="flex min-h-12 w-full items-center justify-center rounded-full bg-[#25D366] text-[15px] font-semibold text-white"
