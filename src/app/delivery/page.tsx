@@ -2,10 +2,9 @@
 
 import { Suspense, useState } from "react";
 import { BookingTabChrome } from "@/components/customer/booking-tab-chrome";
-import { DeliverySheet } from "@/components/uber/delivery-sheet";
+import { SimpleGoodsSheet } from "@/components/uber/simple-goods-sheet";
 import { UberShell } from "@/components/uber/uber-shell";
 import { useBookingMapPin } from "@/components/uber/use-booking-map-pin";
-import { ClientErrorBoundary } from "@/components/ui/client-error-boundary";
 
 function DeliveryInner() {
   const { pin, setPin, mapTapPin, mapTapToken, onMapPin } = useBookingMapPin();
@@ -24,14 +23,13 @@ function DeliveryInner() {
       backHref="/"
       title="Village Delivery"
     >
-      <ClientErrorBoundary>
-        <DeliverySheet
-          onPinChange={setPin}
-          onDropoffPinChange={setDropoffPin}
-          mapTapPin={mapTapPin}
-          mapTapToken={mapTapToken}
-        />
-      </ClientErrorBoundary>
+      <SimpleGoodsSheet
+        service="delivery"
+        onPinChange={setPin}
+        onDropoffPinChange={setDropoffPin}
+        mapTapPin={mapTapPin}
+        mapTapToken={mapTapToken}
+      />
     </UberShell>
   );
 }

@@ -30,7 +30,7 @@ const ACCEPT =
   "image/jpeg,image/png,image/webp,image/heic,image/heif,image/*";
 
 /**
- * Optional rider face photo — camera or gallery.
+ * Optional rider face photo — gallery upload first, camera optional.
  * Saves a compressed JPEG locally; uploads that same file when a phone exists.
  */
 export function RiderPhotoField({
@@ -176,25 +176,25 @@ export function RiderPhotoField({
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-black px-3 py-2 text-xs font-semibold text-white transition active:scale-95">
-              <Camera className="h-3.5 w-3.5" aria-hidden />
+              <ImagePlus className="h-3.5 w-3.5" aria-hidden />
               {pending ? "Saving…" : preview ? "Change" : "Add photo"}
               <input
-                ref={cameraRef}
+                ref={galleryRef}
                 type="file"
                 accept={ACCEPT}
-                capture="user"
                 className="sr-only"
                 disabled={pending}
                 onChange={(e) => onFile(e.target.files?.[0] ?? null)}
               />
             </label>
             <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition active:scale-95">
-              <ImagePlus className="h-3.5 w-3.5" aria-hidden />
-              Upload
+              <Camera className="h-3.5 w-3.5" aria-hidden />
+              Camera
               <input
-                ref={galleryRef}
+                ref={cameraRef}
                 type="file"
                 accept={ACCEPT}
+                capture="user"
                 className="sr-only"
                 disabled={pending}
                 onChange={(e) => onFile(e.target.files?.[0] ?? null)}
