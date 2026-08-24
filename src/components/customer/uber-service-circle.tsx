@@ -1,7 +1,6 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
+import { AppLink } from "@/components/ui/app-link";
 import { UBER_BADGE, UBER_CIRCLE } from "@/components/customer/uber-chrome";
 
 export function UberServiceCircle({
@@ -23,7 +22,7 @@ export function UberServiceCircle({
 }) {
   const img = Math.round(size * 0.72);
   return (
-    <Link
+    <AppLink
       href={href}
       data-testid={testId}
       data-primary={primary ? "true" : undefined}
@@ -38,7 +37,8 @@ export function UberServiceCircle({
         </span>
       ) : null}
       <span className={UBER_CIRCLE} style={{ width: size, height: size }}>
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src={src}
           alt=""
           width={img}
@@ -49,6 +49,6 @@ export function UberServiceCircle({
       <span className="mt-2 text-center text-[13px] font-semibold text-[#0a0a0a]">
         {label}
       </span>
-    </Link>
+    </AppLink>
   );
 }

@@ -43,10 +43,16 @@ function withReferralNote(d: Draft): Draft {
 
 function detailsFromDraft(d: Draft, locale: string): string {
   const when = d.scheduled_for
-    ? new Date(d.scheduled_for).toLocaleString(locale, {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
+    ? (() => {
+        try {
+          return new Date(d.scheduled_for).toLocaleString(locale, {
+            dateStyle: "medium",
+            timeStyle: "short",
+          });
+        } catch {
+          return d.scheduled_for;
+        }
+      })()
     : "ASAP";
 
   if (d.service_type === "ride") {

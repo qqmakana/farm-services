@@ -56,14 +56,20 @@ export function formatWhen(
   countryCode?: string | null,
 ) {
   if (!iso) return "ASAP";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "ASAP";
   const locale = getCountry(countryCode).locale;
-  return new Date(iso).toLocaleString(locale, {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  try {
+    return d.toLocaleString(locale, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return d.toISOString().slice(0, 16).replace("T", " ");
+  }
 }
 
 export function serviceBadgeClass(_type: ServiceType) {

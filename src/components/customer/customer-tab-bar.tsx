@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/app-link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { Grid2X2, Home, Receipt, User } from "lucide-react";
@@ -60,7 +60,7 @@ export function CustomerTabBar() {
           const Icon = tab.icon;
           return (
             <li key={tab.href} className="flex flex-1">
-              <Link
+              <AppLink
                 href={tab.href}
                 data-testid={`customer-tab-${tab.label.toLowerCase()}`}
                 className={`uber-press flex min-h-12 flex-1 flex-col items-center justify-center gap-0.5 py-1.5 ${
@@ -78,7 +78,7 @@ export function CustomerTabBar() {
                 <span className="text-[11px] font-semibold leading-none tracking-[0.5px]">
                   {tab.label}
                 </span>
-              </Link>
+              </AppLink>
             </li>
           );
         })}

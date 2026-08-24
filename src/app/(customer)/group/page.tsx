@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/app-link";
 import { useEffect, useState } from "react";
 import { listOpenGroupTrips } from "@/lib/actions-group";
 import { GroupTripCard } from "@/components/group/group-trip-card";
@@ -35,12 +35,12 @@ export default function GroupRidesPage() {
 
       <div className={`mt-4 rounded-[28px] px-4 py-3 text-[13px] font-medium text-[#0a0a0a] ${UBER_GLOSS}`}>
         Drivers: publish a group from the{" "}
-        <Link
+        <AppLink
           href="/driver/group"
           className="uber-press font-bold text-black underline"
         >
           driver app
-        </Link>
+        </AppLink>
         .
       </div>
 
@@ -61,12 +61,12 @@ export default function GroupRidesPage() {
         )}
       </section>
 
-      <Link
+      <AppLink
         href="/ride"
         className={`${UBER_BTN_BLACK} mt-8`}
       >
         Book a private ride instead
-      </Link>
+      </AppLink>
     </main>
   );
 }

@@ -5,6 +5,7 @@ import { BookingTabChrome } from "@/components/customer/booking-tab-chrome";
 import { FarmSheet } from "@/components/uber/farm-sheet";
 import { UberShell } from "@/components/uber/uber-shell";
 import { useBookingMapPin } from "@/components/uber/use-booking-map-pin";
+import { ClientErrorBoundary } from "@/components/ui/client-error-boundary";
 
 function FarmInner() {
   const { pin, setPin, mapTapPin, mapTapToken, onMapPin } = useBookingMapPin();
@@ -23,12 +24,14 @@ function FarmInner() {
       backHref="/"
       title="Farm Connect"
     >
-      <FarmSheet
-        onPinChange={setPin}
-        onDropoffPinChange={setDropoffPin}
-        mapTapPin={mapTapPin}
-        mapTapToken={mapTapToken}
-      />
+      <ClientErrorBoundary>
+        <FarmSheet
+          onPinChange={setPin}
+          onDropoffPinChange={setDropoffPin}
+          mapTapPin={mapTapPin}
+          mapTapToken={mapTapToken}
+        />
+      </ClientErrorBoundary>
     </UberShell>
   );
 }

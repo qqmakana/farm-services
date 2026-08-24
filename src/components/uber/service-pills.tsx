@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { AppLink } from "@/components/ui/app-link";
 
 const PILLS = [
   {
@@ -67,7 +66,7 @@ function ServicePillsInner({ className = "" }: { className?: string }) {
       {PILLS.map((pill) => {
         const active = pill.match(pathname, when);
         return (
-          <Link
+          <AppLink
             key={`${pill.label}-${pill.href}`}
             href={pill.href}
             aria-current={active ? "page" : undefined}
@@ -79,19 +78,18 @@ function ServicePillsInner({ className = "" }: { className?: string }) {
             }`}
           >
             <span className="relative h-8 w-8 shrink-0">
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={pill.src}
                 alt=""
-                fill
-                className="pointer-events-none object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)]"
-                sizes="32px"
+                className="pointer-events-none h-8 w-8 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)]"
               />
             </span>
             {pill.label}
             {active ? (
               <span className="absolute bottom-0 left-1/2 h-[3px] w-9 -translate-x-1/2 rounded-full bg-[#0a0a0a]" />
             ) : null}
-          </Link>
+          </AppLink>
         );
       })}
     </div>

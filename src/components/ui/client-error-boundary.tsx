@@ -1,6 +1,7 @@
 "use client";
 
 import React, { type ReactNode } from "react";
+import { BRAND_WHATSAPP_HREF, BRAND } from "@/lib/brand";
 
 type Props = {
   children: ReactNode;
@@ -10,7 +11,7 @@ type Props = {
 
 type State = { error: Error | null };
 
-/** Catches render errors (e.g. Mapbox/WebGL on budget phones) without killing the whole app. */
+/** Catches render errors without killing the whole screen. */
 export class ClientErrorBoundary extends React.Component<Props, State> {
   state: State = { error: null };
 
@@ -25,12 +26,30 @@ export class ClientErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.error) {
+      if (this.props.fallback) return this.props.fallback;
+      const wa = `${BRAND_WHATSAPP_HREF}?text=${encodeURIComponent(
+        `Hi ${BRAND.appName} — booking form failed on my phone. Please help me book.`,
+      )}`;
       return (
-        this.props.fallback ?? (
-          <div className="flex h-full min-h-[12rem] w-full items-center justify-center bg-[#1a1a1a] p-4 text-center text-sm text-white/80">
-            This part could not load on this device.
-          </div>
-        )
+        <div className="space-y-3 rounded-2xl bg-white p-4 text-center text-black">
+          <p className="text-[15px] font-semibold">Could not load this form</p>
+          <p className="text-[13px] text-[#6B6B6B]">
+            Try again, or book on WhatsApp.
+          </p>
+          <button
+            type="button"
+            onClick={() => this.setState({ error: null })}
+            className="flex min-h-12 w-full items-center justify-center rounded-full bg-black text-[15px] font-semibold text-white"
+          >
+            Try again
+          </button>
+          <a
+            href={wa}
+            className="flex min-h-12 w-full items-center justify-center rounded-full bg-[#25D366] text-[15px] font-semibold text-white"
+          >
+            Book on WhatsApp
+          </a>
+        </div>
       );
     }
     return this.props.children;

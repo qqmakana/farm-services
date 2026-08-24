@@ -1,17 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { AppLink } from "@/components/ui/app-link";
 import { useState, Suspense } from "react";
 import { CalendarClock, Search } from "lucide-react";
 import { CaptureReferral } from "@/components/referral/capture-referral";
 import { HomeScheduleLaterModal } from "@/components/customer/home-schedule-later-modal";
 import { UberServiceCircle } from "@/components/customer/uber-service-circle";
 import { SmartSuggestions } from "@/components/rider/smart-suggestions";
-import {
-  bookingPathForTab,
-  type PlaceSuggestion,
-} from "@/lib/suggestions";
+import { type PlaceSuggestion } from "@/lib/suggestions";
 
 type HomeMode = "ride" | "shops" | "courier";
 
@@ -78,12 +74,11 @@ function hrefForTrip(place?: PlaceSuggestion): string {
 }
 
 export function UberHome() {
-  const router = useRouter();
   const [mode, setMode] = useState<HomeMode>("ride");
   const [laterOpen, setLaterOpen] = useState(false);
 
   function goToPlace(place: PlaceSuggestion) {
-    router.push(hrefForTrip(place));
+    window.location.assign(hrefForTrip(place));
   }
 
   return (
@@ -134,7 +129,7 @@ export function UberHome() {
             );
           }
           return (
-            <Link
+            <AppLink
               key={m.id}
               href={m.href}
               role="tab"
@@ -147,13 +142,13 @@ export function UberHome() {
               }`}
             >
               {inner}
-            </Link>
+            </AppLink>
           );
         })}
       </div>
 
       <div className="mt-5 flex items-center rounded-full bg-white py-1.5 pl-5 pr-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]">
-        <Link
+        <AppLink
           href="/ride"
           data-testid="home-where-to"
           className="uber-press flex min-h-12 flex-1 items-center gap-3 text-left"
@@ -166,7 +161,7 @@ export function UberHome() {
           <span className="text-[17px] font-normal text-[#A6A6A6]">
             Where to?
           </span>
-        </Link>
+        </AppLink>
         <span className="mx-1 h-8 w-px bg-[#EEEEEE]" aria-hidden />
         <button
           type="button"
@@ -184,7 +179,7 @@ export function UberHome() {
           <h2 className="text-[24px] font-bold leading-[1.2] tracking-[-0.3px] text-black">
             For you
           </h2>
-          <Link
+          <AppLink
             href="/services"
             className="uber-press flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] ring-1 ring-[#EEEEEE]"
             aria-label="All services"
@@ -192,7 +187,7 @@ export function UberHome() {
             <span className="text-lg leading-none text-black" aria-hidden>
               ›
             </span>
-          </Link>
+          </AppLink>
         </div>
         <div
           data-testid="service-circles"
@@ -213,18 +208,18 @@ export function UberHome() {
             </div>
           ))}
         </div>
-        <Link
+        <AppLink
           href="/courier"
           data-testid="service-circle-send-items"
           className="sr-only"
         >
           Send items
-        </Link>
+        </AppLink>
       </section>
 
       <SmartSuggestions filter="for-you" onSelectDestination={goToPlace} />
 
-      <Link
+      <AppLink
         href="/ride"
         className="uber-press mt-4 block rounded-2xl bg-black px-4 py-3 text-white"
       >
@@ -232,7 +227,7 @@ export function UberHome() {
         <span className="mt-0.5 block text-[12px] text-white/70">
           Village Pass · cash or PayPal
         </span>
-      </Link>
+      </AppLink>
 
       <HomeScheduleLaterModal
         open={laterOpen}

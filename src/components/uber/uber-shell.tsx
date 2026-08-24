@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
+import { AppLink } from "@/components/ui/app-link";
 import {
   useCallback,
   useEffect,
@@ -177,15 +177,15 @@ export function UberShell({
         <div className="pointer-events-auto flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
             {backHref ? (
-              <Link
+              <AppLink
                 href={backHref}
                 className="uber-press flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#0a0a0a] shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
                 aria-label="Back"
               >
                 <ArrowLeft className="h-5 w-5" strokeWidth={2.2} />
-              </Link>
+              </AppLink>
             ) : (
-              <Link
+              <AppLink
                 href="/"
                 className="uber-press flex items-center gap-2 rounded-full bg-white/95 py-1.5 pr-3.5 pl-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur"
               >
@@ -209,7 +209,7 @@ export function UberShell({
                     {country.currency}
                   </span>
                 </span>
-              </Link>
+              </AppLink>
             )}
           </div>
           {backHref ? (
@@ -221,13 +221,13 @@ export function UberShell({
             </span>
           ) : (
             <div className="flex items-center gap-1.5">
-              <Link
+              <AppLink
                 href="/help"
                 className="uber-press flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-black shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur"
                 aria-label="Help"
               >
                 <HelpCircle className="h-5 w-5" aria-hidden />
-              </Link>
+              </AppLink>
               <div className="rounded-full bg-white/95 p-1 shadow-[0_4px_24px_rgba(0,0,0,0.08)] [&_button]:rounded-full">
                 <ShareAppButton />
               </div>

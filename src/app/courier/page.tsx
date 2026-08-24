@@ -5,6 +5,7 @@ import { BookingTabChrome } from "@/components/customer/booking-tab-chrome";
 import { CourierSheet } from "@/components/uber/courier-sheet";
 import { UberShell } from "@/components/uber/uber-shell";
 import { useBookingMapPin } from "@/components/uber/use-booking-map-pin";
+import { ClientErrorBoundary } from "@/components/ui/client-error-boundary";
 
 function CourierInner() {
   const { pin, setPin, mapTapPin, mapTapToken, onMapPin } = useBookingMapPin();
@@ -23,12 +24,14 @@ function CourierInner() {
       backHref="/"
       title="Courier"
     >
-      <CourierSheet
-        onPinChange={setPin}
-        onDropoffPinChange={setDropoffPin}
-        mapTapPin={mapTapPin}
-        mapTapToken={mapTapToken}
-      />
+      <ClientErrorBoundary>
+        <CourierSheet
+          onPinChange={setPin}
+          onDropoffPinChange={setDropoffPin}
+          mapTapPin={mapTapPin}
+          mapTapToken={mapTapToken}
+        />
+      </ClientErrorBoundary>
     </UberShell>
   );
 }

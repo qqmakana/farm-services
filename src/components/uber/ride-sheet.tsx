@@ -1,8 +1,6 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ChevronDown, User } from "lucide-react";
 import { CheckoutBlock } from "@/components/uber/checkout-block";
@@ -28,6 +26,37 @@ import { formatPhonePlaceholder } from "@/lib/country-preference";
 import { formatMoney } from "@/lib/format";
 import type { VehicleType } from "@/lib/types";
 import { reservationFeeAmount } from "@/lib/pricing";
+import { AppLink } from "@/components/ui/app-link";
+
+function formatWhenLabel(local: string): string {
+  const d = new Date(local);
+  if (Number.isNaN(d.getTime())) return "Later";
+  try {
+    return d.toLocaleString("en-ZA", {
+      weekday: "short",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return local.replace("T", " ");
+  }
+}
+
+function formatEta(eta: string): string {
+  const mins = Number.parseInt(String(eta), 10);
+  if (!Number.isFinite(mins) || mins <= 0) return eta;
+  const d = new Date();
+  d.setMinutes(d.getMinutes() + mins);
+  try {
+    const time = d.toLocaleTimeString("en-ZA", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return `${time} · ${mins} min`;
+  } catch {
+    return `${mins} min`;
+  }
+}
 
 /**
  * Uber-style Ride sheet: Where to? → Choose a ride (photos) → Confirm.
@@ -63,8 +92,12 @@ export function RideSheet({
     searchParams.get("when") === "later" ? "later" : "now",
   );
   const [scheduledLocal, setScheduledLocal] = useState(defaultLaterLocal);
-  const [fee, setFee] = useState(country.pricing.ride.base);
-  const [baseFee, setBaseFee] = useState(country.pricing.ride.base);
+  const rideBase = country.pricing?.ride?.base ?? 15;
+  const deliveryBase = country.pricing?.delivery?.base ?? 25;
+  const motoBase = country.pricing?.motorcycle?.base ?? 12;
+  const localModes = country.localRideModes ?? [];
+  const [fee, setFee] = useState(rideBase);
+  const [baseFee, setBaseFee] = useState(rideBase);
   const [isNight, setIsNight] = useState(false);
   const [nightExtra, setNightExtra] = useState(0);
   const [currency, setCurrency] = useState(country.currency);
@@ -170,7 +203,7 @@ export function RideSheet({
             );
             setEtaLabel(mins <= 1 ? "1 min" : `${mins} min`);
           } else {
-            setFee(country.pricing.ride.base);
+            setFee(country.pricing?.ride?.base ?? 15);
             setEtaLabel("Few min");
           }
         }
@@ -222,20 +255,20 @@ export function RideSheet({
   const selectedLabel = useMemo(() => {
     if (localModeId) {
       return (
-        country.localRideModes.find((m) => m.id === localModeId)?.label ??
+        localModes.find((m) => m.id === localModeId)?.label ??
         "Ride"
       );
     }
     if (vehicle === "bakkie") return "Bakkie";
     return "Village Ride";
-  }, [country.localRideModes, localModeId, vehicle]);
+  }, [localModes, localModeId, vehicle]);
 
   const vehicleOptions = [
     {
       id: "sedan" as VehicleType,
       label: "Village Ride",
       capacity: 4,
-      from: country.pricing.ride.base,
+      from: rideBase,
       modeId: null as string | null,
       image: "/home/sug-ride.jpg",
       eta: etaLabel,
@@ -244,16 +277,16 @@ export function RideSheet({
       id: "bakkie" as VehicleType,
       label: "Bakkie",
       capacity: 6,
-      from: country.pricing.delivery.base,
+      from: deliveryBase,
       modeId: null as string | null,
       image: "/home/sug-farm.jpg",
       eta: etaLabel,
     },
-    ...country.localRideModes.map((m) => ({
+    ...localModes.map((m) => ({
       id: "motorcycle" as VehicleType,
       label: m.label,
       capacity: 1,
-      from: country.pricing.motorcycle.base,
+      from: motoBase,
       modeId: m.id as string,
       image: "/home/sug-courier.jpg",
       eta: "Quick",
@@ -269,13 +302,7 @@ export function RideSheet({
         onDropoff={setDropoff}
         whenMode={whenMode}
         whenLabel={
-          whenMode === "later"
-            ? new Date(scheduledLocal).toLocaleString("en-ZA", {
-                weekday: "short",
-                hour: "numeric",
-                minute: "2-digit",
-              })
-            : undefined
+          whenMode === "later" ? formatWhenLabel(scheduledLocal) : undefined
         }
         forMeLabel={name.trim() ? name.trim().split(" ")[0] : "For me"}
         onToggleWhen={() =>
@@ -326,19 +353,7 @@ export function RideSheet({
               vehicle === opt.id && localModeId === opt.modeId && quoteReady
                 ? fee
                 : opt.from + reserveAddOn;
-            const mins = Number.parseInt(String(opt.eta), 10);
-            const arrival =
-              Number.isFinite(mins) && mins > 0
-                ? (() => {
-                    const d = new Date();
-                    d.setMinutes(d.getMinutes() + mins);
-                    const time = d.toLocaleTimeString("en-ZA", {
-                      hour: "numeric",
-                      minute: "2-digit",
-                    });
-                    return `${time} · ${mins} min`;
-                  })()
-                : opt.eta;
+            const arrival = formatEta(opt.eta);
             return (
               <li key={`${opt.id}-${opt.modeId ?? opt.label}`}>
                 <button
@@ -354,12 +369,11 @@ export function RideSheet({
                   }`}
                 >
                   <span className="relative h-16 w-[4.75rem] shrink-0 overflow-hidden">
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src={opt.image}
                       alt=""
-                      fill
-                      className="object-contain object-center"
-                      sizes="76px"
+                      className="h-16 w-[4.75rem] object-contain object-center"
                     />
                   </span>
                   <span className="min-w-0 flex-1">
@@ -450,12 +464,12 @@ export function RideSheet({
                 countryCode={countryCode}
                 onChange={setRiderPhotoPreview}
               />
-              <Link
+              <AppLink
                 href="/delivery"
                 className="block text-xs font-semibold text-gray-500 underline"
               >
                 Moving goods? Switch to Delivery
-              </Link>
+              </AppLink>
             </>
           ) : null}
         </div>

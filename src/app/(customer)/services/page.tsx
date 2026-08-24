@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/app-link";
 import { OnboardingGate } from "@/components/onboarding/onboarding-gate";
 import {
   UBER_BADGE,
@@ -36,7 +36,7 @@ function ServicesContent() {
 
       <section className="mt-6">
         <h2 className={UBER_H2}>Go anywhere</h2>
-        <Link
+        <AppLink
           href="/ride"
           className={`uber-press relative mt-4 block overflow-hidden rounded-[28px] bg-[#0a0a0a] p-5 text-white ${UBER_GLOSS}`}
         >
@@ -48,7 +48,7 @@ function ServicesContent() {
             Start with Village Pass · Trip, Delivery, Farm or Courier · cash or
             PayPal
           </span>
-        </Link>
+        </AppLink>
         <div className="mt-5 grid grid-cols-4 gap-2">
           {GO_ANYWHERE.map((item) => (
             <UberServiceCircle
@@ -79,7 +79,7 @@ function ServicesContent() {
       <section className="mt-8">
         <h2 className={UBER_H2}>Get Courier to help</h2>
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <Link
+          <AppLink
             href="/courier"
             className={`uber-press relative flex min-h-[9rem] flex-col justify-between overflow-hidden rounded-[28px] p-4 ${UBER_GLOSS}`}
           >
@@ -98,8 +98,8 @@ function ServicesContent() {
               alt=""
               className="h-12 w-12 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)]"
             />
-          </Link>
-          <Link
+          </AppLink>
+          <AppLink
             href="/shops"
             className={`uber-press flex min-h-[9rem] flex-col justify-between rounded-[28px] p-4 ${UBER_GLOSS}`}
           >
@@ -117,7 +117,7 @@ function ServicesContent() {
               alt=""
               className="h-12 w-12 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)]"
             />
-          </Link>
+          </AppLink>
         </div>
       </section>
     </main>
