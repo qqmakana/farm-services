@@ -1,123 +1,170 @@
 "use client";
 
-import { AppLink } from "@/components/ui/app-link";
 import { OnboardingGate } from "@/components/onboarding/onboarding-gate";
+import { UBER_H1 } from "@/components/customer/uber-chrome";
 import {
-  UBER_BADGE,
-  UBER_GLOSS,
-  UBER_H1,
-  UBER_H2,
-  UBER_PAGE,
-} from "@/components/customer/uber-chrome";
-import { UberServiceCircle } from "@/components/customer/uber-service-circle";
+  ArtClinic,
+  ArtFeed,
+  ArtGrocery,
+  ArtGroups,
+  ArtHardware,
+  ArtReserve,
+  ArtSpaza,
+  UberFeatureTile,
+  UberServiceTile,
+} from "@/components/customer/uber-service-tile";
 
-const GO_ANYWHERE = [
-  { href: "/ride", title: "Trip", src: "/home/icons/car.png" },
-  { href: "/ride?when=later", title: "Reserve", src: "/home/icons/car.png" },
-  { href: "/group", title: "Groups", src: "/home/icons/car.png" },
-  { href: "/farm", title: "Farm", src: "/home/icons/farm.png" },
+const GO = [
+  {
+    href: "/ride",
+    title: "Trip",
+    src: "/home/icons/car.png",
+    badge: "20%",
+    testId: "service-circle-trip",
+  },
+  {
+    href: "/ride?when=later",
+    title: "Reserve",
+    art: <ArtReserve />,
+    testId: "service-circle-reserve",
+  },
+  {
+    href: "/group",
+    title: "Groups",
+    art: <ArtGroups />,
+    testId: "service-circle-groups",
+  },
+  {
+    href: "/farm",
+    title: "Farm",
+    src: "/home/icons/farm.png",
+    testId: "service-circle-farm",
+  },
 ] as const;
 
-const DELIVERED = [
-  { href: "/shops", title: "Shops", src: "/home/icons/shops.png" },
-  { href: "/delivery", title: "Delivery", src: "/home/icons/courier.png" },
-  { href: "/courier", title: "Courier", src: "/home/icons/courier.png" },
-  { href: "/farm", title: "Farm", src: "/home/icons/farm.png" },
-  { href: "/shops", title: "Hardware", src: "/home/icons/shops.png" },
-  { href: "/shops", title: "Spaza", src: "/home/icons/shops.png" },
-  { href: "/farm", title: "Feed", src: "/home/icons/farm.png" },
-  { href: "/shops", title: "Clinic run", src: "/home/icons/shops.png" },
+const DELIVERED_ROW1 = [
+  {
+    href: "/shops",
+    title: "Shops",
+    src: "/home/icons/shops.png",
+    testId: "service-circle-shops",
+  },
+  {
+    href: "/delivery",
+    title: "Delivery",
+    src: "/home/icons/courier.png",
+    testId: "service-circle-delivery",
+  },
+  {
+    href: "/delivery?kind=shop",
+    title: "Grocery",
+    art: <ArtGrocery />,
+    testId: "service-circle-grocery",
+  },
+] as const;
+
+const DELIVERED_ROW2 = [
+  {
+    href: "/delivery",
+    title: "Hardware",
+    art: <ArtHardware />,
+    testId: "service-circle-hardware",
+  },
+  {
+    href: "/shops",
+    title: "Spaza",
+    art: <ArtSpaza />,
+    testId: "service-circle-spaza",
+  },
+  {
+    href: "/farm",
+    title: "Feed",
+    art: <ArtFeed />,
+    testId: "service-circle-feed",
+  },
+  {
+    href: "/courier",
+    title: "Clinic",
+    art: <ArtClinic />,
+    testId: "service-circle-clinic",
+  },
 ] as const;
 
 function ServicesContent() {
   return (
-    <main className={UBER_PAGE}>
+    <main
+      data-testid="uber-services"
+      className="ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-40 pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] tracking-[-0.02em] text-black"
+    >
       <h1 className={UBER_H1}>Services</h1>
+      <div className="-mx-4 mt-4 border-b border-[#E8E8E8]" />
 
-      <section className="mt-6">
-        <h2 className={UBER_H2}>Go anywhere</h2>
-        <AppLink
-          href="/ride"
-          className={`uber-press relative mt-4 block overflow-hidden rounded-[28px] bg-[#0a0a0a] p-5 text-white ${UBER_GLOSS}`}
-        >
-          <span className={`absolute top-3 right-3 ${UBER_BADGE}`}>20%</span>
-          <span className="block pr-16 text-[15px] font-bold">
-            Get 20% off 10 trips
-          </span>
-          <span className="mt-1 block pr-16 text-[13px] font-medium text-white/70">
-            Start with Village Pass · Trip, Delivery, Farm or Courier · cash or
-            PayPal
-          </span>
-        </AppLink>
-        <div className="mt-5 grid grid-cols-4 gap-2">
-          {GO_ANYWHERE.map((item) => (
-            <UberServiceCircle
+      <section className="mt-5">
+        <div className="grid grid-cols-4 gap-2.5">
+          {GO.map((item) => (
+            <UberServiceTile
               key={item.title}
               href={item.href}
               label={item.title}
-              src={item.src}
-              testId={`service-circle-${item.title.toLowerCase()}`}
+              src={"src" in item ? item.src : undefined}
+              art={"art" in item ? item.art : undefined}
+              badge={"badge" in item ? item.badge : undefined}
+              knockoutWhite={item.title !== "Trip"}
+              testId={item.testId}
             />
           ))}
         </div>
       </section>
 
       <section className="mt-8">
-        <h2 className={UBER_H2}>Get anything delivered</h2>
-        <div className="mt-5 grid grid-cols-4 gap-x-2 gap-y-5">
-          {DELIVERED.map((item) => (
-            <UberServiceCircle
+        <h2 className="text-[18px] font-bold leading-snug tracking-[-0.2px] text-black">
+          Get anything delivered
+        </h2>
+        <div className="mt-4 grid grid-cols-3 gap-2.5">
+          {DELIVERED_ROW1.map((item) => (
+            <UberServiceTile
               key={item.title}
               href={item.href}
               label={item.title}
-              src={item.src}
+              src={"src" in item ? item.src : undefined}
+              art={"art" in item ? item.art : undefined}
+              knockoutWhite
+              testId={item.testId}
+            />
+          ))}
+        </div>
+        <div className="mt-5 grid grid-cols-4 gap-2.5">
+          {DELIVERED_ROW2.map((item) => (
+            <UberServiceTile
+              key={item.title}
+              href={item.href}
+              label={item.title}
+              art={item.art}
+              testId={item.testId}
             />
           ))}
         </div>
       </section>
 
       <section className="mt-8">
-        <h2 className={UBER_H2}>Get Courier to help</h2>
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <AppLink
+        <h2 className="text-[18px] font-bold leading-snug tracking-[-0.2px] text-black">
+          Get Courier to help
+        </h2>
+        <div className="mt-4 grid grid-cols-2 gap-2.5">
+          <UberFeatureTile
             href="/courier"
-            className={`uber-press relative flex min-h-[9rem] flex-col justify-between overflow-hidden rounded-[28px] p-4 ${UBER_GLOSS}`}
-          >
-            <span className={`absolute top-3 right-3 ${UBER_BADGE}`}>20%</span>
-            <span>
-              <span className="block text-[15px] font-bold text-[#0a0a0a]">
-                Send items
-              </span>
-              <span className="mt-1 block text-[13px] font-medium text-[#6b6b6b]">
-                Documents or small packages, curb-to-curb
-              </span>
-            </span>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/home/icons/courier.png"
-              alt=""
-              className="h-12 w-12 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)]"
-            />
-          </AppLink>
-          <AppLink
+            title="Send items"
+            sub="Documents or a small package"
+            src="/home/icons/courier.png"
+            testId="service-circle-send-items"
+          />
+          <UberFeatureTile
             href="/shops"
-            className={`uber-press flex min-h-[9rem] flex-col justify-between rounded-[28px] p-4 ${UBER_GLOSS}`}
-          >
-            <span>
-              <span className="block text-[15px] font-bold text-[#0a0a0a]">
-                Store pick-up
-              </span>
-              <span className="mt-1 block text-[13px] font-medium text-[#6b6b6b]">
-                Menu order or shop &amp; deliver
-              </span>
-            </span>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/home/icons/shops.png"
-              alt=""
-              className="h-12 w-12 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)]"
-            />
-          </AppLink>
+            title="Store pick-up"
+            sub="I know the shop, or find one"
+            src="/home/icons/shops.png"
+            testId="service-circle-store-pickup"
+          />
         </div>
       </section>
     </main>

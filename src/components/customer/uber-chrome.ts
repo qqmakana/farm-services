@@ -31,5 +31,9 @@ export const UBER_BTN_BLACK =
 export const UBER_CIRCLE =
   "flex items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]";
 
+/** Uber Services square tile — light gray, no border, no shadow. */
+export const UBER_TILE =
+  "relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-[16px] bg-[#F3F3F3]";
+
 export const UBER_BADGE =
   "rounded-full bg-[#CB4040] px-1.5 py-[2px] text-[11px] font-semibold tracking-[0.5px] text-white uppercase";

@@ -162,6 +162,32 @@ test.describe("Home Uber structure", () => {
     await expect(page).toHaveURL(/\/ride/, { timeout: 15_000 });
   });
 
+  test("Services page uses Uber tile layout", async ({ page }) => {
+    await page.goto("/services");
+    await dismissCountryModalIfPresent(page);
+
+    await expect(page.getByTestId("uber-services")).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole("heading", { name: /^Services$/ })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Get anything delivered/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Get Courier to help/i }),
+    ).toBeVisible();
+    await expect(page.getByTestId("service-circle-trip")).toBeVisible();
+    await expect(page.getByTestId("service-circle-shops")).toBeVisible();
+    await expect(page.getByText("Send items")).toBeVisible();
+    await expect(page.getByText("Store pick-up")).toBeVisible();
+    await expect(page.getByTestId("customer-tab-services")).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    await page.screenshot({
+      path: "test-results/services-uber-layout.png",
+      fullPage: true,
+    });
+  });
+
   test("Services page Reserve, Groups, Farm also navigate", async ({
     page,
   }) => {
