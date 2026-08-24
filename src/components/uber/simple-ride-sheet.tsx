@@ -162,7 +162,7 @@ export function SimpleRideSheet({
     customer_name: name || "—",
     customer_phone: phone || "—",
     detailsLine: whenLater ? "Reserve" : "Trip now",
-    paymentLabel: payMethod === "card" ? "Card (PayPal)" : "Cash",
+    paymentLabel: payMethod === "card" ? "Card" : "Cash",
     estimateZar: estimate,
     currencySymbol: country.currencySymbol,
   });

@@ -273,7 +273,7 @@ export function SimpleGoodsSheet({
         : service === "farm"
           ? `${farmType} · ${weight}`
           : `${item} · ${weight}${insured ? " · insured" : ""}`,
-    paymentLabel: payMethod === "card" ? "Card (PayPal)" : "Cash",
+    paymentLabel: payMethod === "card" ? "Card" : "Cash",
     estimateZar: estimate,
     currencySymbol: country.currencySymbol,
   });
