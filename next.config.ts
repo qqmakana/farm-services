@@ -21,6 +21,16 @@ const nextConfig: NextConfig = {
           { key: "Service-Worker-Allowed", value: "/" },
         ],
       },
+      {
+        // Prevent stale HTML shell in TWA after deploys (ride/delivery pages).
+        source: "/((?!_next/static|_next/image|icons/|home/|marketing/).*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store, must-revalidate",
+          },
+        ],
+      },
     ];
   },
 };
