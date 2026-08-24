@@ -37,6 +37,12 @@ test.describe("Home Uber structure", () => {
     await expect(page.getByTestId("service-circle-reserve")).toBeVisible();
     await expect(page.getByTestId("service-circle-groups")).toBeVisible();
     await expect(page.getByTestId("service-circle-delivery")).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Saved places/i })).toBeVisible();
+    await expect(page.getByText(/Order almost anything/i)).toBeVisible();
+    await page.screenshot({
+      path: "test-results/home-uber-layout.png",
+      fullPage: true,
+    });
     await expect(page.getByTestId("smart-suggestions")).toBeVisible({
       timeout: 20_000,
     });

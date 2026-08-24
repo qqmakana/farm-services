@@ -13,6 +13,8 @@ export function UberServiceTile({
   badge,
   testId,
   knockoutWhite = false,
+  primary = false,
+  tileClassName,
 }: {
   href: string;
   label: string;
@@ -21,14 +23,18 @@ export function UberServiceTile({
   badge?: string;
   testId?: string;
   knockoutWhite?: boolean;
+  primary?: boolean;
+  tileClassName?: string;
 }) {
   return (
     <AppLink
       href={href}
       data-testid={testId}
+      data-primary={primary ? "true" : undefined}
+      aria-current={primary ? "page" : undefined}
       className="uber-press flex min-h-12 flex-col items-center"
     >
-      <span className={UBER_TILE}>
+      <span className={`${UBER_TILE} ${tileClassName ?? ""}`}>
         {badge ? (
           <span className={`absolute top-1.5 left-1.5 z-10 ${UBER_BADGE}`}>
             {badge}
@@ -39,15 +45,17 @@ export function UberServiceTile({
           <img
             src={src}
             alt=""
-            className={`pointer-events-none h-[78%] w-[78%] object-contain drop-shadow-[0_8px_14px_rgba(0,0,0,0.18)] ${
-              knockoutWhite ? "mix-blend-multiply" : ""
+            className={`pointer-events-none relative z-[1] h-[78%] w-[78%] object-contain ${
+              knockoutWhite
+                ? "mix-blend-multiply drop-shadow-[0_8px_14px_rgba(0,0,0,0.18)]"
+                : "drop-shadow-[0_4px_8px_rgba(0,0,0,0.45)]"
             }`}
           />
         ) : (
           art
         )}
       </span>
-      <span className="mt-2 text-center text-[13px] font-semibold leading-tight text-[#0a0a0a]">
+      <span className="mt-2 px-0.5 text-center text-[12px] font-semibold leading-tight text-[#0a0a0a]">
         {label}
       </span>
     </AppLink>
@@ -89,6 +97,28 @@ export function UberFeatureTile({
         className="mt-3 h-14 w-14 self-end object-contain mix-blend-multiply drop-shadow-[0_6px_10px_rgba(0,0,0,0.12)]"
       />
     </AppLink>
+  );
+}
+
+export function ArtForYou() {
+  return (
+    <svg viewBox="0 0 64 64" className="h-[58%] w-[58%]" aria-hidden>
+      <circle cx="32" cy="32" r="22" fill="#276EF1" />
+      <path
+        d="M32 16l4.2 12.2L48 32l-11.8 3.8L32 48l-4.2-12.2L16 32l11.8-3.8z"
+        fill="#fff"
+      />
+    </svg>
+  );
+}
+
+export function ArtCourier() {
+  return (
+    <svg viewBox="0 0 64 64" className="h-[62%] w-[62%]" aria-hidden>
+      <rect x="8" y="18" width="48" height="32" rx="4" fill="#fff" stroke="#D2D2D2" strokeWidth="2" />
+      <path d="M8 22l24 16 24-16" fill="none" stroke="#276EF1" strokeWidth="3" />
+      <rect x="38" y="36" width="14" height="10" rx="2" fill="#F6C90E" />
+    </svg>
   );
 }
 

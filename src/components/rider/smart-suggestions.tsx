@@ -276,6 +276,9 @@ export function SmartSuggestions({
 
   return (
     <div data-testid="smart-suggestions" className="mt-4 space-y-4">
+      <h2 className="text-[18px] font-bold leading-snug tracking-[-0.2px] text-black">
+        Saved places
+      </h2>
       <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {display.saved.map((place) => {
           const Icon =

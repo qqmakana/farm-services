@@ -5,7 +5,14 @@ import { useState, Suspense } from "react";
 import { CalendarClock, Search } from "lucide-react";
 import { CaptureReferral } from "@/components/referral/capture-referral";
 import { HomeScheduleLaterModal } from "@/components/customer/home-schedule-later-modal";
-import { UberServiceCircle } from "@/components/customer/uber-service-circle";
+import {
+  ArtCourier,
+  ArtForYou,
+  ArtGroups,
+  ArtReserve,
+  UberFeatureTile,
+  UberServiceTile,
+} from "@/components/customer/uber-service-tile";
 import { SmartSuggestions } from "@/components/rider/smart-suggestions";
 import { DriveSignupCard } from "@/components/driver/drive-signup-card";
 import type { PlaceSuggestion } from "@/lib/suggestions";
@@ -28,31 +35,61 @@ const MODES: {
   },
 ];
 
-/** Each icon opens its service immediately — no double-tap or filter-only taps. */
+/** Square tiles — each service has its own art, not a repeated car. */
 const HOME_SERVICES = [
-  { href: "/", label: "For you", src: "/home/icons/car.png", testId: "service-circle-for-you" },
-  { href: "/ride", label: "Trip", src: "/home/icons/car.png", testId: "service-circle-trip" },
+  {
+    href: "/",
+    label: "For you",
+    art: <ArtForYou />,
+    testId: "service-circle-for-you",
+    primary: true,
+  },
+  {
+    href: "/ride",
+    label: "Trip",
+    src: "/home/icons/car.png",
+    testId: "service-circle-trip",
+    badge: "20%",
+  },
   {
     href: "/ride?when=later",
     label: "Reserve",
-    src: "/home/icons/car.png",
+    art: <ArtReserve />,
     testId: "service-circle-reserve",
   },
-  { href: "/group", label: "Groups", src: "/home/icons/car.png", testId: "service-circle-groups" },
+  {
+    href: "/group",
+    label: "Groups",
+    art: <ArtGroups />,
+    testId: "service-circle-groups",
+  },
   {
     href: "/delivery",
     label: "Delivery",
     src: "/home/icons/courier.png",
     testId: "service-circle-delivery",
+    knockoutWhite: true,
   },
   {
     href: "/courier",
     label: "Courier",
-    src: "/home/icons/courier.png",
+    art: <ArtCourier />,
     testId: "service-circle-courier",
   },
-  { href: "/farm", label: "Farm", src: "/home/icons/farm.png", testId: "service-circle-farm" },
-  { href: "/shops", label: "Shops", src: "/home/icons/shops.png", testId: "service-circle-shops" },
+  {
+    href: "/farm",
+    label: "Farm",
+    src: "/home/icons/farm.png",
+    testId: "service-circle-farm",
+    knockoutWhite: true,
+  },
+  {
+    href: "/shops",
+    label: "Shops",
+    src: "/home/icons/shops.png",
+    testId: "service-circle-shops",
+    knockoutWhite: true,
+  },
 ] as const;
 
 function placeQuery(place?: PlaceSuggestion): string {
@@ -105,7 +142,13 @@ export function UberHome() {
             <>
               <span className="relative block h-10 w-10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={m.src} alt="" className="h-10 w-10 object-contain" />
+                <img
+                  src={m.src}
+                  alt=""
+                  className={`h-10 w-10 object-contain ${
+                    m.id !== "ride" ? "mix-blend-multiply" : ""
+                  }`}
+                />
               </span>
               {m.label}
               {selected ? (
@@ -194,19 +237,22 @@ export function UberHome() {
         </div>
         <div
           data-testid="service-circles"
-          className="mt-4 flex gap-1 overflow-x-auto pb-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="mt-4 flex gap-2.5 overflow-x-auto pb-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="navigation"
           aria-label="Services"
         >
-          {HOME_SERVICES.map((item, i) => (
-            <div key={item.label} className="w-[76px] shrink-0">
-              <UberServiceCircle
+          {HOME_SERVICES.map((item) => (
+            <div key={item.label} className="w-[92px] shrink-0">
+              <UberServiceTile
                 href={item.href}
                 label={item.label}
-                src={item.src}
+                src={"src" in item ? item.src : undefined}
+                art={"art" in item ? item.art : undefined}
+                badge={"badge" in item ? item.badge : undefined}
+                knockoutWhite={"knockoutWhite" in item ? item.knockoutWhite : false}
+                primary={"primary" in item ? item.primary : false}
+                tileClassName={item.label === "Trip" ? "bg-[#E8E8E8]" : undefined}
                 testId={item.testId}
-                size={52}
-                primary={i === 0}
               />
             </div>
           ))}
@@ -220,15 +266,33 @@ export function UberHome() {
         </AppLink>
       </section>
 
+      <div className="mt-4">
+        <UberFeatureTile
+          href="/shops"
+          title="Order almost anything"
+          sub="Shops, grocery lists, or a bakkie for the heavy stuff"
+          src="/home/icons/shops.png"
+        />
+      </div>
+
       <SmartSuggestions filter="for-you" onSelectDestination={goToPlace} />
 
       <AppLink
         href="/ride"
-        className="uber-press mt-4 block rounded-2xl bg-black px-4 py-3 text-white"
+        className="uber-press mt-4 block rounded-[16px] bg-black px-4 py-4 text-white"
       >
-        <span className="text-[13px] font-bold">20% off 10 trips</span>
-        <span className="mt-0.5 block text-[12px] text-white/70">
+        <span className="text-[15px] font-bold">20% off 10 trips</span>
+        <span className="mt-0.5 block text-[13px] text-white/70">
           Village Pass · cash or PayPal
+        </span>
+      </AppLink>
+      <AppLink
+        href="/account"
+        className="uber-press mt-3 block rounded-[16px] bg-[#F3F3F3] px-4 py-4 text-black"
+      >
+        <span className="text-[15px] font-bold">Refer a friend, get R50</span>
+        <span className="mt-0.5 block text-[13px] text-[#6B6B6B]">
+          Share your VR code from Account
         </span>
       </AppLink>
 
