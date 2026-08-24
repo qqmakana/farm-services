@@ -79,6 +79,7 @@ export function GroupTripCard({ trip, showJoin = true }: Props) {
           <p className="mt-2 text-sm font-semibold text-black">
             {formatMoney(perSeat, country.currency, countryCode)} per{" "}
             {trip.kind === "goods" ? "package" : "person"}
+            {trip.kind === "ride" ? " · 60% of a private Trip" : ""}
           </p>
         </div>
         <span

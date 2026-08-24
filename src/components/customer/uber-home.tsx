@@ -7,7 +7,8 @@ import { CaptureReferral } from "@/components/referral/capture-referral";
 import { HomeScheduleLaterModal } from "@/components/customer/home-schedule-later-modal";
 import { UberServiceCircle } from "@/components/customer/uber-service-circle";
 import { SmartSuggestions } from "@/components/rider/smart-suggestions";
-import { type PlaceSuggestion } from "@/lib/suggestions";
+import { DriveSignupCard } from "@/components/driver/drive-signup-card";
+import type { PlaceSuggestion } from "@/lib/suggestions";
 
 type HomeMode = "ride" | "shops" | "courier";
 
@@ -86,6 +87,8 @@ export function UberHome() {
       data-testid="uber-home"
       className="ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-28 pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] text-black"
     >
+      <DriveSignupCard variant="full" className="mb-5" />
+
       <Suspense fallback={null}>
         <CaptureReferral />
       </Suspense>

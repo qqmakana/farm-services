@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { mockRepo } from "./mock-store";
-import { calculateFare, detailsIsExpress, type FareBreakdown } from "./fares";
+import {
+  calculateFare,
+  detailsIsExpress,
+  detailsIsInsured,
+  type FareBreakdown,
+} from "./fares";
 import { getDrivingRoute } from "./mapbox-server";
 import { assertBookingInServiceArea } from "./service-area";
 import { isValidMobileForCountry } from "./phone";
@@ -26,6 +31,7 @@ import {
   isSearchingStatus,
   mergeDriverArrivedDetails,
 } from "./job-status";
+import { mergeTipIntoDetails } from "./tips";
 import {
   applyCommissionToWallet,
   cashPlatformRemittance,
@@ -177,6 +183,7 @@ async function resolveFare(params: {
   weight_category?: string | null;
   details?: unknown;
   is_express?: boolean;
+  apply_insurance?: boolean;
 }): Promise<FareBreakdown> {
   const countryCode = params.country_code || DEFAULT_COUNTRY;
 
@@ -208,6 +215,9 @@ async function resolveFare(params: {
     params.service_type === "ride" && Boolean(params.at);
   const isExpress =
     Boolean(params.is_express) || detailsIsExpress(params.details);
+  const applyInsurance =
+    params.service_type === "delivery" &&
+    (Boolean(params.apply_insurance) || detailsIsInsured(params.details));
 
   if (!pickup || !dropoff) {
     return calculateFare({
@@ -224,6 +234,7 @@ async function resolveFare(params: {
       quoteReady: false,
       applyReservationFee,
       isExpress,
+      applyInsurance,
     });
   }
 
@@ -245,6 +256,7 @@ async function resolveFare(params: {
     quoteReady: true,
     applyReservationFee,
     isExpress,
+    applyInsurance,
   });
 }
 
@@ -260,6 +272,7 @@ export async function quoteFareAction(params: {
   customer_phone?: string | null;
   weight_category?: string | null;
   is_express?: boolean;
+  apply_insurance?: boolean;
   details?: unknown;
 }): Promise<FareBreakdown> {
   return resolveFare(params);
@@ -3463,6 +3476,37 @@ export async function creditDriverWallet(
   if (upErr) throw new Error(upErr.message);
   revalidateAll();
   return data as Driver;
+}
+
+export async function setTripTip(jobId: string, amount: number) {
+  const tip = Math.max(0, Math.round(Number(amount) || 0));
+  if (!useAdmin()) {
+    const job = mockRepo.setTripTip(jobId, tip);
+    revalidateAll();
+    return job;
+  }
+
+  const admin = createAdminClient();
+  const { data: job, error } = await admin
+    .from("rr_jobs")
+    .select("*")
+    .eq("id", jobId)
+    .single();
+  if (error || !job) throw new Error(error?.message ?? "Job not found");
+  if (job.status !== "completed") {
+    throw new Error("Tip after the trip is complete.");
+  }
+
+  const details = mergeTipIntoDetails(job.details, tip);
+  const { data, error: upErr } = await admin
+    .from("rr_jobs")
+    .update({ details, updated_at: new Date().toISOString() })
+    .eq("id", jobId)
+    .select(JOB_WITH_RELATIONS)
+    .single();
+  if (upErr) throw new Error(upErr.message);
+  revalidateAll();
+  return data as JobWithDriver;
 }
 
 export async function rateTrip(jobId: string, stars: number, comment?: string) {

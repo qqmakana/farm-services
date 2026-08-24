@@ -34,6 +34,7 @@ export function VillageMap({
       cars={cars}
       onSelect={onSelect}
       cinematic
+      variant="rider"
     />
   );
 }

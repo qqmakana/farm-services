@@ -9,6 +9,12 @@ import {
 } from "@/lib/actions-group";
 import { GroupTripCard } from "@/components/group/group-trip-card";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
+import {
+  clampGroupRideCapacity,
+  GROUP_MAX_PASSENGERS,
+  GROUP_SEAT_FARE_PCT,
+  groupSeatFare,
+} from "@/lib/pricing";
 import type { GroupTrip, GroupTripKind } from "@/lib/types";
 
 export function DriverGroupTripsView() {
@@ -23,7 +29,8 @@ export function DriverGroupTripsView() {
     route_dropoff: "",
     route_stops: "",
     capacity: "4",
-    price_per_person: "100",
+    private_fare: "100",
+    price_per_person: String(groupSeatFare(100)),
   });
 
   useEffect(() => {
@@ -49,7 +56,7 @@ export function DriverGroupTripsView() {
           route_pickup: form.route_pickup,
           route_dropoff: form.route_dropoff,
           route_stops: stops,
-          capacity: Number(form.capacity) || 4,
+          capacity: clampGroupRideCapacity(form.kind, Number(form.capacity)),
           price_per_person: Number(form.price_per_person) || 0,
           country_code: driver!.country_code || "ZA",
         });
@@ -61,7 +68,8 @@ export function DriverGroupTripsView() {
           route_dropoff: "",
           route_stops: "",
           capacity: "4",
-          price_per_person: "100",
+          private_fare: "100",
+          price_per_person: String(groupSeatFare(100)),
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not create");
@@ -75,8 +83,9 @@ export function DriverGroupTripsView() {
         Group trips
       </h1>
       <p className="mt-1 text-sm text-[var(--ru-muted)]">
-        Create a shared ride or load. Passengers split the cost — you earn the
-        full fare when it runs.
+        Shared passenger rides: max {GROUP_MAX_PASSENGERS} seats, each seat is{" "}
+        {GROUP_SEAT_FARE_PCT}% of a private Trip. You still keep 90% of what
+        riders pay.
       </p>
 
       <form onSubmit={onCreate} className="ru-card mt-5 space-y-3 p-4">
@@ -129,26 +138,43 @@ export function DriverGroupTripsView() {
               required
               type="number"
               min={1}
-              max={40}
+              max={form.kind === "ride" ? GROUP_MAX_PASSENGERS : 40}
               className="ru-input mt-1"
               value={form.capacity}
               onChange={(e) => setForm({ ...form, capacity: e.target.value })}
             />
           </label>
           <label className="text-xs font-medium text-slate-600">
-            Price per person (R)
+            Private Trip fare (R)
             <input
-              required
               type="number"
               min={1}
               className="ru-input mt-1"
-              value={form.price_per_person}
-              onChange={(e) =>
-                setForm({ ...form, price_per_person: e.target.value })
-              }
+              value={form.private_fare}
+              onChange={(e) => {
+                const privateFare = e.target.value;
+                setForm({
+                  ...form,
+                  private_fare: privateFare,
+                  price_per_person: String(groupSeatFare(Number(privateFare) || 0)),
+                });
+              }}
             />
           </label>
         </div>
+        <label className="text-xs font-medium text-slate-600">
+          Seat price ({GROUP_SEAT_FARE_PCT}% of private)
+          <input
+            required
+            type="number"
+            min={1}
+            className="ru-input mt-1"
+            value={form.price_per_person}
+            onChange={(e) =>
+              setForm({ ...form, price_per_person: e.target.value })
+            }
+          />
+        </label>
         <button
           type="submit"
           disabled={pending}

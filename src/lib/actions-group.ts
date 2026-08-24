@@ -7,6 +7,7 @@ import { DEFAULT_COUNTRY, getCountry } from "./countries";
 import { sendPushToToken } from "./firebase/admin";
 import { createAdminClient, hasServiceRole } from "./supabase/admin";
 import { isSupabaseConfigured } from "./supabase/server";
+import { clampGroupRideCapacity } from "./pricing";
 import type {
   CreateGroupTripInput,
   Driver,
@@ -78,7 +79,10 @@ export async function createGroupTrip(
   if (!input.route_pickup?.trim() || !input.route_dropoff?.trim()) {
     throw new Error("Pickup and dropoff are required.");
   }
-  const capacity = Math.max(1, Math.min(40, Math.floor(Number(input.capacity))));
+  const capacity = clampGroupRideCapacity(
+    input.kind,
+    Number(input.capacity),
+  );
   const price = Math.max(0, Number(input.price_per_person) || 0);
   if (price <= 0) throw new Error("Price per person must be greater than 0.");
 

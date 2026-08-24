@@ -38,23 +38,27 @@ export default function DriverLandingPage() {
       <main className="mx-auto max-w-6xl space-y-8 px-4 py-8 pb-16">
         <div>
           <p className="text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">
-            Driver app
+            Driver signup
           </p>
           <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight">
-            Apply · go online · earn
+            Sign up to drive
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            New drivers apply first. Approved drivers open the premium driver
-            app — map, jobs, wallet, account.
+            Apply below. Keep 90%. After approval, open the driver app to go
+            online.
           </p>
         </div>
 
-        <section className="rounded-xl border border-emerald-100 bg-white p-5 shadow-sm">
+        <div id="apply">
+          <DriverApplyForm compactTitle="Apply to drive" />
+        </div>
+
+        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-bold text-slate-900">
-            Open driver app
+            Already approved?
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            Select your approved profile to enter the 4-tab driver shell.
+            Select your profile to go online.
           </p>
           <label className="mt-4 block text-sm font-medium text-slate-700">
             Driver
@@ -88,8 +92,6 @@ export default function DriverLandingPage() {
             </Link>
           </div>
         </section>
-
-        <DriverApplyForm />
       </main>
     </>
   );

@@ -16,6 +16,10 @@ test.describe("Home Uber structure", () => {
     await dismissCountryModalIfPresent(page);
 
     await expect(page.getByTestId("uber-home")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("drive-signup-card")).toBeVisible();
+    await expect(page.getByTestId("home-drive-signup-cta")).toHaveText(
+      /Sign up to drive/i,
+    );
     await expect(page.getByTestId("home-mode-tabs")).toBeVisible();
     await expect(page.getByRole("tab", { name: /^Ride$/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: /For you/i })).toBeVisible();
@@ -99,6 +103,19 @@ test.describe("Home Uber structure", () => {
     });
   });
 
+  test("home Sign up to drive opens join", async ({ page }) => {
+    await page.goto("/");
+    await dismissCountryModalIfPresent(page);
+
+    const cta = page.getByTestId("home-drive-signup-cta");
+    await expect(cta).toBeVisible({ timeout: 15_000 });
+    await cta.click();
+    await expect(page).toHaveURL(/\/driver\/join/, { timeout: 45_000 });
+    await expect(
+      page.getByRole("heading", { name: /Drive with/i }),
+    ).toBeVisible({ timeout: 15_000 });
+  });
+
   test("Earn by driving is on Account and opens join", async ({ page }) => {
     await page.goto("/account");
     await dismissCountryModalIfPresent(page);
@@ -157,6 +174,7 @@ test.describe("Home Uber structure", () => {
     await page.goto("/services");
     await page.getByTestId("service-circle-groups").click();
     await expect(page).toHaveURL(/\/group/, { timeout: 15_000 });
+    await expect(page.getByText(/60% of a private Trip/i)).toBeVisible();
 
     await page.goto("/services");
     await page.getByTestId("service-circle-farm").click();
@@ -183,6 +201,7 @@ test.describe("Home Uber structure", () => {
     await expect(page.getByRole("heading", { name: /^Delivery$/i })).toBeVisible(
       { timeout: 15_000 },
     );
+    await expect(page.getByTestId("delivery-insurance-on")).toBeVisible();
 
     await page.goto("/farm");
     await dismissCountryModalIfPresent(page);
@@ -195,5 +214,7 @@ test.describe("Home Uber structure", () => {
     await expect(page.getByText(/Shop & Deliver/i).first()).toBeVisible({
       timeout: 15_000,
     });
+    await expect(page.getByTestId("shop-know")).toBeVisible();
+    await expect(page.getByTestId("shop-find")).toBeVisible();
   });
 });

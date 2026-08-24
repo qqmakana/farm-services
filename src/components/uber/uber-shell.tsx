@@ -25,7 +25,7 @@ const VillageMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full w-full items-center justify-center bg-[#1b2433] text-sm text-white/70">
+      <div className="flex h-full w-full items-center justify-center bg-[#e8e8e8] text-sm text-black/50">
         Loading map…
       </div>
     ),

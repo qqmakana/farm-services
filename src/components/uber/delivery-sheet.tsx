@@ -75,6 +75,8 @@ export function DeliverySheet({
   const [currency, setCurrency] = useState(country.currency);
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [quoteReady, setQuoteReady] = useState(false);
+  const [insured, setInsured] = useState(false);
+  const [insuranceFee, setInsuranceFee] = useState(0);
 
   const atIso = useMemo(
     () =>
@@ -138,6 +140,7 @@ export function DeliverySheet({
           at: atIso,
           customer_phone: senderPhone || getGuestProfile()?.phone || null,
           weight_category: weight,
+          details: { insurance: insured },
         });
         if (!cancelled) {
           setQuoteError(null);
@@ -152,6 +155,7 @@ export function DeliverySheet({
           setIsNight(fare.is_night_ride);
           setFee(fare.fee_amount);
           setCurrency(fare.currency);
+          setInsuranceFee(fare.insurance_fee);
         }
       } catch (err) {
         if (!cancelled) {
@@ -165,7 +169,7 @@ export function DeliverySheet({
     return () => {
       cancelled = true;
     };
-  }, [vehicle, weight, pickup.lat, pickup.lng, dropoff.lat, dropoff.lng, atIso, countryCode, senderPhone]);
+  }, [vehicle, weight, pickup.lat, pickup.lng, dropoff.lat, dropoff.lng, atIso, countryCode, senderPhone, insured]);
 
   const itemLabel =
     shopMode && shoppingList.trim()
@@ -328,6 +332,36 @@ export function DeliverySheet({
         serviceLabel="delivery"
       />
 
+      <div>
+        <p className="text-sm font-semibold text-black">Goods insurance</p>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            data-testid="delivery-insurance-off"
+            onClick={() => setInsured(false)}
+            className={`uber-press min-h-12 rounded-full px-3 text-sm font-bold ${
+              !insured ? "bg-black text-white" : "bg-gray-100 text-gray-700"
+            }`}
+          >
+            No cover
+          </button>
+          <button
+            type="button"
+            data-testid="delivery-insurance-on"
+            onClick={() => setInsured(true)}
+            className={`uber-press min-h-12 rounded-full px-3 text-sm font-bold ${
+              insured ? "bg-black text-white" : "bg-gray-100 text-gray-700"
+            }`}
+          >
+            Add cover
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-gray-500">
+          Optional cover for loss or damage in transit. Added to the delivery
+          fee before the 90/10 split.
+        </p>
+      </div>
+
       <label className="block text-sm font-semibold text-[#000000]">
         Special notes
         <textarea
@@ -351,6 +385,7 @@ export function DeliverySheet({
         currency={currency}
         villagePass={villagePass}
         distanceKm={distanceKm}
+        insuranceFee={insuranceFee}
       />
 
       {quoteError ? (
@@ -395,6 +430,7 @@ export function DeliverySheet({
               shopMode &&
                 "Shop & Deliver — rider pays goods at till; Village Ride delivery fee only",
               "Photo proof at pickup and drop-off",
+              insured && "Goods insurance included",
               isNight && "Night Ride (Premium) — after-hours safety surcharge",
               recipientName.trim() && `Recipient: ${recipientName.trim()}`,
               recipientPhone.trim() && `Recipient phone: ${recipientPhone.trim()}`,
@@ -418,6 +454,7 @@ export function DeliverySheet({
             recipient_name: recipientName.trim() || undefined,
             recipient_phone: recipientPhone.trim() || undefined,
             photo_proof_requested: true,
+            insurance: insured,
             ...(shopMode
               ? {
                   shop_mode: "shop_and_deliver" as const,

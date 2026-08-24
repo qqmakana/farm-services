@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { ConditionalFooter } from "@/components/conditional-footer";
 import { CountryProvider } from "@/components/country/country-provider";
 import { CountryWelcomeModal } from "@/components/country/country-selector";
+import { DriverWantedNotice } from "@/components/driver-wanted-notice";
 import { UnsupportedMarketNotice } from "@/components/country/unsupported-market-notice";
 import { InstallShareBar } from "@/components/install-share-bar";
 import { PwaRegister } from "@/components/pwa-register";
@@ -110,6 +111,7 @@ export default function RootLayout({
                 <InstallShareBar />
                 <WhatsAppFloat />
                 <CountryWelcomeModal />
+                <DriverWantedNotice />
                 <UnsupportedMarketNotice />
               </PhoneFrame>
             </ToastProvider>

@@ -9,7 +9,6 @@ import {
   listIncomingOffers,
   saveDriverFcmToken,
   setDriverOnline,
-  updateDriverLocation,
 } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
 import { OutOfFuelPanel } from "@/components/driver/out-of-fuel-panel";
@@ -35,6 +34,7 @@ import {
   isApproachingCreditLimit,
   walletCreditFloor,
 } from "@/lib/wallet";
+import { useDriverGpsPing } from "@/components/driver/use-driver-gps";
 import {
   getDriverVerificationUiStatus,
   VERIFICATION_BLOCK_MESSAGE,
@@ -83,24 +83,10 @@ export function DriverHomeView() {
     return () => clearInterval(t);
   }, [loadOffers]);
 
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-    const watch = navigator.geolocation.watchPosition(
-      (pos) => {
-        const next = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        };
-        setCoords(next);
-        if (driverId && driver?.is_online) {
-          void updateDriverLocation(driverId, next.lat, next.lng);
-        }
-      },
-      () => undefined,
-      { enableHighAccuracy: true, maximumAge: 5000 },
-    );
-    return () => navigator.geolocation.clearWatch(watch);
-  }, [driverId, driver?.is_online]);
+  const onGps = useCallback((lat: number, lng: number) => {
+    setCoords({ lat, lng });
+  }, []);
+  useDriverGpsPing(driverId, Boolean(driver?.is_online), onGps);
 
   const driverLoc =
     coords ??

@@ -18,6 +18,8 @@ export async function prepareBrowserContext(context: BrowserContext) {
       localStorage.setItem("vr_onboarding_seen_v1", "1");
       // Skip driver first-login guide in general E2E.
       localStorage.setItem("vr_driver_onboarding_seen_v1", "1");
+      // Signup overlay is on home for real users; skip in E2E so other tests can click.
+      localStorage.setItem("vr_driver_wanted_notice_v1", "1");
     } catch (e) {}
     try {
       Object.defineProperty(window.Notification, "permission", {

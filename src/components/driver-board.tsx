@@ -12,7 +12,6 @@ import {
   saveDriverFcmToken,
   setDriverOnline,
   startTrip,
-  updateDriverLocation,
 } from "@/lib/actions";
 import {
   formatMoney,
@@ -23,6 +22,7 @@ import {
 } from "@/lib/format";
 import { DriverPushPrompt } from "@/components/driver-push-prompt";
 import { DriverTrustPanel } from "@/components/driver-trust-panel";
+import { useDriverGpsPing } from "@/components/driver/use-driver-gps";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
 import { BRAND } from "@/lib/brand";
 import {
@@ -89,22 +89,7 @@ export function DriverBoard({
     return () => clearInterval(t);
   }, [driverId, jobs, refreshDriverViews]);
 
-  useEffect(() => {
-    if (!driver?.is_online || !driverId) return;
-    if (!navigator.geolocation) return;
-    const watch = navigator.geolocation.watchPosition(
-      (pos) => {
-        void updateDriverLocation(
-          driverId,
-          pos.coords.latitude,
-          pos.coords.longitude,
-        );
-      },
-      () => undefined,
-      { enableHighAccuracy: true, maximumAge: 5000 },
-    );
-    return () => navigator.geolocation.clearWatch(watch);
-  }, [driver?.is_online, driverId]);
+  useDriverGpsPing(driverId, Boolean(driver?.is_online));
 
   function run(fn: () => Promise<unknown>) {
     setError(null);

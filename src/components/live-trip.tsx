@@ -14,6 +14,7 @@ import {
   getRatingForJob,
   rateTrip,
   saveCustomerFcmToken,
+  setTripTip,
   triggerSos,
 } from "@/lib/actions";
 import { MessageCircle, Phone, Star } from "lucide-react";
@@ -49,6 +50,7 @@ import {
   tripWhatsAppHref,
 } from "@/lib/trip-quick-replies";
 import type { JobStatus, JobWithDriver, Rating } from "@/lib/types";
+import { tipAmountFromDetails, tipPresetAmounts } from "@/lib/tips";
 
 const TripLiveMap = dynamic(
   () =>
@@ -56,7 +58,7 @@ const TripLiveMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full min-h-[220px] w-full items-center justify-center bg-[#1b2433] text-sm text-white/70">
+      <div className="flex h-full min-h-[220px] w-full items-center justify-center bg-[#e8e8e8] text-sm text-black/50">
         Loading map…
       </div>
     ),
@@ -90,6 +92,9 @@ export function LiveTrip({
   const [rating, setRating] = useState(initialRating);
   const [stars, setStars] = useState(5);
   const [comment, setComment] = useState("");
+  const [tipChoice, setTipChoice] = useState<number | null>(
+    tipAmountFromDetails(initialJob.details),
+  );
   const [pending, startTransition] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -160,6 +165,26 @@ export function LiveTrip({
     `Hi ${job.drivers?.full_name?.split(" ")[0] || "there"} — I'm your Village Ride rider for ${job.reference_code}. Pickup: ${job.pickup_landmark}`,
     job.country_code,
   );
+
+  function submitTip() {
+    setMsg(null);
+    const amount = tipChoice ?? 0;
+    startTransition(async () => {
+      try {
+        const next = await setTripTip(job.id, amount);
+        setJob(next);
+        setTipChoice(tipAmountFromDetails(next.details));
+        setMsg(
+          amount > 0
+            ? `Tip saved — pay the driver ${formatMoney(amount)} in cash. 100% theirs.`
+            : "No tip. You can still rate the driver.",
+        );
+        router.refresh();
+      } catch (e) {
+        setMsg(e instanceof Error ? e.message : "Could not save tip");
+      }
+    });
+  }
 
   function submitRating() {
     setMsg(null);
@@ -681,6 +706,14 @@ export function LiveTrip({
             </span>
           </span>
         </div>
+        {tipAmountFromDetails(job.details) != null ? (
+          <div className="flex justify-between gap-3">
+            <span className="text-[var(--ru-muted)]">Tip (cash to driver)</span>
+            <span className="font-semibold text-black">
+              {formatMoney(tipAmountFromDetails(job.details) ?? 0)}
+            </span>
+          </div>
+        ) : null}
         {showCashReminder ? (
           <p className="rounded-xl bg-[var(--ru-elevated)] px-3 py-2 text-xs font-medium text-black">
             Pay the driver {formatMoney(Number(job.fee_amount))} in cash
@@ -750,6 +783,48 @@ export function LiveTrip({
           </div>
         )}
       </div>
+
+      {job.status === "completed" && tipAmountFromDetails(job.details) == null ? (
+        <div
+          data-testid="tip-selector"
+          className="rounded-2xl bg-gray-50 space-y-3 p-5"
+        >
+          <h2 className="font-semibold text-black">Add a tip</h2>
+          <p className="text-xs text-[var(--ru-muted)]">
+            100% goes to the driver. Pay them in cash — not taken from the
+            Village Ride fare.
+          </p>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Tip amount">
+            {tipPresetAmounts(job.country_code).map((n) => (
+              <button
+                key={n}
+                type="button"
+                data-testid={`tip-${n}`}
+                aria-pressed={tipChoice === n}
+                onClick={() => setTipChoice(n)}
+                className={`uber-press min-h-11 rounded-full px-4 text-sm font-bold ${
+                  tipChoice === n
+                    ? "bg-black text-white"
+                    : "bg-white text-black ring-1 ring-gray-200"
+                }`}
+              >
+                {n === 0 ? "No tip" : formatMoney(n)}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            data-testid="tip-pay"
+            disabled={pending || tipChoice == null}
+            onClick={submitTip}
+            className="uber-press uber-btn-black w-full"
+          >
+            {tipChoice && tipChoice > 0
+              ? `Confirm ${formatMoney(tipChoice)} tip`
+              : "Confirm no tip"}
+          </button>
+        </div>
+      ) : null}
 
       {job.status === "completed" && !rating && (
         <div className="rounded-2xl bg-gray-50 space-y-3 p-5">

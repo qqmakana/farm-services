@@ -16,7 +16,7 @@ export const SERVICE_COPY = {
   groups: {
     title: "Groups",
     blurb:
-      "Share a ride with others going the same way. Drivers publish open seats — you join and split the cost.",
+      "Share a ride with others going the same way — max 4 passengers, 60% of a private Trip fare.",
   },
   delivery: {
     title: "Delivery",
@@ -36,16 +36,16 @@ export const SERVICE_COPY = {
   shops: {
     title: "Shops",
     blurb:
-      "Order from a local menu, or send a shopping list. You pay for goods at the shop. Village Ride only charges the delivery fee — cash or PayPal.",
+      "I know the shop — send a shopping list. Or find a shop for me from menus nearby. You pay for goods at the shop. Village Ride only charges the delivery fee — cash or PayPal.",
   },
   shopAndDeliver: {
-    title: "Shop & Deliver",
+    title: "I know the shop",
     blurb:
-      "Write a list and a shop name. The driver buys the items (you pay at the till) and brings them to you. Village Ride charges the delivery fee only.",
+      "Write the shop name and a shopping list. The driver buys the items (you pay at the till) and brings them to you. Village Ride charges the delivery fee only.",
   },
   restaurantPickup: {
-    title: "Restaurant & store pickup",
+    title: "Find a shop for me",
     blurb:
-      "Order from a local kitchen or store menu. The driver collects prepared food or goods and delivers.",
+      "Browse local kitchens and stores. The driver collects prepared food or goods and delivers.",
   },
 } as const;

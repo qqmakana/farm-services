@@ -21,6 +21,12 @@ export function detailsIsExpress(details: unknown): boolean {
   return Boolean((details as { is_express?: unknown }).is_express);
 }
 
+export function detailsIsInsured(details: unknown): boolean {
+  if (!details || typeof details !== "object") return false;
+  const d = details as { insurance?: unknown; insured?: unknown };
+  return Boolean(d.insurance) || Boolean(d.insured);
+}
+
 export type FareBreakdown = {
   /**
    * Total the rider pays (cash or card). 90/10 is taken from this, not added.
@@ -57,6 +63,7 @@ export type FareBreakdown = {
   reservation_fee: number;
   express_extra: number;
   express_multiplier: number;
+  insurance_fee: number;
 };
 
 /** Server-side fare — never trust client fee for charging. */
@@ -78,6 +85,7 @@ export function calculateFare(params: {
   quoteReady?: boolean;
   applyReservationFee?: boolean;
   isExpress?: boolean;
+  applyInsurance?: boolean;
   /** @deprecated Prefer unified pricing; ignored when serviceType set */
   rules?: {
     base_fare: number;
@@ -131,6 +139,7 @@ export function calculateFare(params: {
     nightSurchargePct: night ? NIGHT_SURCHARGE_PCT : 0,
     applyReservationFee: Boolean(params.applyReservationFee),
     isExpress: Boolean(params.isExpress),
+    applyInsurance: Boolean(params.applyInsurance),
   });
 
   // Rider pays `total_fare`. Platform 10% is stored as platform_commission
@@ -161,5 +170,6 @@ export function calculateFare(params: {
     reservation_fee: unified.reservation_fee,
     express_extra: unified.express_extra,
     express_multiplier: unified.express_multiplier,
+    insurance_fee: unified.insurance_fee,
   };
 }

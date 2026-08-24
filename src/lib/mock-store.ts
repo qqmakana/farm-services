@@ -32,6 +32,7 @@ import { distanceKm, jitterLatLng } from "./geo";
 import { calculateFare } from "./fares";
 import { isValidMobileForCountry } from "./phone";
 import { DEFAULT_COUNTRY, getCountry } from "./countries";
+import { clampGroupRideCapacity } from "./pricing";
 import { rankDriversWithExpandingRadius } from "./dispatch-score";
 import {
   driverHasArrived,
@@ -1578,6 +1579,23 @@ export const mockRepo = {
     return driver;
   },
 
+  setTripTip(jobId: string, amount: number): JobWithDriver {
+    const job = store().jobs.find((j) => j.id === jobId);
+    if (!job) throw new Error("Job not found");
+    if (job.status !== "completed") {
+      throw new Error("Tip after the trip is complete.");
+    }
+    const tip = Math.max(0, Math.round(Number(amount) || 0));
+    const base =
+      job.details && typeof job.details === "object"
+        ? { ...(job.details as Record<string, unknown>) }
+        : {};
+    base.tip_amount = tip;
+    job.details = base as Job["details"];
+    job.updated_at = new Date().toISOString();
+    return withDriver(job);
+  },
+
   rateTrip(jobId: string, stars: number, comment?: string): Rating {
     const job = store().jobs.find((j) => j.id === jobId);
     if (!job) throw new Error("Job not found");
@@ -1928,7 +1946,7 @@ export const mockRepo = {
   },
 
   createGroupTrip(input: CreateGroupTripInput): GroupTrip {
-    const capacity = Math.max(1, Math.min(40, Math.floor(input.capacity)));
+    const capacity = clampGroupRideCapacity(input.kind, input.capacity);
     const price = Math.max(0, Number(input.price_per_person) || 0);
     const trip: GroupTrip = {
       id: uid(),

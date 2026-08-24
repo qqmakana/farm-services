@@ -54,6 +54,12 @@ export const DRIVER_SHARE_PCT = 90;
 export const RIDE_INCLUDED_KM = 2;
 /** Scheduled Trip (Reserve) — ZA rands, scaled per market. Applied before 90/10. */
 export const ZA_RESERVATION_FEE = 10;
+/** Optional goods cover on Delivery — ZA rands, scaled per market. */
+export const ZA_DELIVERY_INSURANCE_FEE = 15;
+/** Shared Groups seat vs a private Trip. */
+export const GROUP_SEAT_FARE_PCT = 60;
+/** Passenger group rides — max seats. */
+export const GROUP_MAX_PASSENGERS = 4;
 /** Courier express: 1.5× distance fare, under ~30 min target. */
 export const COURIER_EXPRESS_MULTIPLIER = 1.5;
 
@@ -106,6 +112,27 @@ export function scaleAmount(zarAmount: number, countryCode?: string | null): num
 
 export function reservationFeeAmount(countryCode?: string | null): number {
   return scaleAmount(ZA_RESERVATION_FEE, countryCode);
+}
+
+export function deliveryInsuranceFeeAmount(
+  countryCode?: string | null,
+): number {
+  return scaleAmount(ZA_DELIVERY_INSURANCE_FEE, countryCode);
+}
+
+/** Shared Groups seat = 60% of the equivalent private Trip fare. */
+export function groupSeatFare(privateFare: number): number {
+  const privateAmt = Math.max(0, Math.round(Number(privateFare) || 0));
+  return Math.max(1, Math.round((privateAmt * GROUP_SEAT_FARE_PCT) / 100));
+}
+
+export function clampGroupRideCapacity(
+  kind: string,
+  capacity: number,
+): number {
+  const n = Math.max(1, Math.floor(Number(capacity) || 1));
+  if (kind === "ride") return Math.min(GROUP_MAX_PASSENGERS, n);
+  return Math.min(40, n);
 }
 
 export function normalizeWeightCategory(
@@ -212,6 +239,8 @@ export type UnifiedFareBreakdown = {
   /** Extra from courier express (0 unless 1.5×). */
   express_extra: number;
   express_multiplier: number;
+  /** Optional delivery goods cover (0 unless toggled). */
+  insurance_fee: number;
 };
 
 /**
@@ -229,6 +258,8 @@ export function calculateUnifiedFare(params: {
   applyReservationFee?: boolean;
   /** Courier express — 1.5× after reservation, before night. */
   isExpress?: boolean;
+  /** Delivery goods cover — adds scaled R15 before 90/10. */
+  applyInsurance?: boolean;
 }): UnifiedFareBreakdown {
   const rate = getServiceRate({
     serviceType: params.serviceType,
@@ -245,6 +276,12 @@ export function calculateUnifiedFare(params: {
     ? scaleAmount(ZA_RESERVATION_FEE, params.countryCode)
     : 0;
   riderRaw += reservationFee;
+
+  const insuranceFee =
+    params.applyInsurance && params.serviceType === "delivery"
+      ? scaleAmount(ZA_DELIVERY_INSURANCE_FEE, params.countryCode)
+      : 0;
+  riderRaw += insuranceFee;
 
   let expressExtra = 0;
   let expressMultiplier = 1;
@@ -279,6 +316,7 @@ export function calculateUnifiedFare(params: {
     reservation_fee: reservationFee,
     express_extra: expressExtra,
     express_multiplier: expressMultiplier,
+    insurance_fee: insuranceFee,
   };
 }
 

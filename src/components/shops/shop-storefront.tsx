@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/app-link";
 import { Clock, Star, Store } from "lucide-react";
 import type { Shop } from "@/lib/types";
 import { SERVICE_COPY } from "@/lib/service-guide";
@@ -27,29 +27,36 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
       </header>
 
       <div className="grid grid-cols-1 gap-3">
-        <Link
+        <AppLink
           href="/delivery?kind=shop"
+          data-testid="shop-know"
           className={`uber-press rounded-[28px] p-4 ${UBER_GLOSS}`}
         >
           <p className="text-[15px] font-bold text-[#0a0a0a]">
-            {SERVICE_COPY.shopAndDeliver.title}
+            I know the shop
           </p>
           <p className="mt-1 text-[13px] font-medium text-[#6b6b6b]">
-            Send a list. Pay for groceries at the till. Delivery fee via cash or
-            PayPal — nothing held in escrow.
+            Shop & Deliver — send a list and the shop name. Pay for groceries
+            at the till. Village Ride charges the delivery fee only.
           </p>
-        </Link>
-        <div className={`rounded-[28px] p-4 ${UBER_GLOSS}`}>
+        </AppLink>
+        <a
+          href="#find-shop"
+          data-testid="shop-find"
+          className={`uber-press rounded-[28px] p-4 ${UBER_GLOSS}`}
+        >
           <p className="text-[15px] font-bold text-[#0a0a0a]">
-            {SERVICE_COPY.restaurantPickup.title}
+            Find a shop for me
           </p>
           <p className="mt-1 text-[13px] font-medium text-[#6b6b6b]">
             {SERVICE_COPY.restaurantPickup.blurb}
           </p>
-        </div>
+        </a>
       </div>
 
-      <h2 className="text-[17px] font-bold text-[#0a0a0a]">Menus near you</h2>
+      <h2 id="find-shop" className="scroll-mt-24 text-[17px] font-bold text-[#0a0a0a]">
+        Menus near you
+      </h2>
 
       {shops.length === 0 ? (
         <div className={`rounded-[28px] px-4 py-10 text-center ${UBER_GLOSS}`}>
@@ -57,11 +64,17 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
           <p className="mt-3 text-[15px] font-bold text-[#0a0a0a]">
             No shops nearby yet
           </p>
+          <AppLink
+            href="/delivery?kind=shop"
+            className="uber-press mt-4 inline-flex min-h-11 items-center rounded-full bg-black px-4 text-sm font-bold text-white"
+          >
+            I know the shop — send a list
+          </AppLink>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {shops.map((shop, i) => (
-            <Link
+            <AppLink
               key={shop.id}
               href={`/shops/${shop.id}`}
               className={`uber-press group overflow-hidden rounded-[28px] ${UBER_GLOSS}`}
@@ -102,7 +115,7 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
                   )}
                 </div>
               </div>
-            </Link>
+            </AppLink>
           ))}
         </div>
       )}

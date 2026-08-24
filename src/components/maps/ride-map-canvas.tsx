@@ -4,9 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import mapboxgl, { type GeoJSONSource } from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import {
-  MAPBOX_STYLE,
+  MAPBOX_STYLE_DRIVER,
+  MAPBOX_STYLE_RIDER,
   MAPBOX_TOKEN,
   type MapPin,
+  type MapStyleVariant,
 } from "@/lib/mapbox";
 import { getDrivingRouteAction } from "@/lib/actions-mapbox";
 
@@ -31,7 +33,7 @@ function emptyRoute() {
   return { type: "FeatureCollection" as const, features: [] };
 }
 
-function add3dBuildings(map: mapboxgl.Map) {
+function add3dBuildings(map: mapboxgl.Map, variant: "rider" | "driver") {
   if (map.getLayer("vr-3d-buildings")) return;
   if (!map.getSource("composite")) return;
   try {
@@ -56,7 +58,7 @@ function add3dBuildings(map: mapboxgl.Map) {
       type: "fill-extrusion",
       minzoom: 13,
       paint: {
-        "fill-extrusion-color": "#222222",
+        "fill-extrusion-color": variant === "driver" ? "#222222" : "#c8c8c8",
         "fill-extrusion-height": ["get", "height"],
         "fill-extrusion-base": ["get", "min_height"],
         "fill-extrusion-opacity": 0.82,
@@ -66,12 +68,16 @@ function add3dBuildings(map: mapboxgl.Map) {
   );
 }
 
-function configureBasemap(map: mapboxgl.Map, cinematic: boolean) {
+function configureBasemap(
+  map: mapboxgl.Map,
+  cinematic: boolean,
+  variant: "rider" | "driver",
+) {
   if (cinematic && typeof window !== "undefined") {
     const lowEnd =
       (navigator as Navigator & { deviceMemory?: number }).deviceMemory != null &&
       (navigator as Navigator & { deviceMemory?: number }).deviceMemory! <= 2;
-    if (!lowEnd) add3dBuildings(map);
+    if (!lowEnd) add3dBuildings(map, variant);
   }
 }
 
@@ -79,7 +85,6 @@ function ensureRouteLayer(map: mapboxgl.Map) {
   if (map.getSource("vr-route")) return;
   map.addSource("vr-route", {
     type: "geojson",
-    lineMetrics: true,
     data: emptyRoute(),
   });
   map.addLayer({
@@ -100,16 +105,9 @@ function ensureRouteLayer(map: mapboxgl.Map) {
     source: "vr-route",
     layout: { "line-cap": "round", "line-join": "round" },
     paint: {
-      "line-width": 4.5,
-      "line-gradient": [
-        "interpolate",
-        ["linear"],
-        ["line-progress"],
-        0,
-        "#111111",
-        1,
-        "#276EF1",
-      ],
+      "line-width": 4,
+      "line-opacity": 0.8,
+      "line-color": "#276EF1",
     },
   });
 }
@@ -124,6 +122,7 @@ export function RideMapCanvas({
   onSelect,
   onSelectJob,
   cinematic = true,
+  variant = "rider",
   className = "",
 }: {
   center: MapPin;
@@ -135,6 +134,7 @@ export function RideMapCanvas({
   onSelect?: (pin: MapPin) => void;
   onSelectJob?: (id: string) => void;
   cinematic?: boolean;
+  variant?: MapStyleVariant;
   className?: string;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -156,6 +156,7 @@ export function RideMapCanvas({
     jobs,
     cars,
     cinematic,
+    variant,
     routeLine,
   });
   stateRef.current = {
@@ -166,6 +167,7 @@ export function RideMapCanvas({
     jobs,
     cars,
     cinematic,
+    variant,
     routeLine,
   };
 
@@ -208,7 +210,8 @@ export function RideMapCanvas({
     try {
       map = new mapboxgl.Map({
         container: wrap,
-        style: MAPBOX_STYLE,
+        style:
+          variant === "driver" ? MAPBOX_STYLE_DRIVER : MAPBOX_STYLE_RIDER,
         center: [center.lng, center.lat],
         zoom: cinematic && !lowEnd ? 14.4 : 14,
         pitch: cinematic && !lowEnd ? 48 : 0,
@@ -229,7 +232,7 @@ export function RideMapCanvas({
       const m = mapRef.current;
       if (!m?.isStyleLoaded()) return;
       const s = stateRef.current;
-      configureBasemap(m, s.cinematic);
+      configureBasemap(m, s.cinematic, s.variant);
       ensureRouteLayer(m);
 
       const source = m.getSource("vr-route") as GeoJSONSource | undefined;

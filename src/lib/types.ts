@@ -58,6 +58,8 @@ export type DeliveryDetails = {
   shop_name?: string;
   shopping_list?: string;
   photo_proof_requested?: boolean;
+  /** Optional goods cover — adds insurance_fee to the delivery quote. */
+  insurance?: boolean;
 };
 
 export type FarmDetails = {

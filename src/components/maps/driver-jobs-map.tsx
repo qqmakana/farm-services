@@ -27,6 +27,7 @@ export function DriverJobsMap({
       jobs={jobs}
       onSelectJob={onSelectJob}
       cinematic
+      variant="driver"
     />
   );
 }

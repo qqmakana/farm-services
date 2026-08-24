@@ -25,6 +25,10 @@ import {
   generateShopWeeklyReport,
 } from "../src/lib/partner";
 import { calculateFare } from "../src/lib/fares";
+import {
+  clampGroupRideCapacity,
+  groupSeatFare,
+} from "../src/lib/pricing";
 import { reserveWindowError } from "../src/lib/reserve-window";
 import { courierTooHeavyError } from "../src/lib/courier-limits";
 import { getCountry } from "../src/lib/countries";
@@ -672,6 +676,52 @@ test("fares: courier express is 1.5× before 90/10", () => {
     isExpress: true,
   });
   assert(rideExpressIgnored.fee_amount === 55, "express does not apply to trips");
+});
+
+test("fares: delivery insurance adds R15 then 90/10", () => {
+  const plain = dayQuote({
+    vehicle: "bakkie",
+    serviceType: "delivery",
+    countryCode: "ZA",
+    routeDistanceKm: 10,
+    quoteReady: true,
+    weightCategory: "light",
+  });
+  const covered = dayQuote({
+    vehicle: "bakkie",
+    serviceType: "delivery",
+    countryCode: "ZA",
+    routeDistanceKm: 10,
+    quoteReady: true,
+    weightCategory: "light",
+    applyInsurance: true,
+  });
+  assert(plain.insurance_fee === 0, "no cover");
+  assert(covered.insurance_fee === 15, `cover ${covered.insurance_fee}`);
+  assert(covered.fee_amount === plain.fee_amount + 15, "rider pays +15");
+  assert(
+    covered.fee_amount ===
+      covered.driver_fare_amount + covered.platform_commission,
+    "90/10 after insurance",
+  );
+  const farmCoverIgnored = dayQuote({
+    vehicle: "bakkie",
+    serviceType: "farm",
+    countryCode: "ZA",
+    routeDistanceKm: 10,
+    quoteReady: true,
+    weightCategory: "light",
+    applyInsurance: true,
+  });
+  assert(farmCoverIgnored.insurance_fee === 0, "insurance is delivery only");
+});
+
+test("groups: seat is 60% of private Trip, max 4 passengers", () => {
+  assert(groupSeatFare(100) === 60, "R100 private → R60 seat");
+  assert(groupSeatFare(15) === 9, "R15 private → R9 seat");
+  assert(clampGroupRideCapacity("ride", 8) === 4, "ride cap 4");
+  assert(clampGroupRideCapacity("ride", 2) === 2, "ride under max");
+  assert(clampGroupRideCapacity("goods", 12) === 12, "goods can exceed 4");
 });
 
 test("reserve window: 30 minutes to 30 days", () => {

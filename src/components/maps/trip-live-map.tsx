@@ -24,6 +24,7 @@ export function TripLiveMap({
       dropoff={dropoff}
       driverLocation={driver}
       cinematic
+      variant="rider"
     />
   );
 }

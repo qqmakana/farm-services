@@ -32,8 +32,9 @@ export default function GroupRidesPage() {
 
       <h1 className={UBER_H1}>{SERVICE_COPY.groups.title}</h1>
       <p className={UBER_SUB}>
-        Groups is a shared ride — you join a driver who already has a route.
-        Trip is a private car just for you.
+        Groups is a shared ride — max 4 passengers, 60% of a private Trip.
+        You join a driver who already has a route. Trip is a private car just
+        for you.
       </p>
 
       <div className={`mt-4 rounded-[28px] px-4 py-3 text-[13px] font-medium text-[#0a0a0a] ${UBER_GLOSS}`}>

@@ -20,6 +20,7 @@ export function PinMapInner({
         center={{ lat, lng }}
         pin={pin}
         cinematic={false}
+        variant="rider"
         onSelect={({ lat: nextLat, lng: nextLng }) => onPick(nextLat, nextLng)}
       />
     </div>

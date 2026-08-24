@@ -14,6 +14,7 @@ export function FareBreakdownCard({
   distanceKm,
   reservationFee = 0,
   expressExtra = 0,
+  insuranceFee = 0,
 }: {
   baseFare: number;
   distanceFare: number;
@@ -24,6 +25,7 @@ export function FareBreakdownCard({
   distanceKm?: number;
   reservationFee?: number;
   expressExtra?: number;
+  insuranceFee?: number;
 }) {
   const { countryCode } = useCountry();
   const cur = currency;
@@ -73,6 +75,17 @@ export function FareBreakdownCard({
             <dt className="text-gray-500">Express (1.5×)</dt>
             <dd className="font-medium text-[var(--ru-ink)]">
               {formatMoney(expressExtra, cur, countryCode)}
+            </dd>
+          </div>
+        ) : null}
+        {insuranceFee > 0 ? (
+          <div className="flex justify-between gap-3">
+            <dt className="text-gray-500">Goods insurance</dt>
+            <dd
+              data-testid="insurance-fee-line"
+              className="font-medium text-[var(--ru-ink)]"
+            >
+              {formatMoney(insuranceFee, cur, countryCode)}
             </dd>
           </div>
         ) : null}

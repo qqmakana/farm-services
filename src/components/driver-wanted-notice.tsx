@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AppLink } from "@/components/ui/app-link";
 import { getSelectedDriverId } from "@/lib/driver-session";
 import {
   hasSeenDriverWantedNotice,
@@ -12,6 +12,7 @@ import {
 // Recruitment belongs on marketing surfaces, never over a booking, sign-up,
 // checkout, or installed-app flow.
 const RECRUITMENT_PROMOTION_PATHS = new Set([
+  "/",
   "/activity",
   "/account",
   "/partners",
@@ -34,7 +35,8 @@ export function DriverWantedNotice() {
     if (getSelectedDriverId()) return;
     if (hasSeenDriverWantedNotice()) return;
     if (!pathname || !RECRUITMENT_PROMOTION_PATHS.has(pathname)) return;
-    const t = window.setTimeout(() => setOpen(true), 900);
+    const delay = pathname === "/" ? 0 : 400;
+    const t = window.setTimeout(() => setOpen(true), delay);
     return () => window.clearTimeout(t);
   }, [pathname]);
 
@@ -82,13 +84,13 @@ export function DriverWantedNotice() {
           </button>
         </div>
         <div className="mt-4 flex flex-col gap-2">
-          <Link
+          <AppLink
             href="/driver/join"
             onClick={close}
-            className="ru-btn ru-btn-primary ru-btn-block !rounded-full"
+            className="flex min-h-12 w-full items-center justify-center rounded-full bg-black text-[15px] font-bold text-white"
           >
-            Apply to drive
-          </Link>
+            Sign up to drive
+          </AppLink>
           <button
             type="button"
             onClick={close}

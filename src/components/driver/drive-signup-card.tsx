@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { ChevronRight, X } from "lucide-react";
+import { AppLink } from "@/components/ui/app-link";
 import {
   dismissDriverWantedBanner,
   isDriverWantedBannerVisible,
@@ -53,18 +52,19 @@ export function DriveSignupCard({
             <p className="mt-1 font-[family-name:var(--font-display)] text-[16px] font-bold leading-snug tracking-[-0.02em] text-[#0a0a0a]">
               Earn with Village Ride — keep 90%
             </p>
-            <Link
+            <AppLink
               href="/driver/join"
               data-testid="drive-signup-cta"
-              className="uber-press mt-3 inline-flex h-9 w-fit items-center gap-1 rounded-full bg-white px-4 text-sm font-bold text-[#0a0a0a] shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
+              className="uber-press mt-3 inline-flex h-11 min-h-11 w-fit items-center gap-1 rounded-full bg-white px-4 text-sm font-bold text-[#0a0a0a] shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
             >
-              Sign up
+              Sign up to drive
               <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden />
-            </Link>
+            </AppLink>
           </div>
           <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-[#f6d56a]">
             <span className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.7)_0%,transparent_62%)]" />
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/home/icons/bell.png"
               alt=""
               width={88}
@@ -107,21 +107,22 @@ export function DriveSignupCard({
         Earn with your car, bakkie or truck — in villages, small towns, towns
         and cities. Keep most of every fare. Pay is cash or card to you.
       </p>
-      <Link
+      <AppLink
         href="/driver/join"
+        data-testid="home-drive-signup-cta"
         className="uber-press mt-4 flex min-h-12 w-full items-center justify-center gap-1 rounded-full bg-white text-sm font-bold text-black hover:bg-gray-100 active:bg-gray-200"
       >
         Sign up to drive
         <ChevronRight className="h-4 w-4" aria-hidden />
-      </Link>
+      </AppLink>
       <p className="mt-3 text-center text-xs text-white/50">
         Already a driver?{" "}
-        <Link
+        <AppLink
           href="/driver"
           className="font-semibold text-white underline underline-offset-2"
         >
           Open driver app
-        </Link>
+        </AppLink>
       </p>
     </section>
   );
