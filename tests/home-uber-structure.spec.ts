@@ -28,10 +28,6 @@ test.describe("Home Uber structure", () => {
       "data-primary",
       "true",
     );
-    await expect(page.getByTestId("service-circle-for-you")).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
     await expect(page.getByTestId("service-circle-send-items")).toBeAttached();
     await expect(page.getByTestId("service-circle-farm")).toBeVisible();
     await expect(page.getByTestId("service-circle-reserve")).toBeVisible();
@@ -118,7 +114,7 @@ test.describe("Home Uber structure", () => {
     ).toBeVisible({ timeout: 15_000 });
   });
 
-  test("For you is default; service pills filter then Where to? books", async ({
+  test("For you is default; service icons open booking pages", async ({
     page,
   }) => {
     await page.goto("/");
@@ -128,35 +124,25 @@ test.describe("Home Uber structure", () => {
       timeout: 20_000,
     });
     await expect(page.getByTestId("service-circle-for-you")).toHaveAttribute(
-      "aria-selected",
+      "data-primary",
       "true",
     );
 
     await page.getByTestId("service-circle-trip").click();
-    await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByTestId("service-circle-trip")).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-    await expect(page.getByTestId("smart-suggestions")).toBeVisible();
+    await expect(page).toHaveURL(/\/ride/, { timeout: 15_000 });
 
-    await page.getByTestId("service-circle-for-you").click();
-    await expect(page.getByTestId("service-circle-for-you")).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-    await expect(page.getByTestId("smart-suggestions")).toBeVisible();
-
+    await page.goto("/");
+    await dismissCountryModalIfPresent(page);
     await page.getByTestId("service-circle-reserve").click();
-    await expect(page.getByTestId("service-circle-reserve")).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-    await page.getByTestId("home-where-to").click();
     await expect(page).toHaveURL(/\/ride\?when=later/, { timeout: 15_000 });
     await expect(page.getByTestId("reservation-fee-line")).toBeVisible({
       timeout: 15_000,
     });
+
+    await page.goto("/");
+    await dismissCountryModalIfPresent(page);
+    await page.getByTestId("home-where-to").click();
+    await expect(page).toHaveURL(/\/ride/, { timeout: 15_000 });
   });
 
   test("Services page Reserve, Groups, Farm also navigate", async ({

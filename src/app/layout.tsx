@@ -6,6 +6,7 @@ import { CountryWelcomeModal } from "@/components/country/country-selector";
 import { UnsupportedMarketNotice } from "@/components/country/unsupported-market-notice";
 import { InstallShareBar } from "@/components/install-share-bar";
 import { PwaRegister } from "@/components/pwa-register";
+import { PwaRecover } from "@/components/pwa-recover";
 import { WhatsAppFloat } from "@/components/whatsapp-float";
 import { FlushPendingBookings } from "@/components/booking/flush-pending-bookings";
 import { OfflineBanner } from "@/components/offline-banner";
@@ -96,6 +97,7 @@ export default function RootLayout({
             <ToastProvider>
               <PhoneFrame>
                 <PwaRegister />
+                <PwaRecover />
                 <OfflineBanner />
                 <FlushPendingPlaces />
                 <FlushPendingBookings />

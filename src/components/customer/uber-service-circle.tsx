@@ -11,6 +11,7 @@ export function UberServiceCircle({
   badge,
   size = 64,
   testId,
+  primary = false,
 }: {
   href: string;
   label: string;
@@ -18,12 +19,15 @@ export function UberServiceCircle({
   badge?: string;
   size?: number;
   testId?: string;
+  primary?: boolean;
 }) {
   const img = Math.round(size * 0.72);
   return (
     <Link
       href={href}
       data-testid={testId}
+      data-primary={primary ? "true" : undefined}
+      aria-current={primary ? "page" : undefined}
       className="uber-press relative flex min-h-12 w-full flex-col items-center justify-start"
     >
       {badge ? (
