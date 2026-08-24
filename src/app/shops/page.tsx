@@ -7,7 +7,12 @@ import { listShops } from "@/lib/actions";
 export const dynamic = "force-dynamic";
 
 export default async function ShopsBuyerPage() {
-  const shops = await listShops();
+  let shops: Awaited<ReturnType<typeof listShops>> = [];
+  try {
+    shops = await listShops();
+  } catch {
+    shops = [];
+  }
 
   return (
     <BookingTabChrome>

@@ -15,9 +15,27 @@ export function PwaRegister() {
       window.location.hostname === "127.0.0.1";
     if (!secure) return;
 
-    navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" }).catch(() => {
-      // Ignore registration failures (private mode, etc.)
-    });
+    navigator.serviceWorker
+      .register("/sw.js", { scope: "/", updateViaCache: "none" })
+      .then((registration) => {
+        registration.addEventListener("updatefound", () => {
+          const worker = registration.installing;
+          if (!worker) return;
+          worker.addEventListener("statechange", () => {
+            if (
+              worker.state === "activated" &&
+              navigator.serviceWorker.controller
+            ) {
+              // Pick up fixed SW (v4+) without serving stale HTML for other routes.
+              window.location.reload();
+            }
+          });
+        });
+        void registration.update();
+      })
+      .catch(() => {
+        // Ignore registration failures (private mode, etc.)
+      });
   }, []);
 
   return null;

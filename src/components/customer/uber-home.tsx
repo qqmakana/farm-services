@@ -114,22 +114,8 @@ export function UberHome() {
       >
         {MODES.map((m) => {
           const selected = mode === m.id;
-          return (
-            <button
-              key={m.id}
-              type="button"
-              role="tab"
-              aria-selected={selected}
-              onClick={() => {
-                setMode(m.id);
-                if (m.id !== "ride") router.push(m.href);
-              }}
-              className={`uber-press relative flex min-h-14 flex-1 flex-col items-center gap-1 pb-2.5 text-[15px] ${
-                selected
-                  ? "font-bold text-black"
-                  : "font-medium text-[#6B6B6B]"
-              }`}
-            >
+          const inner = (
+            <>
               <span className="relative h-10 w-10">
                 <Image
                   src={m.src}
@@ -143,7 +129,41 @@ export function UberHome() {
               {selected ? (
                 <span className="absolute bottom-0 left-2 right-2 h-[3px] rounded-full bg-black" />
               ) : null}
-            </button>
+            </>
+          );
+          if (m.id === "ride") {
+            return (
+              <button
+                key={m.id}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                onClick={() => setMode("ride")}
+                className={`uber-press relative flex min-h-14 flex-1 flex-col items-center gap-1 pb-2.5 text-[15px] ${
+                  selected
+                    ? "font-bold text-black"
+                    : "font-medium text-[#6B6B6B]"
+                }`}
+              >
+                {inner}
+              </button>
+            );
+          }
+          return (
+            <Link
+              key={m.id}
+              href={m.href}
+              role="tab"
+              aria-selected={selected}
+              onClick={() => setMode(m.id)}
+              className={`uber-press relative flex min-h-14 flex-1 flex-col items-center gap-1 pb-2.5 text-[15px] ${
+                selected
+                  ? "font-bold text-black"
+                  : "font-medium text-[#6B6B6B]"
+              }`}
+            >
+              {inner}
+            </Link>
           );
         })}
       </div>
@@ -200,19 +220,11 @@ export function UberHome() {
               tab.id === "courier"
                 ? "service-circle-courier"
                 : `service-circle-${tab.label.toLowerCase().replace(/\s+/g, "-")}`;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={selected}
-                data-testid={testId}
-                data-primary={i === 0 ? "true" : "false"}
-                onClick={() => onFeedTabClick(tab.id)}
-                className={`uber-press relative z-10 flex shrink-0 flex-col items-center gap-1.5 rounded-2xl px-2 py-2 ${
-                  selected ? "bg-black text-white" : "bg-[#F3F3F3] text-black"
-                }`}
-              >
+            const pillClass = `uber-press relative z-10 flex shrink-0 flex-col items-center gap-1.5 rounded-2xl px-2 py-2 ${
+              selected ? "bg-black text-white" : "bg-[#F3F3F3] text-black"
+            }`;
+            const pillInner = (
+              <>
                 <span
                   className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-full ${
                     selected ? "bg-white/15" : "bg-white"
@@ -229,6 +241,35 @@ export function UberHome() {
                 <span className="w-[64px] text-center text-[12px] font-semibold">
                   {tab.label}
                 </span>
+              </>
+            );
+            if (homeTabOpensPage(tab.id)) {
+              return (
+                <Link
+                  key={tab.id}
+                  href={bookingPathForTab(tab.id)}
+                  role="tab"
+                  aria-selected={selected}
+                  data-testid={testId}
+                  data-primary={i === 0 ? "true" : "false"}
+                  className={pillClass}
+                >
+                  {pillInner}
+                </Link>
+              );
+            }
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                data-testid={testId}
+                data-primary={i === 0 ? "true" : "false"}
+                onClick={() => onFeedTabClick(tab.id)}
+                className={pillClass}
+              >
+                {pillInner}
               </button>
             );
           })}
