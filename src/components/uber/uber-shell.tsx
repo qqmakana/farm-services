@@ -17,6 +17,7 @@ import { useCountry } from "@/components/country/country-provider";
 import { listNearbySupplyPins } from "@/lib/actions-supply";
 import { BRAND } from "@/lib/brand";
 import type { JobMapPin } from "@/components/maps/ride-map-canvas";
+import { ClientErrorBoundary } from "@/components/ui/client-error-boundary";
 
 const VillageMap = dynamic(
   () =>
@@ -150,16 +151,25 @@ export function UberShell({
     >
       {/* Full-screen map foundation */}
       <div className="absolute inset-0 z-0">
-        <VillageMap
-          pin={pin}
-          dropoff={dropoffPin}
-          center={country.mapCenter}
-          cars={cars}
-          onSelect={(next) => {
-            if (snap === "full") setSnap("mid");
-            onMapPin?.(next);
-          }}
-        />
+        <ClientErrorBoundary
+          fallback={
+            <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[#1a1a1a] px-6 text-center text-sm text-white/80">
+              <MapPin className="h-8 w-8 text-white/50" aria-hidden />
+              <p>Map unavailable on this device — you can still book below.</p>
+            </div>
+          }
+        >
+          <VillageMap
+            pin={pin}
+            dropoff={dropoffPin}
+            center={country.mapCenter}
+            cars={cars}
+            onSelect={(next) => {
+              if (snap === "full") setSnap("mid");
+              onMapPin?.(next);
+            }}
+          />
+        </ClientErrorBoundary>
       </div>
 
       {/* Top chrome + optional Where-to bar */}

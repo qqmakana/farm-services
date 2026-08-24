@@ -41,7 +41,8 @@ export default defineConfig({
         },
         {
           name: "production-mobile",
-          testMatch: /public-pages\.spec\.ts/,
+          testMatch:
+            /public-pages\.spec\.ts|production-booking-mobile\.spec\.ts/,
           use: { ...devices["Pixel 5"] },
         },
       ]

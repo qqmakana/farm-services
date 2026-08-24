@@ -67,7 +67,12 @@ function add3dBuildings(map: mapboxgl.Map) {
 }
 
 function configureBasemap(map: mapboxgl.Map, cinematic: boolean) {
-  if (cinematic) add3dBuildings(map);
+  if (cinematic && typeof window !== "undefined") {
+    const lowEnd =
+      (navigator as Navigator & { deviceMemory?: number }).deviceMemory != null &&
+      (navigator as Navigator & { deviceMemory?: number }).deviceMemory! <= 2;
+    if (!lowEnd) add3dBuildings(map);
+  }
 }
 
 function ensureRouteLayer(map: mapboxgl.Map) {
@@ -194,19 +199,30 @@ export function RideMapCanvas({
       return;
     }
 
+    const lowEnd =
+      (navigator as Navigator & { deviceMemory?: number }).deviceMemory != null &&
+      (navigator as Navigator & { deviceMemory?: number }).deviceMemory! <= 2;
+
     mapboxgl.accessToken = MAPBOX_TOKEN;
-    const map = new mapboxgl.Map({
-      container: wrap,
-      style: MAPBOX_STYLE,
-      center: [center.lng, center.lat],
-      zoom: cinematic ? 14.4 : 14,
-      pitch: cinematic ? 48 : 0,
-      bearing: cinematic ? -18 : 0,
-      attributionControl: true,
-      logoPosition: "bottom-left",
-      minZoom: 3,
-      maxPitch: 62,
-    });
+    let map: mapboxgl.Map;
+    try {
+      map = new mapboxgl.Map({
+        container: wrap,
+        style: MAPBOX_STYLE,
+        center: [center.lng, center.lat],
+        zoom: cinematic && !lowEnd ? 14.4 : 14,
+        pitch: cinematic && !lowEnd ? 48 : 0,
+        bearing: cinematic && !lowEnd ? -18 : 0,
+        attributionControl: true,
+        logoPosition: "bottom-left",
+        minZoom: 3,
+        maxPitch: lowEnd ? 0 : 62,
+        failIfMajorPerformanceCaveat: false,
+      });
+    } catch (err) {
+      setMapError(err instanceof Error ? err.message : "Map failed to start");
+      return;
+    }
     mapRef.current = map;
 
     const sync = () => {

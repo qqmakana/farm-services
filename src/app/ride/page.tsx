@@ -5,6 +5,7 @@ import { BookingTabChrome } from "@/components/customer/booking-tab-chrome";
 import { RideSheet } from "@/components/uber/ride-sheet";
 import { UberShell } from "@/components/uber/uber-shell";
 import { useBookingMapPin } from "@/components/uber/use-booking-map-pin";
+import { ClientErrorBoundary } from "@/components/ui/client-error-boundary";
 
 function RideInner() {
   const { pin, setPin, mapTapPin, mapTapToken, onMapPin } = useBookingMapPin();
@@ -24,12 +25,14 @@ function RideInner() {
       backHref="/"
       title="Village Ride"
     >
-      <RideSheet
-        onPinChange={setPin}
-        onDropoffPinChange={setDropoffPin}
-        mapTapPin={mapTapPin}
-        mapTapToken={mapTapToken}
-      />
+      <ClientErrorBoundary>
+        <RideSheet
+          onPinChange={setPin}
+          onDropoffPinChange={setDropoffPin}
+          mapTapPin={mapTapPin}
+          mapTapToken={mapTapToken}
+        />
+      </ClientErrorBoundary>
     </UberShell>
   );
 }

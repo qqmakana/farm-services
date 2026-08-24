@@ -1,18 +1,22 @@
 "use client";
 
 import { useEffect } from "react";
-import { isStandaloneDisplay } from "@/lib/pwa-install";
 
 /**
- * Play Store TWA + installed PWA: unregister ALL service workers and wipe caches.
- * Old SW v3 served the home page for /ride and caused "Try again" on every tap.
- * Web updates do NOT require a new AAB — the bundle only opens village-ride.vercel.app.
+ * Unregister service workers + wipe caches once (no reload — reload loops break some TWAs).
  */
 export function PwaRecover() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     void (async () => {
+      try {
+        if (localStorage.getItem("vr_pwa_purged_v7") === "1") return;
+        localStorage.setItem("vr_pwa_purged_v7", "1");
+      } catch {
+        /* ignore */
+      }
+
       try {
         if ("caches" in window) {
           const keys = await caches.keys();
@@ -29,17 +33,6 @@ export function PwaRecover() {
         await Promise.all(regs.map((reg) => reg.unregister()));
       } catch {
         /* ignore */
-      }
-
-      // Standalone / Play Store TWA: one reload after purge so fresh bundles load.
-      if (isStandaloneDisplay()) {
-        try {
-          if (sessionStorage.getItem("vr_pwa_purged_v6") === "1") return;
-          sessionStorage.setItem("vr_pwa_purged_v6", "1");
-          window.location.reload();
-        } catch {
-          window.location.reload();
-        }
       }
     })();
   }, []);
