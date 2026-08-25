@@ -54,7 +54,7 @@ export function DriveSignupCard({
             </p>
             <AppLink
               href="/driver/join"
-              data-testid="drive-signup-cta"
+              data-testid="home-drive-signup-cta"
               className="uber-press mt-3 inline-flex h-11 min-h-11 w-fit items-center gap-1 rounded-full bg-white px-4 text-sm font-bold text-[#0a0a0a] shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
             >
               Sign up to drive

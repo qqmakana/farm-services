@@ -83,6 +83,24 @@ export function isSameStop(
   return distanceKm(a, b) < 0.05;
 }
 
+function fallbackRoute(
+  from: { lat: number; lng: number },
+  to: { lat: number; lng: number },
+): DrivingRoute {
+  const km = Math.round(distanceKm(from, to) * 10) / 10;
+  return {
+    distanceKm: km,
+    durationSeconds: Math.max(60, Math.round((km / 30) * 3600)),
+    geometry: {
+      type: "LineString",
+      coordinates: [
+        [from.lng, from.lat],
+        [to.lng, to.lat],
+      ],
+    },
+  };
+}
+
 export async function getDrivingRoute(
   from: { lat: number; lng: number },
   to: { lat: number; lng: number },
@@ -101,60 +119,52 @@ export async function getDrivingRoute(
     };
   }
 
-  const token = mapboxServerToken();
-  if (!token) {
-    throw new Error(
-      "Mapbox is not configured — cannot calculate driving distance.",
-    );
-  }
-
   const key = routeCacheKey(from, to);
   const hit = routeCache.get(key);
   if (hit && Date.now() - hit.at < ROUTE_CACHE_MS) return hit.value;
+
+  const token = mapboxServerToken();
+  if (!token) return fallbackRoute(from, to);
 
   const path = `${from.lng},${from.lat};${to.lng},${to.lat}`;
   const url =
     `https://api.mapbox.com/directions/v5/mapbox/driving/${path}` +
     `?alternatives=false&geometries=geojson&overview=full&access_token=${encodeURIComponent(token)}`;
 
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error(
-      "Could not calculate a driving route. Check the pins and try again.",
-    );
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return fallbackRoute(from, to);
+    const body = (await res.json()) as {
+      code?: string;
+      routes?: Array<{
+        distance?: number;
+        duration?: number;
+        geometry?: { type?: string; coordinates?: [number, number][] };
+      }>;
+    };
+    const route = body.routes?.[0];
+    if (!route || body.code !== "Ok") return fallbackRoute(from, to);
+    const meters = Number(route.distance ?? 0);
+    const value: DrivingRoute = {
+      distanceKm: Math.round((meters / 1000) * 10) / 10,
+      durationSeconds: Math.round(Number(route.duration ?? 0)),
+      geometry: {
+        type: "LineString",
+        coordinates: route.geometry?.coordinates ?? [
+          [from.lng, from.lat],
+          [to.lng, to.lat],
+        ],
+      },
+    };
+    routeCache.set(key, { at: Date.now(), value });
+    if (routeCache.size > 80) {
+      const first = routeCache.keys().next().value;
+      if (first) routeCache.delete(first);
+    }
+    return value;
+  } catch {
+    return fallbackRoute(from, to);
   }
-  const body = (await res.json()) as {
-    code?: string;
-    routes?: Array<{
-      distance?: number;
-      duration?: number;
-      geometry?: { type?: string; coordinates?: [number, number][] };
-    }>;
-  };
-  const route = body.routes?.[0];
-  if (!route || body.code !== "Ok") {
-    throw new Error(
-      "No driving route between these points. Pick places that are connected by road.",
-    );
-  }
-  const meters = Number(route.distance ?? 0);
-  const value: DrivingRoute = {
-    distanceKm: Math.round((meters / 1000) * 10) / 10,
-    durationSeconds: Math.round(Number(route.duration ?? 0)),
-    geometry: {
-      type: "LineString",
-      coordinates: route.geometry?.coordinates ?? [
-        [from.lng, from.lat],
-        [to.lng, to.lat],
-      ],
-    },
-  };
-  routeCache.set(key, { at: Date.now(), value });
-  if (routeCache.size > 80) {
-    const first = routeCache.keys().next().value;
-    if (first) routeCache.delete(first);
-  }
-  return value;
 }
 
 export async function geocodeAddressQuery(
@@ -168,9 +178,7 @@ export async function geocodeAddressQuery(
   const q = query.trim();
   if (q.length < 2) return [];
   const token = mapboxServerToken();
-  if (!token) {
-    throw new Error("Mapbox is not configured — address search is unavailable.");
-  }
+  if (!token) return [];
 
   const country = (opts?.countryCode || "ZA").toLowerCase();
   const proximity = opts?.proximity ?? defaultProximity(opts?.countryCode);

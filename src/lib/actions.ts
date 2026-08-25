@@ -302,7 +302,10 @@ export async function getJobByReference(
     .ilike("reference_code", code)
     .maybeSingle();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("getJobByReference", error.message);
+    return null;
+  }
   return (data as JobWithDriver | null) ?? null;
 }
 
@@ -1708,6 +1711,18 @@ export async function createCashJob(draft: Omit<NewJobInput, "payment">) {
     });
   } catch (err) {
     throw friendlyBookingError(err);
+  }
+}
+
+/** Same booking, but returns an error string instead of throwing (no Next overlay). */
+export async function createCashJobResult(
+  draft: Omit<NewJobInput, "payment">,
+): Promise<{ ok: true; job: JobWithDriver } | { ok: false; error: string }> {
+  try {
+    const job = await createCashJob(draft);
+    return { ok: true, job };
+  } catch (err) {
+    return { ok: false, error: friendlyBookingError(err).message };
   }
 }
 
@@ -3602,7 +3617,10 @@ export async function getRatingForJob(jobId: string) {
     .eq("job_id", jobId)
     .maybeSingle();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("getRatingForJob", error.message);
+    return null;
+  }
   return (data as Rating | null) ?? null;
 }
 

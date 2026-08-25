@@ -20,6 +20,10 @@ export function VillageMap({
   cinematic = false,
   searchingRadar = false,
   className = "",
+  pickupLabel = null,
+  dropoffLabel = null,
+  pickupEtaMins = null,
+  paddingBottom = 40,
 }: {
   pin?: Pin;
   dropoff?: Pin;
@@ -30,6 +34,10 @@ export function VillageMap({
   cinematic?: boolean;
   searchingRadar?: boolean;
   className?: string;
+  pickupLabel?: string | null;
+  dropoffLabel?: string | null;
+  pickupEtaMins?: number | null;
+  paddingBottom?: number;
 }) {
   return (
     <RideMapCanvas
@@ -43,6 +51,10 @@ export function VillageMap({
       cinematic={cinematic}
       searchingRadar={searchingRadar}
       variant="rider"
+      pickupLabel={pickupLabel}
+      dropoffLabel={dropoffLabel}
+      pickupEtaMins={pickupEtaMins}
+      paddingBottom={paddingBottom}
     />
   );
 }

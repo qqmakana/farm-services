@@ -22,11 +22,47 @@ export type JobMapPin = {
 const EMPTY_JOBS: JobMapPin[] = [];
 const EMPTY_CARS: JobMapPin[] = [];
 
+function shortCallout(raw: string) {
+  const base = (raw.split(",")[0] || raw).trim();
+  if (base.length <= 22) return base;
+  return `${base.slice(0, 21)}…`;
+}
+
 function pinEl(kind: "pickup" | "dropoff" | "you" | "job" | "car") {
   const el = document.createElement("div");
   el.className = `vr-map-pin vr-map-pin-${kind}`;
   el.setAttribute("aria-hidden", "true");
   return el;
+}
+
+function labeledPinEl(opts: {
+  kind: "pickup" | "dropoff";
+  title: string;
+  eta?: string | null;
+  radar?: boolean;
+}) {
+  const wrap = document.createElement("div");
+  wrap.className = "vr-map-labeled";
+  wrap.setAttribute("aria-hidden", "true");
+
+  const callout = document.createElement("div");
+  callout.className = "vr-map-callout";
+  if (opts.eta) {
+    const eta = document.createElement("div");
+    eta.className = "vr-map-callout-eta";
+    eta.textContent = opts.eta;
+    callout.appendChild(eta);
+  }
+  const name = document.createElement("div");
+  name.className = "vr-map-callout-name";
+  name.textContent = `${shortCallout(opts.title)} ›`;
+  callout.appendChild(name);
+  wrap.appendChild(callout);
+
+  const pin = pinEl(opts.kind);
+  if (opts.radar) pin.classList.add("vr-map-pin-radar");
+  wrap.appendChild(pin);
+  return wrap;
 }
 
 function emptyRoute() {
@@ -171,6 +207,10 @@ export function RideMapCanvas({
   searchingRadar = false,
   variant = "rider",
   className = "",
+  pickupLabel = null,
+  dropoffLabel = null,
+  pickupEtaMins = null,
+  paddingBottom = 40,
 }: {
   center: MapPin;
   pin?: MapPin | null;
@@ -184,6 +224,10 @@ export function RideMapCanvas({
   searchingRadar?: boolean;
   variant?: MapStyleVariant;
   className?: string;
+  pickupLabel?: string | null;
+  dropoffLabel?: string | null;
+  pickupEtaMins?: number | null;
+  paddingBottom?: number;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -207,6 +251,10 @@ export function RideMapCanvas({
     searchingRadar,
     variant,
     routeLine,
+    pickupLabel,
+    dropoffLabel,
+    pickupEtaMins,
+    paddingBottom,
   });
   stateRef.current = {
     center,
@@ -219,6 +267,10 @@ export function RideMapCanvas({
     searchingRadar,
     variant,
     routeLine,
+    pickupLabel,
+    dropoffLabel,
+    pickupEtaMins,
+    paddingBottom,
   };
 
   useEffect(() => {
@@ -233,7 +285,12 @@ export function RideMapCanvas({
           if (!cancelled) setRouteLine(route.geometry.coordinates);
         })
         .catch(() => {
-          if (!cancelled) setRouteLine(null);
+          if (!cancelled) {
+            setRouteLine([
+              [pin.lng, pin.lat],
+              [dropoff.lng, dropoff.lat],
+            ]);
+          }
         });
     }, 180);
     return () => {
@@ -268,7 +325,7 @@ export function RideMapCanvas({
         bearing: cinematic && !lowEnd ? -18 : 0,
         attributionControl: true,
         logoPosition: "bottom-left",
-        minZoom: 3,
+        minZoom: variant === "driver" ? 3 : 10,
         maxPitch: lowEnd ? 0 : 62,
         failIfMajorPerformanceCaveat: false,
       });
@@ -305,9 +362,18 @@ export function RideMapCanvas({
         lngLat: [number, number],
         kind: "pickup" | "dropoff" | "you" | "job" | "car",
         job?: JobMapPin,
+        labeled?: { title: string; eta?: string | null },
       ) => {
-        const el = pinEl(kind);
-        if (kind === "pickup" && s.searchingRadar) {
+        const el =
+          labeled && (kind === "pickup" || kind === "dropoff")
+            ? labeledPinEl({
+                kind,
+                title: labeled.title,
+                eta: labeled.eta,
+                radar: kind === "pickup" && s.searchingRadar,
+              })
+            : pinEl(kind);
+        if (kind === "pickup" && s.searchingRadar && !labeled) {
           el.classList.add("vr-map-pin-radar");
         }
         if (job) {
@@ -317,7 +383,10 @@ export function RideMapCanvas({
             onSelectJobRef.current?.(job.id);
           });
         }
-        const marker = new mapboxgl.Marker({ element: el, anchor: "center" })
+        const marker = new mapboxgl.Marker({
+          element: el,
+          anchor: labeled ? "bottom" : "center",
+        })
           .setLngLat(lngLat)
           .addTo(m);
         markersRef.current.push(marker);
@@ -329,9 +398,30 @@ export function RideMapCanvas({
           s.variant === "driver" ? "you" : "car",
         );
       }
-      if (s.pin) add([s.pin.lng, s.pin.lat], "pickup");
-      else if (!s.driverLocation) add([s.center.lng, s.center.lat], "pickup");
-      if (s.dropoff) add([s.dropoff.lng, s.dropoff.lat], "dropoff");
+      const pickupEta =
+        s.pickupEtaMins != null && s.pickupEtaMins > 0
+          ? `${Math.round(s.pickupEtaMins)} MIN`
+          : null;
+      if (s.pin) {
+        add(
+          [s.pin.lng, s.pin.lat],
+          "pickup",
+          undefined,
+          s.pickupLabel
+            ? { title: s.pickupLabel, eta: pickupEta }
+            : undefined,
+        );
+      } else if (!s.driverLocation) {
+        add([s.center.lng, s.center.lat], "pickup");
+      }
+      if (s.dropoff) {
+        add(
+          [s.dropoff.lng, s.dropoff.lat],
+          "dropoff",
+          undefined,
+          s.dropoffLabel ? { title: s.dropoffLabel } : undefined,
+        );
+      }
       for (const car of s.cars) {
         add([car.lng, car.lat], "car");
       }
@@ -347,12 +437,15 @@ export function RideMapCanvas({
           bounds.extend([s.driverLocation.lng, s.driverLocation.lat]);
         }
         m.fitBounds(bounds, {
-          padding: s.cinematic
-            ? { top: 96, bottom: 260, left: 56, right: 56 }
-            : 40,
+          padding: {
+            top: s.cinematic ? 96 : 80,
+            bottom: Math.max(s.paddingBottom, s.cinematic ? 260 : 40),
+            left: s.cinematic ? 56 : 48,
+            right: s.cinematic ? 56 : 48,
+          },
           maxZoom: 15.6,
           pitch: s.cinematic ? 45 : 0,
-          duration: 800,
+          duration: 900,
           essential: true,
         });
         return;
@@ -363,12 +456,15 @@ export function RideMapCanvas({
           .extend([s.pin.lng, s.pin.lat])
           .extend([s.driverLocation.lng, s.driverLocation.lat]);
         m.fitBounds(bounds, {
-          padding: s.cinematic
-            ? { top: 96, bottom: 180, left: 56, right: 56 }
-            : 40,
+          padding: {
+            top: s.cinematic ? 96 : 80,
+            bottom: Math.max(s.paddingBottom, s.cinematic ? 180 : 40),
+            left: s.cinematic ? 56 : 48,
+            right: s.cinematic ? 56 : 48,
+          },
           maxZoom: 15.6,
           pitch: s.cinematic ? 45 : 0,
-          duration: 800,
+          duration: 900,
           essential: true,
         });
         return;
@@ -411,7 +507,22 @@ export function RideMapCanvas({
 
   useEffect(() => {
     syncRef.current();
-  }, [pin, dropoff, driverLocation, jobs, cars, center.lat, center.lng, cinematic, searchingRadar, routeLine]);
+  }, [
+    pin,
+    dropoff,
+    driverLocation,
+    jobs,
+    cars,
+    center.lat,
+    center.lng,
+    cinematic,
+    searchingRadar,
+    routeLine,
+    pickupLabel,
+    dropoffLabel,
+    pickupEtaMins,
+    paddingBottom,
+  ]);
 
   return (
     <div className={`relative h-full w-full ${className}`}>

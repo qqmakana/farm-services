@@ -136,22 +136,16 @@ function RowButton({
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] font-medium text-black">
+        <span className="block truncate text-[15px] font-semibold text-black">
           {place.name}
         </span>
         <span className="mt-0.5 block truncate text-[13px] font-normal text-[#6B6B6B]">
           {place.address}
         </span>
       </span>
-      {place.ride_count && place.ride_count > 1 ? (
-        <span className="shrink-0 rounded-full bg-[#F3F3F3] px-2 py-1 text-[11px] font-semibold text-[#6B6B6B]">
-          {place.ride_count} rides
-        </span>
-      ) : place.distance ? (
-        <span className="shrink-0 text-[12px] text-[#A6A6A6]">
-          {place.distance}
-        </span>
-      ) : null}
+      <span className="shrink-0 text-[18px] leading-none text-[#C4C4C4]" aria-hidden>
+        ›
+      </span>
     </button>
   );
 }
@@ -274,8 +268,29 @@ export function SmartSuggestions({
 
   if (loading) return <SuggestionsSkeleton />;
 
-  return (
-    <div data-testid="smart-suggestions" className="mt-4 space-y-4">
+  const recents = (
+    display.recent.length > 0 ? (
+      <ul className="overflow-hidden bg-white" data-testid="home-recents">
+        {display.recent.map((place, i) => (
+          <li key={place.id}>
+            {i > 0 ? <div className="mx-4 h-px bg-[#EEEEEE]" /> : null}
+            <RowButton
+              place={place}
+              onSelect={onSelectDestination}
+              icon={<Clock className="h-4 w-4 text-[#6B6B6B]" strokeWidth={2} />}
+            />
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <div data-testid="home-recents" className="sr-only">
+        No recent Village Ride trips
+      </div>
+    )
+  );
+
+  const saved = (
+    <>
       <h2 className="text-[18px] font-bold leading-snug tracking-[-0.2px] text-black">
         Saved places
       </h2>
@@ -322,31 +337,13 @@ export function SmartSuggestions({
           </button>
         ) : null}
       </div>
+    </>
+  );
 
-      {display.recent.length > 0 ? (
-        <ul
-          className="overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white"
-          data-testid="home-recents"
-        >
-          <li className="px-4 pt-3 text-[11px] font-semibold tracking-wide text-[#6B6B6B] uppercase">
-            Recent
-          </li>
-          {display.recent.map((place, i) => (
-            <li key={place.id}>
-              {i > 0 ? <div className="mx-4 h-px bg-[#EEEEEE]" /> : null}
-              <RowButton
-                place={place}
-                onSelect={onSelectDestination}
-                icon={<Clock className="h-4 w-4 text-[#6B6B6B]" strokeWidth={2} />}
-              />
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <div data-testid="home-recents" className="sr-only">
-          No recent Village Ride trips
-        </div>
-      )}
+  return (
+    <div data-testid="smart-suggestions" className="mt-3 space-y-4">
+      {recents}
+      {saved}
 
       {display.nearby.length > 0 ? (
         <ul

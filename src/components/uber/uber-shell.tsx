@@ -54,6 +54,9 @@ export function UberShell({
   topRightLabel,
   cinematic = false,
   searchingRadar = false,
+  pickupLabel = null,
+  dropoffLabel = null,
+  pickupEtaMins = null,
 }: {
   children: ReactNode;
   pin?: { lat: number; lng: number } | null;
@@ -86,9 +89,14 @@ export function UberShell({
   topRightLabel?: string;
   cinematic?: boolean;
   searchingRadar?: boolean;
+  pickupLabel?: string | null;
+  dropoffLabel?: string | null;
+  pickupEtaMins?: number | null;
 }) {
   const { country } = useCountry();
   const [cars, setCars] = useState<JobMapPin[]>([]);
+  const dropoffPinRef = useRef(dropoffPin);
+  dropoffPinRef.current = dropoffPin;
   const bottomInset = showTabBar
     ? "calc(4rem + env(safe-area-inset-bottom, 0px))"
     : "0px";
@@ -214,6 +222,12 @@ export function UberShell({
             cars={driverPin ? [] : cars}
             cinematic={cinematic}
             searchingRadar={searchingRadar}
+            pickupLabel={dropoffPin ? pickupLabel : null}
+            dropoffLabel={dropoffPin ? dropoffLabel : null}
+            pickupEtaMins={dropoffPin ? pickupEtaMins : null}
+            paddingBottom={
+              snap === "mid" ? 340 : snap === "full" ? 96 : 200
+            }
             onSelect={
               onMapPin
                 ? (next) => {
@@ -348,7 +362,7 @@ export function UberShell({
             const active = document.activeElement;
             const sheet = document.querySelector("[data-testid='bottom-sheet']");
             if (sheet && active && sheet.contains(active)) return;
-            setSnap(dropoffPin ? "mid" : "peek");
+            setSnap(dropoffPinRef.current ? "mid" : "full");
           }, 180);
         }}
       >

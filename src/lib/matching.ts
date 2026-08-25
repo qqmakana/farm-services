@@ -176,7 +176,11 @@ export async function insertPaidJob(row: Record<string, unknown>) {
     .single();
 
   if (error) throw new Error(error.message);
-  await matchJobAfterCreate(data.id);
+  try {
+    await matchJobAfterCreate(data.id);
+  } catch {
+    /* Job is saved — dispatch can retry. Never fail the rider booking. */
+  }
   const { data: fresh } = await admin
     .from("rr_jobs")
     .select("*, drivers:rr_drivers!driver_id(*), shops:rr_shops(*)")

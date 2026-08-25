@@ -30,9 +30,8 @@ export async function searchAddressesAction(
       proximity,
       limit: 6,
     });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Address search failed.";
-    throw new Error(msg);
+  } catch {
+    mapbox = [];
   }
 
   if (mapbox.length > 0) {

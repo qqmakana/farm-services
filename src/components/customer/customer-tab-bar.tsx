@@ -43,14 +43,18 @@ const TABS = [
 
 export function CustomerTabBar() {
   const pathname = usePathname() ?? "/";
+  const hideOnMap =
+    pathname.startsWith("/ride") || pathname.startsWith("/trip");
 
   useEffect(() => {
     applySimpleModeClass();
   }, []);
 
+  if (hideOnMap) return null;
+
   return (
     <nav
-      className="fixed bottom-0 left-1/2 z-[60] w-full max-w-md -translate-x-1/2 border-t border-[#E8E8E8] bg-white pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-sans)]"
+      className="fixed bottom-[max(0.4rem,env(safe-area-inset-bottom))] left-1/2 z-[60] w-[calc(100%-1.25rem)] max-w-md -translate-x-1/2 rounded-[28px] bg-white shadow-[0_8px_28px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.06] font-[family-name:var(--font-sans)]"
       aria-label="Main"
       data-testid="customer-tab-bar"
     >

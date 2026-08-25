@@ -122,10 +122,8 @@ export function UberHome() {
   return (
     <main
       data-testid="uber-home"
-      className="ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-28 pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] text-black"
+      className="ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-32 pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] text-black"
     >
-      <DriveSignupCard variant="full" className="mb-5" />
-
       <Suspense fallback={null}>
         <CaptureReferral />
       </Suspense>
@@ -193,7 +191,7 @@ export function UberHome() {
         })}
       </div>
 
-      <div className="mt-5 flex items-center rounded-full bg-white py-1.5 pl-5 pr-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]">
+      <div className="mt-5 flex items-center rounded-full bg-[#EEEEEE] py-1.5 pl-5 pr-1.5">
         <AppLink
           href="/ride"
           data-testid="home-where-to"
@@ -208,17 +206,21 @@ export function UberHome() {
             Where to?
           </span>
         </AppLink>
-        <span className="mx-1 h-8 w-px bg-[#EEEEEE]" aria-hidden />
+        <span className="mx-1 h-8 w-px bg-[#D2D2D2]" aria-hidden />
         <button
           type="button"
           data-testid="home-later"
           onClick={() => setLaterOpen(true)}
-          className="uber-press flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-[#F3F3F3] px-4 text-[15px] font-medium text-black"
+          className="uber-press flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-white px-4 text-[15px] font-medium text-black shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
         >
           <CalendarClock className="h-4 w-4" strokeWidth={2} aria-hidden />
           Later
         </button>
       </div>
+
+      <SmartSuggestions filter="for-you" onSelectDestination={goToPlace} />
+
+      <DriveSignupCard variant="compact" className="mt-5" />
 
       <section className="relative z-10 mt-6" data-testid="home-chips">
         <div className="flex items-center justify-between">
@@ -242,7 +244,7 @@ export function UberHome() {
           aria-label="Services"
         >
           {HOME_SERVICES.map((item) => (
-            <div key={item.label} className="w-[92px] shrink-0">
+            <div key={item.label} className="w-[76px] shrink-0">
               <UberServiceTile
                 href={item.href}
                 label={item.label}
@@ -251,7 +253,11 @@ export function UberHome() {
                 badge={"badge" in item ? item.badge : undefined}
                 knockoutWhite={"knockoutWhite" in item ? item.knockoutWhite : false}
                 primary={"primary" in item ? item.primary : false}
-                tileClassName={item.label === "Trip" ? "bg-[#E8E8E8]" : undefined}
+                tileClassName={
+                  item.label === "Trip"
+                    ? "!rounded-full bg-[#E8E8E8]"
+                    : "!rounded-full"
+                }
                 testId={item.testId}
               />
             </div>
@@ -274,8 +280,6 @@ export function UberHome() {
           src="/home/icons/shops.png"
         />
       </div>
-
-      <SmartSuggestions filter="for-you" onSelectDestination={goToPlace} />
 
       <AppLink
         href="/ride"

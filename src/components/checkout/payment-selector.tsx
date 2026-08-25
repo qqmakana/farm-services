@@ -48,7 +48,7 @@ export function PaymentSelector({
       {value === "cash" ? (
         <p
           data-testid="cash-payment-message"
-          className={compact ? "sr-only" : "text-[13px] text-[#6B6B6B]"}
+          className={compact ? "mt-1 text-[12px] text-[#6B6B6B]" : "text-[13px] text-[#6B6B6B]"}
         >
           Pay the driver in cash
         </p>
@@ -85,7 +85,13 @@ export function PaymentSelector({
               onClick={() => onChange(other.id)}
               className="uber-press flex w-full items-center gap-3 py-1 text-left"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black text-white">
+              <span
+                className={`flex h-8 w-8 shrink-0 items-center justify-center text-white ${
+                  opt.id === "cash"
+                    ? "rounded-[6px] bg-[#0F7B3A]"
+                    : "rounded-full bg-black"
+                }`}
+              >
                 <Icon className="h-4 w-4" aria-hidden />
               </span>
               <span className="min-w-0 flex-1 text-[16px] font-semibold text-[#0a0a0a]">

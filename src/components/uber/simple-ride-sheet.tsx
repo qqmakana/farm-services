@@ -1,28 +1,29 @@
 ﻿"use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { User } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CalendarClock, User } from "lucide-react";
 import {
   PaymentSelector,
   type CheckoutPaymentChoice,
 } from "@/components/checkout/payment-selector";
 import { useCountry } from "@/components/country/country-provider";
-import { PlanYourRideHeader } from "@/components/uber/plan-your-ride-header";
 import { SafeCardPay } from "@/components/uber/safe-card-pay";
 import { localInputToIso } from "@/components/uber/schedule-when";
 import { WhereToBar } from "@/components/uber/where-to-bar";
 import {
   capturePayPalAndCreateJob,
-  createCashJob,
+  createCashJobResult,
   createLocalPaidJob,
   createPayPalOrderAction,
   quoteFareAction,
 } from "@/lib/actions";
+import { searchAddressesAction } from "@/lib/actions-mapbox";
 import { bookingWhatsAppHref } from "@/lib/brand";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
 import { formatMoney } from "@/lib/format";
 import { etaMinutes } from "@/lib/geo";
 import { getGuestProfile, setGuestProfile } from "@/lib/guest-profile";
+import type { AddressSuggestion } from "@/lib/mapbox-types";
 import { getCapturedReferrer } from "@/lib/rider-referral";
 import { SmartSuggestions } from "@/components/rider/smart-suggestions";
 import type { PlaceSuggestion } from "@/lib/suggestions";
@@ -38,6 +39,7 @@ type Draft = Omit<NewJobInput, "payment">;
 export function SimpleRideSheet({
   onPinChange,
   onDropoffPinChange,
+  onMapLabelsChange,
   mapTapPin = null,
   mapTapToken = 0,
   searchNonce = 0,
@@ -45,6 +47,11 @@ export function SimpleRideSheet({
 }: {
   onPinChange?: (pin: Pin | null) => void;
   onDropoffPinChange?: (pin: Pin | null) => void;
+  onMapLabelsChange?: (next: {
+    pickup: string;
+    dropoff: string;
+    etaMins: number;
+  }) => void;
   mapTapPin?: Pin | null;
   mapTapToken?: number;
   /** Parent back from choose-ride → search. */
@@ -52,22 +59,24 @@ export function SimpleRideSheet({
   onSnap?: (snap: "peek" | "mid" | "full") => void;
 }) {
   const { country, countryCode } = useCountry();
-  const center = country.mapCenter;
   const [whenLater, setWhenLater] = useState(false);
   const [scheduledLocal, setScheduledLocal] = useState("");
   const [pickup, setPickup] = useState("");
   const [dropoff, setDropoff] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [pickupPin, setPickupPin] = useState<Pin | null>(center);
+  const [pickupPin, setPickupPin] = useState<Pin | null>(null);
   const [dropoffPin, setDropoffPin] = useState<Pin | null>(null);
   const [nextPinIsDropoff, setNextPinIsDropoff] = useState(false);
   const [payMethod, setPayMethod] = useState<CheckoutPaymentChoice>("cash");
   const [msg, setMsg] = useState<string | null>(null);
-  const [pending, start] = useTransition();
+  const [pending, setPending] = useState(false);
   const [fee, setFee] = useState(country.pricing?.ride?.base ?? 15);
   const [etaMins, setEtaMins] = useState(7);
   const [quoteReady, setQuoteReady] = useState(false);
+  const [dropHits, setDropHits] = useState<AddressSuggestion[]>([]);
+  const [dropFocused, setDropFocused] = useState(false);
+  const dropoffRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     try {
@@ -90,14 +99,30 @@ export function SimpleRideSheet({
 
   useEffect(() => {
     if (!mapTapPin || !mapTapToken) return;
-    if (nextPinIsDropoff || (pickupPin && !dropoffPin)) {
+    // First token is auto-GPS — always pickup, never drop-off.
+    if (mapTapToken === 1 && !nextPinIsDropoff) {
+      setPickupPin(mapTapPin);
+      setPickup((p) => p.trim() || "Current location");
+      return;
+    }
+    if (nextPinIsDropoff) {
       setDropoffPin(mapTapPin);
       setDropoff((d) => d.trim() || "Dropped pin");
       setNextPinIsDropoff(false);
-    } else {
+      return;
+    }
+    if (!pickupPin) {
       setPickupPin(mapTapPin);
       setPickup((p) => p.trim() || "Current location");
+      return;
     }
+    if (!dropoffPin) {
+      setDropoffPin(mapTapPin);
+      setDropoff((d) => d.trim() || "Dropped pin");
+      return;
+    }
+    setPickupPin(mapTapPin);
+    setPickup((p) => p.trim() || "Current location");
   }, [mapTapPin, mapTapToken]);
 
   useEffect(() => {
@@ -107,6 +132,29 @@ export function SimpleRideSheet({
   useEffect(() => {
     onDropoffPinChange?.(dropoffPin);
   }, [dropoffPin, onDropoffPinChange]);
+
+  useEffect(() => {
+    const pickupWait = Math.max(2, Math.min(8, Math.round(etaMins / 4) || 3));
+    onMapLabelsChange?.({
+      pickup: "Pickup",
+      dropoff: dropoff.trim() || "Drop-off",
+      etaMins: pickupWait,
+    });
+  }, [dropoff, etaMins, onMapLabelsChange]);
+
+  useEffect(() => {
+    const q = dropoff.trim();
+    if (!dropFocused || dropoffPin || q.length < 2) {
+      setDropHits([]);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      void searchAddressesAction(q, countryCode, pickupPin)
+        .then((res) => setDropHits(res.results))
+        .catch(() => setDropHits([]));
+    }, 280);
+    return () => window.clearTimeout(timer);
+  }, [dropoff, dropFocused, dropoffPin, countryCode, pickupPin]);
 
   useEffect(() => {
     if (searchNonce < 1) return;
@@ -199,15 +247,24 @@ export function SimpleRideSheet({
       setMsg("Fill name, phone, pickup and drop-off. Tap the map to set pins.");
       return;
     }
-    start(async () => {
+    void (async () => {
+      setPending(true);
       try {
         saveGuest();
-        const job = await createCashJob(buildDraft());
-        window.location.assign(`/trip/${job.reference_code}`);
+        const result = await createCashJobResult(buildDraft());
+        if (!result.ok) {
+          setMsg(result.error);
+          setPending(false);
+          return;
+        }
+        window.location.assign(`/trip/${result.job.reference_code}`);
       } catch (err) {
-        setMsg(err instanceof Error ? err.message : "Could not book. Use WhatsApp.");
+        setMsg(
+          err instanceof Error ? err.message : "Could not book. Use WhatsApp.",
+        );
+        setPending(false);
       }
-    });
+    })();
   }
 
   const estimate = fee;
@@ -228,9 +285,33 @@ export function SimpleRideSheet({
 
   function pickDestination(place: PlaceSuggestion) {
     setDropoff(place.name);
+    setDropHits([]);
+    setDropFocused(false);
+    dropoffRef.current?.blur();
     if (place.lat != null && place.lng != null) {
       setDropoffPin({ lat: place.lat, lng: place.lng });
       onSnap?.("mid");
+    }
+  }
+
+  function pickAddress(hit: AddressSuggestion) {
+    setDropoff(hit.label);
+    setDropoffPin({ lat: hit.lat, lng: hit.lng });
+    setDropHits([]);
+    setDropFocused(false);
+    dropoffRef.current?.blur();
+    onSnap?.("mid");
+  }
+
+  async function confirmTypedDropoff() {
+    const q = dropoff.trim();
+    if (q.length < 2) return;
+    try {
+      const res = await searchAddressesAction(q, countryCode, pickupPin);
+      const hit = res.results[0];
+      if (hit) pickAddress(hit);
+    } catch {
+      /* keep typing — landmarks may still appear */
     }
   }
   const wa = bookingWhatsAppHref({
@@ -245,15 +326,78 @@ export function SimpleRideSheet({
     currencySymbol: country.currencySymbol,
   });
 
+  const cardPay = (
+    <SafeCardPay
+      amount={estimate}
+      description="Village Ride · Trip"
+      disabled={!ready}
+      submitLabel="Choose Village Ride"
+      onCreateOrder={async () => {
+        setMsg(null);
+        if (!ready) throw new Error("Complete the form first.");
+        saveGuest();
+        const d = buildDraft();
+        const { orderId } = await createPayPalOrderAction({
+          vehicle: "sedan",
+          service_type: "ride",
+          country_code: d.country_code || countryCode,
+          customer_phone: d.customer_phone,
+          pickup_lat: d.pickup_lat,
+          pickup_lng: d.pickup_lng,
+          dropoff_lat: d.dropoff_lat,
+          dropoff_lng: d.dropoff_lng,
+          description: "Village Ride trip · Go (car)",
+          at: d.scheduled_for ?? null,
+          details: d.details,
+        });
+        return orderId;
+      }}
+      onApprove={async (orderId) => {
+        setMsg(null);
+        try {
+          saveGuest();
+          const job = await capturePayPalAndCreateJob(orderId, buildDraft());
+          window.location.assign(`/trip/${job.reference_code}`);
+        } catch (err) {
+          setMsg(err instanceof Error ? err.message : "Payment failed");
+          throw err;
+        }
+      }}
+      onLocalPay={async () => {
+        setMsg(null);
+        if (!ready) throw new Error("Complete the form first.");
+        saveGuest();
+        const job = await createLocalPaidJob(buildDraft());
+        window.location.assign(`/trip/${job.reference_code}`);
+      }}
+    />
+  );
+
+  const bookCashBtn = (
+    <button
+      type="button"
+      data-testid="book-button"
+      disabled={pending}
+      onClick={bookCash}
+      className="uber-press min-w-0 w-full flex-1 rounded-full bg-black py-4 text-[17px] font-medium text-white disabled:opacity-50"
+    >
+      Choose Village Ride · {formatMoney(estimate, country.currency, countryCode)}
+    </button>
+  );
+
+  const laterBtn = (
+    <button
+      type="button"
+      aria-label="Schedule for later"
+      onClick={() => setWhenLater(true)}
+      className="uber-press flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] border border-black bg-white text-black"
+    >
+      <CalendarClock className="h-5 w-5" strokeWidth={2} aria-hidden />
+    </button>
+  );
+
   return (
     <div className="space-y-3 text-black">
-      <PlanYourRideHeader
-        whenMode={whenLater ? "later" : "now"}
-        whenLabel="Later"
-        forMeLabel={name.trim() ? name.trim().split(" ")[0] : "For me"}
-        onToggleWhen={() => setWhenLater((v) => !v)}
-      />
-
       <WhereToBar
         onSwap={() => {
           const p = pickup;
@@ -266,7 +410,7 @@ export function SimpleRideSheet({
         pickupSlot={
           <input
             data-testid="pickup-input"
-            className="w-full bg-transparent text-[17px] font-bold text-black outline-none placeholder:font-normal placeholder:text-[#A6A6A6]"
+            className="w-full bg-transparent text-[17px] font-bold text-black outline-none ring-0 placeholder:font-normal placeholder:text-[#A6A6A6] focus:outline-none focus:ring-0 focus-visible:outline-none"
             placeholder="Current location"
             value={pickup}
             onChange={(e) => setPickup(e.target.value)}
@@ -274,33 +418,57 @@ export function SimpleRideSheet({
         }
         dropoffSlot={
           <input
+            ref={dropoffRef}
             data-testid="dropoff-input"
-            className="w-full bg-transparent text-[17px] font-bold text-black outline-none placeholder:font-normal placeholder:text-[#A6A6A6]"
+            className="w-full bg-transparent text-[17px] font-bold text-black outline-none ring-0 placeholder:font-normal placeholder:text-[#A6A6A6] focus:outline-none focus:ring-0 focus-visible:outline-none"
             placeholder="Where to?"
             value={dropoff}
-            onChange={(e) => setDropoff(e.target.value)}
-            onFocus={() => onSnap?.("full")}
+            onChange={(e) => {
+              setDropoff(e.target.value);
+              if (dropoffPin) {
+                setDropoffPin(null);
+                setQuoteReady(false);
+              }
+            }}
+            onFocus={() => {
+              setDropFocused(true);
+              onSnap?.("full");
+            }}
+            onBlur={() => {
+              window.setTimeout(() => setDropFocused(false), 180);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void confirmTypedDropoff();
+              }
+            }}
           />
         }
       />
 
-      {searching ? (
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setNextPinIsDropoff(false)}
-            className="min-h-11 flex-1 rounded-full bg-[#F3F3F3] text-[13px] font-semibold"
-          >
-            Map tap = pickup
-          </button>
-          <button
-            type="button"
-            onClick={() => setNextPinIsDropoff(true)}
-            className="min-h-11 flex-1 rounded-full bg-[#F3F3F3] text-[13px] font-semibold"
-          >
-            Map tap = drop-off
-          </button>
-        </div>
+      {dropHits.length > 0 ? (
+        <ul className="animate-[uberFadeIn_200ms_ease-out] divide-y divide-[#eee] overflow-hidden rounded-[14px] bg-[#F8F8F8]">
+          {dropHits.map((hit) => (
+            <li key={hit.id}>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => pickAddress(hit)}
+                className="uber-press flex min-h-12 w-full items-start px-3 py-3 text-left"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-[15px] font-semibold text-black">
+                    {hit.label.split(",")[0]}
+                  </span>
+                  <span className="mt-0.5 block truncate text-[12px] text-[#6B6B6B]">
+                    {hit.label}
+                  </span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
       ) : null}
 
       {searching ? (
@@ -312,7 +480,7 @@ export function SimpleRideSheet({
         </div>
       ) : null}
 
-      <div>
+      <div className={searching ? "" : "animate-[uberFadeIn_280ms_ease-out]"}>
         <p className="mb-1 text-[22px] font-bold tracking-[-0.04em]">Choose a ride</p>
         <button
           type="button"
@@ -344,29 +512,31 @@ export function SimpleRideSheet({
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <input
-          aria-label="Your name"
-          className="rounded-[12px] bg-[#F3F3F3] p-4 text-[17px] outline-none"
-          placeholder="Your name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          aria-label="Phone"
-          className="rounded-[12px] bg-[#F3F3F3] p-4 text-[17px] outline-none"
-          placeholder={formatPhonePlaceholder(countryCode)}
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          inputMode="tel"
-        />
-      </div>
+      {searching || !name.trim() || !phone.trim() ? (
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            aria-label="Your name"
+            className="rounded-[12px] bg-[#F3F3F3] p-4 text-[17px] outline-none"
+            placeholder="Your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <input
+            aria-label="Phone"
+            className="rounded-[12px] bg-[#F3F3F3] p-4 text-[17px] outline-none"
+            placeholder={formatPhonePlaceholder(countryCode)}
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            inputMode="tel"
+          />
+        </div>
+      ) : null}
 
       {whenLater ? (
         <>
           <input
             type="datetime-local"
-            className="w-full rounded-[12px] bg-[#F3F3F3] p-4 text-[17px] outline-none"
+            className="w-full rounded-[12px] bg-[#F3F3F3] p-4 text-[17px] outline-none focus:outline-none focus-visible:outline-none"
             value={scheduledLocal}
             onChange={(e) => setScheduledLocal(e.target.value)}
           />
@@ -374,20 +544,13 @@ export function SimpleRideSheet({
             Includes R10 reservation fee. Cancel free until 1 hour before.
           </p>
         </>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setWhenLater(true)}
-          className="min-h-12 w-full rounded-full bg-[#F3F3F3] text-[15px] font-semibold"
-        >
-          Schedule for later (Reserve)
-        </button>
-      )}
+      ) : null}
 
       <PaymentSelector
         value={payMethod}
         onChange={setPayMethod}
         currencyLabel={country.currencySymbol}
+        compact={!searching}
       />
 
       {msg ? (
@@ -404,67 +567,30 @@ export function SimpleRideSheet({
           </p>
         </div>
       ) : payMethod === "cash" ? (
-        <button
-          type="button"
-          data-testid="book-button"
-          disabled={pending}
-          onClick={bookCash}
-          className="uber-press w-full rounded-full bg-black py-4 text-[17px] font-medium text-white disabled:opacity-50"
-        >
-          Choose Village Ride · {formatMoney(estimate, country.currency, countryCode)}
-        </button>
+        searching || whenLater ? (
+          bookCashBtn
+        ) : (
+          <div className="flex items-end gap-2">
+            {bookCashBtn}
+            {laterBtn}
+          </div>
+        )
+      ) : searching || whenLater ? (
+        cardPay
       ) : (
-        <SafeCardPay
-          amount={estimate}
-          description="Village Ride · Trip"
-          disabled={!ready}
-          submitLabel="Choose Village Ride"
-          onCreateOrder={async () => {
-            setMsg(null);
-            if (!ready) throw new Error("Complete the form first.");
-            saveGuest();
-            const d = buildDraft();
-            const { orderId } = await createPayPalOrderAction({
-              vehicle: "sedan",
-              service_type: "ride",
-              country_code: d.country_code || countryCode,
-              customer_phone: d.customer_phone,
-              pickup_lat: d.pickup_lat,
-              pickup_lng: d.pickup_lng,
-              dropoff_lat: d.dropoff_lat,
-              dropoff_lng: d.dropoff_lng,
-              description: "Village Ride trip · Go (car)",
-              at: d.scheduled_for ?? null,
-              details: d.details,
-            });
-            return orderId;
-          }}
-          onApprove={async (orderId) => {
-            setMsg(null);
-            try {
-              saveGuest();
-              const job = await capturePayPalAndCreateJob(orderId, buildDraft());
-              window.location.assign(`/trip/${job.reference_code}`);
-            } catch (err) {
-              setMsg(err instanceof Error ? err.message : "Payment failed");
-              throw err;
-            }
-          }}
-          onLocalPay={async () => {
-            setMsg(null);
-            if (!ready) throw new Error("Complete the form first.");
-            saveGuest();
-            const job = await createLocalPaidJob(buildDraft());
-            window.location.assign(`/trip/${job.reference_code}`);
-          }}
-        />
+        <div className="flex items-end gap-2">
+          <div className="min-w-0 flex-1">{cardPay}</div>
+          {laterBtn}
+        </div>
       )}
-      <a
-        href={wa}
-        className="flex min-h-12 w-full items-center justify-center rounded-full bg-[#25D366] text-[15px] font-semibold text-white"
-      >
-        Or book on WhatsApp
-      </a>
+      {searching ? (
+        <a
+          href={wa}
+          className="flex min-h-12 w-full items-center justify-center rounded-full bg-[#25D366] text-[15px] font-semibold text-white"
+        >
+          Or book on WhatsApp
+        </a>
+      ) : null}
     </div>
   );
 }

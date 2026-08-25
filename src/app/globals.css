@@ -257,6 +257,13 @@ body {
   border-radius: 24px 24px 0 0;
 }
 
+.ru-sheet input:focus,
+.ru-sheet input:focus-visible,
+.ru-sheet textarea:focus,
+.ru-sheet textarea:focus-visible {
+  outline: none;
+}
+
 .ru-segment {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -859,30 +866,66 @@ html[data-theme="dark"] .ru-skeleton {
   pointer-events: auto;
 }
 
+.vr-map-labeled {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  z-index: 3;
+  animation: uberFadeIn 280ms ease-out;
+}
+
+.vr-map-callout {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 2px 8px rgb(0 0 0 / 18%));
+}
+
+.vr-map-callout-eta {
+  background: #000;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  padding: 4px 7px;
+  border-radius: 2px 2px 0 0;
+}
+
+.vr-map-callout-name {
+  background: #fff;
+  color: #0a0a0a;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 7px 10px;
+  white-space: nowrap;
+  max-width: 168px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .vr-map-pin-pickup {
-  width: 14px;
-  height: 14px;
+  width: 24px;
+  height: 24px;
   border-radius: 9999px;
   background: #000;
-  border: 3px solid #fff;
   box-shadow: 0 1px 4px rgb(0 0 0 / 35%);
   box-sizing: border-box;
 }
 
 .vr-map-pin-pickup::before {
-  content: none;
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 9999px;
+  background: #fff;
 }
 
 .vr-map-pin-pickup::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 100%;
-  width: 0;
-  height: 0;
-  border: 5px solid transparent;
-  border-top-color: #000;
-  transform: translateX(-50%);
+  content: none;
 }
 
 .vr-map-pin-radar {
@@ -894,21 +937,19 @@ html[data-theme="dark"] .ru-skeleton {
 }
 
 .vr-map-pin-dropoff {
-  width: 10px;
-  height: 10px;
-  border-radius: 1px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   background: #000;
-  border: 2px solid #fff;
   box-shadow: 0 1px 4px rgb(0 0 0 / 35%);
   box-sizing: border-box;
-  transform: rotate(45deg);
 }
 
 .vr-map-pin-dropoff::before {
   content: "";
   position: absolute;
-  inset: 2px;
-  border-radius: 1px;
+  inset: 8px;
+  border-radius: 2px;
   background: #fff;
 }
 
@@ -932,12 +973,12 @@ html[data-theme="dark"] .ru-skeleton {
 }
 
 .vr-map-pin-car {
-  width: 14px;
-  height: 22px;
-  border-radius: 4px;
-  background: #000;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 35%);
+  width: 16px;
+  height: 26px;
+  border-radius: 5px;
+  background: #fff;
+  border: 1.5px solid #1a1a1a;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 28%);
   transform: rotate(-22deg);
 }
 
