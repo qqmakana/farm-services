@@ -12,23 +12,33 @@ function RideInner() {
     lat: number;
     lng: number;
   } | null>(null);
+  const [searchNonce, setSearchNonce] = useState(0);
 
   return (
     <UberShell
-      showServicePills
       showTabBar
-      initialSnap="mid"
+      enterFromPeek
+      initialSnap="full"
       pin={pin}
       dropoffPin={dropoffPin}
       onMapPin={onMapPin}
       backHref="/"
-      title="Village Ride"
+      onBack={() => {
+        if (dropoffPin) {
+          setDropoffPin(null);
+          setSearchNonce((n) => n + 1);
+          return;
+        }
+        window.location.assign("/");
+      }}
+      title="Plan your ride"
     >
       <SimpleRideSheet
         onPinChange={setPin}
         onDropoffPinChange={setDropoffPin}
         mapTapPin={mapTapPin}
         mapTapToken={mapTapToken}
+        searchNonce={searchNonce}
       />
     </UberShell>
   );

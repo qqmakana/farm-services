@@ -44,6 +44,10 @@ export function UberShell({
   floatingSearch = null,
   stickyAction = null,
   initialSnap = "peek",
+  snap: snapProp,
+  onSnapChange,
+  onBack,
+  enterFromPeek = false,
 }: {
   children: ReactNode;
   pin?: { lat: number; lng: number } | null;
@@ -51,6 +55,8 @@ export function UberShell({
   /** Tap map → pin. Landmark text in the sheet stays active too. */
   onMapPin?: (pin: { lat: number; lng: number }) => void;
   backHref?: string;
+  /** In-page back (search ↔ choose ride). Falls back to backHref. */
+  onBack?: () => void;
   title?: string;
   /** Reserve space for the customer bottom tab bar (Home). */
   showTabBar?: boolean;
@@ -61,7 +67,11 @@ export function UberShell({
   /** Pinned bottom CTA inside the sheet (Book Now) */
   stickyAction?: ReactNode;
   /** Starting sheet height. Ride checkout uses mid so the map stays visible. */
-  initialSnap?: "peek" | "mid";
+  initialSnap?: "peek" | "mid" | "full";
+  snap?: "peek" | "mid" | "full";
+  onSnapChange?: (next: "peek" | "mid" | "full") => void;
+  /** Slide the sheet up on first paint (Home → search). */
+  enterFromPeek?: boolean;
 }) {
   const { country } = useCountry();
   const [cars, setCars] = useState<JobMapPin[]>([]);
@@ -71,11 +81,24 @@ export function UberShell({
 
   type SheetSnap = "peek" | "mid" | "full";
   const SNAP_PCT: Record<SheetSnap, number> = {
-    peek: 34,
-    mid: 48,
-    full: 70,
+    peek: 28,
+    mid: 58,
+    full: 86,
   };
-  const [snap, setSnap] = useState<SheetSnap>(initialSnap);
+  const [snapState, setSnapState] = useState<SheetSnap>(
+    enterFromPeek ? "peek" : initialSnap,
+  );
+  const snap = snapProp ?? snapState;
+  const setSnap = useCallback(
+    (next: SheetSnap | ((prev: SheetSnap) => SheetSnap)) => {
+      setSnapState((prev) => {
+        const resolved = typeof next === "function" ? next(snapProp ?? prev) : next;
+        onSnapChange?.(resolved);
+        return resolved;
+      });
+    },
+    [onSnapChange, snapProp],
+  );
   const [dragPx, setDragPx] = useState(0);
   const dragStartY = useRef(0);
   const dragStartSnap = useRef<SheetSnap>("peek");
@@ -83,11 +106,20 @@ export function UberShell({
   const sawDropoff = useRef(false);
 
   useEffect(() => {
-    if (dropoffPin && !sawDropoff.current) {
-      setSnap("mid");
-    }
+    if (!enterFromPeek) return;
+    const id = window.setTimeout(() => setSnap(initialSnap === "mid" ? "mid" : "full"), 40);
+    return () => window.clearTimeout(id);
+  }, [enterFromPeek, initialSnap, setSnap]);
+
+  useEffect(() => {
+    if (snapProp) setSnapState(snapProp);
+  }, [snapProp]);
+
+  useEffect(() => {
+    if (dropoffPin) setSnap("mid");
+    else if (sawDropoff.current) setSnap("full");
     sawDropoff.current = Boolean(dropoffPin);
-  }, [dropoffPin]);
+  }, [dropoffPin, setSnap]);
 
   useEffect(() => {
     const origin = pin ?? country.mapCenter;
@@ -142,7 +174,7 @@ export function UberShell({
     applySnapFromDrag(dy, dragStartSnap.current);
   }
 
-  const sheetHeight = `clamp(11.5rem, calc(${SNAP_PCT[snap]}% - ${dragPx}px), 78%)`;
+  const sheetHeight = `clamp(11.5rem, calc(${SNAP_PCT[snap]}% - ${dragPx}px), 90%)`;
 
   return (
     <div
@@ -176,7 +208,16 @@ export function UberShell({
       <div className="pointer-events-none absolute inset-x-0 top-0 z-30 px-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div className="pointer-events-auto flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
-            {backHref ? (
+            {onBack ? (
+              <button
+                type="button"
+                onClick={onBack}
+                className="uber-press flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#0a0a0a] shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
+                aria-label="Back"
+              >
+                <ArrowLeft className="h-5 w-5" strokeWidth={2.2} />
+              </button>
+            ) : backHref ? (
               <AppLink
                 href={backHref}
                 className="uber-press flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#0a0a0a] shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
@@ -212,7 +253,7 @@ export function UberShell({
               </AppLink>
             )}
           </div>
-          {backHref ? (
+          {(onBack || backHref) ? (
             <span
               data-testid="country-indicator"
               className="rounded-full bg-white px-3 py-2 text-[12px] font-bold tracking-wide text-[#0a0a0a] shadow-[0_2px_12px_rgba(0,0,0,0.12)]"

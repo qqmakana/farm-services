@@ -233,10 +233,15 @@ body {
   font-size: 17px;
 }
 
-.ru-sheet {
-  border-radius: var(--ru-radius-lg) var(--ru-radius-lg) 0 0;
-  background: var(--ru-surface);
-  box-shadow: var(--ru-shadow-sheet);
+@keyframes uberFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .ru-sheet-handle {

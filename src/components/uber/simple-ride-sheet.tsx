@@ -1,23 +1,31 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { User } from "lucide-react";
 import {
   PaymentSelector,
   type CheckoutPaymentChoice,
 } from "@/components/checkout/payment-selector";
 import { useCountry } from "@/components/country/country-provider";
+import { PlanYourRideHeader } from "@/components/uber/plan-your-ride-header";
 import { SafeCardPay } from "@/components/uber/safe-card-pay";
 import { localInputToIso } from "@/components/uber/schedule-when";
+import { WhereToBar } from "@/components/uber/where-to-bar";
 import {
   capturePayPalAndCreateJob,
   createCashJob,
   createLocalPaidJob,
   createPayPalOrderAction,
+  quoteFareAction,
 } from "@/lib/actions";
 import { bookingWhatsAppHref } from "@/lib/brand";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
+import { formatMoney } from "@/lib/format";
+import { etaMinutes } from "@/lib/geo";
 import { getGuestProfile, setGuestProfile } from "@/lib/guest-profile";
 import { getCapturedReferrer } from "@/lib/rider-referral";
+import { SmartSuggestions } from "@/components/rider/smart-suggestions";
+import type { PlaceSuggestion } from "@/lib/suggestions";
 import type { NewJobInput } from "@/lib/types";
 
 type Pin = { lat: number; lng: number };
@@ -32,11 +40,16 @@ export function SimpleRideSheet({
   onDropoffPinChange,
   mapTapPin = null,
   mapTapToken = 0,
+  searchNonce = 0,
+  onSnap,
 }: {
   onPinChange?: (pin: Pin | null) => void;
   onDropoffPinChange?: (pin: Pin | null) => void;
   mapTapPin?: Pin | null;
   mapTapToken?: number;
+  /** Parent back from choose-ride â†’ search. */
+  searchNonce?: number;
+  onSnap?: (snap: "peek" | "mid" | "full") => void;
 }) {
   const { country, countryCode } = useCountry();
   const center = country.mapCenter;
@@ -52,6 +65,9 @@ export function SimpleRideSheet({
   const [payMethod, setPayMethod] = useState<CheckoutPaymentChoice>("cash");
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const [fee, setFee] = useState(country.pricing?.ride?.base ?? 15);
+  const [etaMins, setEtaMins] = useState(7);
+  const [quoteReady, setQuoteReady] = useState(false);
 
   useEffect(() => {
     try {
@@ -92,6 +108,46 @@ export function SimpleRideSheet({
     onDropoffPinChange?.(dropoffPin);
   }, [dropoffPin, onDropoffPinChange]);
 
+  useEffect(() => {
+    if (searchNonce < 1) return;
+    setDropoff("");
+    setDropoffPin(null);
+    setQuoteReady(false);
+    onSnap?.("full");
+  }, [searchNonce]);
+
+  useEffect(() => {
+    if (!pickupPin || !dropoffPin) {
+      setQuoteReady(false);
+      return;
+    }
+    let cancelled = false;
+    void quoteFareAction({
+      vehicle: "sedan",
+      service_type: "ride",
+      country_code: countryCode,
+      pickup_lat: pickupPin.lat,
+      pickup_lng: pickupPin.lng,
+      dropoff_lat: dropoffPin.lat,
+      dropoff_lng: dropoffPin.lng,
+      at: whenLater ? localInputToIso(scheduledLocal) : null,
+      customer_phone: phone || null,
+    })
+      .then((fare) => {
+        if (cancelled) return;
+        setFee(fare.fee_amount);
+        setEtaMins(etaMinutes(fare.distance_km || 0));
+        setQuoteReady(fare.quote_ready);
+        onSnap?.("mid");
+      })
+      .catch(() => {
+        if (!cancelled) setQuoteReady(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pickupPin, dropoffPin, whenLater, scheduledLocal, countryCode, phone]);
+
   const ready =
     Boolean(name.trim()) &&
     Boolean(phone.trim()) &&
@@ -122,10 +178,10 @@ export function SimpleRideSheet({
       dispatcher_notes: tag,
       details: {
         seats: 1,
-        route_name: `${pickup.trim()} → ${dropoff.trim()}`,
+        route_name: `${pickup.trim()} â†’ ${dropoff.trim()}`,
         direction: "to_village",
       },
-      fee_amount: country.pricing?.ride?.base ?? 15,
+      fee_amount: fee,
     };
   }
 
@@ -154,13 +210,35 @@ export function SimpleRideSheet({
     });
   }
 
-  const estimate = country.pricing?.ride?.base ?? 15;
+  const estimate = fee;
+  const searching = !dropoffPin;
+  const etaLabel = (() => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + etaMins);
+    try {
+      const time = d.toLocaleTimeString("en-ZA", {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+      return `${time} Â· ${etaMins} min`;
+    } catch {
+      return `${etaMins} min`;
+    }
+  })();
+
+  function pickDestination(place: PlaceSuggestion) {
+    setDropoff(place.name);
+    if (place.lat != null && place.lng != null) {
+      setDropoffPin({ lat: place.lat, lng: place.lng });
+      onSnap?.("mid");
+    }
+  }
   const wa = bookingWhatsAppHref({
     service_type: "ride",
-    pickup_landmark: pickup || "—",
-    dropoff_landmark: dropoff || "—",
-    customer_name: name || "—",
-    customer_phone: phone || "—",
+    pickup_landmark: pickup || "â€”",
+    dropoff_landmark: dropoff || "â€”",
+    customer_name: name || "â€”",
+    customer_phone: phone || "â€”",
     detailsLine: whenLater ? "Reserve" : "Trip now",
     paymentLabel: payMethod === "card" ? "Card" : "Cash",
     estimateZar: estimate,
@@ -169,40 +247,100 @@ export function SimpleRideSheet({
 
   return (
     <div className="space-y-3 text-black">
-      <h1 className="text-center text-[22px] font-bold">
-        {whenLater ? "Reserve a trip" : "Plan your ride"}
-      </h1>
-      <p className="text-center text-[13px] text-[#6B6B6B]">
-        Type landmarks, then tap the map for pickup and drop-off pins.
-      </p>
-
-      <input
-        className="w-full rounded-[12px] bg-[#F3F3F3] p-4 text-[17px] outline-none"
-        placeholder="Pickup — e.g. Engen, taxi rank"
-        value={pickup}
-        onChange={(e) => setPickup(e.target.value)}
-      />
-      <input
-        className="w-full rounded-[12px] bg-[#F3F3F3] p-4 text-[17px] outline-none"
-        placeholder="Where to?"
-        value={dropoff}
-        onChange={(e) => setDropoff(e.target.value)}
+      <PlanYourRideHeader
+        whenMode={whenLater ? "later" : "now"}
+        whenLabel="Later"
+        forMeLabel={name.trim() ? name.trim().split(" ")[0] : "For me"}
+        onToggleWhen={() => setWhenLater((v) => !v)}
       />
 
-      <div className="flex gap-2">
+      <WhereToBar
+        onSwap={() => {
+          const p = pickup;
+          const pp = pickupPin;
+          setPickup(dropoff);
+          setPickupPin(dropoffPin);
+          setDropoff(p);
+          setDropoffPin(pp);
+        }}
+        pickupSlot={
+          <input
+            data-testid="pickup-input"
+            className="w-full bg-transparent text-[17px] font-bold text-black outline-none placeholder:font-normal placeholder:text-[#A6A6A6]"
+            placeholder="Current location"
+            value={pickup}
+            onChange={(e) => setPickup(e.target.value)}
+          />
+        }
+        dropoffSlot={
+          <input
+            data-testid="dropoff-input"
+            className="w-full bg-transparent text-[17px] font-bold text-black outline-none placeholder:font-normal placeholder:text-[#A6A6A6]"
+            placeholder="Where to?"
+            value={dropoff}
+            onChange={(e) => setDropoff(e.target.value)}
+            onFocus={() => onSnap?.("full")}
+          />
+        }
+      />
+
+      {searching ? (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setNextPinIsDropoff(false)}
+            className="min-h-11 flex-1 rounded-full bg-[#F3F3F3] text-[13px] font-semibold"
+          >
+            Map tap = pickup
+          </button>
+          <button
+            type="button"
+            onClick={() => setNextPinIsDropoff(true)}
+            className="min-h-11 flex-1 rounded-full bg-[#F3F3F3] text-[13px] font-semibold"
+          >
+            Map tap = drop-off
+          </button>
+        </div>
+      ) : null}
+
+      {searching ? (
+        <div className="animate-[uberFadeIn_200ms_ease-out]">
+          <SmartSuggestions
+            filter="trip"
+            onSelectDestination={pickDestination}
+          />
+        </div>
+      ) : null}
+
+      <div>
+        <p className="mb-1 text-[22px] font-bold tracking-[-0.04em]">Choose a ride</p>
         <button
           type="button"
-          onClick={() => setNextPinIsDropoff(false)}
-          className="min-h-12 flex-1 rounded-full bg-[#F3F3F3] text-[14px] font-semibold"
+          className="uber-press flex w-full items-center gap-3 rounded-[14px] px-2 py-3 text-left ring-2 ring-[#0a0a0a] ring-inset"
         >
-          Next map tap = pickup
-        </button>
-        <button
-          type="button"
-          onClick={() => setNextPinIsDropoff(true)}
-          className="min-h-12 flex-1 rounded-full bg-[#F3F3F3] text-[14px] font-semibold"
-        >
-          Next map tap = drop-off
+          <span className="relative h-14 w-16 shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/home/icons/car.png"
+              alt=""
+              className="h-14 w-16 object-contain"
+            />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-2 text-[16px] font-bold">
+              Village Ride
+              <span className="inline-flex items-center gap-0.5 text-[12px] font-medium text-[#6B6B6B]">
+                <User className="h-3.5 w-3.5" aria-hidden />
+                4
+              </span>
+            </span>
+            <span className="mt-0.5 block text-[13px] font-medium text-[#6B6B6B]">
+              {quoteReady ? etaLabel : "Few min"}
+            </span>
+          </span>
+          <span className="shrink-0 text-right text-[16px] font-bold">
+            {formatMoney(estimate, country.currency, countryCode)}
+          </span>
         </button>
       </div>
 
@@ -256,21 +394,29 @@ export function SimpleRideSheet({
         </p>
       ) : null}
 
-      {payMethod === "cash" ? (
+      {pending ? (
+        <div className="rounded-[16px] bg-[#F3F3F3] px-4 py-6 text-center">
+          <p className="text-[22px] font-bold">Finding your rideâ€¦</p>
+          <p className="mt-1 text-[13px] text-[#6B6B6B]">
+            Pinging nearby drivers
+          </p>
+        </div>
+      ) : payMethod === "cash" ? (
         <button
           type="button"
+          data-testid="book-button"
           disabled={pending}
           onClick={bookCash}
           className="uber-press w-full rounded-full bg-black py-4 text-[17px] font-medium text-white disabled:opacity-50"
         >
-          {pending ? "Finding driver…" : "Request Trip · Cash"}
+          Choose Village Ride
         </button>
       ) : (
         <SafeCardPay
           amount={estimate}
-          description="Village Ride · Trip"
+          description="Village Ride Â· Trip"
           disabled={!ready}
-          submitLabel="Request Trip · Card"
+          submitLabel="Choose Village Ride"
           onCreateOrder={async () => {
             setMsg(null);
             if (!ready) throw new Error("Complete the form first.");
@@ -285,7 +431,7 @@ export function SimpleRideSheet({
               pickup_lng: d.pickup_lng,
               dropoff_lat: d.dropoff_lat,
               dropoff_lng: d.dropoff_lng,
-              description: "Village Ride trip · Go (car)",
+              description: "Village Ride trip Â· Go (car)",
               at: d.scheduled_for ?? null,
               details: d.details,
             });
