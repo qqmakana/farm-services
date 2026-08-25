@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Calendar, Clock, X } from "lucide-react";
 import {
   defaultLaterLocal,
@@ -21,7 +20,6 @@ export function HomeScheduleLaterModal({
   open: boolean;
   onClose: () => void;
 }) {
-  const router = useRouter();
   const [scheduledLocal, setScheduledLocal] = useState(defaultLaterLocal);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +49,7 @@ export function HomeScheduleLaterModal({
     }
     setError(null);
     onClose();
-    router.push(`/ride?when=later&at=${encodeURIComponent(iso)}`);
+    window.location.assign(`/ride?when=later&at=${encodeURIComponent(iso)}`);
   }
 
   return (

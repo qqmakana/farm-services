@@ -271,7 +271,10 @@ export function RideMapCanvas({
       };
 
       if (s.driverLocation) {
-        add([s.driverLocation.lng, s.driverLocation.lat], "you");
+        add(
+          [s.driverLocation.lng, s.driverLocation.lat],
+          s.variant === "driver" ? "you" : "car",
+        );
       }
       if (s.pin) add([s.pin.lng, s.pin.lat], "pickup");
       else if (!s.driverLocation) add([s.center.lng, s.center.lat], "pickup");

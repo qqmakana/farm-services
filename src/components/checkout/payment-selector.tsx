@@ -45,6 +45,14 @@ export function PaymentSelector({
           Payment
         </p>
       )}
+      {value === "cash" ? (
+        <p
+          data-testid="cash-payment-message"
+          className={compact ? "sr-only" : "text-[13px] text-[#6B6B6B]"}
+        >
+          Pay the driver in cash
+        </p>
+      ) : null}
       {options.map((opt) => {
         const selected = value === opt.id;
         const Icon = opt.Icon;

@@ -1,9 +1,6 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { LiveTrip } from "@/components/live-trip";
-import { TripChrome } from "@/components/trip/trip-chrome";
 import { getJobByReference, getRatingForJob } from "@/lib/actions";
-import { isSearchingStatus } from "@/lib/job-status";
 
 export const dynamic = "force-dynamic";
 
@@ -16,38 +13,11 @@ export default async function TripPage({
   const job = await getJobByReference(code);
   if (!job) notFound();
   const rating = await getRatingForJob(job.id);
-  const stillSearching =
-    isSearchingStatus(job.status) && !job.dispatch_exhausted;
 
   return (
     <div className="ru-force-light relative min-h-dvh bg-white text-slate-900">
-      <TripChrome referenceCode={job.reference_code} />
-      <main className="mx-auto max-w-lg pb-16">
+      <main className="mx-auto max-w-md">
         <LiveTrip initialJob={job} initialRating={rating} />
-        {!stillSearching ? (
-          <div className="mt-6 flex flex-col gap-2 px-4">
-            <Link
-              href={
-                job.service_type === "delivery"
-                  ? "/delivery"
-                  : job.service_type === "farm"
-                    ? "/farm"
-                    : job.service_type === "courier"
-                      ? "/courier"
-                      : "/ride"
-              }
-              className="ru-btn ru-btn-primary w-full text-center"
-            >
-              Request another trip
-            </Link>
-            <Link
-              href="/"
-              className="text-center text-sm font-semibold text-[#000000]"
-            >
-              Back to home
-            </Link>
-          </div>
-        ) : null}
       </main>
     </div>
   );

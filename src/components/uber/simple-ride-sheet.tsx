@@ -47,7 +47,7 @@ export function SimpleRideSheet({
   onDropoffPinChange?: (pin: Pin | null) => void;
   mapTapPin?: Pin | null;
   mapTapToken?: number;
-  /** Parent back from choose-ride â†’ search. */
+  /** Parent back from choose-ride → search. */
   searchNonce?: number;
   onSnap?: (snap: "peek" | "mid" | "full") => void;
 }) {
@@ -178,7 +178,7 @@ export function SimpleRideSheet({
       dispatcher_notes: tag,
       details: {
         seats: 1,
-        route_name: `${pickup.trim()} â†’ ${dropoff.trim()}`,
+        route_name: `${pickup.trim()} → ${dropoff.trim()}`,
         direction: "to_village",
       },
       fee_amount: fee,
@@ -220,7 +220,7 @@ export function SimpleRideSheet({
         hour: "numeric",
         minute: "2-digit",
       });
-      return `${time} Â· ${etaMins} min`;
+      return `${time} · ${etaMins} min`;
     } catch {
       return `${etaMins} min`;
     }
@@ -235,10 +235,10 @@ export function SimpleRideSheet({
   }
   const wa = bookingWhatsAppHref({
     service_type: "ride",
-    pickup_landmark: pickup || "â€”",
-    dropoff_landmark: dropoff || "â€”",
-    customer_name: name || "â€”",
-    customer_phone: phone || "â€”",
+    pickup_landmark: pickup || "—",
+    dropoff_landmark: dropoff || "—",
+    customer_name: name || "—",
+    customer_phone: phone || "—",
     detailsLine: whenLater ? "Reserve" : "Trip now",
     paymentLabel: payMethod === "card" ? "Card" : "Cash",
     estimateZar: estimate,
@@ -316,7 +316,7 @@ export function SimpleRideSheet({
         <p className="mb-1 text-[22px] font-bold tracking-[-0.04em]">Choose a ride</p>
         <button
           type="button"
-          className="uber-press flex w-full items-center gap-3 rounded-[14px] px-2 py-3 text-left ring-2 ring-[#0a0a0a] ring-inset"
+          className="uber-press flex w-full items-center gap-3 rounded-[14px] px-2 py-3 text-left ring-2 ring-black ring-inset"
         >
           <span className="relative h-14 w-16 shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -338,7 +338,7 @@ export function SimpleRideSheet({
               {quoteReady ? etaLabel : "Few min"}
             </span>
           </span>
-          <span className="shrink-0 text-right text-[16px] font-bold">
+          <span data-testid="price-display" className="shrink-0 text-right text-[16px] font-bold">
             {formatMoney(estimate, country.currency, countryCode)}
           </span>
         </button>
@@ -346,12 +346,14 @@ export function SimpleRideSheet({
 
       <div className="grid grid-cols-2 gap-2">
         <input
+          aria-label="Your name"
           className="rounded-[12px] bg-[#F3F3F3] p-4 text-[17px] outline-none"
           placeholder="Your name"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         <input
+          aria-label="Phone"
           className="rounded-[12px] bg-[#F3F3F3] p-4 text-[17px] outline-none"
           placeholder={formatPhonePlaceholder(countryCode)}
           value={phone}
@@ -396,7 +398,7 @@ export function SimpleRideSheet({
 
       {pending ? (
         <div className="rounded-[16px] bg-[#F3F3F3] px-4 py-6 text-center">
-          <p className="text-[22px] font-bold">Finding your rideâ€¦</p>
+          <p className="text-[22px] font-bold">Finding your ride…</p>
           <p className="mt-1 text-[13px] text-[#6B6B6B]">
             Pinging nearby drivers
           </p>
@@ -414,7 +416,7 @@ export function SimpleRideSheet({
       ) : (
         <SafeCardPay
           amount={estimate}
-          description="Village Ride Â· Trip"
+          description="Village Ride · Trip"
           disabled={!ready}
           submitLabel="Choose Village Ride"
           onCreateOrder={async () => {
@@ -431,7 +433,7 @@ export function SimpleRideSheet({
               pickup_lng: d.pickup_lng,
               dropoff_lat: d.dropoff_lat,
               dropoff_lng: d.dropoff_lng,
-              description: "Village Ride trip Â· Go (car)",
+              description: "Village Ride trip · Go (car)",
               at: d.scheduled_for ?? null,
               details: d.details,
             });

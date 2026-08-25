@@ -36,6 +36,7 @@ export function UberShell({
   children,
   pin = null,
   dropoffPin = null,
+  driverPin = null,
   onMapPin,
   backHref,
   title,
@@ -48,10 +49,15 @@ export function UberShell({
   onSnapChange,
   onBack,
   enterFromPeek = false,
+  hideLocationHint = false,
+  autoSnapOnRoute = true,
+  topRightLabel,
 }: {
   children: ReactNode;
   pin?: { lat: number; lng: number } | null;
   dropoffPin?: { lat: number; lng: number } | null;
+  /** Assigned driver GPS — rider trip tracking. */
+  driverPin?: { lat: number; lng: number } | null;
   /** Tap map → pin. Landmark text in the sheet stays active too. */
   onMapPin?: (pin: { lat: number; lng: number }) => void;
   backHref?: string;
@@ -72,6 +78,10 @@ export function UberShell({
   onSnapChange?: (next: "peek" | "mid" | "full") => void;
   /** Slide the sheet up on first paint (Home → search). */
   enterFromPeek?: boolean;
+  hideLocationHint?: boolean;
+  /** When false, dropoff does not force mid snap (live trip). */
+  autoSnapOnRoute?: boolean;
+  topRightLabel?: string;
 }) {
   const { country } = useCountry();
   const [cars, setCars] = useState<JobMapPin[]>([]);
@@ -116,10 +126,11 @@ export function UberShell({
   }, [snapProp]);
 
   useEffect(() => {
+    if (!autoSnapOnRoute) return;
     if (dropoffPin) setSnap("mid");
     else if (sawDropoff.current) setSnap("full");
     sawDropoff.current = Boolean(dropoffPin);
-  }, [dropoffPin, setSnap]);
+  }, [autoSnapOnRoute, dropoffPin, setSnap]);
 
   useEffect(() => {
     const origin = pin ?? country.mapCenter;
@@ -194,12 +205,17 @@ export function UberShell({
           <VillageMap
             pin={pin}
             dropoff={dropoffPin}
+            driverLocation={driverPin}
             center={country.mapCenter}
-            cars={cars}
-            onSelect={(next) => {
-              if (snap === "full") setSnap("mid");
-              onMapPin?.(next);
-            }}
+            cars={driverPin ? [] : cars}
+            onSelect={
+              onMapPin
+                ? (next) => {
+                    if (snap === "full") setSnap("mid");
+                    onMapPin(next);
+                  }
+                : undefined
+            }
           />
         </ClientErrorBoundary>
       </div>
@@ -258,7 +274,7 @@ export function UberShell({
               data-testid="country-indicator"
               className="rounded-full bg-white px-3 py-2 text-[12px] font-bold tracking-wide text-[#0a0a0a] shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
             >
-              {country.flag} {country.currency}
+              {topRightLabel ?? `${country.flag} ${country.currency}`}
             </span>
           ) : (
             <div className="flex items-center gap-1.5">
@@ -285,7 +301,7 @@ export function UberShell({
         ) : null}
       </div>
 
-        {onMapPin && !floatingSearch && !showServicePills ? (
+        {onMapPin && !hideLocationHint && !floatingSearch && !showServicePills ? (
         <div className="pointer-events-none absolute inset-x-0 top-[5.5rem] z-30 flex justify-center px-4">
           <p className="inline-flex items-center gap-1.5 rounded-full bg-black/80 px-3 py-1.5 text-[11px] font-semibold text-white shadow-md backdrop-blur">
             <MapPin className="h-3.5 w-3.5" aria-hidden />
@@ -314,6 +330,7 @@ export function UberShell({
           if (tag === "INPUT" || tag === "TEXTAREA") setSnap("full");
         }}
         onBlurCapture={() => {
+          if (!autoSnapOnRoute) return;
           window.setTimeout(() => {
             const active = document.activeElement;
             const sheet = document.querySelector("[data-testid='bottom-sheet']");
