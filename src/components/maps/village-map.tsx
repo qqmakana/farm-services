@@ -17,6 +17,8 @@ export function VillageMap({
   center = null,
   cars = EMPTY_CARS,
   onSelect,
+  cinematic = false,
+  searchingRadar = false,
   className = "",
 }: {
   pin?: Pin;
@@ -25,6 +27,8 @@ export function VillageMap({
   center?: { lat: number; lng: number } | null;
   cars?: JobMapPin[];
   onSelect?: (pin: { lat: number; lng: number }) => void;
+  cinematic?: boolean;
+  searchingRadar?: boolean;
   className?: string;
 }) {
   return (
@@ -36,7 +40,8 @@ export function VillageMap({
       driverLocation={driverLocation}
       cars={cars}
       onSelect={onSelect}
-      cinematic
+      cinematic={cinematic}
+      searchingRadar={searchingRadar}
       variant="rider"
     />
   );

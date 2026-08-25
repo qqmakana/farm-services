@@ -245,11 +245,16 @@ body {
 }
 
 .ru-sheet-handle {
-  margin: 0 auto 16px;
+  margin: 8px auto 16px;
   height: 4px;
-  width: 40px;
-  border-radius: 2px;
-  background: var(--ru-gray-200);
+  width: 36px;
+  border-radius: 999px;
+  background: #bcbcbc;
+}
+
+.ru-sheet {
+  background: #ffffff;
+  border-radius: 24px 24px 0 0;
 }
 
 .ru-segment {
@@ -855,47 +860,55 @@ html[data-theme="dark"] .ru-skeleton {
 }
 
 .vr-map-pin-pickup {
-  width: 24px;
-  height: 24px;
+  width: 14px;
+  height: 14px;
   border-radius: 9999px;
   background: #000;
-  border: 7px solid #000;
-  box-shadow: var(--ru-shadow-float);
+  border: 3px solid #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 35%);
   box-sizing: border-box;
 }
 
 .vr-map-pin-pickup::before {
-  content: "";
-  position: absolute;
-  inset: 6px;
-  border-radius: 9999px;
-  background: #fff;
+  content: none;
 }
 
 .vr-map-pin-pickup::after {
   content: "";
   position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  border: 2px solid rgb(0 0 0 / 28%);
-  animation: vr-map-pulse 2.1s ease-out infinite;
+  left: 50%;
+  top: 100%;
+  width: 0;
+  height: 0;
+  border: 5px solid transparent;
+  border-top-color: #000;
+  transform: translateX(-50%);
+}
+
+.vr-map-pin-radar {
+  box-shadow:
+    0 0 0 8px rgb(0 0 0 / 0.1),
+    0 0 0 18px rgb(0 0 0 / 0.07),
+    0 0 0 32px rgb(0 0 0 / 0.04);
+  animation: vr-radar-pulse 2s ease-out infinite;
 }
 
 .vr-map-pin-dropoff {
-  width: 24px;
-  height: 24px;
-  border-radius: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 1px;
   background: #000;
-  border: 7px solid #000;
-  box-shadow: var(--ru-shadow-float);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 35%);
   box-sizing: border-box;
+  transform: rotate(45deg);
 }
 
 .vr-map-pin-dropoff::before {
   content: "";
   position: absolute;
-  inset: 6px;
-  border-radius: 2px;
+  inset: 2px;
+  border-radius: 1px;
   background: #fff;
 }
 
@@ -903,9 +916,9 @@ html[data-theme="dark"] .ru-skeleton {
   width: 16px;
   height: 16px;
   border-radius: 9999px;
-  background: #2563eb;
+  background: #4285f4;
   border: 3px solid #fff;
-  box-shadow: 0 0 0 6px rgb(37 99 235 / 28%);
+  box-shadow: 0 0 0 6px rgb(66 133 244 / 28%);
 }
 
 .vr-map-pin-job {
@@ -919,13 +932,28 @@ html[data-theme="dark"] .ru-skeleton {
 }
 
 .vr-map-pin-car {
-  width: 10px;
-  height: 16px;
-  border-radius: 3px;
-  background: #111;
+  width: 14px;
+  height: 22px;
+  border-radius: 4px;
+  background: #000;
   border: 2px solid #fff;
-  box-shadow: 0 1px 6px rgb(0 0 0 / 35%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 35%);
   transform: rotate(-22deg);
+}
+
+@keyframes vr-radar-pulse {
+  0% {
+    box-shadow:
+      0 0 0 8px rgb(0 0 0 / 0.12),
+      0 0 0 18px rgb(0 0 0 / 0.08),
+      0 0 0 32px rgb(0 0 0 / 0.04);
+  }
+  100% {
+    box-shadow:
+      0 0 0 18px rgb(0 0 0 / 0.04),
+      0 0 0 36px rgb(0 0 0 / 0.02),
+      0 0 0 56px rgb(0 0 0 / 0);
+  }
 }
 
 @keyframes vr-map-pulse {

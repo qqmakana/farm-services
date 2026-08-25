@@ -411,7 +411,7 @@ export function SimpleRideSheet({
           onClick={bookCash}
           className="uber-press w-full rounded-full bg-black py-4 text-[17px] font-medium text-white disabled:opacity-50"
         >
-          Choose Village Ride
+          Choose Village Ride · {formatMoney(estimate, country.currency, countryCode)}
         </button>
       ) : (
         <SafeCardPay

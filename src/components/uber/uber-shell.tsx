@@ -25,7 +25,7 @@ const VillageMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full w-full items-center justify-center bg-[#e8e8e8] text-sm text-black/50">
+      <div className="flex h-full w-full items-center justify-center bg-[#E5E3DF] text-sm text-black/50">
         Loading map…
       </div>
     ),
@@ -52,6 +52,8 @@ export function UberShell({
   hideLocationHint = false,
   autoSnapOnRoute = true,
   topRightLabel,
+  cinematic = false,
+  searchingRadar = false,
 }: {
   children: ReactNode;
   pin?: { lat: number; lng: number } | null;
@@ -82,6 +84,8 @@ export function UberShell({
   /** When false, dropoff does not force mid snap (live trip). */
   autoSnapOnRoute?: boolean;
   topRightLabel?: string;
+  cinematic?: boolean;
+  searchingRadar?: boolean;
 }) {
   const { country } = useCountry();
   const [cars, setCars] = useState<JobMapPin[]>([]);
@@ -91,9 +95,9 @@ export function UberShell({
 
   type SheetSnap = "peek" | "mid" | "full";
   const SNAP_PCT: Record<SheetSnap, number> = {
-    peek: 28,
-    mid: 58,
-    full: 86,
+    peek: 25,
+    mid: 55,
+    full: 85,
   };
   const [snapState, setSnapState] = useState<SheetSnap>(
     enterFromPeek ? "peek" : initialSnap,
@@ -208,6 +212,8 @@ export function UberShell({
             driverLocation={driverPin}
             center={country.mapCenter}
             cars={driverPin ? [] : cars}
+            cinematic={cinematic}
+            searchingRadar={searchingRadar}
             onSelect={
               onMapPin
                 ? (next) => {
@@ -312,6 +318,13 @@ export function UberShell({
         </div>
       ) : null}
 
+      {snap === "full" ? (
+        <div
+          className="pointer-events-none absolute inset-0 z-10 bg-black/40 transition-opacity duration-300"
+          aria-hidden
+        />
+      ) : null}
+
       {/* Native-style bottom sheet over the map */}
       <div
         data-testid="bottom-sheet"
@@ -319,7 +332,7 @@ export function UberShell({
         className={`ru-sheet absolute inset-x-0 bottom-0 z-20 flex flex-col overflow-hidden ${
           dragPx !== 0
             ? ""
-            : "transition-[height] duration-300 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]"
+            : "transition-[height] duration-[400ms] [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]"
         }`}
         style={{
           height: sheetHeight,

@@ -295,7 +295,9 @@ export function LiveTrip({
     job.dropoff_landmark,
   );
 
-  const headline = arrived
+  const headline = completed
+    ? "Thanks for riding"
+    : arrived
     ? "Your driver has arrived"
     : eta != null && confirmed
       ? `Pick-up in ${eta} min`
@@ -316,6 +318,8 @@ export function LiveTrip({
       driverPin={driverPin}
       hideLocationHint
       autoSnapOnRoute={false}
+      cinematic={inProgress}
+      searchingRadar={searching}
       initialSnap="mid"
       snap={completed || cancelled || noDrivers ? "full" : undefined}
       enterFromPeek={searching}
@@ -355,7 +359,7 @@ export function LiveTrip({
         {searching ? (
           <div className="flex flex-col items-center gap-3 rounded-[16px] bg-[#F3F3F3] px-4 py-8 text-center">
             <span className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-black border-t-transparent" />
-            <p className="text-[22px] font-bold text-black">
+            <p className="text-[16px] font-medium text-black">
               Finding your driver...
             </p>
             <p className="max-w-sm text-[15px] text-[#6B6B6B]">

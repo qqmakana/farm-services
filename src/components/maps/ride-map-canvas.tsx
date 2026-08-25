@@ -68,11 +68,46 @@ function add3dBuildings(map: mapboxgl.Map, variant: "rider" | "driver") {
   );
 }
 
+function hidePoiLabels(map: mapboxgl.Map) {
+  const layers = map.getStyle().layers ?? [];
+  for (const layer of layers) {
+    if (layer.type !== "symbol") continue;
+    if (!/poi|transit/i.test(layer.id)) continue;
+    try {
+      map.setLayoutProperty(layer.id, "visibility", "none");
+    } catch {
+      /* layer id differs by style version */
+    }
+  }
+}
+
+function styleRiderBasemap(map: mapboxgl.Map) {
+  const paint = (id: string, prop: string, value: string) => {
+    try {
+      if (!map.getLayer(id)) return;
+      (map.setPaintProperty as (layer: string, name: string, val: string) => void)(
+        id,
+        prop,
+        value,
+      );
+    } catch {
+      /* optional */
+    }
+  };
+  paint("land", "background-color", "#E5E3DF");
+  paint("background", "background-color", "#E5E3DF");
+  paint("water", "fill-color", "#AAD3DF");
+  paint("national-park", "fill-color", "#D0E3D0");
+  paint("landcover", "fill-color", "#D0E3D0");
+  hidePoiLabels(map);
+}
+
 function configureBasemap(
   map: mapboxgl.Map,
   cinematic: boolean,
   variant: "rider" | "driver",
 ) {
+  if (variant === "rider") styleRiderBasemap(map);
   if (cinematic && typeof window !== "undefined") {
     const lowEnd =
       (navigator as Navigator & { deviceMemory?: number }).deviceMemory != null &&
@@ -81,8 +116,19 @@ function configureBasemap(
   }
 }
 
-function ensureRouteLayer(map: mapboxgl.Map) {
-  if (map.getSource("vr-route")) return;
+function ensureRouteLayer(map: mapboxgl.Map, variant: "rider" | "driver") {
+  const rider = variant === "rider";
+  const color = rider ? "#000000" : "#E8E8E8";
+  if (map.getSource("vr-route")) {
+    try {
+      map.setPaintProperty("vr-route-glow", "line-color", color);
+      map.setPaintProperty("vr-route-line", "line-color", color);
+      map.setPaintProperty("vr-route-line", "line-width", rider ? 6 : 4);
+    } catch {
+      /* not ready */
+    }
+    return;
+  }
   map.addSource("vr-route", {
     type: "geojson",
     data: emptyRoute(),
@@ -93,10 +139,10 @@ function ensureRouteLayer(map: mapboxgl.Map) {
     source: "vr-route",
     layout: { "line-cap": "round", "line-join": "round" },
     paint: {
-      "line-width": 12,
-      "line-opacity": 0.28,
-      "line-color": "#276EF1",
-      "line-blur": 6,
+      "line-width": rider ? 14 : 12,
+      "line-opacity": rider ? 0.18 : 0.28,
+      "line-color": color,
+      "line-blur": 4,
     },
   });
   map.addLayer({
@@ -105,9 +151,9 @@ function ensureRouteLayer(map: mapboxgl.Map) {
     source: "vr-route",
     layout: { "line-cap": "round", "line-join": "round" },
     paint: {
-      "line-width": 4,
-      "line-opacity": 0.8,
-      "line-color": "#276EF1",
+      "line-width": rider ? 6 : 4,
+      "line-opacity": 1,
+      "line-color": color,
     },
   });
 }
@@ -122,6 +168,7 @@ export function RideMapCanvas({
   onSelect,
   onSelectJob,
   cinematic = true,
+  searchingRadar = false,
   variant = "rider",
   className = "",
 }: {
@@ -134,6 +181,7 @@ export function RideMapCanvas({
   onSelect?: (pin: MapPin) => void;
   onSelectJob?: (id: string) => void;
   cinematic?: boolean;
+  searchingRadar?: boolean;
   variant?: MapStyleVariant;
   className?: string;
 }) {
@@ -156,6 +204,7 @@ export function RideMapCanvas({
     jobs,
     cars,
     cinematic,
+    searchingRadar,
     variant,
     routeLine,
   });
@@ -167,6 +216,7 @@ export function RideMapCanvas({
     jobs,
     cars,
     cinematic,
+    searchingRadar,
     variant,
     routeLine,
   };
@@ -213,8 +263,8 @@ export function RideMapCanvas({
         style:
           variant === "driver" ? MAPBOX_STYLE_DRIVER : MAPBOX_STYLE_RIDER,
         center: [center.lng, center.lat],
-        zoom: cinematic && !lowEnd ? 14.4 : 14,
-        pitch: cinematic && !lowEnd ? 48 : 0,
+        zoom: 15.5,
+        pitch: cinematic && !lowEnd ? 45 : 0,
         bearing: cinematic && !lowEnd ? -18 : 0,
         attributionControl: true,
         logoPosition: "bottom-left",
@@ -233,7 +283,7 @@ export function RideMapCanvas({
       if (!m?.isStyleLoaded()) return;
       const s = stateRef.current;
       configureBasemap(m, s.cinematic, s.variant);
-      ensureRouteLayer(m);
+      ensureRouteLayer(m, s.variant);
 
       const source = m.getSource("vr-route") as GeoJSONSource | undefined;
       if (source) {
@@ -257,6 +307,9 @@ export function RideMapCanvas({
         job?: JobMapPin,
       ) => {
         const el = pinEl(kind);
+        if (kind === "pickup" && s.searchingRadar) {
+          el.classList.add("vr-map-pin-radar");
+        }
         if (job) {
           el.title = job.label;
           el.addEventListener("click", (ev) => {
@@ -298,8 +351,8 @@ export function RideMapCanvas({
             ? { top: 96, bottom: 260, left: 56, right: 56 }
             : 40,
           maxZoom: 15.6,
-          pitch: s.cinematic ? 38 : 0,
-          duration: 850,
+          pitch: s.cinematic ? 45 : 0,
+          duration: 800,
           essential: true,
         });
         return;
@@ -314,8 +367,8 @@ export function RideMapCanvas({
             ? { top: 96, bottom: 180, left: 56, right: 56 }
             : 40,
           maxZoom: 15.6,
-          pitch: s.cinematic ? 38 : 0,
-          duration: 850,
+          pitch: s.cinematic ? 45 : 0,
+          duration: 800,
           essential: true,
         });
         return;
@@ -324,8 +377,8 @@ export function RideMapCanvas({
       const focus = s.pin ?? s.driverLocation ?? s.center;
       m.easeTo({
         center: [focus.lng, focus.lat],
-        zoom: s.pin || s.driverLocation ? 15.1 : 13.4,
-        pitch: s.cinematic ? 48 : 0,
+        zoom: s.pin || s.driverLocation ? 15.5 : 13.4,
+        pitch: s.cinematic ? 45 : 0,
         bearing: s.cinematic ? -18 : 0,
         duration: 700,
         essential: true,
@@ -358,14 +411,16 @@ export function RideMapCanvas({
 
   useEffect(() => {
     syncRef.current();
-  }, [pin, dropoff, driverLocation, jobs, cars, center.lat, center.lng, cinematic, routeLine]);
+  }, [pin, dropoff, driverLocation, jobs, cars, center.lat, center.lng, cinematic, searchingRadar, routeLine]);
 
   return (
     <div className={`relative h-full w-full ${className}`}>
       <div
         ref={wrapRef}
         data-testid="ride-map"
-        className="vr-mapbox h-full w-full bg-[#1a1a1a]"
+        className={`vr-mapbox h-full w-full ${
+          variant === "rider" ? "bg-[#E5E3DF]" : "bg-[#1a1a1a]"
+        }`}
       />
       {mapError ? (
         <p className="absolute inset-x-3 top-24 z-10 rounded-lg bg-black/80 px-3 py-2 text-xs text-white">
