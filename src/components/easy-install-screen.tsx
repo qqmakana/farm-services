@@ -14,12 +14,13 @@ import {
   isStandaloneDisplay,
   openInstallInChrome,
   promptNativeInstall,
+  shouldInstallFromPlayStore,
   subscribeInstallReady,
 } from "@/lib/pwa-install";
 
 /**
- * Install screen — Google Play for Android, home screen for iPhone.
- * TWA/PWA files stay so the Play listing can wrap the site.
+ * Install screen — home screen for everyone while Play is tester-only.
+ * Testers can still open the Play listing from a secondary link.
  */
 export function EasyInstallScreen() {
   const [standalone, setStandalone] = useState(false);
@@ -51,12 +52,7 @@ export function EasyInstallScreen() {
       return;
     }
 
-    if (isAndroidDevice()) {
-      window.location.href = getPlayStoreUrl();
-      return;
-    }
-
-    // WhatsApp / Instagram / etc. cannot install PWAs — open real Chrome.
+    // WhatsApp / Instagram / etc. cannot install — open Chrome or Safari first.
     if (isInAppBrowser() && isAndroidDevice()) {
       openInstallInChrome();
       return;
@@ -71,6 +67,11 @@ export function EasyInstallScreen() {
       return;
     }
 
+    if (shouldInstallFromPlayStore() && isAndroidDevice()) {
+      window.location.href = getPlayStoreUrl();
+      return;
+    }
+
     setInstalling(true);
     try {
       const outcome = await promptNativeInstall();
@@ -79,7 +80,6 @@ export function EasyInstallScreen() {
         setNote("Installed — check your home screen");
         return;
       }
-      // No deferred prompt yet — show simple Chrome steps
       setAndroidHint(true);
     } finally {
       setInstalling(false);
@@ -134,14 +134,14 @@ export function EasyInstallScreen() {
           {inApp && ios
             ? `Open in Safari to add Village Ride to your home screen.`
             : inApp && android
-              ? "Get Village Ride on Google Play — works on Samsung and other Android phones."
+              ? `Open in Chrome, then tap Install — anyone can add it, no Play Store tester invite.`
             : ios
               ? "Add Village Ride to your home screen in Safari."
               : android
-                ? "Get Village Ride on Google Play — works on Samsung and other Android phones."
+                ? "Add Village Ride to your home screen. You do not need to be a Google Play tester."
                 : hasPrompt
                 ? "Tap once to install on your home screen."
-                : "Add Village Ride to your iPhone home screen."}
+                : "Add Village Ride to your phone home screen — anyone can install."}
         </p>
 
         <button
@@ -154,7 +154,7 @@ export function EasyInstallScreen() {
             ? "Opening…"
             : ios
               ? "How to install"
-              : "Get it on Google Play"}
+              : "Install app"}
         </button>
 
         {iosHint ? (
@@ -210,6 +210,18 @@ export function EasyInstallScreen() {
         ) : !iosHint && !androidHint ? (
           <p className="mt-6 max-w-xs text-sm text-gray-500">
             Free · Cash or card · Keep ~90% to drivers
+          </p>
+        ) : null}
+
+        {android && !shouldInstallFromPlayStore() ? (
+          <p className="mt-6 max-w-sm text-sm text-gray-500">
+            Invited as a Play tester?{" "}
+            <a
+              href={getPlayStoreUrl()}
+              className="font-semibold text-black underline underline-offset-2"
+            >
+              Open Google Play
+            </a>
           </p>
         ) : null}
       </div>

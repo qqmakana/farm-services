@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
+import { PLAY_LISTING_PUBLIC, PLAY_STORE_PACKAGE, PLAY_STORE_URL } from "@/lib/play-store";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -13,14 +14,16 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "any",
     background_color: "#ffffff",
     theme_color: "#000000",
-    prefer_related_applications: true,
-    related_applications: [
-      {
-        platform: "play",
-        id: "app.villageride.twa",
-        url: "https://play.google.com/store/apps/details?id=app.villageride.twa",
-      },
-    ],
+    prefer_related_applications: PLAY_LISTING_PUBLIC,
+    related_applications: PLAY_LISTING_PUBLIC
+      ? [
+          {
+            platform: "play",
+            id: PLAY_STORE_PACKAGE,
+            url: PLAY_STORE_URL,
+          },
+        ]
+      : [],
     categories: ["travel", "business", "shopping"],
     icons: [
       {

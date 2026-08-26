@@ -1,5 +1,7 @@
 /** Shared PWA install helpers — keep prompt capture at module load. */
 
+import { PLAY_LISTING_PUBLIC, PLAY_STORE_URL } from "@/lib/play-store";
+
 export type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
@@ -98,7 +100,12 @@ export function getAppInstallUrl() {
 }
 
 export function getPlayStoreUrl() {
-  return "https://play.google.com/store/apps/details?id=app.villageride.twa";
+  return PLAY_STORE_URL;
+}
+
+/** Play Store first only when anyone can install from the listing. */
+export function shouldInstallFromPlayStore() {
+  return PLAY_LISTING_PUBLIC;
 }
 
 /** Direct download for the signed Android app (APK) — no browser install prompt needed. */

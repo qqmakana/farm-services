@@ -21,7 +21,7 @@ export const BRAND_TAGLINE =
 
 /** Text pasted when someone taps Share (WhatsApp, etc.). */
 export const BRAND_SHARE_TEXT =
-  `Village Ride offers rides and deliveries for villages, towns and cities. We humbly need a few more drivers; if you have a suitable vehicle, we'd be grateful to hear from you. Open https://village-ride.vercel.app/get-app — cash or card is welcome.`;
+  `Village Ride offers rides and deliveries for villages, towns and cities. Install on your phone from this link (anyone can — you do not need a Google Play tester invite): https://village-ride.vercel.app/get-app — cash or card is welcome. Drivers: we'd be grateful to hear from you.`;
 
 export const BRAND_FULL = `${BRAND.appName} by ${BRAND.company}`;
 

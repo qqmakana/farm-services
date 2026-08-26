@@ -13,6 +13,7 @@ import {
   isIosDevice,
   isStandaloneDisplay,
   promptNativeInstall,
+  shouldInstallFromPlayStore,
   subscribeInstallReady,
 } from "@/lib/pwa-install";
 
@@ -56,7 +57,7 @@ export function useInstallActions() {
   }, []);
 
   const install = useCallback(async () => {
-    if (isAndroidDevice()) {
+    if (shouldInstallFromPlayStore() && isAndroidDevice()) {
       window.location.href = getPlayStoreUrl();
       return;
     }

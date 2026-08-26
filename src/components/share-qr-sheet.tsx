@@ -17,8 +17,8 @@ export function ShareQrSheet({
       <div className="w-full max-w-sm rounded-2xl bg-white p-5 text-slate-900 shadow-2xl">
         <p className="text-lg font-bold tracking-tight">Share Village Ride</p>
         <p className="mt-1 text-sm text-slate-600">
-          Send this picture directly. It has no QR code, so someone viewing it
-          on their phone can simply tap the shared link.
+          Send this picture and link. Anyone can install Village Ride on their
+          home screen — they do not need a Google Play tester invite.
         </p>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
