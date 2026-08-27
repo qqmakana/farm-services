@@ -5,6 +5,7 @@ import { Clock, Star, Store } from "lucide-react";
 import type { Shop } from "@/lib/types";
 import { SERVICE_COPY } from "@/lib/service-guide";
 import { UBER_GLOSS, UBER_H1, UBER_SUB } from "@/components/customer/uber-chrome";
+import { ShopsHowItWorks } from "@/components/shops/shops-how-it-works";
 
 const ACCENTS = [
   "from-emerald-700 to-emerald-500",
@@ -23,8 +24,13 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
     <div className="touch-manipulation space-y-5">
       <header>
         <h1 className={UBER_H1}>Shops</h1>
-        <p className={UBER_SUB}>{SERVICE_COPY.shops.blurb}</p>
+        <p className={UBER_SUB}>
+          Order from local shops. You pay for the goods. Village Ride only
+          charges delivery — cash or PayPal.
+        </p>
       </header>
+
+      <ShopsHowItWorks />
 
       <div className="grid grid-cols-1 gap-3">
         <AppLink
