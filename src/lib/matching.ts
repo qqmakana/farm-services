@@ -148,6 +148,40 @@ export async function matchJobAfterCreate(jobId: string) {
   return (await offerNextDriver(jobId)) ?? typedJob;
 }
 
+function missingColumnName(error: {
+  message?: string;
+  details?: string;
+  hint?: string;
+}): string | null {
+  const blob = `${error.message ?? ""} ${error.details ?? ""} ${error.hint ?? ""}`;
+  const quoted = blob.match(/'([a-z_][a-z0-9_]*)' column/i);
+  if (quoted) return quoted[1];
+  const pg = blob.match(/column "([a-z_][a-z0-9_]*)"/i);
+  return pg?.[1] ?? null;
+}
+
+async function insertJobRow(
+  admin: ReturnType<typeof createAdminClient>,
+  row: Record<string, unknown>,
+) {
+  const payload: Record<string, unknown> = { ...row };
+  delete payload.booking_fee;
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const { data, error } = await admin
+      .from("rr_jobs")
+      .insert(payload)
+      .select("*, drivers:rr_drivers!driver_id(*), shops:rr_shops(*)")
+      .single();
+    if (!error && data) return data;
+    const col = error ? missingColumnName(error) : null;
+    if (!col || !(col in payload)) {
+      throw new Error(error?.message ?? "Could not create your trip.");
+    }
+    delete payload[col];
+  }
+  throw new Error("Could not create your trip.");
+}
+
 export async function insertPaidJob(row: Record<string, unknown>) {
   const admin = createAdminClient();
   const code = (row.reference_code as string) || refCode();
@@ -169,13 +203,7 @@ export async function insertPaidJob(row: Record<string, unknown>) {
     if (existing) return existing;
   }
 
-  const { data, error } = await admin
-    .from("rr_jobs")
-    .insert({ ...row, reference_code: code })
-    .select("*, drivers:rr_drivers!driver_id(*), shops:rr_shops(*)")
-    .single();
-
-  if (error) throw new Error(error.message);
+  const data = await insertJobRow(admin, { ...row, reference_code: code });
   try {
     await matchJobAfterCreate(data.id);
   } catch {

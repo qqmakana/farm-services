@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ContactSupportActions } from "@/components/support/contact-support";
-import { BRAND, BRAND_WHATSAPP_HREF } from "@/lib/brand";
+import { BRAND } from "@/lib/brand";
 
 export default function RideErrorPage({
   error,
@@ -11,9 +11,7 @@ export default function RideErrorPage({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const wa = `${BRAND_WHATSAPP_HREF}?text=${encodeURIComponent(
-    `Hi ${BRAND.appName} — I can't open Trip booking on my phone (${error.message || "error"}). Please help me book.`,
-  )}`;
+  void error;
 
   return (
     <main className="ru-force-light mx-auto flex min-h-dvh max-w-md flex-col justify-center bg-white px-5 py-16 text-black">
@@ -22,18 +20,9 @@ export default function RideErrorPage({
       </p>
       <h1 className="mt-2 text-2xl font-bold">Trip booking did not open</h1>
       <p className="mt-2 text-sm text-[#6B6B6B]">
-        Your phone can still book by WhatsApp, or try again after the update
-        loads.
+        Try again after the page loads, or go back home and tap Where to?
       </p>
       <div className="mt-6 flex flex-col gap-2">
-        <a
-          href={wa}
-          target="_blank"
-          rel="noreferrer"
-          className="rounded-full bg-[#25D366] px-4 py-3.5 text-center text-sm font-bold text-white"
-        >
-          Book on WhatsApp
-        </a>
         <button
           type="button"
           onClick={() => reset()}
@@ -47,7 +36,9 @@ export default function RideErrorPage({
         >
           Back to home
         </Link>
-        <ContactSupportActions whatsappPrefill={`Hi ${BRAND.appName} support — Trip won't load on my phone.`} />
+        <ContactSupportActions
+          whatsappPrefill={`Hi ${BRAND.appName} support — Trip won't load on my phone.`}
+        />
       </div>
     </main>
   );

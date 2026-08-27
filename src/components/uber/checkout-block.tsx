@@ -9,10 +9,6 @@ import {
 } from "@/components/checkout/payment-selector";
 import { SafeCardPay } from "@/components/uber/safe-card-pay";
 import {
-  bookingWhatsAppHref,
-  type BookingWhatsAppDraft,
-} from "@/lib/brand";
-import {
   capturePayPalAndCreateJob,
   createCashJob,
   createLocalPaidJob,
@@ -23,6 +19,7 @@ import { setGuestProfile } from "@/lib/guest-profile";
 import { enqueuePendingBooking } from "@/lib/offline-booking-queue";
 import { driverOptInNote } from "@/lib/night-fare";
 import { getCapturedReferrer } from "@/lib/rider-referral";
+import { stashPaypalApproveUrl, stashPaypalBooking } from "@/lib/paypal-draft";
 import type { NewJobInput, ServiceType, VehicleType } from "@/lib/types";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
 import { SubscribeButton } from "@/components/subscription/subscribe-button";
@@ -39,77 +36,6 @@ function withReferralNote(d: Draft): Draft {
     ...d,
     dispatcher_notes: existing ? `${existing} · ${tag}` : tag,
   };
-}
-
-function detailsFromDraft(d: Draft, locale: string): string {
-  const when = d.scheduled_for
-    ? (() => {
-        try {
-          return new Date(d.scheduled_for).toLocaleString(locale, {
-            dateStyle: "medium",
-            timeStyle: "short",
-          });
-        } catch {
-          return d.scheduled_for;
-        }
-      })()
-    : "ASAP";
-
-  if (d.service_type === "ride") {
-    const seats =
-      "seats" in d.details ? Number(d.details.seats) || 1 : 1;
-    const wearing =
-      "wearing" in d.details && d.details.wearing
-        ? String(d.details.wearing)
-        : "";
-    return [
-      `${seats} passenger${seats === 1 ? "" : "s"}`,
-      VEHICLE_LABELS[d.required_vehicle],
-      when,
-      wearing && `wearing ${wearing}`,
-    ]
-      .filter(Boolean)
-      .join(" · ");
-  }
-
-  if (d.service_type === "delivery" || d.service_type === "courier") {
-    const item =
-      "item_description" in d.details
-        ? String(d.details.item_description || "Package")
-        : "Package";
-    const size =
-      "size" in d.details ? String(d.details.size || "") : "";
-    const weightCat =
-      "weight_category" in d.details && d.details.weight_category
-        ? String(d.details.weight_category)
-        : "";
-    const weight =
-      "item_weight" in d.details && d.details.item_weight
-        ? String(d.details.item_weight)
-        : "";
-    return [
-      item,
-      weightCat && `weight ${weightCat}`,
-      weight && `weight ${weight}`,
-      size && `size ${size}`,
-      VEHICLE_LABELS[d.required_vehicle],
-      when,
-    ]
-      .filter(Boolean)
-      .join(" · ");
-  }
-
-  const notes =
-    "notes" in d.details && d.details.notes
-      ? String(d.details.notes)
-      : d.product_summary || "Farm load";
-  const weightCat =
-    "weight_category" in d.details && d.details.weight_category
-      ? String(d.details.weight_category)
-      : "";
-  return [notes, weightCat && `weight ${weightCat}`, VEHICLE_LABELS[d.required_vehicle], when]
-    .filter(Boolean)
-    .join(" · ");
 }
 
 export function CheckoutBlock({
@@ -223,7 +149,7 @@ export function CheckoutBlock({
           /Server Components|digest|omitted in production|Body exceeded|413/i.test(
             raw,
           )
-            ? "Could not create your trip. Check your connection and try again — or use WhatsApp booking."
+            ? "Could not create your trip. Check your connection and try again."
             : raw;
         const looksNetwork =
           /fetch|network|failed to fetch|load failed|offline/i.test(raw);
@@ -240,30 +166,6 @@ export function CheckoutBlock({
         setFormError(msg);
       }
     });
-  }
-
-  function openWhatsAppBooking() {
-    setFormError(null);
-    if (!ready) {
-      setFormError("Complete the form first.");
-      return;
-    }
-    void (async () => {
-      const d = await buildDraft();
-      saveGuest(d);
-      const payload: BookingWhatsAppDraft = {
-        service_type: d.service_type,
-        pickup_landmark: d.pickup_landmark,
-        dropoff_landmark: d.dropoff_landmark,
-        customer_name: d.customer_name,
-        customer_phone: d.customer_phone,
-        detailsLine: detailsFromDraft(d, country.locale),
-        paymentLabel: payMethod === "card" ? "Card" : "Cash",
-        estimateZar: fee,
-        currencySymbol: country.currencySymbol,
-      };
-      window.open(bookingWhatsAppHref(payload), "_blank", "noopener,noreferrer");
-    })();
   }
 
   return (
@@ -416,13 +318,6 @@ export function CheckoutBlock({
       {formError ? (
         <div className="space-y-2 rounded-2xl bg-[#fdecea] px-3 py-3 text-sm text-[#b01000]">
           <p>{formError}</p>
-          <button
-            type="button"
-            onClick={openWhatsAppBooking}
-            className="uber-press font-semibold underline"
-          >
-            Try WhatsApp booking instead
-          </button>
         </div>
       ) : null}
 
@@ -489,7 +384,8 @@ export function CheckoutBlock({
               if (!ready) throw new Error("Complete the form first.");
               const d = await buildDraft();
               saveGuest(d);
-              const { orderId } = await createPayPalOrderAction({
+              stashPaypalBooking(d);
+              const { orderId, approveUrl } = await createPayPalOrderAction({
                 vehicle,
                 service_type: serviceType,
                 country_code: d.country_code || countryCode,
@@ -502,7 +398,8 @@ export function CheckoutBlock({
                 at: d.scheduled_for ?? null,
                 details: d.details,
               });
-              return orderId;
+              stashPaypalApproveUrl(approveUrl);
+              return { orderId, approveUrl };
             }}
             onApprove={async (orderId) => {
               setFormError(null);
@@ -529,17 +426,6 @@ export function CheckoutBlock({
               router.refresh();
             }}
           />
-        )}
-
-        {compact ? null : (
-          <button
-            type="button"
-            disabled={!ready || pending}
-            onClick={openWhatsAppBooking}
-            className="uber-press uber-btn-soft w-full"
-          >
-            Or send booking via WhatsApp
-          </button>
         )}
       </div>
     </div>

@@ -1,3 +1,5 @@
+import { getSiteUrl } from "@/lib/app-links";
+
 const PAYPAL_API_BASE =
   process.env.PAYPAL_MODE === "sandbox"
     ? "https://api-m.sandbox.paypal.com"
@@ -83,6 +85,8 @@ export async function paypalCreateOrder(params: {
         shipping_preference: "NO_SHIPPING",
         user_action: "PAY_NOW",
         brand_name: "Village Ride",
+        return_url: `${getSiteUrl()}/paypal/complete`,
+        cancel_url: `${getSiteUrl()}/ride`,
       },
     }),
   });
@@ -92,8 +96,15 @@ export async function paypalCreateOrder(params: {
     throw new Error(`PayPal create order failed: ${text}`);
   }
 
-  const order = (await res.json()) as { id: string; status: string };
-  return order;
+  const order = (await res.json()) as {
+    id: string;
+    status: string;
+    links?: Array<{ rel: string; href: string }>;
+  };
+  const approveUrl =
+    order.links?.find((l) => l.rel === "approve" || l.rel === "payer-action")
+      ?.href ?? null;
+  return { ...order, approveUrl };
 }
 
 export async function paypalCaptureOrder(orderId: string) {

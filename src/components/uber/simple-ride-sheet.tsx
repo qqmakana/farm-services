@@ -1,14 +1,14 @@
 ﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CalendarClock, User } from "lucide-react";
+import { CalendarClock, Search, User } from "lucide-react";
 import {
   PaymentSelector,
   type CheckoutPaymentChoice,
 } from "@/components/checkout/payment-selector";
 import { useCountry } from "@/components/country/country-provider";
 import { SafeCardPay } from "@/components/uber/safe-card-pay";
-import { localInputToIso } from "@/components/uber/schedule-when";
+import { localInputToIso, toLocalInputValue } from "@/components/uber/schedule-when";
 import { WhereToBar } from "@/components/uber/where-to-bar";
 import {
   capturePayPalAndCreateJob,
@@ -18,13 +18,13 @@ import {
   quoteFareAction,
 } from "@/lib/actions";
 import { searchAddressesAction } from "@/lib/actions-mapbox";
-import { bookingWhatsAppHref } from "@/lib/brand";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
 import { formatMoney } from "@/lib/format";
 import { etaMinutes } from "@/lib/geo";
 import { getGuestProfile, setGuestProfile } from "@/lib/guest-profile";
 import type { AddressSuggestion } from "@/lib/mapbox-types";
 import { getCapturedReferrer } from "@/lib/rider-referral";
+import { stashPaypalApproveUrl, stashPaypalBooking } from "@/lib/paypal-draft";
 import { SmartSuggestions } from "@/components/rider/smart-suggestions";
 import type { PlaceSuggestion } from "@/lib/suggestions";
 import type { NewJobInput } from "@/lib/types";
@@ -82,12 +82,28 @@ export function SimpleRideSheet({
     try {
       const q = new URLSearchParams(window.location.search);
       if (q.get("when") === "later") setWhenLater(true);
+      const at = q.get("at");
+      if (at) {
+        setWhenLater(true);
+        const parsed = new Date(at);
+        if (!Number.isNaN(parsed.getTime())) {
+          setScheduledLocal(toLocalInputValue(parsed));
+        }
+      }
       const to = q.get("to");
       if (to) setDropoff(to);
+      const from = q.get("from");
+      if (from) setPickup(from);
       const toLat = Number(q.get("toLat"));
       const toLng = Number(q.get("toLng"));
       if (Number.isFinite(toLat) && Number.isFinite(toLng)) {
         setDropoffPin({ lat: toLat, lng: toLng });
+      }
+      const fromLat = Number(q.get("fromLat"));
+      const fromLng = Number(q.get("fromLng"));
+      if (Number.isFinite(fromLat) && Number.isFinite(fromLng)) {
+        setPickupPin({ lat: fromLat, lng: fromLng });
+        setPickup((p) => p.trim() || from || "Current location");
       }
     } catch {
       /* ignore */
@@ -95,6 +111,11 @@ export function SimpleRideSheet({
     const guest = getGuestProfile();
     if (guest?.name) setName(guest.name);
     if (guest?.phone) setPhone(guest.phone);
+    const hasDest =
+      Number.isFinite(Number(new URLSearchParams(window.location.search).get("toLat")));
+    if (!hasDest) {
+      window.setTimeout(() => dropoffRef.current?.focus(), 400);
+    }
   }, []);
 
   useEffect(() => {
@@ -260,7 +281,7 @@ export function SimpleRideSheet({
         window.location.assign(`/trip/${result.job.reference_code}`);
       } catch (err) {
         setMsg(
-          err instanceof Error ? err.message : "Could not book. Use WhatsApp.",
+          err instanceof Error ? err.message : "Could not book. Try again.",
         );
         setPending(false);
       }
@@ -314,17 +335,6 @@ export function SimpleRideSheet({
       /* keep typing — landmarks may still appear */
     }
   }
-  const wa = bookingWhatsAppHref({
-    service_type: "ride",
-    pickup_landmark: pickup || "—",
-    dropoff_landmark: dropoff || "—",
-    customer_name: name || "—",
-    customer_phone: phone || "—",
-    detailsLine: whenLater ? "Reserve" : "Trip now",
-    paymentLabel: payMethod === "card" ? "Card" : "Cash",
-    estimateZar: estimate,
-    currencySymbol: country.currencySymbol,
-  });
 
   const cardPay = (
     <SafeCardPay
@@ -337,7 +347,8 @@ export function SimpleRideSheet({
         if (!ready) throw new Error("Complete the form first.");
         saveGuest();
         const d = buildDraft();
-        const { orderId } = await createPayPalOrderAction({
+        stashPaypalBooking(d);
+        const { orderId, approveUrl } = await createPayPalOrderAction({
           vehicle: "sedan",
           service_type: "ride",
           country_code: d.country_code || countryCode,
@@ -350,7 +361,8 @@ export function SimpleRideSheet({
           at: d.scheduled_for ?? null,
           details: d.details,
         });
-        return orderId;
+        stashPaypalApproveUrl(approveUrl);
+        return { orderId, approveUrl };
       }}
       onApprove={async (orderId) => {
         setMsg(null);
@@ -417,33 +429,46 @@ export function SimpleRideSheet({
           />
         }
         dropoffSlot={
-          <input
-            ref={dropoffRef}
-            data-testid="dropoff-input"
-            className="w-full bg-transparent text-[17px] font-bold text-black outline-none ring-0 placeholder:font-normal placeholder:text-[#A6A6A6] focus:outline-none focus:ring-0 focus-visible:outline-none"
-            placeholder="Where to?"
-            value={dropoff}
-            onChange={(e) => {
-              setDropoff(e.target.value);
-              if (dropoffPin) {
-                setDropoffPin(null);
-                setQuoteReady(false);
-              }
-            }}
-            onFocus={() => {
-              setDropFocused(true);
-              onSnap?.("full");
-            }}
-            onBlur={() => {
-              window.setTimeout(() => setDropFocused(false), 180);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                void confirmTypedDropoff();
-              }
-            }}
-          />
+          <div className="flex min-h-11 items-center gap-2">
+            {searching ? (
+              <Search
+                className="h-4 w-4 shrink-0 text-[#6B6B6B]"
+                strokeWidth={2}
+                aria-hidden
+              />
+            ) : null}
+            <input
+              ref={dropoffRef}
+              data-testid="dropoff-input"
+              className="w-full bg-transparent text-[17px] font-bold text-black outline-none ring-0 placeholder:font-normal placeholder:text-[#A6A6A6] focus:outline-none focus:ring-0 focus-visible:outline-none"
+              placeholder="Where to?"
+              value={dropoff}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="search"
+              onChange={(e) => {
+                setDropoff(e.target.value);
+                if (dropoffPin) {
+                  setDropoffPin(null);
+                  setQuoteReady(false);
+                }
+              }}
+              onFocus={() => {
+                setDropFocused(true);
+                onSnap?.("full");
+              }}
+              onBlur={() => {
+                window.setTimeout(() => setDropFocused(false), 180);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void confirmTypedDropoff();
+                }
+              }}
+            />
+          </div>
         }
       />
 
@@ -478,9 +503,8 @@ export function SimpleRideSheet({
             onSelectDestination={pickDestination}
           />
         </div>
-      ) : null}
-
-      <div className={searching ? "" : "animate-[uberFadeIn_280ms_ease-out]"}>
+      ) : (
+      <div className="animate-[uberFadeIn_280ms_ease-out] space-y-3">
         <p className="mb-1 text-[22px] font-bold tracking-[-0.04em]">Choose a ride</p>
         <button
           type="button"
@@ -510,9 +534,8 @@ export function SimpleRideSheet({
             {formatMoney(estimate, country.currency, countryCode)}
           </span>
         </button>
-      </div>
 
-      {searching || !name.trim() || !phone.trim() ? (
+      {!name.trim() || !phone.trim() ? (
         <div className="grid grid-cols-2 gap-2">
           <input
             aria-label="Your name"
@@ -550,7 +573,7 @@ export function SimpleRideSheet({
         value={payMethod}
         onChange={setPayMethod}
         currencyLabel={country.currencySymbol}
-        compact={!searching}
+        compact
       />
 
       {msg ? (
@@ -567,7 +590,7 @@ export function SimpleRideSheet({
           </p>
         </div>
       ) : payMethod === "cash" ? (
-        searching || whenLater ? (
+        whenLater ? (
           bookCashBtn
         ) : (
           <div className="flex items-end gap-2">
@@ -575,7 +598,7 @@ export function SimpleRideSheet({
             {laterBtn}
           </div>
         )
-      ) : searching || whenLater ? (
+      ) : whenLater ? (
         cardPay
       ) : (
         <div className="flex items-end gap-2">
@@ -583,13 +606,12 @@ export function SimpleRideSheet({
           {laterBtn}
         </div>
       )}
-      {searching ? (
-        <a
-          href={wa}
-          className="flex min-h-12 w-full items-center justify-center rounded-full bg-[#25D366] text-[15px] font-semibold text-white"
-        >
-          Or book on WhatsApp
-        </a>
+        </div>
+      )}
+      {searching && whenLater ? (
+        <p data-testid="reservation-fee-line" className="text-[13px] text-[#6B6B6B]">
+          Includes R10 reservation fee. Cancel free until 1 hour before.
+        </p>
       ) : null}
     </div>
   );

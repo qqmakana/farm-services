@@ -9,6 +9,7 @@ import {
   createPayPalOrderAction,
   quoteFareAction,
 } from "@/lib/actions";
+import { stashPaypalApproveUrl, stashPaypalBooking } from "@/lib/paypal-draft";
 import type { ServiceType, VehicleType } from "@/lib/types";
 import {
   defaultFeeForVehicle,
@@ -426,7 +427,9 @@ export function BookingForm({
         onCreateOrder={async () => {
           setFormError(null);
           if (!formReady) throw new Error("Complete the form first.");
-          const { orderId } = await createPayPalOrderAction({
+          const d = buildDraft();
+          stashPaypalBooking(d);
+          const { orderId, approveUrl } = await createPayPalOrderAction({
             vehicle,
             pickup_lat: pickup.lat,
             pickup_lng: pickup.lng,
@@ -434,7 +437,8 @@ export function BookingForm({
             dropoff_lng: dropoff.lng,
             description: `Village Ride ${serviceType} · ${VEHICLE_LABELS[vehicle]}`,
           });
-          return orderId;
+          stashPaypalApproveUrl(approveUrl);
+          return { orderId, approveUrl };
         }}
         onApprove={async (orderId) => {
           setFormError(null);

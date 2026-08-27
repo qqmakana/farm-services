@@ -154,7 +154,7 @@ function friendlyBookingError(err: unknown): Error {
     )
   ) {
     return new Error(
-      "Could not create your trip. Check your connection and try again — or use WhatsApp booking.",
+      "Could not create your trip. Check your connection and try again.",
     );
   }
   if (
@@ -1385,6 +1385,7 @@ export async function createPayPalOrderAction(params: {
   });
   return {
     orderId: order.id,
+    approveUrl: order.approveUrl,
     currency: getPayPalCurrency(),
     amount: amountZar,
   };
@@ -1551,7 +1552,6 @@ async function createJobInner(input: NewJobInput) {
     fee_amount: fare.fee_amount,
     platform_commission: fare.platform_commission,
     driver_payout: fare.driver_payout,
-    booking_fee: fare.booking_fee,
     priority_score: fare.village_pass ? 1 : 0,
     village_pass: fare.village_pass,
     weight_category: fare.weight_category,

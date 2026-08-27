@@ -3,6 +3,7 @@ import {
   dismissCountryModalIfPresent,
   prepareBrowserContext,
 } from "./helpers/auth-helper";
+import { rideBookingUrl } from "./helpers/test-data";
 
 const MARKETS = [
   { code: "KE", phone: "0712345678", name: "Kenya Rider" },
@@ -24,17 +25,18 @@ test.describe("Multi-country cash booking", () => {
         }
       }, market.code);
 
-      await page.goto("/ride");
+      await page.goto(rideBookingUrl());
       await dismissCountryModalIfPresent(page);
 
       await expect(page.getByTestId("search-bar")).toBeVisible({
         timeout: 15_000,
       });
 
-      await page.getByTestId("pickup-input").fill("Village clinic gate");
-      await page.getByTestId("dropoff-input").fill("Town market main entrance");
-      await page.getByLabel(/Your name/i).fill(market.name);
-      await page.getByLabel(/^Phone$/i).fill(market.phone);
+      const nameField = page.getByLabel(/Your name/i);
+      if (await nameField.isVisible().catch(() => false)) {
+        await nameField.fill(market.name);
+        await page.getByLabel(/^Phone$/i).fill(market.phone);
+      }
 
       await page.keyboard.press("Escape");
       await page

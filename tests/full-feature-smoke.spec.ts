@@ -53,7 +53,7 @@ test.describe("Full feature smoke", () => {
 
   test("D–G: booking sheets for ride/delivery/farm/courier", async ({ page }) => {
     const sheets: Array<{ path: string; cue: RegExp }> = [
-      { path: "/ride", cue: /Choose a ride|Village Ride|More options/i },
+      { path: "/ride", cue: /Where to\?|Choose a ride|Village Ride/i },
       { path: "/delivery", cue: /Request|Describe pickup|Delivery/i },
       { path: "/farm", cue: /Farm|Request|landmark/i },
       { path: "/courier", cue: /Courier|Request|recipient|package/i },

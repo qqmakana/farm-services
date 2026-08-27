@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { prepareBrowserContext } from "./helpers/auth-helper";
+import { rideBookingUrl } from "./helpers/test-data";
 
-const PAGES = ["/ride", "/delivery", "/courier", "/farm"] as const;
+const PAGES = [rideBookingUrl(), "/delivery", "/courier", "/farm"] as const;
 
 test.describe("Card (PayPal) and cash on booking sheets", () => {
   test.beforeEach(async ({ context }) => {

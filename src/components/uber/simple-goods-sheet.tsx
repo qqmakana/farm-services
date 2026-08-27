@@ -13,7 +13,6 @@ import {
   createLocalPaidJob,
   createPayPalOrderAction,
 } from "@/lib/actions";
-import { bookingWhatsAppHref } from "@/lib/brand";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
 import { getGuestProfile, setGuestProfile } from "@/lib/guest-profile";
 import {
@@ -22,6 +21,7 @@ import {
   type WeightCategory,
 } from "@/lib/pricing";
 import { getCapturedReferrer } from "@/lib/rider-referral";
+import { stashPaypalApproveUrl, stashPaypalBooking } from "@/lib/paypal-draft";
 import { SERVICE_COPY } from "@/lib/service-guide";
 import type { CourierPackageType, JobDetails, NewJobInput, ServiceType } from "@/lib/types";
 import { suggestVehicle, VEHICLE_LABELS } from "@/lib/vehicles";
@@ -255,28 +255,10 @@ export function SimpleGoodsSheet({
         const job = await createCashJob(buildDraft());
         window.location.assign(`/trip/${job.reference_code}`);
       } catch (err) {
-        setMsg(err instanceof Error ? err.message : "Could not book. Use WhatsApp.");
+        setMsg(err instanceof Error ? err.message : "Could not book. Try again.");
       }
     });
   }
-
-  const wa = bookingWhatsAppHref({
-    service_type: service,
-    pickup_landmark: pickup || "—",
-    dropoff_landmark: dropoff || "—",
-    customer_name: name || "—",
-    customer_phone: phone || "—",
-    detailsLine: shopMode
-      ? `Shop & Deliver · ${shopName || pickup} · ${list.slice(0, 80)}`
-      : service === "courier"
-        ? `${pkg}${express ? " · Express" : ""} · ${recipientPhone}`
-        : service === "farm"
-          ? `${farmType} · ${weight}`
-          : `${item} · ${weight}${insured ? " · insured" : ""}`,
-    paymentLabel: payMethod === "card" ? "Card" : "Cash",
-    estimateZar: estimate,
-    currencySymbol: country.currencySymbol,
-  });
 
   return (
     <div className="space-y-3 text-black">
@@ -507,7 +489,8 @@ export function SimpleGoodsSheet({
             if (!ready) throw new Error("Complete the form first.");
             saveGuest();
             const d = buildDraft();
-            const { orderId } = await createPayPalOrderAction({
+            stashPaypalBooking(d);
+            const { orderId, approveUrl } = await createPayPalOrderAction({
               vehicle,
               service_type: service,
               country_code: d.country_code || countryCode,
@@ -521,7 +504,8 @@ export function SimpleGoodsSheet({
               details: d.details,
               is_express: service === "courier" ? express : undefined,
             });
-            return orderId;
+            stashPaypalApproveUrl(approveUrl);
+            return { orderId, approveUrl };
           }}
           onApprove={async (orderId) => {
             setMsg(null);
@@ -543,12 +527,6 @@ export function SimpleGoodsSheet({
           }}
         />
       )}
-      <a
-        href={wa}
-        className="flex min-h-12 w-full items-center justify-center rounded-full bg-[#25D366] text-[15px] font-semibold text-white"
-      >
-        Or book on WhatsApp
-      </a>
     </div>
   );
 }

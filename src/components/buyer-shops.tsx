@@ -18,6 +18,7 @@ import {
 } from "@/lib/actions";
 import type { FareBreakdown } from "@/lib/fares";
 import { formatMoney, VEHICLE_LABELS } from "@/lib/format";
+import { stashPaypalApproveUrl, stashPaypalBooking } from "@/lib/paypal-draft";
 import type { Product, Shop, VehicleType } from "@/lib/types";
 import { suggestVehicle } from "@/lib/vehicles";
 
@@ -254,7 +255,9 @@ export function BuyerShops({
               if (!formReady || !vehicle) {
                 throw new Error("Complete the form first.");
               }
-              const { orderId } = await createPayPalOrderAction({
+              const d = orderDraft();
+              stashPaypalBooking(d, "shop");
+              const { orderId, approveUrl } = await createPayPalOrderAction({
                 vehicle,
                 service_type: "delivery",
                 country_code: countryCode,
@@ -263,7 +266,8 @@ export function BuyerShops({
                 pickup_lng: shop?.lng ?? null,
                 description: `Delivery · ${selected?.name ?? "shop order"}`,
               });
-              return orderId;
+              stashPaypalApproveUrl(approveUrl);
+              return { orderId, approveUrl };
             }}
             onApprove={async (orderId) => {
               setError(null);

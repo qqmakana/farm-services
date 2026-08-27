@@ -14,6 +14,7 @@ import {
   UberServiceTile,
 } from "@/components/customer/uber-service-tile";
 import { SmartSuggestions } from "@/components/rider/smart-suggestions";
+import { HomeWhereSearch } from "@/components/customer/home-where-search";
 import { DriveSignupCard } from "@/components/driver/drive-signup-card";
 import type { PlaceSuggestion } from "@/lib/suggestions";
 
@@ -102,6 +103,24 @@ function placeQuery(place?: PlaceSuggestion): string {
   if (place.lng != null && Number.isFinite(place.lng)) {
     q.set("toLng", String(place.lng));
   }
+  try {
+    const raw = sessionStorage.getItem("vr_last_gps_v1");
+    if (raw) {
+      const gps = JSON.parse(raw) as { lat?: number; lng?: number };
+      if (
+        Number.isFinite(gps.lat) &&
+        Number.isFinite(gps.lng) &&
+        gps.lat != null &&
+        gps.lng != null
+      ) {
+        q.set("from", "Current location");
+        q.set("fromLat", String(gps.lat));
+        q.set("fromLng", String(gps.lng));
+      }
+    }
+  } catch {
+    /* private mode */
+  }
   const s = q.toString();
   return s ? `?${s}` : "";
 }
@@ -114,6 +133,7 @@ function hrefForTrip(place?: PlaceSuggestion): string {
 export function UberHome() {
   const [mode, setMode] = useState<HomeMode>("ride");
   const [laterOpen, setLaterOpen] = useState(false);
+  const [whereOpen, setWhereOpen] = useState(false);
 
   function goToPlace(place: PlaceSuggestion) {
     window.location.assign(hrefForTrip(place));
@@ -192,9 +212,10 @@ export function UberHome() {
       </div>
 
       <div className="mt-5 flex items-center rounded-full bg-[#EEEEEE] py-1.5 pl-5 pr-1.5">
-        <AppLink
-          href="/ride"
+        <button
+          type="button"
           data-testid="home-where-to"
+          onClick={() => setWhereOpen(true)}
           className="uber-press flex min-h-12 flex-1 items-center gap-3 text-left"
         >
           <Search
@@ -205,7 +226,7 @@ export function UberHome() {
           <span className="text-[17px] font-normal text-[#A6A6A6]">
             Where to?
           </span>
-        </AppLink>
+        </button>
         <span className="mx-1 h-8 w-px bg-[#D2D2D2]" aria-hidden />
         <button
           type="button"
@@ -217,6 +238,12 @@ export function UberHome() {
           Later
         </button>
       </div>
+
+      <HomeWhereSearch
+        open={whereOpen}
+        onClose={() => setWhereOpen(false)}
+        onPick={goToPlace}
+      />
 
       <SmartSuggestions filter="for-you" onSelectDestination={goToPlace} />
 

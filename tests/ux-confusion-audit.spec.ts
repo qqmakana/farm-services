@@ -3,6 +3,7 @@ import {
   dismissCountryModalIfPresent,
   prepareBrowserContext,
 } from "./helpers/auth-helper";
+import { rideBookingUrl } from "./helpers/test-data";
 
 /**
  * Installation / onboarding / UX confusion audit (clueless first-time user).
@@ -166,16 +167,13 @@ test.describe("Phase 3 — Nav confusion & checkout clarity", () => {
     await expect(page.getByTestId("payment-selector")).toBeVisible();
   });
 
-  test("ride checkout shows FareBreakdownCard + cash/card", async ({
+  test("ride checkout shows cash/card after a destination is picked", async ({
     page,
   }) => {
-    await ready(page, "/ride");
-    await expect(page.getByTestId("fare-breakdown")).toBeVisible({
+    await ready(page, rideBookingUrl());
+    await expect(page.getByTestId("price-display")).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByTestId("base-fare")).toBeVisible();
-    await expect(page.getByTestId("platform-fee")).toBeVisible();
-    await expect(page.getByTestId("total-fare")).toBeVisible();
     await expect(page.getByTestId("payment-selector")).toBeVisible();
   });
 

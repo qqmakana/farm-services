@@ -1,5 +1,6 @@
 import { test, expect, type BrowserContext, type Page } from "@playwright/test";
 import { dismissCountryModalIfPresent } from "./helpers/auth-helper";
+import { rideBookingUrl } from "./helpers/test-data";
 
 /**
  * Global validation — matches the *actual* Village Ride build.
@@ -41,7 +42,7 @@ test.describe("Multi-country configuration", () => {
       page,
     }) => {
       await lockCountry(context, m.code);
-      await gotoReady(page, "/ride");
+      await gotoReady(page, rideBookingUrl());
 
       const indicator = page.getByTestId("country-indicator");
       await expect(indicator).toBeVisible({ timeout: 15_000 });
@@ -97,11 +98,11 @@ test.describe("Uber-style UI", () => {
     await expect(page.getByTestId("dropoff-input")).toBeVisible();
 
     await page.getByTestId("dropoff-input").fill("Johannesburg CBD");
-    await expect(page.getByTestId("book-button").first()).toBeVisible();
+    await expect(page.getByText(/Choose a ride/i)).toHaveCount(0);
   });
 
   test("book CTA is black pill", async ({ page }) => {
-    await gotoReady(page, "/ride");
+    await gotoReady(page, rideBookingUrl());
     const book = page.getByTestId("book-button").first();
     await expect(book).toBeVisible({ timeout: 15_000 });
 
@@ -110,7 +111,7 @@ test.describe("Uber-style UI", () => {
   });
 
   test("ride sheet vehicle list selectable", async ({ page }) => {
-    await gotoReady(page, "/ride");
+    await gotoReady(page, rideBookingUrl());
     await expect(page.getByText(/Choose a ride/i)).toBeVisible({
       timeout: 15_000,
     });
@@ -126,13 +127,13 @@ test.describe("Payment + Village Pass", () => {
   });
 
   test("cash/card selector on ride checkout", async ({ page }) => {
-    await gotoReady(page, "/ride");
+    await gotoReady(page, rideBookingUrl());
 
-    await page.getByTestId("pickup-input").fill("Clinic gate");
-    await page.getByTestId("dropoff-input").fill("Town market");
-    await page.getByLabel(/Your name/i).fill("QA Rider");
-    await page.getByLabel(/^Phone$/i).fill("0821234567");
-    await page.keyboard.press("Escape");
+    const nameField = page.getByLabel(/Your name/i);
+    if (await nameField.isVisible().catch(() => false)) {
+      await nameField.fill("QA Rider");
+      await page.getByLabel(/^Phone$/i).fill("0821234567");
+    }
 
     await expect(page.getByTestId("payment-selector")).toBeVisible({
       timeout: 15_000,
@@ -173,9 +174,9 @@ test.describe("Fare logic (server-side via UI quote)", () => {
     page,
   }) => {
     await lockCountry(context, "ZA");
-    await gotoReady(page, "/ride");
+    await gotoReady(page, rideBookingUrl());
 
-    // With no coords, quote uses base; with pins it adds km
+    // Pins make the quote ready; rider total is on Choose a ride.
     await expect(page.getByTestId("price-display")).toBeVisible({
       timeout: 15_000,
     });

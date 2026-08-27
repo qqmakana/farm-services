@@ -165,7 +165,14 @@ test.describe("Home Uber structure", () => {
     await page.goto("/");
     await dismissCountryModalIfPresent(page);
     await page.getByTestId("home-where-to").click();
-    await expect(page).toHaveURL(/\/ride/, { timeout: 15_000 });
+    await expect(page.getByTestId("home-where-search")).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page.getByTestId("home-where-input")).toBeVisible();
+    await expect(page.getByTestId("home-where-input")).toBeFocused({
+      timeout: 5_000,
+    });
+    await expect(page).not.toHaveURL(/\/ride/, { timeout: 2_000 });
   });
 
   test("Services page uses Uber tile layout", async ({ page }) => {
