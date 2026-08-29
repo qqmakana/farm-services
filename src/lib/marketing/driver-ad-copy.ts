@@ -30,9 +30,10 @@ export const FEATURE_TOUR_SOCIAL_IMAGES = [
 export const FEATURE_TOUR_CAPTION = `Swipe Village Ride — same tour as in the app.
 
 1. Trip, Fetch, Send & Shops
-2. Buy from shops — you pay for the goods at the till
-3. Describe your place (landmark + map)
-4. We open end of September — drivers apply now, keep 90%
+2. Trip + stop — shop or clinic on the way, you stay in the car, +R15
+3. Buy from shops — you pay for the goods at the till
+4. Describe your place (landmark + map)
+5. We open end of September — drivers apply now, keep 90%
 
 Install: https://village-ride.vercel.app/get-app
 Drive: https://village-ride.vercel.app/driver/join

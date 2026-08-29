@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BRAND } from "@/lib/brand";
 import { OPERATING_LAUNCH } from "@/lib/launch";
+import { SERVICE_COPY } from "@/lib/service-guide";
 import {
   hasPermanentlyDismissedOnboarding,
   markOnboardingSeen,
@@ -23,6 +24,7 @@ import {
   ArtLaunch,
   ArtServices,
   ArtShopPay,
+  ArtTripStop,
 } from "@/components/onboarding/feature-tour-art";
 
 const SLIDES: OnboardingSlideData[] = [
@@ -32,6 +34,12 @@ const SLIDES: OnboardingSlideData[] = [
     description:
       "Trip is a ride. Send is a parcel to someone else. Fetch is a driver collecting or buying and bringing it to you. Reserve books later. Safety stays with you.",
     art: <ArtServices />,
+  },
+  {
+    id: "trip-stop",
+    title: SERVICE_COPY.tripStop.title,
+    description: SERVICE_COPY.tripStop.blurb,
+    art: <ArtTripStop />,
   },
   {
     id: "shops",

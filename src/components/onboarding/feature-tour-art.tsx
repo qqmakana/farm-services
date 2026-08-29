@@ -55,6 +55,47 @@ export function ArtServices() {
   );
 }
 
+/** Trip + stop: you stay in the car, one shop/clinic stop, then continue. */
+export function ArtTripStop() {
+  return (
+    <svg viewBox="0 0 320 280" className="h-auto w-full" aria-hidden>
+      <rect width="320" height="280" rx="32" fill="#f5f5f5" />
+      <rect x="28" y="36" width="80" height="72" rx="18" fill="#fff" stroke="#e5e5e5" strokeWidth="2" />
+      <text x="68" y="68" textAnchor="middle" fill="#111" fontSize="13" fontFamily="system-ui,sans-serif" fontWeight="700">
+        Pickup
+      </text>
+      <text x="68" y="90" textAnchor="middle" fill="#6e6e6e" fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600">
+        You in the car
+      </text>
+      <rect x="120" y="36" width="80" height="72" rx="18" fill="#000" />
+      <text x="160" y="68" textAnchor="middle" fill="#fff" fontSize="13" fontFamily="system-ui,sans-serif" fontWeight="700">
+        One stop
+      </text>
+      <text x="160" y="90" textAnchor="middle" fill="#f0c14b" fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="700">
+        Shop or clinic
+      </text>
+      <rect x="212" y="36" width="80" height="72" rx="18" fill="#fff" stroke="#e5e5e5" strokeWidth="2" />
+      <text x="252" y="68" textAnchor="middle" fill="#111" fontSize="13" fontFamily="system-ui,sans-serif" fontWeight="700">
+        Then go
+      </text>
+      <text x="252" y="90" textAnchor="middle" fill="#6e6e6e" fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600">
+        Your drop-off
+      </text>
+      <path d="M108 72h12M200 72h12" stroke="#111" strokeWidth="3" strokeLinecap="round" />
+      <rect x="36" y="132" width="248" height="112" rx="18" fill="#fff" stroke="#e5e5e5" strokeWidth="2" />
+      <text x="160" y="172" textAnchor="middle" fill="#111" fontSize="16" fontFamily="system-ui,sans-serif" fontWeight="800">
+        +R15 in the same fare
+      </text>
+      <text x="160" y="200" textAnchor="middle" fill="#6e6e6e" fontSize="13" fontFamily="system-ui,sans-serif" fontWeight="600">
+        One booking · not a second trip
+      </text>
+      <text x="160" y="224" textAnchor="middle" fill="#111" fontSize="13" fontFamily="system-ui,sans-serif" fontWeight="700">
+        Not going along? Use Fetch
+      </text>
+    </svg>
+  );
+}
+
 /** Shops: driver goes, you pay for goods at the till. */
 export function ArtShopPay() {
   return (

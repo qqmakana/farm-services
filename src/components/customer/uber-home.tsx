@@ -17,6 +17,7 @@ import { SmartSuggestions } from "@/components/rider/smart-suggestions";
 import { HomeWhereSearch } from "@/components/customer/home-where-search";
 import { HomeInstallCard } from "@/components/customer/home-install-card";
 import { DriveSignupCard } from "@/components/driver/drive-signup-card";
+import { SERVICE_COPY } from "@/lib/service-guide";
 import type { PlaceSuggestion } from "@/lib/suggestions";
 
 type HomeMode = "ride" | "shops" | "send";
@@ -309,7 +310,14 @@ export function UberHome() {
         </AppLink>
       </section>
 
-      <div className="mt-4">
+      <div className="mt-4 space-y-3">
+        <UberFeatureTile
+          href="/ride?stop=1"
+          title={SERVICE_COPY.tripStop.title}
+          sub={SERVICE_COPY.tripStop.tile}
+          src="/home/icons/car.png"
+          testId="home-trip-stop"
+        />
         <UberFeatureTile
           href="/shops"
           title="Buy from local shops"

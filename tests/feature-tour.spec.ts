@@ -13,6 +13,7 @@ test.describe("Feature tour", () => {
         localStorage.removeItem("vr_feature_tour_seen_v2");
         localStorage.removeItem("vr_feature_tour_seen_v1");
         localStorage.removeItem("vr_onboarding_seen_v1");
+        localStorage.removeItem("vr_feature_tour_seen_v6");
         localStorage.removeItem("vr_feature_tour_seen_v5");
         localStorage.removeItem("vr_feature_tour_seen_v4");
         sessionStorage.removeItem("vr_feature_tour_skip_session");
@@ -29,6 +30,13 @@ test.describe("Feature tour", () => {
     await expect(
       page.getByText(/Trip, Fetch, Send|Shops/i).first(),
     ).toBeVisible();
+
+    await page.getByRole("button", { name: /^Next$/i }).click();
+    await expect(page.getByText(/Trip \+ stop/i).first()).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page.getByText(/stops once with you/i).first()).toBeVisible();
+    await expect(page.getByText(/use Fetch instead/i).first()).toBeVisible();
 
     await page.getByRole("button", { name: /^Next$/i }).click();
     await expect(page.getByText(/Buy from local shops/i).first()).toBeVisible({

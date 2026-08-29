@@ -77,6 +77,9 @@ function ServicesContent() {
       </section>
 
       <p className="mt-8 text-[13px] leading-relaxed text-[#6B6B6B]">
+        <span className="font-semibold text-black">Trip + stop</span> is one
+        extra stop with you in the car — shop or clinic — then the same driver
+        continues. +R15 in the same fare.{" "}
         <span className="font-semibold text-black">Send</span> is a parcel to
         someone else. <span className="font-semibold text-black">Fetch</span>{" "}
         is the driver collecting or buying and bringing it to you — shop list,

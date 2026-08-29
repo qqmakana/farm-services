@@ -21,7 +21,9 @@ export const SERVICE_COPY = {
   tripStop: {
     title: "Trip + stop",
     blurb:
-      "One extra stop on the way — spaza, grocery, hardware, or clinic. Added to your trip total, not a second booking.",
+      "Going somewhere and need the shop or clinic on the way? Book one trip. The driver stops once with you, then continues. +R15, already in the fare — not a second booking. If you are not going along, use Fetch instead.",
+    tile:
+      "Need the shop or clinic on the way? One stop with you in the car. +R15 in the same fare.",
   },
   delivery: {
     title: "Fetch",

@@ -4,9 +4,10 @@
  * - Session skip → sessionStorage (Skip for now — returns next visit)
  */
 
-/** v5 = Trip/Fetch/Send + shops + September launch. */
-const PERMANENT_KEY = "vr_feature_tour_seen_v5";
+/** v6 = adds Trip + stop (you stay in the car; not Fetch). */
+const PERMANENT_KEY = "vr_feature_tour_seen_v6";
 const LEGACY_PERMANENT_KEYS = [
+  "vr_feature_tour_seen_v5",
   "vr_feature_tour_seen_v4",
   "vr_feature_tour_seen_v3",
   "vr_feature_tour_seen_v2",

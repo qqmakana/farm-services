@@ -33,6 +33,7 @@ import {
   type TripSeats,
 } from "@/lib/pricing";
 import { TRIP_STOP_TYPES, type TripStopType } from "@/lib/fares";
+import { SERVICE_COPY } from "@/lib/service-guide";
 import type { NewJobInput } from "@/lib/types";
 
 type Pin = { lat: number; lng: number };
@@ -595,6 +596,9 @@ export function SimpleRideSheet({
         </div>
 
         <div data-testid="trip-stop" className="space-y-2">
+          <p className="text-[13px] leading-snug text-[#6B6B6B]">
+            {SERVICE_COPY.tripStop.tile}
+          </p>
           <button
             type="button"
             aria-pressed={extraStop}
