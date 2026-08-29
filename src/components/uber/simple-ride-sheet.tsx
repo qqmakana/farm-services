@@ -27,6 +27,12 @@ import { getCapturedReferrer } from "@/lib/rider-referral";
 import { stashPaypalApproveUrl, stashPaypalBooking } from "@/lib/paypal-draft";
 import { SmartSuggestions } from "@/components/rider/smart-suggestions";
 import type { PlaceSuggestion } from "@/lib/suggestions";
+import {
+  normalizeTripSeats,
+  tripStopFeeAmount,
+  type TripSeats,
+} from "@/lib/pricing";
+import { TRIP_STOP_TYPES, type TripStopType } from "@/lib/fares";
 import type { NewJobInput } from "@/lib/types";
 
 type Pin = { lat: number; lng: number };
@@ -76,12 +82,19 @@ export function SimpleRideSheet({
   const [quoteReady, setQuoteReady] = useState(false);
   const [dropHits, setDropHits] = useState<AddressSuggestion[]>([]);
   const [dropFocused, setDropFocused] = useState(false);
+  const [seats, setSeats] = useState<TripSeats>(1);
+  const [extraStop, setExtraStop] = useState(false);
+  const [stopType, setStopType] = useState<TripStopType>("spaza");
+  const [stopFee, setStopFee] = useState(0);
+  const [peopleFee, setPeopleFee] = useState(0);
   const dropoffRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     try {
       const q = new URLSearchParams(window.location.search);
       if (q.get("when") === "later") setWhenLater(true);
+      if (q.get("stop") === "1") setExtraStop(true);
+      setSeats(normalizeTripSeats(q.get("seats")));
       const at = q.get("at");
       if (at) {
         setWhenLater(true);
@@ -201,10 +214,16 @@ export function SimpleRideSheet({
       dropoff_lng: dropoffPin.lng,
       at: whenLater ? localInputToIso(scheduledLocal) : null,
       customer_phone: phone || null,
+      details: {
+        seats,
+        extra_stop_type: extraStop ? stopType : undefined,
+      },
     })
       .then((fare) => {
         if (cancelled) return;
         setFee(fare.fee_amount);
+        setStopFee(fare.extra_stop_fee || 0);
+        setPeopleFee(fare.extra_passenger_fee || 0);
         setEtaMins(etaMinutes(fare.distance_km || 0));
         setQuoteReady(fare.quote_ready);
         onSnap?.("mid");
@@ -215,7 +234,17 @@ export function SimpleRideSheet({
     return () => {
       cancelled = true;
     };
-  }, [pickupPin, dropoffPin, whenLater, scheduledLocal, countryCode, phone]);
+  }, [
+    pickupPin,
+    dropoffPin,
+    whenLater,
+    scheduledLocal,
+    countryCode,
+    phone,
+    seats,
+    extraStop,
+    stopType,
+  ]);
 
   const ready =
     Boolean(name.trim()) &&
@@ -244,11 +273,19 @@ export function SimpleRideSheet({
       dropoff_landmark: dropoff.trim(),
       scheduled_for: whenLater ? localInputToIso(scheduledLocal) : null,
       country_code: countryCode,
-      dispatcher_notes: tag,
+      dispatcher_notes: [
+        tag,
+        extraStop ? `Stop: ${stopType} (+${formatMoney(tripStopFeeAmount(countryCode), country.currency, countryCode)})` : null,
+        seats > 1 ? `${seats} people` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ") || null,
       details: {
-        seats: 1,
+        seats,
         route_name: `${pickup.trim()} → ${dropoff.trim()}`,
         direction: "to_village",
+        extra_stop_type: extraStop ? stopType : undefined,
+        extra_stop_fee: extraStop ? tripStopFeeAmount(countryCode) : undefined,
       },
       fee_amount: fee,
     };
@@ -534,6 +571,72 @@ export function SimpleRideSheet({
             {formatMoney(estimate, country.currency, countryCode)}
           </span>
         </button>
+
+        <div data-testid="trip-people" className="space-y-2">
+          <p className="text-[13px] font-semibold text-[#6B6B6B]">People</p>
+          <div className="grid grid-cols-3 gap-2" role="group" aria-label="People">
+            {([1, 2, 4] as const).map((n) => (
+              <button
+                key={n}
+                type="button"
+                data-testid={`trip-seats-${n}`}
+                aria-pressed={seats === n}
+                onClick={() => setSeats(n)}
+                className={`uber-press min-h-11 rounded-full text-[15px] font-bold ${
+                  seats === n
+                    ? "bg-black text-white"
+                    : "bg-[#F3F3F3] text-black"
+                }`}
+              >
+                {n === 1 ? "Solo" : n}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div data-testid="trip-stop" className="space-y-2">
+          <button
+            type="button"
+            aria-pressed={extraStop}
+            onClick={() => setExtraStop((v) => !v)}
+            className={`uber-press w-full min-h-11 rounded-full text-[15px] font-bold ${
+              extraStop ? "bg-black text-white" : "bg-[#F3F3F3] text-black"
+            }`}
+          >
+            {extraStop ? "One stop included" : "Add one stop"}
+          </button>
+          {extraStop ? (
+            <div className="grid grid-cols-4 gap-1.5" role="group" aria-label="Stop type">
+              {TRIP_STOP_TYPES.map((stop) => (
+                <button
+                  key={stop.id}
+                  type="button"
+                  aria-pressed={stopType === stop.id}
+                  onClick={() => setStopType(stop.id)}
+                  className={`uber-press min-h-10 rounded-full px-1 text-[12px] font-semibold ${
+                    stopType === stop.id
+                      ? "bg-black text-white"
+                      : "bg-[#F3F3F3] text-black"
+                  }`}
+                >
+                  {stop.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        {stopFee > 0 || peopleFee > 0 ? (
+          <p data-testid="bundled-fare-note" className="text-[13px] text-[#6B6B6B]">
+            One price
+            {stopFee > 0
+              ? ` · stop ${formatMoney(stopFee, country.currency, countryCode)}`
+              : ""}
+            {peopleFee > 0
+              ? ` · extra people ${formatMoney(peopleFee, country.currency, countryCode)}`
+              : ""}
+          </p>
+        ) : null}
 
       {!name.trim() || !phone.trim() ? (
         <div className="grid grid-cols-2 gap-2">

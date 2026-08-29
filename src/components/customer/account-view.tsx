@@ -233,7 +233,7 @@ export function AccountView() {
       <div className="mt-6 grid grid-cols-2 gap-3">
         <GridTile href="/help" label="Help" Icon={LifeBuoy} />
         <GridTile href="/account/payment" label="Wallet" Icon={Wallet} />
-        <GridTile href="/help" label="Safety" Icon={Shield} />
+        <GridTile href="/safety" label="Safety" Icon={Shield} />
         <GridTile href="/notifications" label="Inbox" Icon={Mail} />
       </div>
 
@@ -265,7 +265,7 @@ export function AccountView() {
       </div>
 
       <Link
-        href="/help"
+        href="/safety"
         className={`uber-press mt-4 flex items-center gap-3 rounded-[28px] p-4 ${UBER_GLOSS}`}
       >
         <SafetyRing done={safetyDone} total={7} />

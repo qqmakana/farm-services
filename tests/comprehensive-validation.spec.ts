@@ -209,6 +209,40 @@ test.describe("Pricing Accuracy - All Services & Weight Categories", () => {
     expect(fare.reservation_fee).toBe(0);
   });
 
+  test("trip + stop and 2 people add to one bundled fare before 90/10", () => {
+    const solo = calculateUnifiedFare({
+      serviceType: "ride",
+      distanceKm: 10,
+      countryCode: "ZA",
+    });
+    const withStop = calculateUnifiedFare({
+      serviceType: "ride",
+      distanceKm: 10,
+      countryCode: "ZA",
+      applyExtraStop: true,
+    });
+    const twoPeople = calculateUnifiedFare({
+      serviceType: "ride",
+      distanceKm: 10,
+      countryCode: "ZA",
+      seats: 2,
+    });
+    const fourPeople = calculateUnifiedFare({
+      serviceType: "ride",
+      distanceKm: 10,
+      countryCode: "ZA",
+      seats: 4,
+    });
+    expect(solo.total_fare).toBe(55);
+    expect(withStop.extra_stop_fee).toBe(15);
+    expect(withStop.total_fare).toBe(70);
+    expect(withStop.platform_fee).toBe(7);
+    expect(twoPeople.extra_passenger_fee).toBe(10);
+    expect(twoPeople.total_fare).toBe(65);
+    expect(fourPeople.extra_passenger_fee).toBe(30);
+    expect(fourPeople.total_fare).toBe(85);
+  });
+
   test("scheduled trip adds R10 reservation before 90/10", () => {
     const fare = calculateUnifiedFare({
       serviceType: "ride",
@@ -355,7 +389,7 @@ test.describe("Delivery / Farm weight UI", () => {
 
   test("courier has no weight category selector", async ({ page }) => {
     await gotoReady(page, "/courier");
-    await expect(page.getByText(/Village Courier|Courier/i).first()).toBeVisible({
+    await expect(page.getByText(/Send|Village Courier|Courier/i).first()).toBeVisible({
       timeout: 15_000,
     });
     await expect(page.getByTestId("weight-light")).toHaveCount(0);

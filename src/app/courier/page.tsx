@@ -21,7 +21,7 @@ function CourierInner() {
       dropoffPin={dropoffPin}
       onMapPin={onMapPin}
       backHref="/"
-      title="Courier"
+      title="Send"
     >
       <SimpleGoodsSheet
         service="courier"
@@ -40,7 +40,7 @@ export default function CourierPage() {
       <Suspense
         fallback={
           <div className="flex min-h-dvh items-center justify-center bg-[#F5F5F5] text-[#000000]">
-            Loading courier…
+            Loading Send…
           </div>
         }
       >

@@ -118,7 +118,7 @@ async function bookVillageDelivery(page: Page) {
   await page.goto("/delivery");
   await dismissCountryModalIfPresent(page);
   await expect(
-    page.getByRole("heading", { name: /Village Delivery/i }),
+    page.getByRole("heading", { name: /Fetch/i }),
   ).toBeVisible({
     timeout: 15_000,
   });

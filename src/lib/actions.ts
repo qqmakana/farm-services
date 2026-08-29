@@ -5,8 +5,10 @@ import { after } from "next/server";
 import { mockRepo } from "./mock-store";
 import {
   calculateFare,
+  detailsHasExtraStop,
   detailsIsExpress,
   detailsIsInsured,
+  detailsSeats,
   type FareBreakdown,
 } from "./fares";
 import { getDrivingRoute } from "./mapbox-server";
@@ -30,6 +32,7 @@ import {
   isConfirmedStatus,
   isSearchingStatus,
   mergeDriverArrivedDetails,
+  mergeJobDetails,
 } from "./job-status";
 import { mergeTipIntoDetails } from "./tips";
 import {
@@ -218,6 +221,10 @@ async function resolveFare(params: {
   const applyInsurance =
     params.service_type === "delivery" &&
     (Boolean(params.apply_insurance) || detailsIsInsured(params.details));
+  const applyExtraStop =
+    params.service_type === "ride" && detailsHasExtraStop(params.details);
+  const seats =
+    params.service_type === "ride" ? detailsSeats(params.details) : 1;
 
   if (!pickup || !dropoff) {
     return calculateFare({
@@ -235,6 +242,8 @@ async function resolveFare(params: {
       applyReservationFee,
       isExpress,
       applyInsurance,
+      applyExtraStop,
+      seats,
     });
   }
 
@@ -257,6 +266,8 @@ async function resolveFare(params: {
     applyReservationFee,
     isExpress,
     applyInsurance,
+    applyExtraStop,
+    seats,
   });
 }
 
@@ -3777,6 +3788,161 @@ export async function createLocalPaidJob(draft: Omit<NewJobInput, "payment">) {
       paypalCaptureId: `LOCAL-CAP-${stamp}`,
     },
   });
+}
+
+function assertCustomerPhoneMatches(
+  jobPhone: string | null | undefined,
+  given: string,
+) {
+  const givenDigits = String(given || "").replace(/\D/g, "");
+  if (givenDigits.length < 9) {
+    throw new Error("Phone required to update this trip.");
+  }
+  const jobDigits = String(jobPhone || "").replace(/\D/g, "");
+  if (!jobDigits.endsWith(givenDigits.slice(-9))) {
+    throw new Error("Phone does not match this trip.");
+  }
+}
+
+/** Driver live selfie after accept — storage path, never a data URL. */
+export async function uploadDriverLiveSelfie(formData: FormData): Promise<{
+  photo_url: string;
+  job: JobWithDriver;
+}> {
+  const jobId = String(formData.get("jobId") ?? "").trim();
+  const driverId = String(formData.get("driverId") ?? "").trim();
+  const file = requireImageFile(formData, "photo", "Driver selfie");
+  if (!jobId || !driverId) throw new Error("Job and driver are required.");
+
+  if (!useAdmin()) {
+    const existing = mockRepo.getJob(jobId);
+    if (!existing) throw new Error("Job not found");
+    if (existing.driver_id !== driverId) throw new Error("Not your job");
+    const photo_url = `mock://driver-live/${jobId}/${Date.now()}.jpg`;
+    const job = mockRepo.patchJobDetails(jobId, {
+      driver_live_selfie_url: photo_url,
+    });
+    revalidateAll();
+    return { photo_url, job };
+  }
+
+  const admin = createAdminClient();
+  const { data: jobRow, error: fetchErr } = await admin
+    .from("rr_jobs")
+    .select("*")
+    .eq("id", jobId)
+    .single();
+  if (fetchErr || !jobRow) throw new Error(fetchErr?.message ?? "Job not found");
+  if (jobRow.driver_id !== driverId) throw new Error("Not your job");
+  if (!isConfirmedStatus(jobRow.status) && jobRow.status !== "in_progress") {
+    throw new Error("Accept the trip before sending a selfie.");
+  }
+
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `live/${jobId}/${Date.now()}.${ext === "png" ? "png" : "jpg"}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const { error: upErr } = await admin.storage
+    .from("rr-driver-docs")
+    .upload(path, buffer, {
+      contentType: file.type || "image/jpeg",
+      upsert: true,
+    });
+  if (upErr) throw new Error(upErr.message);
+
+  const { data, error } = await admin
+    .from("rr_jobs")
+    .update({
+      details: mergeJobDetails((jobRow as Job).details, {
+        driver_live_selfie_url: path,
+      }),
+    })
+    .eq("id", jobId)
+    .eq("driver_id", driverId)
+    .select(JOB_WITH_RELATIONS)
+    .single();
+  if (error || !data) throw new Error(error?.message ?? "Could not save selfie");
+  revalidateAll();
+  return { photo_url: path, job: data as JobWithDriver };
+}
+
+/** Rider confirms the live selfie matches the driver before pickup. */
+export async function confirmDriverSelfie(
+  jobId: string,
+  customerPhone: string,
+): Promise<JobWithDriver> {
+  if (!useAdmin()) {
+    const job = mockRepo.getJob(jobId);
+    if (!job) throw new Error("Trip not found.");
+    assertCustomerPhoneMatches(job.customer_phone, customerPhone);
+    const next = mockRepo.patchJobDetails(jobId, {
+      rider_confirmed_driver_selfie_at: new Date().toISOString(),
+    });
+    revalidateAll();
+    return next;
+  }
+
+  const admin = createAdminClient();
+  const { data: jobRow, error: fetchErr } = await admin
+    .from("rr_jobs")
+    .select("*")
+    .eq("id", jobId)
+    .single();
+  if (fetchErr || !jobRow) throw new Error(fetchErr?.message ?? "Trip not found");
+  assertCustomerPhoneMatches((jobRow as Job).customer_phone, customerPhone);
+
+  const { data, error } = await admin
+    .from("rr_jobs")
+    .update({
+      details: mergeJobDetails((jobRow as Job).details, {
+        rider_confirmed_driver_selfie_at: new Date().toISOString(),
+      }),
+    })
+    .eq("id", jobId)
+    .select(JOB_WITH_RELATIONS)
+    .single();
+  if (error || !data) throw new Error(error?.message ?? "Could not confirm photo");
+  revalidateAll();
+  return data as JobWithDriver;
+}
+
+/** Rider closes the trip as safe. Driver complete still settles the fare. */
+export async function confirmSafeArrival(
+  jobId: string,
+  customerPhone: string,
+): Promise<JobWithDriver> {
+  if (!useAdmin()) {
+    const job = mockRepo.getJob(jobId);
+    if (!job) throw new Error("Trip not found.");
+    assertCustomerPhoneMatches(job.customer_phone, customerPhone);
+    const next = mockRepo.patchJobDetails(jobId, {
+      safe_arrival_at: new Date().toISOString(),
+    });
+    revalidateAll();
+    return next;
+  }
+
+  const admin = createAdminClient();
+  const { data: jobRow, error: fetchErr } = await admin
+    .from("rr_jobs")
+    .select("*")
+    .eq("id", jobId)
+    .single();
+  if (fetchErr || !jobRow) throw new Error(fetchErr?.message ?? "Trip not found");
+  assertCustomerPhoneMatches((jobRow as Job).customer_phone, customerPhone);
+
+  const { data, error } = await admin
+    .from("rr_jobs")
+    .update({
+      details: mergeJobDetails((jobRow as Job).details, {
+        safe_arrival_at: new Date().toISOString(),
+      }),
+    })
+    .eq("id", jobId)
+    .select(JOB_WITH_RELATIONS)
+    .single();
+  if (error || !data) throw new Error(error?.message ?? "Could not confirm arrival");
+  revalidateAll();
+  return data as JobWithDriver;
 }
 
 export async function createLocalPaidShopOrder(

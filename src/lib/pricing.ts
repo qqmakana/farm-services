@@ -54,7 +54,11 @@ export const DRIVER_SHARE_PCT = 90;
 export const RIDE_INCLUDED_KM = 2;
 /** Scheduled Trip (Reserve) — ZA rands, scaled per market. Applied before 90/10. */
 export const ZA_RESERVATION_FEE = 10;
-/** Optional goods cover on Delivery — ZA rands, scaled per market. */
+/** One extra stop on a Trip — ZA rands, scaled. Bundled into the quoted total. */
+export const ZA_TRIP_STOP_FEE = 15;
+/** Each extra passenger after Solo — ZA rands, scaled. 2 people +R10, 4 people +R30. */
+export const ZA_EXTRA_PASSENGER_FEE = 10;
+/** Optional goods cover on Fetch (Delivery) — ZA rands, scaled per market. */
 export const ZA_DELIVERY_INSURANCE_FEE = 15;
 /** Shared Groups seat vs a private Trip. */
 export const GROUP_SEAT_FARE_PCT = 60;
@@ -112,6 +116,31 @@ export function scaleAmount(zarAmount: number, countryCode?: string | null): num
 
 export function reservationFeeAmount(countryCode?: string | null): number {
   return scaleAmount(ZA_RESERVATION_FEE, countryCode);
+}
+
+export function tripStopFeeAmount(countryCode?: string | null): number {
+  return scaleAmount(ZA_TRIP_STOP_FEE, countryCode);
+}
+
+export type TripSeats = 1 | 2 | 4;
+
+export function normalizeTripSeats(value: unknown): TripSeats {
+  const n = Math.round(Number(value) || 1);
+  if (n >= 4) return 4;
+  if (n >= 2) return 2;
+  return 1;
+}
+
+/** Extra passengers after Solo. */
+export function extraPassengerCount(seats: unknown): number {
+  return Math.max(0, normalizeTripSeats(seats) - 1);
+}
+
+export function extraPassengerFeeAmount(
+  seats: unknown,
+  countryCode?: string | null,
+): number {
+  return extraPassengerCount(seats) * scaleAmount(ZA_EXTRA_PASSENGER_FEE, countryCode);
 }
 
 export function deliveryInsuranceFeeAmount(
@@ -241,6 +270,10 @@ export type UnifiedFareBreakdown = {
   express_multiplier: number;
   /** Optional delivery goods cover (0 unless toggled). */
   insurance_fee: number;
+  /** Trip + one stop (0 unless requested). */
+  extra_stop_fee: number;
+  /** Extra people after Solo (0 unless 2 or 4). */
+  extra_passenger_fee: number;
 };
 
 /**
@@ -260,6 +293,10 @@ export function calculateUnifiedFare(params: {
   isExpress?: boolean;
   /** Delivery goods cover — adds scaled R15 before 90/10. */
   applyInsurance?: boolean;
+  /** Trip + one stop — adds scaled R15 before 90/10. */
+  applyExtraStop?: boolean;
+  /** Village Ride sedan occupants — Solo / 2 / 4. */
+  seats?: number | null;
 }): UnifiedFareBreakdown {
   const rate = getServiceRate({
     serviceType: params.serviceType,
@@ -282,6 +319,18 @@ export function calculateUnifiedFare(params: {
       ? scaleAmount(ZA_DELIVERY_INSURANCE_FEE, params.countryCode)
       : 0;
   riderRaw += insuranceFee;
+
+  const extraStopFee =
+    params.applyExtraStop && params.serviceType === "ride"
+      ? scaleAmount(ZA_TRIP_STOP_FEE, params.countryCode)
+      : 0;
+  riderRaw += extraStopFee;
+
+  const extraPassengerFee =
+    params.serviceType === "ride"
+      ? extraPassengerFeeAmount(params.seats, params.countryCode)
+      : 0;
+  riderRaw += extraPassengerFee;
 
   let expressExtra = 0;
   let expressMultiplier = 1;
@@ -317,6 +366,8 @@ export function calculateUnifiedFare(params: {
     express_extra: expressExtra,
     express_multiplier: expressMultiplier,
     insurance_fee: insuranceFee,
+    extra_stop_fee: extraStopFee,
+    extra_passenger_fee: extraPassengerFee,
   };
 }
 

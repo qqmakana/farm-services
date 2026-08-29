@@ -198,6 +198,36 @@ export function ArtFeed() {
   );
 }
 
+export function ArtTripStop() {
+  return (
+    <svg viewBox="0 0 64 64" className="h-[58%] w-[58%]" aria-hidden>
+      <rect x="10" y="28" width="36" height="16" rx="4" fill="#276EF1" />
+      <circle cx="20" cy="46" r="6" fill="#1A1A1A" />
+      <circle cx="36" cy="46" r="6" fill="#1A1A1A" />
+      <circle cx="50" cy="22" r="10" fill="#E11900" />
+      <path d="M50 16v8M46 22h8" stroke="#fff" strokeWidth="2.5" />
+    </svg>
+  );
+}
+
+export function ArtSafety() {
+  return (
+    <svg viewBox="0 0 64 64" className="h-[58%] w-[58%]" aria-hidden>
+      <path
+        d="M32 8l20 8v16c0 14-8 24-20 28C20 56 12 46 12 32V16l20-8z"
+        fill="#06C167"
+      />
+      <path
+        d="M22 32l7 7 13-14"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function ArtClinic() {
   return (
     <svg viewBox="0 0 64 64" className="h-[62%] w-[62%]" aria-hidden>

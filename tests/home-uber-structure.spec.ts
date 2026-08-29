@@ -35,8 +35,11 @@ test.describe("Home Uber structure", () => {
     await expect(page.getByTestId("service-circle-send-items")).toBeAttached();
     await expect(page.getByTestId("service-circle-farm")).toBeVisible();
     await expect(page.getByTestId("service-circle-reserve")).toBeVisible();
-    await expect(page.getByTestId("service-circle-groups")).toBeVisible();
+    await expect(page.getByTestId("service-circle-groups")).toBeAttached();
     await expect(page.getByTestId("service-circle-delivery")).toBeVisible();
+    await expect(page.getByTestId("service-circle-trip-stop")).toBeVisible();
+    await expect(page.getByText("Fetch")).toBeVisible();
+    await expect(page.getByText("Send", { exact: true }).first()).toBeVisible();
     await expect(page.getByRole("heading", { name: /Saved places/i })).toBeVisible();
     await expect(page.getByText(/Order almost anything/i)).toBeVisible();
     await page.screenshot({
@@ -183,16 +186,14 @@ test.describe("Home Uber structure", () => {
       timeout: 15_000,
     });
     await expect(page.getByRole("heading", { name: /^Services$/ })).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: /Get anything delivered/i }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: /Get Courier to help/i }),
-    ).toBeVisible();
     await expect(page.getByTestId("service-circle-trip")).toBeVisible();
-    await expect(page.getByTestId("service-circle-shops")).toBeVisible();
-    await expect(page.getByText("Send items")).toBeVisible();
-    await expect(page.getByText("Store pick-up")).toBeVisible();
+    await expect(page.getByTestId("service-circle-trip-stop")).toBeVisible();
+    await expect(page.getByTestId("service-circle-courier")).toBeVisible();
+    await expect(page.getByTestId("service-circle-delivery")).toBeVisible();
+    await expect(page.getByTestId("service-circle-reserve")).toBeVisible();
+    await expect(page.getByTestId("service-circle-safety")).toBeVisible();
+    await expect(page.getByText("Send", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("Fetch").first()).toBeVisible();
     await expect(page.getByTestId("customer-tab-services")).toBeVisible();
     await page.waitForLoadState("networkidle");
     await page.screenshot({
@@ -201,7 +202,7 @@ test.describe("Home Uber structure", () => {
     });
   });
 
-  test("Services page Reserve, Groups, Farm also navigate", async ({
+  test("Services page Reserve, Trip+stop, Fetch, Safety navigate", async ({
     page,
   }) => {
     await page.goto("/services");
@@ -211,13 +212,17 @@ test.describe("Home Uber structure", () => {
     await expect(page).toHaveURL(/\/ride\?when=later/, { timeout: 15_000 });
 
     await page.goto("/services");
-    await page.getByTestId("service-circle-groups").click();
-    await expect(page).toHaveURL(/\/group/, { timeout: 15_000 });
-    await expect(page.getByText(/60% of a private Trip/i)).toBeVisible();
+    await page.getByTestId("service-circle-trip-stop").click();
+    await expect(page).toHaveURL(/\/ride\?stop=1/, { timeout: 15_000 });
 
     await page.goto("/services");
-    await page.getByTestId("service-circle-farm").click();
-    await expect(page).toHaveURL(/\/farm/, { timeout: 15_000 });
+    await page.getByTestId("service-circle-delivery").click();
+    await expect(page).toHaveURL(/\/delivery/, { timeout: 15_000 });
+
+    await page.goto("/services");
+    await page.getByTestId("service-circle-safety").click();
+    await expect(page).toHaveURL(/\/safety/, { timeout: 15_000 });
+    await expect(page.getByTestId("safety-page")).toBeVisible();
   });
 
   test("service sheets load; Reserve shows reservation fee", async ({
@@ -231,13 +236,13 @@ test.describe("Home Uber structure", () => {
 
     await page.goto("/courier");
     await dismissCountryModalIfPresent(page);
-    await expect(page.getByRole("heading", { name: /^Courier$/i })).toBeVisible({
+    await expect(page.getByRole("heading", { name: /^Send$/i })).toBeVisible({
       timeout: 15_000,
     });
 
     await page.goto("/delivery");
     await dismissCountryModalIfPresent(page);
-    await expect(page.getByRole("heading", { name: /^Delivery$/i })).toBeVisible(
+    await expect(page.getByRole("heading", { name: /^Fetch$/i })).toBeVisible(
       { timeout: 15_000 },
     );
     await expect(page.getByTestId("delivery-insurance-on")).toBeVisible();
@@ -253,9 +258,13 @@ test.describe("Home Uber structure", () => {
     await expect(page.getByTestId("shops-how-it-works")).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByText(/Two ways to shop/i)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Two ways to shop/i }),
+    ).toBeVisible();
     await page.getByTestId("shops-how-next").click();
-    await expect(page.getByText(/A driver goes for you/i)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /A driver goes for you/i }),
+    ).toBeVisible();
     await expect(page.getByText(/Shop & Deliver/i).first()).toBeVisible();
     await expect(page.getByTestId("shop-know")).toBeVisible();
     await expect(page.getByTestId("shop-find")).toBeVisible();

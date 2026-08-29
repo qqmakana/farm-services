@@ -5,6 +5,7 @@ import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
 import { DriverVehiclePhotos } from "@/components/driver-vehicle-photos";
 import { RiderSafetyTips } from "@/components/trip/rider-safety-tips";
 import { TripQuickReplies } from "@/components/trip/trip-quick-replies";
+import { TripSafetyPanel } from "@/components/trip/trip-safety-panel";
 import { UberShell } from "@/components/uber/uber-shell";
 import { isDriverTrustVerified } from "@/lib/trust";
 import {
@@ -438,6 +439,14 @@ export function LiveTrip({
               </div>
             ) : null}
 
+            <TripSafetyPanel
+              job={job}
+              onJob={setJob}
+              showSelfie={confirmed && !arrived}
+              showPanic={confirmed || inProgress}
+              showArrival={false}
+            />
+
             <DriverVehiclePhotos driver={job.drivers} />
 
             <div className="flex items-center gap-3">
@@ -540,6 +549,13 @@ export function LiveTrip({
 
         {completed ? (
           <div className="space-y-4">
+            <TripSafetyPanel
+              job={job}
+              onJob={setJob}
+              showSelfie={false}
+              showPanic={false}
+              showArrival
+            />
             <div className="space-y-2">
               <div className="flex items-baseline justify-between">
                 <span className="text-[15px] text-[#6B6B6B]">Trip fare</span>

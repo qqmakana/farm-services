@@ -15,6 +15,8 @@ import { useDriverApp } from "@/components/driver/driver-app-provider";
 import { CashCollectModal } from "@/components/driver/cash-collect-modal";
 import { PickupDescribeCard } from "@/components/driver/pickup-describe-card";
 import { RiderSpottingCard } from "@/components/driver/rider-spotting-card";
+import { LiveSelfieCard } from "@/components/driver/live-selfie-card";
+import { jobDetailString } from "@/lib/job-status";
 import { PageShell } from "@/components/ui/page-shell";
 import {
   formatMoney,
@@ -139,7 +141,7 @@ export function DriverJobsView() {
             />
           </div>
           {active.service_type === "ride" ? (
-            <div className="mt-3">
+            <div className="mt-3 space-y-3">
               <RiderSpottingCard
                 customerName={active.customer_name}
                 details={active.details}
@@ -147,6 +149,26 @@ export function DriverJobsView() {
                 driverId={driverId}
                 storagePath={active.customer_photo_url}
               />
+              {isConfirmedStatus(active.status) && driverId ? (
+                <LiveSelfieCard
+                  jobId={active.id}
+                  driverId={driverId}
+                  details={active.details}
+                  onSaved={() => void load()}
+                />
+              ) : null}
+              {jobDetailString(active.details, "extra_stop_type") ? (
+                <p className="text-sm font-medium text-black">
+                  Extra stop: {jobDetailString(active.details, "extra_stop_type")}
+                  {Number((active.details as { seats?: number }).seats) > 1
+                    ? ` · ${Number((active.details as { seats?: number }).seats)} people`
+                    : ""}
+                </p>
+              ) : Number((active.details as { seats?: number }).seats) > 1 ? (
+                <p className="text-sm font-medium text-black">
+                  {Number((active.details as { seats?: number }).seats)} people
+                </p>
+              ) : null}
             </div>
           ) : null}
           <div className="mt-4 flex flex-col gap-2">
@@ -247,7 +269,7 @@ export function DriverJobsView() {
             const commission =
               Number(job.platform_commission) > 0
                 ? Math.round(Number(job.platform_commission))
-                : Math.round((fee * 15) / 100);
+                : Math.round((fee * 10) / 100);
             return (
               <li key={job.id} className="ru-card p-4">
                 <div className="flex items-start justify-between gap-3">

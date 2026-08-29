@@ -50,11 +50,11 @@ function serviceLabelForWhatsApp(
     case "ride":
       return "Village Ride";
     case "delivery":
-      return "Village Delivery";
+      return "Fetch";
     case "farm":
       return "Farm Connect";
     case "courier":
-      return "Village Courier";
+      return "Send";
   }
 }
 

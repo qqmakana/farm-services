@@ -38,6 +38,7 @@ import {
   driverHasArrived,
   isConfirmedStatus,
   mergeDriverArrivedDetails,
+  mergeJobDetails,
 } from "./job-status";
 import { jobNeedsFromJob } from "./job-needs";
 import { SHOP_DELIVERY_FEE } from "./shop-constants";
@@ -1481,6 +1482,18 @@ export const mockRepo = {
     if (driverHasArrived(job)) return withDriver(job);
     const nowIso = new Date().toISOString();
     job.details = mergeDriverArrivedDetails(job.details, nowIso);
+    job.updated_at = nowIso;
+    return withDriver(job);
+  },
+
+  patchJobDetails(
+    jobId: string,
+    patch: Record<string, unknown>,
+  ): JobWithDriver {
+    const job = store().jobs.find((j) => j.id === jobId);
+    if (!job) throw new Error("Job not found");
+    const nowIso = new Date().toISOString();
+    job.details = mergeJobDetails(job.details, patch);
     job.updated_at = nowIso;
     return withDriver(job);
   },

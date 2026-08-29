@@ -4,73 +4,72 @@ import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AppLink } from "@/components/ui/app-link";
 
-const PILLS = [
+const PILLS: {
+  href: string;
+  label: string;
+  src: string;
+  match: (p: string, when: string | null, stop: string | null) => boolean;
+}[] = [
   {
     href: "/ride",
-    label: "Ride",
+    label: "Trip",
     src: "/home/icons/car.png",
-    match: (p: string, when: string | null) =>
-      (p === "/" || p.startsWith("/ride")) && when !== "later",
+    match: (p, when, stop) =>
+      (p === "/" || p.startsWith("/ride")) && when !== "later" && stop !== "1",
+  },
+  {
+    href: "/ride?stop=1",
+    label: "+ Stop",
+    src: "/home/icons/car.png",
+    match: (p, _when, stop) => p.startsWith("/ride") && stop === "1",
+  },
+  {
+    href: "/courier",
+    label: "Send",
+    src: "/home/icons/courier.png",
+    match: (p) => p.startsWith("/courier"),
+  },
+  {
+    href: "/delivery",
+    label: "Fetch",
+    src: "/home/icons/courier.png",
+    match: (p) => p.startsWith("/delivery"),
   },
   {
     href: "/ride?when=later",
     label: "Reserve",
     src: "/home/icons/car.png",
-    match: (p: string, when: string | null) =>
-      p.startsWith("/ride") && when === "later",
+    match: (p, when) => p.startsWith("/ride") && when === "later",
   },
   {
-    href: "/group",
-    label: "Groups",
+    href: "/safety",
+    label: "Safety",
     src: "/home/icons/car.png",
-    match: (p: string) => p.startsWith("/group"),
+    match: (p) => p.startsWith("/safety"),
   },
-  {
-    href: "/farm",
-    label: "Farm",
-    src: "/home/icons/farm.png",
-    match: (p: string) => p.startsWith("/farm"),
-  },
-  {
-    href: "/shops",
-    label: "Shops",
-    src: "/home/icons/shops.png",
-    match: (p: string) => p.startsWith("/shops") || p.startsWith("/shop"),
-  },
-  {
-    href: "/courier",
-    label: "Courier",
-    src: "/home/icons/courier.png",
-    match: (p: string) => p.startsWith("/courier"),
-  },
-  {
-    href: "/delivery",
-    label: "Delivery",
-    src: "/home/icons/courier.png",
-    match: (p: string) => p.startsWith("/delivery"),
-  },
-] as const;
+];
 
 function ServicePillsInner({ className = "" }: { className?: string }) {
   const pathname = usePathname() ?? "/";
   const searchParams = useSearchParams();
   const when = searchParams.get("when");
+  const stop = searchParams.get("stop");
 
   return (
     <div
       data-testid="service-pills"
-      className={`grid grid-cols-4 gap-x-1 gap-y-2 px-1 pb-2 pt-1 font-[family-name:var(--font-display)] tracking-[-0.02em] ${className}`}
+      className={`grid grid-cols-3 gap-x-1 gap-y-2 px-1 pb-2 pt-1 font-[family-name:var(--font-display)] tracking-[-0.02em] ${className}`}
       role="navigation"
       aria-label="Services"
     >
       {PILLS.map((pill) => {
-        const active = pill.match(pathname, when);
+        const active = pill.match(pathname, when, stop);
         return (
           <AppLink
             key={`${pill.label}-${pill.href}`}
             href={pill.href}
             aria-current={active ? "page" : undefined}
-            data-testid={`service-pill-${pill.label.toLowerCase()}`}
+            data-testid={`service-pill-${pill.label.toLowerCase().replace(/\s+/g, "-").replace("+", "plus")}`}
             className={`uber-press relative flex min-h-12 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-1.5 text-[12px] ${
               active
                 ? "font-bold text-[#0a0a0a]"
@@ -96,7 +95,7 @@ function ServicePillsInner({ className = "" }: { className?: string }) {
   );
 }
 
-/** Service shortcuts — wrapped grid so Reserve / Groups / Farm stay tappable. */
+/** Service shortcuts — six products, one Village Ride sedan. */
 export function ServicePills({ className = "" }: { className?: string }) {
   return (
     <Suspense

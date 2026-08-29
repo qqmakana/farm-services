@@ -43,3 +43,23 @@ export function mergeDriverArrivedDetails(
   const base = details && typeof details === "object" ? details : {};
   return { ...base, driver_arrived_at: at };
 }
+
+export function mergeJobDetails(
+  details: JobDetails | null | undefined,
+  patch: Record<string, unknown>,
+): JobDetails {
+  const base =
+    details && typeof details === "object"
+      ? { ...(details as Record<string, unknown>) }
+      : {};
+  return { ...base, ...patch };
+}
+
+export function jobDetailString(
+  details: unknown,
+  key: string,
+): string | null {
+  if (!details || typeof details !== "object") return null;
+  const value = (details as Record<string, unknown>)[key];
+  return typeof value === "string" && value.trim() ? value : null;
+}

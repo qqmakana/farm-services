@@ -34,6 +34,14 @@ export type RideDetails = {
   local_mode?: string;
   /** Driver tapped "I've arrived" at pickup (ISO timestamp). */
   driver_arrived_at?: string;
+  /** One extra stop — spaza / grocery / hardware / clinic. */
+  extra_stop_type?: "spaza" | "grocery" | "hardware" | "clinic";
+  extra_stop_fee?: number;
+  /** Rider tapped “I arrived safely” (ISO). */
+  safe_arrival_at?: string;
+  /** Driver live selfie storage path after accept (not a data URL). */
+  driver_live_selfie_url?: string;
+  rider_confirmed_driver_selfie_at?: string;
 };
 
 /** Delivery / Farm load band — self-selected, no scale. */

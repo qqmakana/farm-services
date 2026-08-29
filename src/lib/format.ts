@@ -3,10 +3,10 @@ import { VEHICLE_LABELS } from "@/lib/vehicles";
 import { getCountry } from "@/lib/countries";
 
 export const SERVICE_LABELS: Record<ServiceType, string> = {
-  ride: "Ride",
-  delivery: "Delivery",
+  ride: "Trip",
+  delivery: "Fetch",
   farm: "Farm Connect",
-  courier: "Courier",
+  courier: "Send",
 };
 
 export { VEHICLE_LABELS };

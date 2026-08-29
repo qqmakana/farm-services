@@ -264,6 +264,41 @@ export function SimpleGoodsSheet({
     <div className="space-y-3 text-black">
       <h1 className="text-center text-[22px] font-bold">{heading}</h1>
       <p className="text-center text-[13px] text-[#6B6B6B]">{copy.blurb}</p>
+      {service === "delivery" ? (
+        <div
+          className="grid grid-cols-3 gap-2"
+          role="group"
+          aria-label="Fetch type"
+        >
+          <button
+            type="button"
+            aria-pressed={shopMode}
+            onClick={() => setShopMode(true)}
+            className={`uber-press min-h-11 rounded-full text-[13px] font-bold ${
+              shopMode ? "bg-black text-white" : "bg-[#F3F3F3] text-black"
+            }`}
+          >
+            Shop list
+          </button>
+          <a
+            href="/farm"
+            className="uber-press flex min-h-11 items-center justify-center rounded-full bg-[#F3F3F3] text-[13px] font-bold text-black"
+          >
+            Farm
+          </a>
+          <button
+            type="button"
+            onClick={() => {
+              setShopMode(true);
+              setItem((v) => v.trim() || "Clinic meds — pay at the till");
+              setPickup((v) => v.trim() || "Clinic / pharmacy");
+            }}
+            className="uber-press min-h-11 rounded-full bg-[#F3F3F3] text-[13px] font-bold text-black"
+          >
+            Clinic
+          </button>
+        </div>
+      ) : null}
       <p className="text-center text-[13px] text-[#6B6B6B]">
         Type landmarks, then tap the map for pickup and drop-off pins.
       </p>

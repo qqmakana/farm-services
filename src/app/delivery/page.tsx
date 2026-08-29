@@ -21,7 +21,7 @@ function DeliveryInner() {
       dropoffPin={dropoffPin}
       onMapPin={onMapPin}
       backHref="/"
-      title="Village Delivery"
+      title="Fetch"
     >
       <SimpleGoodsSheet
         service="delivery"

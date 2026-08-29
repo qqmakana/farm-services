@@ -27,6 +27,51 @@ export function detailsIsInsured(details: unknown): boolean {
   return Boolean(d.insurance) || Boolean(d.insured);
 }
 
+export function detailsSeats(details: unknown): number {
+  if (!details || typeof details !== "object") return 1;
+  return Number((details as { seats?: unknown }).seats) || 1;
+}
+
+export function detailsHasExtraStop(details: unknown): boolean {
+  if (!details || typeof details !== "object") return false;
+  const d = details as {
+    extra_stop_type?: unknown;
+    extra_stop?: unknown;
+  };
+  if (typeof d.extra_stop_type === "string" && d.extra_stop_type.trim()) {
+    return true;
+  }
+  return d.extra_stop === true;
+}
+
+export type TripStopType = "spaza" | "grocery" | "hardware" | "clinic";
+
+export const TRIP_STOP_TYPES: readonly {
+  id: TripStopType;
+  label: string;
+}[] = [
+  { id: "spaza", label: "Spaza" },
+  { id: "grocery", label: "Grocery" },
+  { id: "hardware", label: "Hardware" },
+  { id: "clinic", label: "Clinic" },
+];
+
+export function detailsStopType(details: unknown): TripStopType | null {
+  if (!detailsHasExtraStop(details)) return null;
+  const raw = String(
+    (details as { extra_stop_type?: unknown }).extra_stop_type ?? "",
+  ).trim();
+  if (
+    raw === "spaza" ||
+    raw === "grocery" ||
+    raw === "hardware" ||
+    raw === "clinic"
+  ) {
+    return raw;
+  }
+  return "spaza";
+}
+
 export type FareBreakdown = {
   /**
    * Total the rider pays (cash or card). 90/10 is taken from this, not added.
@@ -64,6 +109,8 @@ export type FareBreakdown = {
   express_extra: number;
   express_multiplier: number;
   insurance_fee: number;
+  extra_stop_fee: number;
+  extra_passenger_fee: number;
 };
 
 /** Server-side fare — never trust client fee for charging. */
@@ -86,6 +133,8 @@ export function calculateFare(params: {
   applyReservationFee?: boolean;
   isExpress?: boolean;
   applyInsurance?: boolean;
+  applyExtraStop?: boolean;
+  seats?: number | null;
   /** @deprecated Prefer unified pricing; ignored when serviceType set */
   rules?: {
     base_fare: number;
@@ -140,6 +189,8 @@ export function calculateFare(params: {
     applyReservationFee: Boolean(params.applyReservationFee),
     isExpress: Boolean(params.isExpress),
     applyInsurance: Boolean(params.applyInsurance),
+    applyExtraStop: Boolean(params.applyExtraStop),
+    seats: params.seats,
   });
 
   // Rider pays `total_fare`. Platform 10% is stored as platform_commission
@@ -171,5 +222,7 @@ export function calculateFare(params: {
     express_extra: unified.express_extra,
     express_multiplier: unified.express_multiplier,
     insurance_fee: unified.insurance_fee,
+    extra_stop_fee: unified.extra_stop_fee,
+    extra_passenger_fee: unified.extra_passenger_fee,
   };
 }

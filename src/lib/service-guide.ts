@@ -14,19 +14,29 @@ export const SERVICE_COPY = {
       "Book 30 minutes to 30 days ahead. Includes a reservation fee. Driver aims to arrive early and wait up to 5 minutes. Cancel free until 1 hour before pickup.",
   },
   groups: {
-    title: "Groups",
+    title: "People",
     blurb:
-      "Share a ride with others going the same way — max 4 passengers, 60% of a private Trip fare.",
+      "Same Village Ride sedan. Pick Solo, 2, or 4 after you set a destination — fare stays one bundled price.",
+  },
+  tripStop: {
+    title: "Trip + stop",
+    blurb:
+      "One extra stop on the way — spaza, grocery, hardware, or clinic. Added to your trip total, not a second booking.",
   },
   delivery: {
-    title: "Delivery",
+    title: "Fetch",
     blurb:
-      "Any item that isn’t a restaurant meal — boxes, furniture, hardware. Weight sets the fare. Driver photos the load at pickup and drop-off.",
+      "Driver collects or buys and brings it to you — shop list, farm goods, or clinic meds. You pay for goods at the shop. Village Ride charges the Fetch fee only.",
   },
   courier: {
-    title: "Courier",
+    title: "Send",
     blurb:
-      "Documents or a small package, curb-to-curb, under 15 kg. Flat distance fare — no weight charge. Share the trip link so the recipient can track without the app.",
+      "Send a parcel to someone else — documents or a small package, curb-to-curb. Share the trip link so the recipient can track without the app.",
+  },
+  safety: {
+    title: "Safety",
+    blurb:
+      "Panic code in chat, confirm you arrived safely, and see your driver’s live photo before pickup.",
   },
   farm: {
     title: "Farm",

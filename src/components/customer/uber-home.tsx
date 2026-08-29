@@ -8,8 +8,8 @@ import { HomeScheduleLaterModal } from "@/components/customer/home-schedule-late
 import {
   ArtCourier,
   ArtForYou,
-  ArtGroups,
   ArtReserve,
+  ArtTripStop,
   UberFeatureTile,
   UberServiceTile,
 } from "@/components/customer/uber-service-tile";
@@ -18,7 +18,7 @@ import { HomeWhereSearch } from "@/components/customer/home-where-search";
 import { DriveSignupCard } from "@/components/driver/drive-signup-card";
 import type { PlaceSuggestion } from "@/lib/suggestions";
 
-type HomeMode = "ride" | "shops" | "courier";
+type HomeMode = "ride" | "shops" | "send";
 
 const MODES: {
   id: HomeMode;
@@ -29,8 +29,8 @@ const MODES: {
   { id: "ride", label: "Ride", href: "/", src: "/home/icons/car.png" },
   { id: "shops", label: "Shops", href: "/shops", src: "/home/icons/shops.png" },
   {
-    id: "courier",
-    label: "Courier",
+    id: "send",
+    label: "Send",
     href: "/courier",
     src: "/home/icons/courier.png",
   },
@@ -53,27 +53,27 @@ const HOME_SERVICES = [
     badge: "20%",
   },
   {
+    href: "/ride?stop=1",
+    label: "Trip + stop",
+    art: <ArtTripStop />,
+    testId: "service-circle-trip-stop",
+  },
+  {
     href: "/ride?when=later",
     label: "Reserve",
     art: <ArtReserve />,
     testId: "service-circle-reserve",
   },
   {
-    href: "/group",
-    label: "Groups",
-    art: <ArtGroups />,
-    testId: "service-circle-groups",
-  },
-  {
     href: "/delivery",
-    label: "Delivery",
+    label: "Fetch",
     src: "/home/icons/courier.png",
     testId: "service-circle-delivery",
     knockoutWhite: true,
   },
   {
     href: "/courier",
-    label: "Courier",
+    label: "Send",
     art: <ArtCourier />,
     testId: "service-circle-courier",
   },
@@ -152,7 +152,7 @@ export function UberHome() {
         data-testid="home-mode-tabs"
         className="flex items-end justify-around"
         role="tablist"
-        aria-label="Ride, Shops, Courier"
+        aria-label="Ride, Shops, Send"
       >
         {MODES.map((m) => {
           const selected = mode === m.id;
@@ -296,6 +296,13 @@ export function UberHome() {
           className="sr-only"
         >
           Send items
+        </AppLink>
+        <AppLink
+          href="/ride?seats=2"
+          data-testid="service-circle-groups"
+          className="sr-only"
+        >
+          People
         </AppLink>
       </section>
 

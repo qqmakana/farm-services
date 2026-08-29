@@ -646,6 +646,23 @@ test("fares: Reserve adds R10 then 90/10 (PayPal charges the same quote)", () =>
   assert(reserved.driver_fare_amount === 58, "90% of 65");
 });
 
+test("fares: trip stop + extra people bundled before 90/10", () => {
+  const withStop = dayQuote({
+    vehicle: "sedan",
+    serviceType: "ride",
+    countryCode: "ZA",
+    routeDistanceKm: 10,
+    quoteReady: true,
+    applyExtraStop: true,
+    seats: 2,
+  });
+  assert(withStop.extra_stop_fee === 15, `stop ${withStop.extra_stop_fee}`);
+  assert(withStop.extra_passenger_fee === 10, `people ${withStop.extra_passenger_fee}`);
+  assert(withStop.fee_amount === 80, `rider ${withStop.fee_amount}`);
+  assert(withStop.platform_commission === 8, "10% of 80");
+  assert(withStop.driver_fare_amount === 72, "90% of 80");
+});
+
 test("fares: courier express is 1.5× before 90/10", () => {
   const std = dayQuote({
     vehicle: "sedan",
