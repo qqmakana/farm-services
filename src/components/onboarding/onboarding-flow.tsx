@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BRAND } from "@/lib/brand";
+import { OPERATING_LAUNCH } from "@/lib/launch";
 import {
   hasPermanentlyDismissedOnboarding,
   markOnboardingSeen,
@@ -15,40 +16,38 @@ import {
 } from "@/components/onboarding/onboarding-slide";
 import {
   ArtDescribePlace,
-  ArtFuelHelp,
+  ArtLaunch,
   ArtServices,
-  ArtWearing,
+  ArtShopPay,
 } from "@/components/onboarding/feature-tour-art";
 
-/** Full product tour: services everywhere + helpers when maps fail. */
 const SLIDES: OnboardingSlideData[] = [
   {
     id: "services",
-    title: "Ride, delivery, farm & courier",
+    title: "Trip, Fetch, Send & Shops",
     description:
-      "Villages, towns & cities — book a ride, send a package, move farm goods, get a delivery, or order from local shops.",
+      "Trip is a ride. Send is a parcel to someone else. Fetch is a driver collecting or buying and bringing it to you. Reserve books later. Safety stays with you.",
     art: <ArtServices />,
+  },
+  {
+    id: "shops",
+    title: "Buy from local shops",
+    description:
+      "Know the shop? Send a list. Or browse nearby. A driver goes for you. You pay for the goods at the shop. Village Ride only charges the Fetch fee — cash or card.",
+    art: <ArtShopPay />,
   },
   {
     id: "describe",
     title: "Describe your place",
     description:
-      "Use a street address when you have one. When the map doesn’t work or your street isn’t listed, describe a landmark — “green gate, next to the mango tree.”",
+      "Use a street address when you have one. When the map doesn’t work, describe a landmark — “green gate, next to the mango tree.”",
     art: <ArtDescribePlace />,
   },
   {
-    id: "wearing",
-    title: "Say what you’re wearing",
-    description:
-      "Tell your driver — “Nike tracksuit”, “red jacket” — so they spot you faster at the landmark.",
-    art: <ArtWearing />,
-  },
-  {
-    id: "fuel",
-    title: "Fuel delivered to you",
-    description:
-      "Stuck on the road? Request fuel from nearby drivers — pay them in cash when it arrives.",
-    art: <ArtFuelHelp />,
+    id: "launch",
+    title: OPERATING_LAUNCH.headline,
+    description: `${OPERATING_LAUNCH.rider} Drivers: ${OPERATING_LAUNCH.driver}`,
+    art: <ArtLaunch />,
   },
 ];
 
@@ -63,7 +62,6 @@ export function OnboardingFlow() {
   const last = SLIDES.length - 1;
 
   useEffect(() => {
-    // Never bounce replay visits home — even if permanent flag is set.
     if (isReplay) return;
     if (hasPermanentlyDismissedOnboarding()) {
       router.replace("/");
@@ -189,7 +187,7 @@ export function OnboardingFlow() {
           </button>
         ) : (
           <p className="text-center text-xs text-[var(--ru-muted)]">
-            Swipe or tap Next — replay anytime in Account
+            Screenshot-ready — swipe or tap Next
           </p>
         )}
       </footer>

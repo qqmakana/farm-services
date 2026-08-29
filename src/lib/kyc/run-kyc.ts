@@ -6,6 +6,7 @@ import {
   mockExtraction,
 } from "./extract-document";
 import type { DocKind, DocumentExtraction, KycDecision } from "./types";
+import { saIdRequiredForCountry } from "@/lib/sa-id";
 import { decideKyc } from "./verify";
 
 function mimeFromPath(path: string): string {
@@ -114,6 +115,8 @@ export async function runDriverKyc(driverId: string): Promise<KycDecision> {
   const decision = decideKyc({
     profileName: typed.full_name,
     statedLicenseNumber: typed.license_number,
+    statedIdNumber: typed.kyc_id_number,
+    requireSaId: saIdRequiredForCountry(typed.country_code),
     extractions,
     openaiAvailable: hasOpenAIKey(),
   });
@@ -143,6 +146,8 @@ export function runMockDriverKyc(driver: Driver): KycDecision {
   return decideKyc({
     profileName: driver.full_name,
     statedLicenseNumber: driver.license_number,
+    statedIdNumber: driver.kyc_id_number,
+    requireSaId: saIdRequiredForCountry(driver.country_code),
     extractions,
     openaiAvailable: false,
   });

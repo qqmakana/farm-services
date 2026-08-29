@@ -1,6 +1,12 @@
 import { DEFAULT_COUNTRY, getCountry } from "@/lib/countries";
 import { normalizeHomeCity } from "@/lib/founding-driver";
 import { isValidMobileForCountry } from "@/lib/phone";
+import {
+  isValidSaIdNumber,
+  normalizeSaId,
+  SA_ID_REJECT_MESSAGE,
+  saIdRequiredForCountry,
+} from "@/lib/sa-id";
 import { createAdminClient, hasServiceRole } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 import type { VehicleType } from "@/lib/types";
@@ -159,6 +165,15 @@ export async function submitDriverApplication(
       };
     }
 
+    const typedId = normalizeSaId(String(formData.get("id_number") ?? ""));
+    let saId: string | null = null;
+    if (saIdRequiredForCountry(country_code)) {
+      if (!isValidSaIdNumber(typedId)) {
+        return { ok: false, error: SA_ID_REJECT_MESSAGE };
+      }
+      saId = typedId;
+    }
+
     const idFile = asImageFile(formData.get("id_doc"), "id_doc", "ID photo (front)");
     const selfieFile = asImageFile(
       formData.get("selfie"),
@@ -188,6 +203,7 @@ export async function submitDriverApplication(
     const now = new Date().toISOString();
     const noteLine = [
       `Area: ${area}`,
+      saId ? `SA ID: ${saId}` : null,
       `${getCountry(country_code).name} — pending photo verification`,
       notes || null,
     ]
@@ -213,6 +229,7 @@ export async function submitDriverApplication(
       driver.vehicle_registration = vehicle_registration;
       driver.code_of_conduct_accepted_at = now;
       driver.verification_status = "pending";
+      if (saId) driver.kyc_id_number = saId;
       driver.id_verified = false;
       driver.docs_submitted_at = now;
       driver.approval_status = "approved";
@@ -231,6 +248,20 @@ export async function submitDriverApplication(
         ok: false,
         error: `Could not check existing drivers: ${existingErr.message}`,
       };
+    }
+
+    if (saId) {
+      const { data: idHit } = await admin
+        .from("rr_drivers")
+        .select("id")
+        .eq("kyc_id_number", saId)
+        .maybeSingle();
+      if (idHit?.id && idHit.id !== existing?.id) {
+        return {
+          ok: false,
+          error: "This South African ID is already on a driver application.",
+        };
+      }
     }
 
     if (
@@ -275,6 +306,7 @@ export async function submitDriverApplication(
         vehicle_model,
         vehicle_color,
         vehicle_registration,
+        kyc_id_number: saId,
       });
       driverId = created.id;
     } else {
@@ -295,6 +327,7 @@ export async function submitDriverApplication(
           vehicle_model,
           vehicle_color,
           vehicle_registration,
+          kyc_id_number: saId,
         })
         .eq("id", driverId);
     }

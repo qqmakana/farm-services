@@ -59,7 +59,7 @@ export async function createPayPalSubscriptionAction(params: {
       mode: "local" as const,
       approveUrl: `${origin}/account?village_pass=local_active`,
       subscriptionId: null as string | null,
-      message: `Village Pass is on for this phone — priority matching on Ride, Delivery, Farm & Courier.`,
+      message: `Village Pass is on for this phone — priority matching on Trip, Fetch, Send and Shops.`,
     };
   }
 

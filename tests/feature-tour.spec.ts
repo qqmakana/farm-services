@@ -13,6 +13,8 @@ test.describe("Feature tour", () => {
         localStorage.removeItem("vr_feature_tour_seen_v2");
         localStorage.removeItem("vr_feature_tour_seen_v1");
         localStorage.removeItem("vr_onboarding_seen_v1");
+        localStorage.removeItem("vr_feature_tour_seen_v5");
+        localStorage.removeItem("vr_feature_tour_seen_v4");
         sessionStorage.removeItem("vr_feature_tour_skip_session");
         sessionStorage.removeItem("vr_onboarding_skip_session");
       } catch {
@@ -25,8 +27,14 @@ test.describe("Feature tour", () => {
       timeout: 20_000,
     });
     await expect(
-      page.getByText(/Ride, delivery, farm|Courier/i).first(),
+      page.getByText(/Trip, Fetch, Send|Shops/i).first(),
     ).toBeVisible();
+
+    await page.getByRole("button", { name: /^Next$/i }).click();
+    await expect(page.getByText(/Buy from local shops/i).first()).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page.getByText(/pay for the goods/i).first()).toBeVisible();
 
     await page.getByRole("button", { name: /^Next$/i }).click();
     await expect(page.getByText(/Describe your place/i).first()).toBeVisible({
@@ -35,12 +43,7 @@ test.describe("Feature tour", () => {
     await expect(page.getByText(/when the map/i).first()).toBeVisible();
 
     await page.getByRole("button", { name: /^Next$/i }).click();
-    await expect(page.getByText(/wearing/i).first()).toBeVisible({
-      timeout: 10_000,
-    });
-
-    await page.getByRole("button", { name: /^Next$/i }).click();
-    await expect(page.getByText(/Fuel delivered/i).first()).toBeVisible({
+    await expect(page.getByText(/end of September/i).first()).toBeVisible({
       timeout: 10_000,
     });
     await expect(

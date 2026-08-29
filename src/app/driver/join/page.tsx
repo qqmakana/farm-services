@@ -5,28 +5,29 @@ import { Car, Package, Tractor, Truck } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
 import { DriverApplyForm } from "@/components/driver-apply-form";
 import { BRAND } from "@/lib/brand";
+import { OPERATING_LAUNCH } from "@/lib/launch";
 import { WhatsAppLinks } from "@/lib/whatsapp-links";
 
 const SERVICES = [
   {
     Icon: Car,
-    title: "Village Ride",
-    blurb: "Passenger trips — village ↔ town, night rides, group rides",
+    title: "Trip",
+    blurb: "Rides — plus one stop, Reserve, Solo / 2 / 4",
   },
   {
     Icon: Truck,
-    title: "Village Delivery",
-    blurb: "Shop & merchant deliveries — parcels, furniture, appliances",
-  },
-  {
-    Icon: Tractor,
-    title: "Farm Connect",
-    blurb: "Farm logistics — produce, livestock crates, equipment",
+    title: "Fetch",
+    blurb: "Collect or buy and bring it to the rider — shops, farm, clinic",
   },
   {
     Icon: Package,
-    title: "Courier",
-    blurb: "Person-to-person packages — keys, gifts, documents",
+    title: "Send",
+    blurb: "Parcel to someone else — documents or a small package",
+  },
+  {
+    Icon: Tractor,
+    title: "Shops",
+    blurb: "Rider pays for goods at the shop. You earn the Fetch fee.",
   },
 ] as const;
 
@@ -37,17 +38,15 @@ export default function DriverJoinPage() {
       <main className="ru-force-light min-h-dvh bg-[var(--ru-canvas)] text-[var(--ru-ink)]">
         <div className="mx-auto max-w-lg px-4 py-10 pb-24">
           <header className="rounded-2xl bg-black px-5 py-7 text-white">
-            <p className="text-[11px] font-semibold tracking-[0.14em] text-white/55 uppercase">
-              Driver signup
+            <p className="text-[11px] font-semibold tracking-[0.14em] text-[#f0c14b] uppercase">
+              {OPERATING_LAUNCH.headline}
             </p>
             <h1 className="mt-2 text-[1.75rem] font-bold leading-tight tracking-tight">
               Drive with {BRAND.appName}
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-white/75">
-              Earn with your car, bakkie or truck across villages, towns and
-              cities. Keep{" "}
-              <strong className="font-semibold text-white">90%</strong> of
-              every job — cash or card paid to you.
+              {OPERATING_LAUNCH.driver} South Africa applicants need a 13-digit
+              SA ID — no passports.
             </p>
           </header>
 
@@ -78,13 +77,19 @@ export default function DriverJoinPage() {
               <span className="text-[var(--ru-muted)]" aria-hidden>
                 ·
               </span>
-              Browse jobs right away — verify before your first paid trip
+              Apply now — paid jobs start at the end of September
             </li>
             <li className="flex gap-2">
               <span className="text-[var(--ru-muted)]" aria-hidden>
                 ·
               </span>
               Your photo and vehicle on every job
+            </li>
+            <li className="flex gap-2">
+              <span className="text-[var(--ru-muted)]" aria-hidden>
+                ·
+              </span>
+              South Africa: 13-digit SA ID only — no passports
             </li>
           </ul>
 

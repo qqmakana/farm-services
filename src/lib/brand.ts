@@ -17,11 +17,11 @@ export const BRAND = {
 export const BRAND_ADDRESS_LINE = `${BRAND.street}, ${BRAND.suburb}, ${BRAND.city}, ${BRAND.postalCode}`;
 
 export const BRAND_TAGLINE =
-  "Rides and deliveries for villages, small towns, towns and cities — book by landmark, pay cash or card. Fair pay for drivers.";
+  "Trip, Fetch, Send and Shops for villages, towns and cities — we start operating at the end of September. Cash or card. Drivers keep 90%.";
 
 /** Text pasted when someone taps Share (WhatsApp, etc.). */
 export const BRAND_SHARE_TEXT =
-  `Village Ride offers rides and deliveries for villages, towns and cities. Install on your phone from this link (anyone can — you do not need a Google Play tester invite): https://village-ride.vercel.app/get-app — cash or card is welcome. Drivers: we'd be grateful to hear from you.`;
+  `Village Ride opens end of September. Trip, Fetch, Send and Shops — you pay for shop goods at the till; we only charge the Fetch fee. Install now (anyone can): https://village-ride.vercel.app/get-app — cash or card. Drivers apply now and keep 90%: https://village-ride.vercel.app/driver/join`;
 
 export const BRAND_FULL = `${BRAND.appName} by ${BRAND.company}`;
 

@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BRAND } from "@/lib/brand";
+import { OPERATING_LAUNCH } from "@/lib/launch";
 import {
   markDriverOnboardingSeen,
   skipDriverOnboardingForSession,
@@ -11,24 +12,24 @@ import { OnboardingProgress } from "@/components/onboarding/onboarding-progress"
 
 const SLIDES = [
   {
-    id: "accept",
-    title: "How to accept trips",
-    body: "Go Online on Home. When a request appears, tap ACCEPT within the timer — or DECLINE so the next driver gets it.",
+    id: "launch",
+    title: OPERATING_LAUNCH.headline,
+    body: OPERATING_LAUNCH.driver,
   },
   {
-    id: "find",
-    title: "How to find riders",
-    body: "Use the pickup description (and photo if they added one). Open Maps when there’s a pin. Call the rider if you can’t find them — GPS is optional.",
+    id: "accept",
+    title: "How to accept trips",
+    body: "Go Online on Home. When a request appears, tap ACCEPT within the timer — or DECLINE so the next driver gets it. After accept, send a live selfie so the rider can match you before pickup.",
+  },
+  {
+    id: "jobs",
+    title: "Trip, Fetch, Send, Shops",
+    body: "Trip is a ride (sometimes one stop). Send is a parcel to someone else. Fetch and Shops: you collect or buy and bring it to them. On Shops, the rider pays for the goods at the till — you earn the Fetch fee only.",
   },
   {
     id: "paid",
     title: "How to get paid",
-    body: "Customer pays you cash. You keep ~90%. Keep your commission wallet topped up so you stay eligible for new offers.",
-  },
-  {
-    id: "bonus",
-    title: "Weekly trip bonus",
-    body: "Complete 10 trips this week and earn a R100 wallet bonus. Track progress on the Earnings tab.",
+    body: "Rider pays cash or card. You keep 90%. Keep your commission wallet topped up so you stay eligible for new offers.",
   },
 ] as const;
 

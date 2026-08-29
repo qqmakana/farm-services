@@ -309,8 +309,8 @@ export function UberHome() {
       <div className="mt-4">
         <UberFeatureTile
           href="/shops"
-          title="Order almost anything"
-          sub="Shops, grocery lists, or a bakkie for the heavy stuff"
+          title="Buy from local shops"
+          sub="You pay for the goods at the shop. We only charge the Fetch fee."
           src="/home/icons/shops.png"
         />
       </div>

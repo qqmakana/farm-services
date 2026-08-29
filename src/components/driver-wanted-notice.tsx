@@ -70,8 +70,8 @@ export function DriverWantedNotice() {
               Want to drive with Village Ride?
             </p>
             <p className="mt-1 text-sm text-slate-600">
-              Keep 90% on rides, deliveries and farm jobs. Apply once — cash or
-              card paid to you.
+              Apply now. Keep 90% on Trip, Fetch, Send and Shops. Paid jobs
+              start at the end of September. South Africa: SA ID only.
             </p>
           </div>
           <button

@@ -47,10 +47,10 @@ export function DriveSignupCard({
         <div className="flex min-h-[5.5rem] items-stretch">
           <div className="flex min-w-0 flex-[2] flex-col justify-center bg-[#f0c14b] px-5 py-4">
             <p className="text-[11px] font-bold tracking-[0.12em] text-[#0a0a0a]/55 uppercase">
-              Drivers wanted
+              Opens end of September
             </p>
             <p className="mt-1 font-[family-name:var(--font-display)] text-[16px] font-bold leading-snug tracking-[-0.02em] text-[#0a0a0a]">
-              Earn with Village Ride — keep 90%
+              Apply now — drivers keep 90%
             </p>
             <AppLink
               href="/driver/join"
@@ -104,8 +104,8 @@ export function DriveSignupCard({
         Drive with Village Ride
       </h2>
       <p className="mt-1.5 text-sm leading-relaxed text-white/75">
-        Earn with your car, bakkie or truck — in villages, small towns, towns
-        and cities. Keep most of every fare. Pay is cash or card to you.
+        Apply now. Paid Trip, Fetch, Send and Shops jobs start at the end of
+        September. Keep 90% — cash or card to you. South Africa: SA ID only.
       </p>
       <AppLink
         href="/driver/join"

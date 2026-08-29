@@ -15,7 +15,7 @@ Return ONLY valid JSON with keys:
 Rules:
 - Do not invent values. Prefer null when unclear.
 - Prefer the cardholder name as printed on the document.
-- For SA smart IDs, id_number is the 13-digit number.
+- For South Africa, id_number must be the 13-digit SA ID (smart ID or green book). If the image is a passport or foreign ID, set id_number to null and document_type to "passport" or "foreign_id".
 - expiry_date: use the license validity / card expiry when shown.`;
 
 function stripFence(text: string): string {

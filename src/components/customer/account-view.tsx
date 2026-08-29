@@ -246,7 +246,7 @@ export function AccountView() {
             Try Village Pass free
           </span>
           <span className="mt-1 text-xs font-medium text-[#71717a]">
-            Priority matching · Ride, Delivery, Farm, Courier · cash or card
+            Priority matching · Trip, Fetch, Send, Shops · cash or card
           </span>
         </span>
         <span className="relative h-[5.5rem] w-28 shrink-0">

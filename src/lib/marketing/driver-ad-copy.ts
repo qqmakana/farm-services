@@ -12,9 +12,10 @@ export const DRIVER_PLAY_STORE_FEATURE_IMAGE =
 
 export const DRIVER_PLAY_STORE_CAPTION = `Drivers wanted.
 
-Village Ride is on Google Play.
+Village Ride opens end of September.
 
-Apply in the app. Keep ~90%. Cash to you.
+Apply now. Keep 90%. Cash or card to you.
+South Africa: 13-digit SA ID only.
 
 #VillageRide #DriversWanted #GooglePlay #SandtonStreets`;
 
@@ -26,43 +27,44 @@ export const FEATURE_TOUR_SOCIAL_IMAGES = [
   "/marketing/village-ride-tour-04-fuel.png",
 ] as const;
 
-export const FEATURE_TOUR_CAPTION = `Swipe through Village Ride — same tour as in the app.
+export const FEATURE_TOUR_CAPTION = `Swipe Village Ride — same tour as in the app.
 
-1. Ride, delivery, farm & courier
-2. Describe your place (landmark + map)
-3. Say what you’re wearing
-4. Fuel delivered to you
+1. Trip, Fetch, Send & Shops
+2. Buy from shops — you pay for the goods at the till
+3. Describe your place (landmark + map)
+4. We open end of September — drivers apply now, keep 90%
 
-Now on Google Play. Apply in the app.
+Install: https://village-ride.vercel.app/get-app
+Drive: https://village-ride.vercel.app/driver/join
 
-Keep ~90%. Cash to you.
+#VillageRide #FeatureTour #DriversWanted #SandtonStreets`;
 
-#VillageRide #FeatureTour #GooglePlay #DriversWanted`;
+export const DRIVER_AD_CAPTION = `Drivers wanted. Every village & small town.
 
-export const DRIVER_AD_CAPTION = `Drivers wanted! Every village & small town.
-
-Village Ride needs drivers for Ride, Delivery, Farm & Courier.
+Village Ride opens end of September.
+Trip · Fetch · Send · Shops
 
 Keep 90%
-Cash to the driver
-Work when you want
-Now on Google Play — apply in the app
+Cash or card to you
+South Africa: SA ID only — no passports
+Apply now in the app
 
 #VillageRide #DriversWanted`;
 
 export const DRIVER_AD_WHATSAPP =
-  "🚗 Drivers wanted — every village & small town. Keep 90%. Cash & Card. Apply: https://village-ride.vercel.app/driver/join";
+  "Village Ride opens end of September. Drivers apply now — keep 90%. Trip, Fetch, Send, Shops. SA ID only. Apply: https://village-ride.vercel.app/driver/join";
 
 /** Caption when posting a screenshot of /countries-social */
 export const COUNTRIES_SOCIAL_CAPTION = `🌍 Village Ride is now in ${GLOBAL_COUNTRY_COUNT} COUNTRIES worldwide!
 
-From Mthatha to Manila, Lagos to London, villages to small towns — global rural logistics.
+We start operating at the end of September.
+Trip · Fetch · Send · Shops — you pay for shop goods at the till.
 
-🚗 DRIVERS WANTED:
+🚗 DRIVERS — APPLY NOW:
 ✅ Keep 90% of every fare
 ✅ Cash & Card payments
-✅ Work when YOU want
-✅ Jobs sent to your phone
+✅ Paid jobs from end of September
+✅ South Africa: SA ID only
 
 Apply: https://village-ride.vercel.app/driver/join
 Flags poster: https://village-ride.vercel.app/countries-social

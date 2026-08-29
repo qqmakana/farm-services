@@ -30,6 +30,11 @@ import {
   groupSeatFare,
 } from "../src/lib/pricing";
 import { reserveWindowError } from "../src/lib/reserve-window";
+import {
+  isValidSaIdNumber,
+  saIdRequiredForCountry,
+} from "../src/lib/sa-id";
+import { decideKyc } from "../src/lib/kyc/verify";
 import { courierTooHeavyError } from "../src/lib/courier-limits";
 import { getCountry } from "../src/lib/countries";
 import { distanceKm, jitterLatLng } from "../src/lib/geo";
@@ -731,6 +736,39 @@ test("fares: delivery insurance adds R15 then 90/10", () => {
     applyInsurance: true,
   });
   assert(farmCoverIgnored.insurance_fee === 0, "insurance is delivery only");
+});
+
+test("SA ID: 13-digit checksum; reject passport and junk", () => {
+  assert(saIdRequiredForCountry("ZA"), "ZA requires SA ID");
+  assert(!saIdRequiredForCountry("KE"), "Kenya does not use SA ID");
+  assert(isValidSaIdNumber("8001015009087"), "known valid SA ID");
+  assert(isValidSaIdNumber("800101 5009 087"), "spaces stripped");
+  assert(!isValidSaIdNumber("8001015009088"), "bad checksum");
+  assert(!isValidSaIdNumber("A01234567"), "passport rejected");
+  assert(!isValidSaIdNumber("12345"), "too short");
+  const reject = decideKyc({
+    profileName: "Test Driver",
+    statedIdNumber: "",
+    requireSaId: true,
+    extractions: [
+      {
+        doc_kind: "id",
+        full_name: "Test Driver",
+        id_number: null,
+        license_number: null,
+        expiry_date: null,
+        document_type: "passport",
+        raw_text_snippet: "PASSPORT",
+        confidence: 0.9,
+      },
+    ],
+    openaiAvailable: true,
+  });
+  assert(reject.id_verified === false, "passport not verified");
+  assert(
+    reject.issues.some((i) => /South African ID|passport/i.test(i)),
+    "flags foreign ID",
+  );
 });
 
 test("groups: seat is 60% of private Trip, max 4 passengers", () => {

@@ -1,3 +1,4 @@
+import { isValidSaIdNumber, normalizeSaId } from "../sa-id";
 import { nameMatchScore } from "./name-match";
 import type { DocumentExtraction, KycDecision } from "./types";
 
@@ -23,6 +24,8 @@ function licenseNumbersClose(a: string, b: string): boolean {
 export function decideKyc(params: {
   profileName: string;
   statedLicenseNumber?: string | null;
+  statedIdNumber?: string | null;
+  requireSaId?: boolean;
   extractions: DocumentExtraction[];
   openaiAvailable: boolean;
 }): KycDecision {
@@ -84,6 +87,28 @@ export function decideKyc(params: {
   const idNumber =
     extractions.map((e) => e.id_number).find((v) => v?.trim()) ?? null;
 
+  if (params.requireSaId) {
+    const stated = normalizeSaId(params.statedIdNumber ?? "");
+    const extractedOk = isValidSaIdNumber(idNumber ?? "");
+    const statedOk = isValidSaIdNumber(stated);
+    if (!extractedOk && !statedOk) {
+      issues.push(
+        "South African ID required — passport or foreign ID is not accepted",
+      );
+    } else if (statedOk && extractedOk && stated !== normalizeSaId(idNumber ?? "")) {
+      issues.push(
+        `ID number mismatch: entered "${stated}" vs document "${normalizeSaId(idNumber ?? "")}"`,
+      );
+    }
+    const foreignDoc = extractions.some((e) => {
+      const t = String(e.document_type ?? "").toLowerCase();
+      return t.includes("passport") || t.includes("foreign");
+    });
+    if (foreignDoc && !extractedOk) {
+      issues.push("Uploaded document looks like a passport or foreign ID");
+    }
+  }
+
   const licenseExpiry =
     extractions
       .filter((e) => e.doc_kind === "license" || e.expiry_date)
@@ -116,7 +141,10 @@ export function decideKyc(params: {
       i.includes("Could not read a name") ||
       i.includes("PDF uploaded") ||
       i.includes("License number mismatch") ||
-      i.includes("OCR confidence"),
+      i.includes("OCR confidence") ||
+      i.includes("South African ID required") ||
+      i.includes("passport or foreign") ||
+      i.includes("ID number mismatch"),
   );
 
   const usable =

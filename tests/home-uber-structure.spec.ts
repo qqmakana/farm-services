@@ -41,7 +41,7 @@ test.describe("Home Uber structure", () => {
     await expect(page.getByText("Fetch")).toBeVisible();
     await expect(page.getByText("Send", { exact: true }).first()).toBeVisible();
     await expect(page.getByRole("heading", { name: /Saved places/i })).toBeVisible();
-    await expect(page.getByText(/Order almost anything/i)).toBeVisible();
+    await expect(page.getByText(/Buy from local shops/i)).toBeVisible();
     await page.screenshot({
       path: "test-results/home-uber-layout.png",
       fullPage: true,

@@ -102,7 +102,7 @@ export function SubscribeButton({
           Priority matching
         </p>
         <p className="mt-1 text-xs text-[var(--ru-muted)]">
-          On Village Ride — Ride, Delivery, Farm and Courier. Fares stay the
+          On Village Ride — Trip, Fetch, Send and Shops. Fares stay the
           same: driver keeps 90%, Village Ride 10%. Cash or card (PayPal).
         </p>
         <ul className="mt-2 space-y-1 text-xs text-[var(--ru-muted)]">

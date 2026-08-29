@@ -31,11 +31,11 @@ export function DriverWantedBanner() {
       <div className="flex items-start gap-3 pl-2">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold tracking-tight text-black">
-            Drivers wanted — rides, delivery, farm &amp; courier
+            Drivers wanted — opens end of September
           </p>
           <p className="mt-0.5 text-xs text-[var(--ru-muted)]">
-            Earn 90% on Village Ride, Delivery, Farm Connect &amp; Courier.
-            Flexible hours.
+            Apply now. Keep 90% on Trip, Fetch, Send and Shops. SA ID in South
+            Africa.
           </p>
           <Link
             href="/driver/join"

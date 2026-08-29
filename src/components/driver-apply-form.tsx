@@ -7,6 +7,12 @@ import { useCountry } from "@/components/country/country-provider";
 import { PhotoUploadField } from "@/components/photo-upload-field";
 import { operatingCountries, type CountryCode } from "@/lib/countries";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
+import {
+  isValidSaIdNumber,
+  normalizeSaId,
+  SA_ID_REJECT_MESSAGE,
+  saIdRequiredForCountry,
+} from "@/lib/sa-id";
 import type { VehicleType } from "@/lib/types";
 import { VEHICLE_LABELS } from "@/lib/vehicles";
 
@@ -27,6 +33,8 @@ export function DriverApplyForm({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [conduct, setConduct] = useState(false);
+  const [saId, setSaId] = useState("");
+  const needSaId = saIdRequiredForCountry(countryCode);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -36,6 +44,14 @@ export function DriverApplyForm({
     const fd = new FormData(form);
     fd.set("country_code", countryCode);
     fd.set("code_of_conduct", conduct ? "true" : "false");
+    if (needSaId) {
+      const id = normalizeSaId(saId);
+      fd.set("id_number", id);
+      if (!isValidSaIdNumber(id)) {
+        setError(SA_ID_REJECT_MESSAGE);
+        return;
+      }
+    }
 
     startTransition(async () => {
       try {
@@ -60,10 +76,11 @@ export function DriverApplyForm({
           return;
         }
         setMessage(
-          "Thanks — your photos were received. You can open the driver app and browse jobs. A human will verify your ID before your first paid trip.",
+          "Thanks — your photos were received. Paid jobs start at the end of September. A human will verify your SA ID before your first paid trip.",
         );
         form.reset();
         setConduct(false);
+        setSaId("");
         router.refresh();
       } catch {
         setError(
@@ -79,11 +96,12 @@ export function DriverApplyForm({
         {compactTitle ?? "Apply to drive"}
       </h2>
       <p className="mt-1 text-sm leading-relaxed text-slate-700">
-        Apply for <strong className="text-slate-900">Village Ride</strong>,{" "}
-        <strong className="text-slate-900">Village Delivery</strong>,{" "}
-        <strong className="text-slate-900">Farm Connect</strong>, and{" "}
-        <strong className="text-slate-900">Courier</strong> in one go. Upload a
-        clear photo of yourself and your vehicle (plate visible).
+        Apply once for <strong className="text-slate-900">Trip</strong>,{" "}
+        <strong className="text-slate-900">Fetch</strong>,{" "}
+        <strong className="text-slate-900">Send</strong>, and{" "}
+        <strong className="text-slate-900">Shops</strong>. Paid jobs start at
+        the end of September. Upload a clear photo of yourself and your vehicle
+        (plate visible).
       </p>
       <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm leading-relaxed text-amber-950">
         Upload your documents to get started. You can start browsing jobs
@@ -134,6 +152,29 @@ export function DriverApplyForm({
             ))}
           </select>
         </label>
+        {needSaId ? (
+          <label className="block sm:col-span-2">
+            <FieldLabel>South African ID number</FieldLabel>
+            <input
+              required
+              name="id_number"
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={13}
+              value={saId}
+              onChange={(e) =>
+                setSaId(e.target.value.replace(/\D/g, "").slice(0, 13))
+              }
+              className="ru-input mt-1.5"
+              placeholder="13 digits — smart ID or green book"
+              aria-describedby="sa-id-hint"
+            />
+            <p id="sa-id-hint" className="mt-1.5 text-xs leading-relaxed text-slate-600">
+              South Africa drivers must use a 13-digit South African ID. Passports
+              and foreign IDs are not accepted.
+            </p>
+          </label>
+        ) : null}
         <label className="block">
           <FieldLabel>Area / town you cover</FieldLabel>
           <input
@@ -192,7 +233,16 @@ export function DriverApplyForm({
             <PhotoUploadField
               required
               name="id_doc"
-              label="ID photo (front)"
+              label={
+                needSaId
+                  ? "South African ID (front)"
+                  : "ID photo (front)"
+              }
+              hint={
+                needSaId
+                  ? "Smart ID or green book — not a passport"
+                  : undefined
+              }
             />
             <PhotoUploadField
               required

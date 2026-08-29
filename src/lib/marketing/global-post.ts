@@ -13,7 +13,7 @@ Every continent · villages & small towns worldwide
 
 Landmark booking · Cash & Card · Drivers keep 90%
 
-🚗 Rides · 📦 Delivery · 🚜 Farm · 📦 Courier
+Trip · Fetch · Send · Shops — opens end of September
 
 https://village-ride.vercel.app
 https://village-ride.vercel.app/countries
@@ -23,7 +23,7 @@ https://village-ride.vercel.app/countries
 export function globalPostForCountry(countryName: string, flag: string): string {
   return `${flag} Village Ride is live in ${countryName}!
 
-Rural rides, delivery, farm & courier.
+Trip, Fetch, Send and Shops. Opens end of September.
 Landmark booking. Cash & Card. Drivers keep 90%.
 
 Open: https://village-ride.vercel.app
