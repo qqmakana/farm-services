@@ -3,7 +3,7 @@ import { EasyInstallScreen } from "@/components/easy-install-screen";
 import { BRAND } from "@/lib/brand";
 
 const title = `Install ${BRAND.appName}`;
-const description = `${BRAND.appName} serves villages, towns and cities. Riders are welcome, and we humbly need a few more drivers. Cash or card.`;
+const description = `Install ${BRAND.appName} on your home screen — not on Play Store yet. Opens end of September. Cash or card.`;
 
 export const metadata: Metadata = {
   title,

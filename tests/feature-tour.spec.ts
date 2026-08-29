@@ -46,6 +46,7 @@ test.describe("Feature tour", () => {
     await expect(page.getByText(/end of September/i).first()).toBeVisible({
       timeout: 10_000,
     });
+    await expect(page.getByTestId("onboarding-install-cta")).toBeVisible();
     await expect(
       page.getByRole("button", { name: /Get started/i }),
     ).toBeVisible();

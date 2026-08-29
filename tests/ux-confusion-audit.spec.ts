@@ -40,9 +40,10 @@ test.describe("Phase 1 — PWA / install surface", () => {
     await ready(page, "/get-app");
     await expect(
       page.getByRole("button", {
-        name: /Get it on Google Play|Install app|How to install/i,
+        name: /Install app|How to install/i,
       }),
     ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/Not on Play Store yet/i)).toBeVisible();
   });
 
   test("offline banner appears when network drops", async ({ page, context }) => {

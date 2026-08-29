@@ -15,6 +15,7 @@ import {
 } from "@/components/customer/uber-service-tile";
 import { SmartSuggestions } from "@/components/rider/smart-suggestions";
 import { HomeWhereSearch } from "@/components/customer/home-where-search";
+import { HomeInstallCard } from "@/components/customer/home-install-card";
 import { DriveSignupCard } from "@/components/driver/drive-signup-card";
 import type { PlaceSuggestion } from "@/lib/suggestions";
 
@@ -147,6 +148,8 @@ export function UberHome() {
       <Suspense fallback={null}>
         <CaptureReferral />
       </Suspense>
+
+      <HomeInstallCard />
 
       <div
         data-testid="home-mode-tabs"

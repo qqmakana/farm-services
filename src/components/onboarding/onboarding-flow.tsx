@@ -9,6 +9,10 @@ import {
   markOnboardingSeen,
   skipOnboardingForSession,
 } from "@/lib/onboarding";
+import {
+  InstallHelpPanel,
+  useInstallActions,
+} from "@/components/install-share-bar";
 import { OnboardingProgress } from "@/components/onboarding/onboarding-progress";
 import {
   OnboardingSlide,
@@ -110,6 +114,8 @@ export function OnboardingFlow() {
   }
 
   const isLast = index === last;
+  const { installing, install, ios, helpOpen, setHelpOpen, standalone } =
+    useInstallActions();
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-white text-black">
@@ -167,13 +173,28 @@ export function OnboardingFlow() {
         <p className="sr-only" aria-live="polite">
           Step {index + 1} of {SLIDES.length}: {SLIDES[index].title}
         </p>
+        {isLast && !standalone ? (
+          <button
+            type="button"
+            data-testid="onboarding-install-cta"
+            onClick={() => void install()}
+            disabled={installing}
+            className="uber-press uber-btn-black w-full !rounded-full text-base disabled:opacity-60"
+          >
+            {installing ? "Opening…" : ios ? "How to install" : "Install app"}
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={() => {
             if (isLast) finishPermanent();
             else go(index + 1);
           }}
-          className="uber-press uber-btn-black w-full !rounded-full text-base"
+          className={`w-full !rounded-full text-base ${
+            isLast && !standalone
+              ? "ru-btn ru-btn-ghost !min-h-12"
+              : "uber-press uber-btn-black"
+          }`}
         >
           {isLast ? "Get started" : "Next"}
         </button>
@@ -190,6 +211,9 @@ export function OnboardingFlow() {
             Screenshot-ready — swipe or tap Next
           </p>
         )}
+        {helpOpen ? (
+          <InstallHelpPanel ios={ios} onClose={() => setHelpOpen(false)} />
+        ) : null}
       </footer>
     </div>
   );

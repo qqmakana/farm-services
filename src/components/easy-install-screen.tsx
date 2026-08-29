@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { BRAND } from "@/lib/brand";
+import { OPERATING_LAUNCH } from "@/lib/launch";
 import {
   getAppInstallUrl,
   getDeferredPrompt,
@@ -124,12 +125,16 @@ export function EasyInstallScreen() {
           height={96}
           className="h-24 w-24 rounded-[1.5rem] shadow ring-1 ring-gray-200"
         />
-        <p className="mt-8 text-xs font-semibold tracking-wide text-gray-500 uppercase">
-          {BRAND.company}
+        <p className="mt-8 text-xs font-semibold tracking-wide text-[#b45309] uppercase">
+          Not on Play Store yet
         </p>
         <h1 className="mt-2 text-4xl font-bold tracking-tight text-black sm:text-5xl">
-          {BRAND.appName}
+          Install {BRAND.appName}
         </h1>
+        <p className="mt-3 max-w-sm text-sm font-semibold text-gray-800">
+          {OPERATING_LAUNCH.headline}. Add it to your home screen now — no
+          Google Play invite.
+        </p>
         <p className="mt-4 max-w-sm text-lg text-gray-600">
           {inApp && ios
             ? `Open in Safari to add Village Ride to your home screen.`

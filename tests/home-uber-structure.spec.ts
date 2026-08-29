@@ -16,6 +16,8 @@ test.describe("Home Uber structure", () => {
     await dismissCountryModalIfPresent(page);
 
     await expect(page.getByTestId("uber-home")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("home-install-card")).toBeVisible();
+    await expect(page.getByTestId("home-install-cta")).toBeVisible();
     await expect(page.getByTestId("drive-signup-card")).toBeVisible();
     await expect(page.getByTestId("home-drive-signup-cta")).toHaveText(
       /Sign up to drive/i,
@@ -38,7 +40,9 @@ test.describe("Home Uber structure", () => {
     await expect(page.getByTestId("service-circle-groups")).toBeAttached();
     await expect(page.getByTestId("service-circle-delivery")).toBeVisible();
     await expect(page.getByTestId("service-circle-trip-stop")).toBeVisible();
-    await expect(page.getByText("Fetch")).toBeVisible();
+    await expect(page.getByTestId("service-circle-delivery")).toContainText(
+      "Fetch",
+    );
     await expect(page.getByText("Send", { exact: true }).first()).toBeVisible();
     await expect(page.getByRole("heading", { name: /Saved places/i })).toBeVisible();
     await expect(page.getByText(/Buy from local shops/i)).toBeVisible();
