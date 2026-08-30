@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Camera } from "lucide-react";
+import { ImagePlus } from "lucide-react";
 import { createProduct } from "@/lib/actions";
 import { uploadShopProductPhoto } from "@/lib/actions-shop-orders";
 import { compressImageFile } from "@/lib/compress-image";
@@ -107,19 +107,18 @@ export function ShopMenuEditor({
               // eslint-disable-next-line @next/next/no-img-element
               <img src={preview} alt="" className="h-full w-full object-cover" />
             ) : (
-              <Camera className="h-6 w-6 text-[#8A8A8A]" />
+              <ImagePlus className="h-6 w-6 text-[#8A8A8A]" />
             )}
           </span>
           <span className="text-sm font-semibold text-black">
-            {photo ? photo.name : "Photo of this item"}
+            {photo ? photo.name : "Choose a photo"}
             <span className="mt-0.5 block font-normal text-[#6B6B6B]">
-              Square crop. Shoppers eat with their eyes.
+              Gallery or files — not the camera.
             </span>
           </span>
           <input
             type="file"
-            accept="image/*"
-            capture="environment"
+            accept="image/jpeg,image/png,image/webp,image/heic,.jpg,.jpeg,.png,.webp"
             className="sr-only"
             onChange={(e) => onFile(e.target.files?.[0] ?? null)}
           />
