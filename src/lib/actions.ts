@@ -1297,7 +1297,29 @@ export async function listShops() {
     .order("name");
 
   if (error) throw new Error(error.message);
-  return data ?? [];
+  const shops = (data ?? []) as Shop[];
+  const needCover = shops
+    .filter((s) => !s.image_url?.trim())
+    .map((s) => s.id);
+  if (!needCover.length) return shops;
+
+  const { data: products } = await supabase
+    .from("rr_products")
+    .select("shop_id, image_url")
+    .in("shop_id", needCover);
+
+  const cover = new Map<string, string>();
+  for (const row of products ?? []) {
+    const url = typeof row.image_url === "string" ? row.image_url.trim() : "";
+    if (url && !cover.has(row.shop_id as string)) {
+      cover.set(row.shop_id as string, url);
+    }
+  }
+  return shops.map((shop) =>
+    shop.image_url?.trim()
+      ? shop
+      : { ...shop, image_url: cover.get(shop.id) ?? shop.image_url },
+  );
 }
 
 export async function listProducts(shopId?: string) {
@@ -2069,6 +2091,107 @@ export async function registerMerchantShop(input: MerchantRegisterInput): Promis
 
   revalidateAll();
   return { shop: shop as Shop, email };
+}
+
+/** Logged-in ops/admin (e.g. solarcouple@gmail.com) — attach a shop without creating a second auth user. */
+export async function createKitchenForSignedInUser(input: {
+  name: string;
+  phone: string;
+  landmark: string;
+  category?: string;
+}): Promise<Shop> {
+  if (!input.name.trim() || !input.phone.trim() || !input.landmark.trim()) {
+    throw new Error("Shop name, phone, and landmark are required.");
+  }
+
+  if (!useAdmin()) {
+    const shop = mockRepo.createShop({
+      name: input.name.trim(),
+      phone: input.phone.trim(),
+      category: input.category?.trim() || "food",
+      landmark: input.landmark.trim(),
+    });
+    revalidateAll();
+    return shop;
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error("Sign in first with your shop email.");
+  }
+
+  const admin = createAdminClient();
+  const { data: existing } = await admin
+    .from("rr_shops")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (existing) {
+    revalidateAll();
+    return existing as Shop;
+  }
+
+  const { generateReferralCode } = await import("./partner");
+  let referralCode = generateReferralCode(input.name.trim());
+  for (let i = 0; i < 8; i++) {
+    const { data: clash } = await admin
+      .from("rr_shops")
+      .select("id")
+      .ilike("referral_code", referralCode)
+      .maybeSingle();
+    if (!clash) break;
+    referralCode = generateReferralCode(input.name.trim());
+  }
+
+  const { data: shop, error: shopErr } = await admin
+    .from("rr_shops")
+    .insert({
+      name: input.name.trim(),
+      phone: input.phone.trim(),
+      category: input.category?.trim() || "food",
+      landmark: input.landmark.trim(),
+      user_id: user.id,
+      delivers: true,
+      is_active: true,
+      referral_code: referralCode,
+    })
+    .select("*")
+    .single();
+  if (shopErr || !shop) {
+    throw new Error(shopErr?.message ?? "Could not create shop.");
+  }
+
+  const { data: profile } = await admin
+    .from("rr_profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+  const keepRole =
+    profile?.role === "admin" || profile?.role === "dispatcher"
+      ? profile.role
+      : "merchant";
+
+  const { error: profileErr } = await admin.from("rr_profiles").upsert(
+    {
+      id: user.id,
+      role: keepRole,
+      full_name: input.name.trim(),
+      phone: input.phone.trim(),
+      shop_id: shop.id,
+    },
+    { onConflict: "id" },
+  );
+  if (profileErr) {
+    throw new Error(profileErr.message);
+  }
+
+  revalidateAll();
+  return shop as Shop;
 }
 
 /** Current signed-in merchant's shop + orders (for /merchant/dashboard). */

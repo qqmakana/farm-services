@@ -10,7 +10,7 @@ export function ShopPhoto({
   src: string;
   alt: string;
   className?: string;
-  fallback?: string;
+  fallback?: string | null;
 }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -24,7 +24,11 @@ export function ShopPhoto({
         const img = e.currentTarget;
         if (img.dataset.fallback === "1") return;
         img.dataset.fallback = "1";
-        img.src = fallback;
+        if (fallback) {
+          img.src = fallback;
+          return;
+        }
+        img.style.visibility = "hidden";
       }}
     />
   );

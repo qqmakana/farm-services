@@ -38,8 +38,25 @@ export const SHOP_CATEGORY_PILLS = [
   "Clinic",
 ] as const;
 
+/** Shop's own banner (or first product photo). Never a stock pap plate. */
+export function shopCoverUrl(
+  shop: Pick<Shop, "image_url">,
+): string | null {
+  const url = shop.image_url?.trim();
+  return url || null;
+}
+
+export function shopCategoryLabel(category: string | null | undefined): string {
+  const raw = (category || "shop").trim();
+  if (!raw) return "Shop";
+  return raw
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export function shopBannerSrc(shop: Pick<Shop, "image_url" | "category" | "name">): string {
-  if (shop.image_url?.trim()) return shop.image_url.trim();
+  const own = shopCoverUrl(shop);
+  if (own) return own;
   const cat = (shop.category || "").toLowerCase();
   if (SHOP_BANNER[cat]) return SHOP_BANNER[cat];
   const hay = `${shop.category} ${shop.name}`.toLowerCase();
@@ -90,7 +107,6 @@ export function shopPillMatch(shop: Shop, pill: string): boolean {
   return map[pill]?.test(hay) ?? hay.includes(pill.toLowerCase());
 }
 
-export function etaForShop(shop: Pick<Shop, "category">): string {
-  if (shop.category === "food" || shop.category === "groceries") return "20–35 min";
-  return "35–55 min";
+export function etaForShop(_shop?: Pick<Shop, "category">): string {
+  return "20–40 min";
 }

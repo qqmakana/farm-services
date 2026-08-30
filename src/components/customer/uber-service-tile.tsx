@@ -115,9 +115,16 @@ export function ArtForYou() {
 export function ArtCourier() {
   return (
     <svg viewBox="0 0 64 64" className="h-[62%] w-[62%]" aria-hidden>
-      <rect x="8" y="18" width="48" height="32" rx="4" fill="#fff" stroke="#D2D2D2" strokeWidth="2" />
-      <path d="M8 22l24 16 24-16" fill="none" stroke="#276EF1" strokeWidth="3" />
-      <rect x="38" y="36" width="14" height="10" rx="2" fill="#F6C90E" />
+      <rect x="14" y="26" width="36" height="26" rx="5" fill="#1A1A1A" />
+      <path d="M14 32h36" stroke="#3D3D3D" strokeWidth="2" />
+      <path
+        d="M20 26V22c0-4 5-8 12-8s12 4 12 8v4"
+        fill="none"
+        stroke="#1A1A1A"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <rect x="28" y="34" width="8" height="10" rx="1.5" fill="#06C167" />
     </svg>
   );
 }

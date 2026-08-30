@@ -35,7 +35,7 @@ import {
   etaForShop,
   productCategory,
   productPhotoSrc,
-  shopBannerSrc,
+  shopCoverUrl,
 } from "@/lib/shop-photos";
 import { ShopPhoto } from "@/components/shops/shop-photo";
 import type { Product, Shop } from "@/lib/types";
@@ -222,12 +222,16 @@ export function ShopMenu({
   return (
     <div className="vr-page-enter relative min-h-dvh touch-manipulation bg-[#f3f3f3] pb-28">
       <div className="relative h-52 overflow-hidden bg-[#3d2a1a]">
-        <ShopPhoto
-          src={shopBannerSrc(shop)}
-          alt=""
-          className="h-full w-full object-cover"
-          fallback="/shops/shop-food.jpg"
-        />
+        {shopCoverUrl(shop) ? (
+          <ShopPhoto
+            src={shopCoverUrl(shop)!}
+            alt=""
+            className="h-full w-full object-cover"
+            fallback={null}
+          />
+        ) : (
+          <div className="h-full w-full bg-[linear-gradient(160deg,#2b2b2b_0%,#5a4636_55%,#8a6a4a_100%)]" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-black/20" />
         <AppLink
           href="/shops"

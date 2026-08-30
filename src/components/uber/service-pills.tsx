@@ -27,7 +27,7 @@ const PILLS: {
   },
   {
     href: "/ride?stop=1",
-    label: "+ Stop",
+    label: "Trip + stop",
     art: <ArtTripStop />,
     match: (p, _when, stop) => p.startsWith("/ride") && stop === "1",
   },

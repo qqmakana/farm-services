@@ -34,10 +34,15 @@ export default async function ShopMenuPage({
   }
 
   const products = await listProducts(shop.id);
+  const cover =
+    shop.image_url?.trim() ||
+    products.find((p) => p.image_url?.trim())?.image_url?.trim() ||
+    null;
+  const shopWithCover = { ...shop, image_url: cover };
 
   return (
     <BookingTabChrome>
-      <ShopMenu shop={shop} products={products} />
+      <ShopMenu shop={shopWithCover} products={products} />
     </BookingTabChrome>
   );
 }
