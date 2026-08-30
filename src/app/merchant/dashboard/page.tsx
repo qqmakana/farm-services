@@ -11,7 +11,7 @@ export default async function MerchantDashboardPage() {
   if (!data) {
     return (
       <>
-        <SiteNav active="shop" />
+        <SiteNav active="shop" compact />
         <main className="ru-page max-w-lg text-center">
           <h1 className="ru-page-title">Shop owner sign-in</h1>
           <p className="ru-page-sub">
@@ -45,7 +45,7 @@ export default async function MerchantDashboardPage() {
   ) {
     return (
       <>
-        <SiteNav active="shop" />
+        <SiteNav active="shop" compact />
         <main className="ru-page max-w-lg text-center">
           <h1 className="ru-page-title">This is a rider account</h1>
           <p className="ru-page-sub">
@@ -66,7 +66,7 @@ export default async function MerchantDashboardPage() {
 
   return (
     <>
-      <SiteNav active="shop" />
+      <SiteNav active="shop" compact />
       <MerchantDashboard
         shop={data.shop}
         jobs={data.jobs}

@@ -38,7 +38,7 @@ const SLIDES = [
     kicker: "Step 4",
     title: "Cash or card for delivery",
     description:
-      "Pay the driver in cash, or pay the fee with PayPal. Track it like a trip.",
+      "Pay the driver in cash, or pay the fee by card (Yoco). Track it like a trip.",
     art: <ArtShopArrive />,
   },
 ] as const;

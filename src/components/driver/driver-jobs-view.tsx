@@ -127,7 +127,7 @@ export function DriverJobsView() {
             {formatMoney(Number(active.fee_amount))} ·{" "}
             {isCashPaymentMethod(active.payment_method)
               ? "Cash"
-              : "Card / PayPal"}
+              : "Card"}
           </p>
           {activeOffer ? (
             <div

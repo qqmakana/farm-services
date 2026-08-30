@@ -314,7 +314,7 @@ export function BookingForm({
             value={fee}
           />
           <span className="mt-1 block text-xs text-slate-500">
-            Calculated from vehicle + distance. PayPal charges this amount.
+            Calculated from vehicle + distance. Card (Yoco) charges this amount.
           </span>
         </label>
       </div>

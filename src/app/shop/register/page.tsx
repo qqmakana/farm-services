@@ -13,7 +13,7 @@ export const metadata = {
 export default function ShopRegisterPage() {
   return (
     <>
-      <SiteNav active="shop" />
+      <SiteNav active="shop" compact />
       <main className="ru-force-light min-h-dvh bg-[var(--ru-canvas)] text-[var(--ru-ink)]">
         <div className="mx-auto max-w-lg px-4 py-10 pb-24">
           <p className="ru-section-label">Shop owner</p>

@@ -86,9 +86,9 @@ export function TripReceipt({ job, onClose }: Props) {
                 </>
               ) : (
                 <>
-                  Card via PayPal
+                  Card via Yoco
                   <span className="mt-0.5 block text-xs font-normal text-slate-500">
-                    Paid via PayPal
+                    Paid with card
                     {job.paypal_capture_id
                       ? ` · ${job.paypal_capture_id.slice(0, 12)}…`
                       : ""}

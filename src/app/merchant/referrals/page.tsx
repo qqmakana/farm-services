@@ -24,7 +24,7 @@ export default function MerchantReferralsPage() {
   if (error) {
     return (
       <>
-        <SiteNav active="shop" />
+        <SiteNav active="shop" compact />
         <main className="mx-auto max-w-lg px-4 py-12 text-center">
           <p className="text-sm text-slate-600">{error}</p>
           <Link href="/login?next=/merchant/referrals" className="mt-4 inline-block text-[#000000] underline">
@@ -38,7 +38,7 @@ export default function MerchantReferralsPage() {
   if (!data) {
     return (
       <>
-        <SiteNav active="shop" />
+        <SiteNav active="shop" compact />
         <main className="mx-auto max-w-lg px-4 py-12 text-center text-sm text-slate-500">
           Loading referrals…
         </main>
@@ -55,7 +55,7 @@ export default function MerchantReferralsPage() {
 
   return (
     <>
-      <SiteNav active="shop" />
+      <SiteNav active="shop" compact />
       <main className="mx-auto max-w-3xl px-4 py-8 pb-20">
         <h1 className="text-2xl font-bold">Referral dashboard</h1>
         <p className="mt-1 text-sm text-slate-600">

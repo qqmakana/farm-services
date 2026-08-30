@@ -281,8 +281,8 @@ export function LiveTrip({
           : "Cash — pay driver"
       : job.payment_status === "paid_online"
         ? job.payment_method === "card"
-          ? "Paid · Card (PayPal)"
-          : "Paid · PayPal"
+          ? "Paid · Card (Yoco)"
+          : "Paid · Card"
         : "Payment pending";
 
   const showCashReminder =

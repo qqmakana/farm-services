@@ -10,8 +10,6 @@ import { BRAND } from "@/lib/brand";
 const PRIMARY = [
   { href: "/ride", label: "Ride", key: "book" },
   { href: "/driver/join", label: "Earn", key: "driver" },
-  { href: "/merchant/dashboard", label: "Shop owner", key: "shop" },
-  { href: "/shops", label: "Shops", key: "shops" },
 ] as const;
 
 const ABOUT_LINKS = [
@@ -24,10 +22,12 @@ const ABOUT_LINKS = [
 ] as const;
 
 const MORE_LINKS = [
+  { href: "/merchant/dashboard", label: "Shop owner kitchen", key: "shop" },
+  { href: "/merchant/register", label: "Register a shop", key: "shop-register" },
+  { href: "/shops", label: "Shops", key: "shops" },
   { href: "/delivery", label: "Deliver", key: "delivery" },
   { href: "/farm", label: "Farm", key: "farm" },
   { href: "/courier", label: "Courier", key: "courier" },
-  { href: "/merchant/register", label: "Register a shop", key: "shop-register" },
   { href: "/partners", label: "Partners", key: "partners-more" },
   { href: "/driver/join", label: "Drive", key: "driver-more" },
   { href: "/pricing", label: "Pricing", key: "pricing" },
@@ -38,8 +38,11 @@ const MORE_LINKS = [
 
 export function SiteNav({
   active,
+  compact = false,
 }: {
   active?: string;
+  /** Login / kitchen: logo + account + menu only. Stops the bar wrapping on phones. */
+  compact?: boolean;
 }) {
   const { locale } = useCountry();
   const [open, setOpen] = useState(false);
@@ -104,22 +107,25 @@ export function SiteNav({
             className="flex min-w-0 flex-1 items-center gap-1 text-sm font-medium"
             aria-label="Primary"
           >
-            {PRIMARY.map((link) => {
-              const isActive = active === link.key;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`rounded-full px-2.5 py-1.5 sm:px-3 ${
-                    isActive
-                      ? "bg-[#0a0a0a] font-semibold text-white"
-                      : "text-[#0a0a0a] hover:bg-[#f4f4f5]"
-                  } ${link.key === "shop" || link.key === "shops" ? "hidden min-[420px]:inline-flex" : ""}`}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
+            {!compact
+              ? PRIMARY.map((link) => {
+                  const isActive = active === link.key;
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={`hidden rounded-full px-2.5 py-1.5 sm:inline-flex sm:px-3 ${
+                        isActive
+                          ? "bg-[#0a0a0a] font-semibold text-white"
+                          : "text-[#0a0a0a] hover:bg-[#f4f4f5]"
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })
+              : null}
+            {!compact ? (
             <div className="relative hidden min-[420px]:block" ref={aboutRef}>
               <button
                 type="button"
@@ -145,9 +151,11 @@ export function SiteNav({
                 </div>
               ) : null}
             </div>
+            ) : null}
           </nav>
 
           <div className="flex shrink-0 items-center gap-0.5">
+            {!compact ? (
             <Link
               href="/account"
               className="hidden items-center gap-1 rounded-full px-2 py-1.5 text-sm font-medium text-[#0a0a0a] hover:bg-[#f4f4f5] min-[380px]:inline-flex"
@@ -156,12 +164,15 @@ export function SiteNav({
               <Globe className="h-4 w-4" strokeWidth={2} aria-hidden />
               {lang}
             </Link>
+            ) : null}
+            {!compact ? (
             <Link
               href="/help"
               className="hidden rounded-full px-2.5 py-1.5 text-sm font-medium text-[#0a0a0a] hover:bg-[#f4f4f5] sm:inline-flex"
             >
               Help
             </Link>
+            ) : null}
             <Link
               href={guestName ? "/account" : "/login"}
               className="inline-flex max-w-[7.5rem] items-center gap-1 rounded-full bg-[#0a0a0a] px-3 py-1.5 text-sm font-semibold text-white"

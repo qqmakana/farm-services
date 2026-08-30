@@ -21,7 +21,7 @@ function initialError(code: string | null) {
     return "Signed in, but this account is not a driver.";
   }
   if (code === "merchant_required") {
-    return "Signed in, but this account is not a merchant. Register from Sell (/shop).";
+    return "Signed in, but this account is not a shop owner. Register at /merchant/register.";
   }
   if (code === "auth_callback") {
     return "That email link expired or was already used. Request a new password link below.";
@@ -115,11 +115,11 @@ export default function LoginClient() {
 
   return (
     <>
-      <SiteNav />
+      <SiteNav compact />
       <main className="mx-auto max-w-md px-4 py-12">
         <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">
           {isMerchantLogin
-            ? "Merchant login"
+            ? "Shop owner login"
             : mode === "create"
               ? "Create a password"
               : mode === "forgot"
@@ -129,7 +129,7 @@ export default function LoginClient() {
         <p className="mt-2 text-sm text-slate-600">
           {isMerchantLogin ? (
             <>
-              Business email from Sell registration. Need an account?{" "}
+              Shop email from registration. Need an account?{" "}
               <a className="font-medium text-black underline" href="/merchant/register">
                 Register your shop
               </a>
@@ -226,7 +226,7 @@ export default function LoginClient() {
                 : mode === "forgot"
                   ? "Email me a password link"
                   : isMerchantLogin
-                    ? "Sign in to dashboard"
+                    ? "Sign in to kitchen"
                     : "Sign in"}
           </button>
         </form>

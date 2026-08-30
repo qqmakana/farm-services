@@ -285,7 +285,7 @@ export function CheckoutBlock({
         >
           <p className="text-sm font-semibold text-black">Pay with card</p>
           <p className="mt-1 text-xs leading-relaxed text-gray-500">
-            Pay the full fare now with PayPal. When the trip completes, the
+            Pay the full fare now with card (Yoco). When the trip completes, the
             driver is credited the fare minus the platform fee — same split as
             cash.
           </p>
@@ -294,7 +294,7 @@ export function CheckoutBlock({
 
       {compact && payMethod === "card" ? (
         <p data-testid="card-payment-message" className="sr-only">
-          Pay with card via PayPal
+          Pay with card via Yoco
         </p>
       ) : null}
 

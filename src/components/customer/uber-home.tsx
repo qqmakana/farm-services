@@ -336,7 +336,7 @@ export function UberHome() {
       >
         <span className="text-[15px] font-bold">20% off 10 trips</span>
         <span className="mt-0.5 block text-[13px] text-white/70">
-          Village Pass · cash or PayPal
+          Village Pass · cash or card
         </span>
       </AppLink>
       <AppLink
