@@ -2081,6 +2081,7 @@ export async function getMerchantDashboardData(): Promise<{
   reports: import("./types").PartnerWeeklyReport[];
   referralCount: number;
   shopOrders: import("./types").ShopOrder[];
+  products: import("./types").Product[];
 } | null> {
   if (!useAdmin()) {
     const { mockPartnerStore } = await import("./partner-mock");
@@ -2100,6 +2101,7 @@ export async function getMerchantDashboardData(): Promise<{
         ? shops.filter((s) => s.referred_by_shop_id === shop.id).length
         : 0,
       shopOrders: shop ? mockRepo.listShopOrders(shop.id) : [],
+      products: shop ? mockRepo.listProducts(shop.id) : [],
     };
   }
 
@@ -2132,6 +2134,7 @@ export async function getMerchantDashboardData(): Promise<{
       reports: [],
       referralCount: 0,
       shopOrders: [],
+      products: [],
     };
   }
 
@@ -2171,6 +2174,7 @@ export async function getMerchantDashboardData(): Promise<{
       reports: [],
       referralCount: 0,
       shopOrders: [],
+      products: [],
     };
   }
 
@@ -2250,6 +2254,18 @@ export async function getMerchantDashboardData(): Promise<{
     shopOrders = [];
   }
 
+  let products: import("./types").Product[] = [];
+  try {
+    const { data: rows } = await admin
+      .from("rr_products")
+      .select("*")
+      .eq("shop_id", shop.id)
+      .order("created_at", { ascending: false });
+    products = (rows ?? []) as import("./types").Product[];
+  } catch {
+    products = [];
+  }
+
   return {
     shop,
     jobs: (jobs ?? []) as JobWithDriver[],
@@ -2259,6 +2275,7 @@ export async function getMerchantDashboardData(): Promise<{
     reports,
     referralCount,
     shopOrders,
+    products,
   };
 }
 
@@ -2413,6 +2430,7 @@ export async function createProduct(input: NewProductInput) {
       description: input.description ?? null,
       price: input.price,
       size: input.size,
+      image_url: input.image_url ?? null,
     })
     .select("*")
     .single();

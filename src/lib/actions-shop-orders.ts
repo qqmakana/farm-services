@@ -15,7 +15,7 @@ import {
   yocoConfirmPaid,
 } from "@/lib/yoco";
 import { createAdminClient, hasServiceRole } from "@/lib/supabase/admin";
-import { isSupabaseConfigured } from "@/lib/supabase/server";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import type {
   Product,
   Shop,
@@ -330,4 +330,65 @@ export async function captureYocoAndPlaceShopCart(
     payment_method: "card",
     notes: `yoco:${checkoutId}`,
   });
+}
+
+const SHOP_PHOTOS_BUCKET = "shop-products";
+
+export async function uploadShopProductPhoto(
+  shopId: string,
+  formData: FormData,
+): Promise<{ url: string }> {
+  const file = formData.get("photo");
+  if (!(file instanceof File) || file.size <= 0) {
+    throw new Error("A product photo is required.");
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error("Photo must be under 5MB.");
+  }
+  if (!shopId) throw new Error("Shop is required.");
+
+  if (!useAdmin()) {
+    return { url: `/shops/prod-staples.jpg` };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Sign in to upload photos.");
+
+  const admin = createAdminClient();
+  const { data: shop } = await admin
+    .from("rr_shops")
+    .select("id, user_id")
+    .eq("id", shopId)
+    .maybeSingle();
+  if (!shop || shop.user_id !== user.id) {
+    const { data: profile } = await admin
+      .from("rr_profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profile?.role !== "admin" && profile?.role !== "dispatcher") {
+      throw new Error("You can only add photos to your own shop.");
+    }
+  }
+
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const safeExt = ext === "png" || ext === "webp" ? ext : "jpg";
+  const path = `${shopId}/${Date.now()}.${safeExt}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const { error } = await admin.storage.from(SHOP_PHOTOS_BUCKET).upload(path, buffer, {
+    contentType: file.type || "image/jpeg",
+    upsert: true,
+  });
+  if (error) {
+    throw new Error(
+      error.message.includes("Bucket") || error.message.includes("not found")
+        ? "Photo storage is not set up yet. Run supabase/SHOP_PRODUCT_PHOTOS.sql."
+        : error.message,
+    );
+  }
+  const { data: pub } = admin.storage.from(SHOP_PHOTOS_BUCKET).getPublicUrl(path);
+  return { url: pub.publicUrl };
 }

@@ -66,7 +66,7 @@ test.describe("Home Uber structure", () => {
     await expect(page.getByTestId("home-later-datetime")).toHaveCount(0);
   });
 
-  test("smart suggestions: Add home and nearby, tap sets destination", async ({
+  test("home shows For you, not a hardcoded nearby list", async ({
     page,
   }) => {
     await page.goto("/");
@@ -78,13 +78,8 @@ test.describe("Home Uber structure", () => {
     });
     await expect(page.getByTestId("home-recents")).toBeAttached();
     await expect(page.getByTestId("add-home")).toBeVisible();
-    await expect(page.getByTestId("home-nearby")).toBeVisible({
-      timeout: 20_000,
-    });
-
-    await page.getByTestId("home-nearby").getByRole("button").first().click();
-    await expect(page).toHaveURL(/\/ride\?/, { timeout: 15_000 });
-    await expect(page).toHaveURL(/to=/);
+    await expect(page.getByTestId("home-nearby")).toHaveCount(0);
+    await expect(page.getByTestId("home-chips")).toBeVisible();
   });
 
   test("smart suggestions: no GPS does not invent a nearby town", async ({
@@ -103,7 +98,7 @@ test.describe("Home Uber structure", () => {
     await expect(page.getByText(/Alice|Fort Hare/i)).toHaveCount(0);
   });
 
-  test("smart suggestions: Johannesburg GPS still fills nearby", async ({
+  test("Johannesburg GPS still does not dump nearby on Home", async ({
     page,
     context,
   }) => {
@@ -115,9 +110,7 @@ test.describe("Home Uber structure", () => {
       timeout: 20_000,
     });
     await expect(page.getByTestId("add-home")).toBeVisible();
-    await expect(page.getByTestId("home-nearby")).toBeVisible({
-      timeout: 20_000,
-    });
+    await expect(page.getByTestId("home-nearby")).toHaveCount(0);
   });
 
   test("home Sign up to drive opens join", async ({ page }) => {

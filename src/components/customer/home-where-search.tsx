@@ -170,7 +170,11 @@ export function HomeWhereSearch({
             ))}
           </ul>
         ) : (
-          <SmartSuggestions filter="for-you" onSelectDestination={onPick} />
+          <SmartSuggestions
+            filter="for-you"
+            showNearby={false}
+            onSelectDestination={onPick}
+          />
         )}
       </div>
     </div>

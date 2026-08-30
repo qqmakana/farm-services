@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/status-badge";
 import { useOnlineStatus } from "@/components/offline-banner";
 import { KitchenOrders } from "@/components/merchant/kitchen-orders";
+import { ShopMenuEditor } from "@/components/merchant/shop-menu-editor";
 import { MerchantPushPrompt } from "@/components/merchant/merchant-push-prompt";
 import { TripShare } from "@/components/trip-share";
 import { useToast } from "@/components/ui/toast";
@@ -42,6 +43,7 @@ import type {
   PartnerWeeklyReport,
   Shop,
   ShopOrder,
+  Product,
 } from "@/lib/types";
 
 type Period = "today" | "week" | "month";
@@ -74,6 +76,7 @@ export function MerchantDashboard({
   reports,
   referralCount,
   shopOrders = [],
+  products = [],
 }: {
   shop: Shop | null;
   jobs: JobWithDriver[];
@@ -82,6 +85,7 @@ export function MerchantDashboard({
   reports: PartnerWeeklyReport[];
   referralCount: number;
   shopOrders?: ShopOrder[];
+  products?: Product[];
 }) {
   const router = useRouter();
   const online = useOnlineStatus();
@@ -357,6 +361,7 @@ export function MerchantDashboard({
       )}
 
       <KitchenOrders orders={shopOrders} />
+      {shop ? <ShopMenuEditor shopId={shop.id} products={products} /> : null}
 
       {showChecklist && (
         <section className="ru-card mt-6 border border-[var(--ru-line)] p-5">

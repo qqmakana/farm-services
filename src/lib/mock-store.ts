@@ -1780,6 +1780,7 @@ export const mockRepo = {
       price: input.price,
       size: input.size,
       in_stock: true,
+      image_url: input.image_url ?? null,
       created_at: new Date().toISOString(),
     };
     store().products.unshift(product);

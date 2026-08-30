@@ -249,10 +249,6 @@ export function UberHome() {
         onPick={goToPlace}
       />
 
-      <SmartSuggestions filter="for-you" onSelectDestination={goToPlace} />
-
-      <DriveSignupCard variant="compact" className="mt-5" />
-
       <section className="relative z-10 mt-6" data-testid="home-chips">
         <div className="flex items-center justify-between">
           <h2 className="text-[24px] font-bold leading-[1.2] tracking-[-0.3px] text-black">
@@ -309,6 +305,14 @@ export function UberHome() {
           People
         </AppLink>
       </section>
+
+      <SmartSuggestions
+        filter="for-you"
+        showNearby={false}
+        onSelectDestination={goToPlace}
+      />
+
+      <DriveSignupCard variant="compact" className="mt-5" />
 
       <div className="mt-4 space-y-3">
         <UberFeatureTile

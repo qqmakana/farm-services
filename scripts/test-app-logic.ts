@@ -334,10 +334,13 @@ test("shops: food photos resolve when shop has no upload", () => {
     description: "Fresh baked",
   });
   assert(bread.includes("prod-bread"), bread);
-  const own = shopBannerSrc({
-    image_url: "https://cdn.example/shop.jpg",
-    category: "food",
-    name: "Mama's Kitchen",
+});
+
+test("shops: uploaded product photo wins over stock photo", () => {
+  const own = productPhotoSrc({
+    image_url: "https://cdn.example/stew.jpg",
+    name: "Brown bread loaf",
+    description: null,
   });
   assert(own.includes("cdn.example"), own);
 });

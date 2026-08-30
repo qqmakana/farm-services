@@ -559,6 +559,7 @@ export type NewProductInput = {
   description?: string | null;
   price: number;
   size: "small" | "medium" | "large" | "xl";
+  image_url?: string | null;
 };
 
 export type ShopOrderInput = {

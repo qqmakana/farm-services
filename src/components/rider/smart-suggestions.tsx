@@ -153,9 +153,12 @@ function RowButton({
 export function SmartSuggestions({
   onSelectDestination,
   filter = "for-you",
+  showNearby = true,
 }: {
   onSelectDestination: (place: PlaceSuggestion) => void;
   filter?: HomeFeedTab;
+  /** Hardcoded nearby landmarks — only after the user types, not on Home. */
+  showNearby?: boolean;
 }) {
   const { countryCode } = useCountry();
   const [data, setData] = useState<SuggestionsPayload>({
@@ -222,6 +225,12 @@ export function SmartSuggestions({
 
     void fetchSuggestions();
 
+    if (!showNearby) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
     const lastGps = readLastGps();
     if (lastGps) void fetchSuggestions(lastGps);
 
@@ -247,18 +256,23 @@ export function SmartSuggestions({
     return () => {
       cancelled = true;
     };
-  }, [countryCode]);
+  }, [countryCode, showNearby]);
 
   const shown = filterSuggestionsForTab(data, filter);
+  const personal = {
+    saved: shown.saved,
+    recent: shown.recent,
+    nearby: showNearby ? shown.nearby : [],
+  };
   const filteredEmpty =
     filter !== "for-you" &&
-    shown.saved.length === 0 &&
-    shown.recent.length === 0 &&
-    shown.nearby.length === 0;
+    personal.saved.length === 0 &&
+    personal.recent.length === 0 &&
+    personal.nearby.length === 0;
   const display =
-    filteredEmpty && data.nearby.length > 0
+    showNearby && filteredEmpty && data.nearby.length > 0
       ? { saved: shown.saved, recent: shown.recent, nearby: data.nearby }
-      : shown;
+      : personal;
   const hasHome = data.saved.some((p) => p.label === "home");
   const hasWork = data.saved.some((p) => p.label === "work");
   const empty =

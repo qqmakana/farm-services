@@ -73,7 +73,7 @@ export function KitchenOrders({ orders }: { orders: ShopOrder[] }) {
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <p className="font-semibold">{order.reference_code}</p>
+                    <p className="font-semibold">Order {order.reference_code}</p>
                     <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-gray-500">
                       <Clock className="h-3 w-3" />
                       {formatWhen(order.created_at)}
