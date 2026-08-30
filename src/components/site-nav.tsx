@@ -114,7 +114,7 @@ export function SiteNav({
                     isActive
                       ? "bg-[#0a0a0a] font-semibold text-white"
                       : "text-[#0a0a0a] hover:bg-[#f4f4f5]"
-                  } ${link.key === "partners" || link.key === "shops" ? "hidden min-[420px]:inline-flex" : ""}`}
+                  } ${link.key === "shop" || link.key === "shops" ? "hidden min-[420px]:inline-flex" : ""}`}
                 >
                   {link.label}
                 </Link>
