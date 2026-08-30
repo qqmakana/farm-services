@@ -1,9 +1,11 @@
 const DRAFT_KEY = "vr_paypal_draft_v1";
 const APPROVE_KEY = "vr_paypal_approve_v1";
+const CHECKOUT_KEY = "vr_card_checkout_id";
 const DRAFT_COOKIE = "vr_paypal_draft_v1";
 const APPROVE_COOKIE = "vr_paypal_approve_v1";
+const CHECKOUT_COOKIE = "vr_card_checkout_id";
 
-export type PaypalDraftFlow = "job" | "shop";
+export type PaypalDraftFlow = "job" | "shop" | "cart";
 
 function writeCookie(name: string, value: string | null) {
   try {
@@ -70,13 +72,36 @@ export function readPaypalStash<T = unknown>(): {
     ) {
       const wrap = parsed as { flow: PaypalDraftFlow; draft: T };
       return {
-        flow: wrap.flow === "shop" ? "shop" : "job",
+        flow:
+          wrap.flow === "shop"
+            ? "shop"
+            : wrap.flow === "cart"
+              ? "cart"
+              : "job",
         draft: wrap.draft,
       };
     }
     return { flow: "job", draft: parsed as T };
   } catch {
     return null;
+  }
+}
+
+export function stashCardCheckoutId(id: string | null | undefined) {
+  try {
+    if (id) sessionStorage.setItem(CHECKOUT_KEY, id);
+    else sessionStorage.removeItem(CHECKOUT_KEY);
+  } catch {
+    /* private mode */
+  }
+  writeCookie(CHECKOUT_COOKIE, id ?? null);
+}
+
+export function readCardCheckoutId(): string | null {
+  try {
+    return sessionStorage.getItem(CHECKOUT_KEY) || readCookie(CHECKOUT_COOKIE);
+  } catch {
+    return readCookie(CHECKOUT_COOKIE);
   }
 }
 
@@ -104,9 +129,11 @@ export function clearPaypalBooking() {
   try {
     sessionStorage.removeItem(DRAFT_KEY);
     sessionStorage.removeItem(APPROVE_KEY);
+    sessionStorage.removeItem(CHECKOUT_KEY);
   } catch {
     /* private mode */
   }
   writeCookie(DRAFT_COOKIE, null);
   writeCookie(APPROVE_COOKIE, null);
+  writeCookie(CHECKOUT_COOKIE, null);
 }

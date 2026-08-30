@@ -27,7 +27,7 @@ export function PaymentSelector({
     {
       id: "card" as const,
       title: "Card",
-      sub: "PayPal",
+      sub: "Yoco",
       Icon: CreditCard,
       testId: "pay-card",
     },

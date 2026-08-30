@@ -73,6 +73,9 @@ export default async function AdminDashboardPage() {
             <Link href="/admin/bonus-payouts" className="rounded-lg border px-3 py-1.5 font-semibold">
               Bonus pools
             </Link>
+            <Link href="/admin/payouts" className="rounded-lg border px-3 py-1.5 font-semibold">
+              Yoco payouts
+            </Link>
             <Link href="/dispatch" className="rounded-lg border px-3 py-1.5 font-semibold">
               Dispatch
             </Link>

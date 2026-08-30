@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import { formatMoney } from "@/lib/format";
-import { readPaypalApproveUrl, stashPaypalApproveUrl } from "@/lib/paypal-draft";
+import {
+  readPaypalApproveUrl,
+  stashCardCheckoutId,
+  stashPaypalApproveUrl,
+} from "@/lib/paypal-draft";
+import { isYocoPublicEnabled } from "@/lib/yoco";
 
 const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "";
 
@@ -13,15 +18,18 @@ function paypalReady() {
   return true;
 }
 
+function cardReady() {
+  return isYocoPublicEnabled() || paypalReady();
+}
+
 function allowLocalTestPay() {
   if (process.env.NEXT_PUBLIC_VERCEL_ENV === "production") return false;
   return process.env.NODE_ENV !== "production";
 }
 
 /**
- * Card pay without the PayPal JS SDK — that SDK crashes in the Play TWA /
- * old WebViews ("could not load PayPal"). We create the order on the server
- * and open PayPal's own checkout page.
+ * Card pay without a JS SDK — old WebViews crash SDKs. Server creates a
+ * Yoco (or PayPal) hosted checkout and we open that page.
  */
 export function SafeCardPay({
   amount,
@@ -47,7 +55,7 @@ export function SafeCardPay({
   void onApprove;
   void description;
 
-  if (!paypalReady()) {
+  if (!cardReady()) {
     if (!allowLocalTestPay() || !onLocalPay) {
       return (
         <p className="rounded-2xl bg-[#F3F3F3] px-4 py-3 text-[13px] text-[#6B6B6B]">
@@ -104,11 +112,14 @@ export function SafeCardPay({
                 typeof created === "string"
                   ? null
                   : created.approveUrl ?? null;
+              if (typeof created !== "string" && created.orderId) {
+                stashCardCheckoutId(created.orderId);
+              }
               if (approveUrl) stashPaypalApproveUrl(approveUrl);
               const url = approveUrl || readPaypalApproveUrl();
               if (!url) {
                 throw new Error(
-                  "PayPal did not open. Choose Cash, or try Card again.",
+                  "Card checkout did not open. Choose Cash, or try Card again.",
                 );
               }
               window.location.assign(url);
@@ -123,11 +134,11 @@ export function SafeCardPay({
         className="uber-press min-h-12 w-full rounded-full bg-black py-4 text-[17px] font-medium text-white disabled:opacity-50"
       >
         {busy
-          ? "Opening PayPal…"
-          : `${submitLabel ?? "Pay with PayPal"} · ${formatMoney(amount)}`}
+          ? "Opening card pay…"
+          : `${submitLabel ?? "Pay with card"} · ${formatMoney(amount)}`}
       </button>
       <p className="text-center text-[12px] text-[#6B6B6B]">
-        PayPal opens to finish card payment, then brings you back here.
+        Yoco opens to finish card payment, then brings you back here.
       </p>
     </div>
   );

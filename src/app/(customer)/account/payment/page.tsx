@@ -25,7 +25,7 @@ export default function PaymentMethodsPage() {
       </Link>
       <h1 className={`mt-5 ${UBER_H1}`}>Payment</h1>
       <p className={UBER_SUB}>
-        Cash or card (PayPal) at checkout in {country.flag} {country.name}.
+        Cash or card (Yoco) at checkout in {country.flag} {country.name}.
       </p>
 
       <ul className="mt-6 space-y-3">
@@ -46,7 +46,7 @@ export default function PaymentMethodsPage() {
             <CreditCard className="h-5 w-5" />
           </span>
           <div>
-            <p className="text-[15px] font-bold text-[#0a0a0a]">Pay card (PayPal)</p>
+            <p className="text-[15px] font-bold text-[#0a0a0a]">Pay card (Yoco)</p>
             <p className="mt-1 text-[13px] font-medium text-[#6b6b6b]">
               Pay the full fare online. Driver is credited ~90% when the trip
               completes.

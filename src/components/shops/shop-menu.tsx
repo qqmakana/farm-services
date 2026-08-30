@@ -24,7 +24,12 @@ import {
   subscribeCart,
   type CartLine,
 } from "@/lib/shop-cart";
+import { SHOP_MIN_ORDER } from "@/lib/shop-constants";
 import { placeShopCartOrder } from "@/lib/actions-shop-orders";
+import { createPayPalOrderAction } from "@/lib/actions";
+import { PaymentSelector, type CheckoutPaymentChoice } from "@/components/checkout/payment-selector";
+import { SafeCardPay } from "@/components/uber/safe-card-pay";
+import { stashPaypalBooking } from "@/lib/paypal-draft";
 import { formatMoney } from "@/lib/format";
 import type { Product, Shop } from "@/lib/types";
 
@@ -48,6 +53,7 @@ export function ShopMenu({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [payMethod, setPayMethod] = useState<CheckoutPaymentChoice>("cash");
   const [justAdded, setJustAdded] = useState<string | null>(null);
 
   useEffect(() => {
@@ -73,6 +79,17 @@ export function ShopMenu({
   const count = cartCount(shopLines);
   const subtotal = cartSubtotal(shopLines);
   const total = subtotal + SHOP_DELIVERY_FEE;
+  const needMore = Math.max(0, SHOP_MIN_ORDER - subtotal);
+  const cartDraft = () => ({
+    shop_id: shop.id,
+    customer_name: name,
+    customer_phone: phone,
+    delivery_address: address,
+    items: shopLines.map((l) => ({
+      product_id: l.productId,
+      quantity: l.quantity,
+    })),
+  });
 
   function onAdd(product: Product) {
     addToCart({
@@ -367,20 +384,50 @@ export function ShopMenu({
               />
             </div>
 
+            {needMore > 0 ? (
+              <p className="mt-3 text-sm font-semibold text-[#b45309]">
+                Add {formatMoney(needMore)} more to checkout (minimum{" "}
+                {formatMoney(SHOP_MIN_ORDER)}).
+              </p>
+            ) : null}
+
+            <div className="mt-4">
+              <PaymentSelector value={payMethod} onChange={setPayMethod} />
+            </div>
+
             {error && (
               <p className="mt-3 text-sm text-red-600">{error}</p>
             )}
 
-            <button
-              type="button"
-              disabled={pending || shopLines.length === 0}
-              onClick={placeOrder}
-              className="uber-press uber-btn-black mt-5 w-full"
-            >
-              {pending
-                ? "Placing order…"
-                : `Place order · ${formatMoney(total)}`}
-            </button>
+            {payMethod === "card" && needMore === 0 ? (
+              <div className="mt-4">
+                <SafeCardPay
+                  amount={total}
+                  description={`Village Ride shop · ${shop.name}`}
+                  disabled={pending || shopLines.length === 0}
+                  submitLabel="Pay with card"
+                  onCreateOrder={async () => {
+                    stashPaypalBooking(cartDraft(), "cart");
+                    return createPayPalOrderAction({
+                      amount: total,
+                      description: `Village Ride · ${shop.name}`,
+                    });
+                  }}
+                  onApprove={async () => undefined}
+                />
+              </div>
+            ) : (
+              <button
+                type="button"
+                disabled={pending || shopLines.length === 0 || needMore > 0}
+                onClick={placeOrder}
+                className="uber-press uber-btn-black mt-5 w-full"
+              >
+                {pending
+                  ? "Placing order…"
+                  : `Place order · ${formatMoney(total)}`}
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -26,8 +26,9 @@ export default async function ShopRegisterPage() {
           <p className="ru-section-label">Partners</p>
           <h1 className="ru-page-title mt-2">Sell on Village Ride</h1>
           <p className="ru-page-sub">
-            Register your shop or farm. List products. When buyers order,
-            delivery jobs go to bakkie and truck drivers.
+            Register your grocery shop. List products. We approve you before
+            you go live. Buyers pay in-app (Yoco) or cash. You keep 85% of
+            goods; delivery is separate.
           </p>
           <p className="mt-3 text-sm text-[var(--ru-muted)]">
             Prefer the full guide?{" "}

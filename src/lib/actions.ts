@@ -84,6 +84,12 @@ import {
   paypalCaptureOrder,
   paypalCreateOrder,
 } from "./paypal";
+import {
+  isYocoConfigured,
+  looksLikeYocoCheckoutId,
+  yocoConfirmPaid,
+  yocoCreateCheckout,
+} from "./yoco";
 import { suggestVehicle, vehicleFitsJob } from "./vehicles";
 import { reserveWindowError } from "./reserve-window";
 import { assertCourierWithinLimit } from "./courier-limits";
@@ -1357,9 +1363,9 @@ export async function createPayPalOrderAction(params: {
   details?: unknown;
   is_express?: boolean;
 }) {
-  if (!isPayPalConfigured()) {
+  if (!isYocoConfigured() && !isPayPalConfigured()) {
     throw new Error(
-      "Add your PayPal Client ID and Secret to .env.local (same API you use on your other apps).",
+      "Add YOCO_SECRET_KEY (and NEXT_PUBLIC_YOCO_ENABLED=1) to take card payments.",
     );
   }
 
@@ -1388,6 +1394,21 @@ export async function createPayPalOrderAction(params: {
 
   if (!amountZar || amountZar <= 0) {
     throw new Error("Invalid amount.");
+  }
+
+  if (isYocoConfigured()) {
+    const checkout = await yocoCreateCheckout({
+      amountZar,
+      description: params.description,
+      successPath: "/yoco/complete",
+      cancelPath: "/ride",
+    });
+    return {
+      orderId: checkout.id,
+      approveUrl: checkout.redirectUrl,
+      currency: "ZAR",
+      amount: amountZar,
+    };
   }
 
   const order = await paypalCreateOrder({
@@ -1648,13 +1669,25 @@ async function createJobInner(input: NewJobInput) {
   }
 }
 
-/** Capture PayPal then create the trip/delivery job. */
+async function confirmCardCapture(orderId: string) {
+  if (isYocoConfigured() || looksLikeYocoCheckoutId(orderId)) {
+    const paid = await yocoConfirmPaid(orderId);
+    return { captureId: paid.paymentId || paid.id };
+  }
+  if (!isPayPalConfigured()) {
+    throw new Error("Card payment is not configured.");
+  }
+  const captured = await paypalCaptureOrder(orderId);
+  return { captureId: captured.captureId };
+}
+
+/** Confirm Yoco (or PayPal) then create the trip/delivery job. */
 export async function capturePayPalAndCreateJob(
   orderId: string,
   draft: Omit<NewJobInput, "payment">,
 ) {
-  if (!isPayPalConfigured()) {
-    throw new Error("PayPal is not configured in .env.local");
+  if (!isYocoConfigured() && !isPayPalConfigured()) {
+    throw new Error("Card payment is not configured.");
   }
 
   if (useAdmin()) {
@@ -1686,7 +1719,7 @@ export async function capturePayPalAndCreateJob(
     );
   }
 
-  const captured = await paypalCaptureOrder(orderId);
+  const captured = await confirmCardCapture(orderId);
 
   return createJob({
     ...draft,
@@ -1741,8 +1774,8 @@ export async function capturePayPalAndCreateShopOrder(
   orderId: string,
   input: Omit<ShopOrderInput, "payment">,
 ) {
-  if (!isPayPalConfigured()) {
-    throw new Error("PayPal is not configured in .env.local");
+  if (!isYocoConfigured() && !isPayPalConfigured()) {
+    throw new Error("Card payment is not configured.");
   }
 
   if (useAdmin()) {
@@ -1755,7 +1788,7 @@ export async function capturePayPalAndCreateShopOrder(
     if (existing) return existing as JobWithDriver;
   }
 
-  const captured = await paypalCaptureOrder(orderId);
+  const captured = await confirmCardCapture(orderId);
   return createShopOrder({
     ...input,
     payment: {

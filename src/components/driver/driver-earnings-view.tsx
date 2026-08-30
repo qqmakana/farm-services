@@ -191,6 +191,11 @@ export function DriverEarningsView() {
     >
       <FoundingBonusPoolCard />
 
+      <p className="mt-4 rounded-2xl bg-[#F3F3F3] px-4 py-3 text-[13px] text-[#6B6B6B]">
+        Card trips are collected by Yoco into Village Ride. Your 90% is paid
+        weekly by EFT — Sunday night totals, then marked Paid when sent.
+      </p>
+
       <section className="ru-card mt-4 p-5">
         <p className="ru-section-label">Driver wallet</p>
         <p

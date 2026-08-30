@@ -41,7 +41,7 @@ import {
   mergeJobDetails,
 } from "./job-status";
 import { jobNeedsFromJob } from "./job-needs";
-import { SHOP_DELIVERY_FEE } from "./shop-constants";
+import { SHOP_DELIVERY_FEE, SHOP_MIN_ORDER } from "./shop-constants";
 import { suggestVehicle, vehicleFitsJob } from "./vehicles";
 import { assertCourierWithinLimit } from "./courier-limits";
 import {
@@ -981,6 +981,11 @@ export const mockRepo = {
       (s, l) => s + l.product.price * l.quantity,
       0,
     );
+    if (subtotal < SHOP_MIN_ORDER) {
+      throw new Error(
+        `Add R${SHOP_MIN_ORDER - subtotal} more to checkout (minimum R${SHOP_MIN_ORDER}).`,
+      );
+    }
     const delivery_fee = SHOP_DELIVERY_FEE;
     const total_amount = subtotal + delivery_fee;
     const summary = lines

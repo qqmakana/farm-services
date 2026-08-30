@@ -2,7 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { mockRepo } from "@/lib/mock-store";
-import { SHOP_DELIVERY_FEE } from "@/lib/shop-constants";
+import { SHOP_DELIVERY_FEE, SHOP_MIN_ORDER } from "@/lib/shop-constants";
+import {
+  isYocoConfigured,
+  looksLikeYocoCheckoutId,
+  yocoConfirmPaid,
+} from "@/lib/yoco";
 import { createAdminClient, hasServiceRole } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 import type {
@@ -98,6 +103,11 @@ async function placeShopCartOrderDb(
     (s, l) => s + Number(l.product.price) * l.quantity,
     0,
   );
+  if (subtotal < SHOP_MIN_ORDER) {
+    throw new Error(
+      `Add R${SHOP_MIN_ORDER - subtotal} more to checkout (minimum R${SHOP_MIN_ORDER}).`,
+    );
+  }
   const delivery_fee = SHOP_DELIVERY_FEE;
   const total_amount = subtotal + delivery_fee;
   const summary = lines
@@ -265,4 +275,19 @@ export async function updateShopOrderStatus(
   const order = data as ShopOrder;
   revalidateShopPaths(order.shop_id);
   return order;
+}
+
+export async function captureYocoAndPlaceShopCart(
+  checkoutId: string,
+  input: Omit<ShopCartOrderInput, "payment_method">,
+) {
+  if (!isYocoConfigured() && !looksLikeYocoCheckoutId(checkoutId)) {
+    throw new Error("Card payment is not configured.");
+  }
+  await yocoConfirmPaid(checkoutId);
+  return placeShopCartOrder({
+    ...input,
+    payment_method: "card",
+    notes: `yoco:${checkoutId}`,
+  });
 }

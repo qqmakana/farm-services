@@ -25,8 +25,8 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
       <header>
         <h1 className={UBER_H1}>Shops</h1>
         <p className={UBER_SUB}>
-          Order from local shops. You pay for the goods. Village Ride only
-          charges delivery — cash or PayPal.
+          Order from local shops. Pay goods in-app with card (Yoco) or cash.
+          Delivery is R35. Fetch is still pay-at-the-till if you send a list.
         </p>
       </header>
 
