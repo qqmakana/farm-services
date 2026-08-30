@@ -200,15 +200,15 @@ export function MerchantDashboard({
   if (!shop) {
     return (
       <main className="ru-page max-w-3xl">
-        <h1 className="ru-page-title">Partner dashboard</h1>
+        <h1 className="ru-page-title">Shop owner kitchen</h1>
         <p className="ru-page-sub">
-          Signed in as {email ?? "merchant"}, but no shop is linked yet.
+          Signed in as {email ?? "shop owner"}, but no shop is linked yet.
         </p>
         <Link
-          href="/shop"
+          href="/merchant/register"
           className="ru-btn ru-btn-primary mt-6 !inline-flex"
         >
-          Register your business
+          Register your shop
         </Link>
       </main>
     );
@@ -313,7 +313,7 @@ export function MerchantDashboard({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold tracking-wide text-[var(--ru-muted)] uppercase">
-            Partner
+            Shop owner
           </p>
           <h1 className="mt-1 font-[family-name:var(--font-display)] text-[28px] font-bold tracking-tight text-black">
             Hello, {shop.name}
@@ -330,12 +330,6 @@ export function MerchantDashboard({
             className="ru-btn ru-btn-secondary !min-h-11 !px-4 !text-sm"
           >
             Referrals
-          </Link>
-          <Link
-            href="/shop"
-            className="ru-btn ru-btn-secondary !min-h-11 !px-4 !text-sm"
-          >
-            Catalog
           </Link>
           <button
             type="button"
@@ -360,8 +354,8 @@ export function MerchantDashboard({
         </p>
       )}
 
-      <KitchenOrders orders={shopOrders} />
       {shop ? <ShopMenuEditor shopId={shop.id} products={products} /> : null}
+      <KitchenOrders orders={shopOrders} />
 
       {showChecklist && (
         <section className="ru-card mt-6 border border-[var(--ru-line)] p-5">

@@ -10,7 +10,7 @@ import { BRAND } from "@/lib/brand";
 const PRIMARY = [
   { href: "/ride", label: "Ride", key: "book" },
   { href: "/driver/join", label: "Earn", key: "driver" },
-  { href: "/partners", label: "Business", key: "partners" },
+  { href: "/merchant/dashboard", label: "Shop owner", key: "shop" },
   { href: "/shops", label: "Shops", key: "shops" },
 ] as const;
 
@@ -27,7 +27,7 @@ const MORE_LINKS = [
   { href: "/delivery", label: "Deliver", key: "delivery" },
   { href: "/farm", label: "Farm", key: "farm" },
   { href: "/courier", label: "Courier", key: "courier" },
-  { href: "/shop", label: "Merchants", key: "shop" },
+  { href: "/merchant/register", label: "Register a shop", key: "shop-register" },
   { href: "/partners", label: "Partners", key: "partners-more" },
   { href: "/driver/join", label: "Drive", key: "driver-more" },
   { href: "/pricing", label: "Pricing", key: "pricing" },

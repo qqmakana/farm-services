@@ -30,7 +30,7 @@ export default function PricingPage() {
               <li>✓ Pay only the delivery fee (customer → driver)</li>
             </ul>
             <Link
-              href="/shop"
+              href="/merchant/register"
               className="mt-4 inline-block rounded-xl bg-[#000000] px-4 py-2 text-sm font-bold text-white"
             >
               Sign up free

@@ -40,6 +40,14 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
           Browse, add to cart, pay in-app or cash. Delivery{" "}
           {formatMoney(SHOP_DELIVERY_FEE)}. Not listed? Use Fetch.
         </p>
+        <AppLink
+          href="/merchant/dashboard"
+          data-testid="shop-owner-kitchen"
+          className="uber-press mt-3 flex min-h-11 items-center justify-between rounded-[16px] bg-black px-4 text-[13px] font-bold text-white"
+        >
+          I own a shop — open kitchen
+          <span aria-hidden>→</span>
+        </AppLink>
       </header>
 
       <label className="flex items-center gap-2 rounded-2xl bg-white px-3 py-3 shadow-[0_4px_12px_rgba(0,0,0,0.06)] ring-1 ring-black/[0.04]">
@@ -95,12 +103,20 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
             <p className="mt-1 text-[13px] text-[#6B6B6B]">
               Send a list with Fetch — the driver shops for you.
             </p>
-            <AppLink
-              href="/delivery?kind=shop"
-              className="uber-press mt-5 inline-flex min-h-11 items-center rounded-full bg-black px-4 text-sm font-bold text-white"
-            >
-              I know the shop — send a list
-            </AppLink>
+            <div className="mt-5 flex flex-col items-center gap-2">
+              <AppLink
+                href="/delivery?kind=shop"
+                className="uber-press inline-flex min-h-11 items-center rounded-full bg-black px-4 text-sm font-bold text-white"
+              >
+                I know the shop — send a list
+              </AppLink>
+              <AppLink
+                href="/merchant/register"
+                className="uber-press inline-flex min-h-11 items-center text-sm font-bold text-black underline"
+              >
+                I own a shop — list it here
+              </AppLink>
+            </div>
           </div>
         </div>
       ) : (

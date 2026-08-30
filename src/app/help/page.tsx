@@ -19,8 +19,8 @@ const FAQS = [
     a: "Use both: tap the map (or GPS) to pin, and always describe a landmark (“green gate, next to the mango tree”). The map does not replace the landmark — drivers use both. Landmark text alone still works if GPS is weak. Saved Home/Work places also work offline from your phone cache.",
   },
   {
-    q: "How do I sign up as a business partner?",
-    a: "Go to /partners or /shop, create an account with your business email, then open /merchant/dashboard. No in-person meeting required.",
+    q: "Where is the shop owner kitchen?",
+    a: "It is not on the rider Home tabs. Register at /merchant/register, then open /merchant/dashboard. Add menu photos there. Sign in with the shop email — not your rider account.",
   },
   {
     q: "Who pays the 10% commission?",

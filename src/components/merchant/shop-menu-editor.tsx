@@ -75,9 +75,10 @@ export function ShopMenuEditor({
 
   return (
     <section className="ru-card mt-6 p-5" data-testid="shop-menu-editor">
-      <h2 className="text-lg font-bold text-black">Your menu</h2>
+      <h2 className="text-lg font-bold text-black">Your menu — add photos here</h2>
       <p className="mt-1 text-sm text-[#6B6B6B]">
-        Upload a photo of the real plate or packet. Riders order what they see.
+        This is the shop-owner kitchen. Name, price, and a photo of the real plate.
+        Riders see it on your shop page.
       </p>
 
       <form onSubmit={submit} className="mt-4 space-y-3">

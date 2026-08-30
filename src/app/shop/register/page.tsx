@@ -1,43 +1,39 @@
 import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
 import { ShopPortal } from "@/components/shop-portal";
-import { listJobs, listProducts, listShops } from "@/lib/actions";
 import { BRAND } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: `Sell on ${BRAND.appName}`,
-  description: "Register your shop or farm and deliver with Village Ride.",
+  title: `Register your shop — ${BRAND.appName}`,
+  description: "Register your shop, add menu photos, and go live on Village Ride.",
 };
 
-export default async function ShopRegisterPage() {
-  const [shops, products, jobs] = await Promise.all([
-    listShops(),
-    listProducts(),
-    listJobs(),
-  ]);
-
+export default function ShopRegisterPage() {
   return (
     <>
       <SiteNav active="shop" />
       <main className="ru-force-light min-h-dvh bg-[var(--ru-canvas)] text-[var(--ru-ink)]">
         <div className="mx-auto max-w-lg px-4 py-10 pb-24">
-          <p className="ru-section-label">Partners</p>
-          <h1 className="ru-page-title mt-2">Sell on Village Ride</h1>
+          <p className="ru-section-label">Shop owner</p>
+          <h1 className="ru-page-title mt-2">Register your shop</h1>
           <p className="ru-page-sub">
-            Register your grocery shop. List products. We approve you before
-            you go live. Buyers pay in-app (Yoco) or cash. You keep 85% of
-            goods; delivery is separate.
+            Create the kitchen login. Then add name, price, and a photo of each
+            plate. Riders see it on Shops. You keep 85% of goods. Delivery is
+            separate.
           </p>
           <p className="mt-3 text-sm text-[var(--ru-muted)]">
-            Prefer the full guide?{" "}
-            <Link href="/partners" className="font-semibold text-black underline">
-              Why partner with us
+            Already listed?{" "}
+            <Link
+              href="/login?next=/merchant/dashboard"
+              className="font-semibold text-black underline"
+            >
+              Open kitchen
             </Link>
           </p>
-          <div className="ru-card mt-8 p-5">
-            <ShopPortal shops={shops} products={products} jobs={jobs} />
+          <div className="mt-8">
+            <ShopPortal />
           </div>
         </div>
       </main>

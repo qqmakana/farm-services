@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
-import { createProduct, registerMerchantShop } from "@/lib/actions";
-import { formatMoney } from "@/lib/format";
+import { useEffect, useState, useTransition } from "react";
+import { registerMerchantShop } from "@/lib/actions";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { FloatingInput } from "@/components/ui/floating-input";
@@ -13,19 +12,9 @@ import {
   PlacesAutocomplete,
   type PlaceValue,
 } from "@/components/uber/places-autocomplete";
-import type { JobWithDriver, Product, Shop } from "@/lib/types";
 
-export function ShopPortal({
-  shops,
-  products,
-  jobs,
-}: {
-  shops: Shop[];
-  products: Product[];
-  jobs: JobWithDriver[];
-}) {
+export function ShopPortal() {
   const router = useRouter();
-  const [shopId, setShopId] = useState(shops[0]?.id ?? "");
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,18 +24,13 @@ export function ShopPortal({
   const [newShop, setNewShop] = useState({
     name: "",
     phone: "",
-    category: "appliances",
+    category: "food",
     landmark: "",
     lat: null as number | null,
     lng: null as number | null,
     email: "",
     password: "",
     referral_code: "",
-  });
-  const [newProduct, setNewProduct] = useState({
-    name: "",
-    price: "",
-    size: "medium" as "small" | "medium" | "large" | "xl",
   });
 
   useEffect(() => {
@@ -55,15 +39,6 @@ export function ShopPortal({
       setNewShop((s) => (s.referral_code ? s : { ...s, referral_code: ref }));
     }
   }, []);
-
-  const shopProducts = useMemo(
-    () => products.filter((p) => p.shop_id === shopId),
-    [products, shopId],
-  );
-  const shopOrders = useMemo(
-    () => jobs.filter((j) => j.shop_id === shopId),
-    [jobs, shopId],
-  );
 
   function registerShop(e: React.FormEvent) {
     e.preventDefault();
@@ -82,7 +57,6 @@ export function ShopPortal({
           password: newShop.password,
           referral_code: newShop.referral_code.trim() || null,
         });
-        setShopId(shop.id);
         setSuccess(true);
 
         try {
@@ -92,7 +66,7 @@ export function ShopPortal({
             password: newShop.password,
           });
           if (!signErr) {
-            setMessage(`Welcome, ${shop.name}. Opening dashboard…`);
+            setMessage(`Welcome, ${shop.name}. Opening kitchen…`);
             setTimeout(() => window.location.assign("/merchant/dashboard"), 900);
             return;
           }
@@ -101,7 +75,7 @@ export function ShopPortal({
         }
 
         setMessage(
-          `Account created. Sign in with ${email} to open your dashboard.`,
+          `Account created. Sign in with ${email} to add menu photos.`,
         );
         router.refresh();
       } catch (err) {
@@ -110,37 +84,18 @@ export function ShopPortal({
     });
   }
 
-  function addProduct(e: React.FormEvent) {
-    e.preventDefault();
-    if (!shopId) return;
-    setMessage(null);
-    setError(null);
-    startTransition(async () => {
-      try {
-        await createProduct({
-          shop_id: shopId,
-          name: newProduct.name,
-          price: Number(newProduct.price) || 0,
-          size: newProduct.size,
-        });
-        setMessage("Product added");
-        setNewProduct({ name: "", price: "", size: "medium" });
-        router.refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed");
-      }
-    });
-  }
-
   return (
-    <div className="ru-page-enter space-y-10">
+    <div className="ru-page-enter space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--ru-line)] bg-white p-4 shadow-[var(--ru-shadow)]">
         <p className="text-sm text-[var(--ru-muted)]">
-          Already a partner?{" "}
-          <strong className="text-black">Open your dashboard</strong>
+          Already a shop owner?{" "}
+          <strong className="text-black">Open your kitchen</strong>
         </p>
-        <Link href="/login?next=/merchant/dashboard" className="ru-btn ru-btn-primary !min-h-11 !px-5 !text-sm">
-          Partner login
+        <Link
+          href="/login?next=/merchant/dashboard"
+          className="ru-btn ru-btn-primary !min-h-11 !px-5 !text-sm"
+        >
+          Kitchen login
         </Link>
       </div>
 
@@ -165,22 +120,23 @@ export function ShopPortal({
               You&apos;re in
             </h2>
             <p className="mt-2 text-sm text-[var(--ru-muted)]">
-              Create deliveries anytime — no meetings required.
+              Add plate photos and prices in the kitchen. Riders see them on
+              Shops.
             </p>
             <Link
               href="/merchant/dashboard"
               className="ru-btn ru-btn-primary ru-btn-block mt-6"
             >
-              Go to dashboard
+              Open kitchen
             </Link>
           </div>
         ) : (
           <>
             <p className="text-xs font-bold tracking-wide text-[var(--ru-muted)] uppercase">
-              Partner signup
+              Shop signup
             </p>
             <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight">
-              Start delivering
+              Start selling
             </h2>
             <div className="mt-4 flex gap-2">
               {[1, 2, 3].map((n) => (
@@ -217,10 +173,12 @@ export function ShopPortal({
                         setNewShop({ ...newShop, category: e.target.value })
                       }
                     >
-                      <option value="farm">Farm</option>
-                      <option value="appliances">Appliances</option>
-                      <option value="furniture">Furniture</option>
+                      <option value="food">Food / kitchen</option>
+                      <option value="spaza">Spaza</option>
                       <option value="grocery">Grocery</option>
+                      <option value="bakery">Bakery</option>
+                      <option value="butchery">Butchery</option>
+                      <option value="farm">Farm</option>
                       <option value="hardware">Hardware</option>
                       <option value="general">General</option>
                     </select>
@@ -246,7 +204,7 @@ export function ShopPortal({
                       showGps
                     />
                     <p className="mt-1 text-xs text-[var(--ru-muted)]">
-                      Pin your location so customers can find and pick up from you.
+                      Pin your location so riders can find you.
                     </p>
                   </div>
                   <Button
@@ -333,7 +291,8 @@ export function ShopPortal({
                     }
                   />
                   <p className="pt-3 text-xs text-[var(--ru-muted)]">
-                    Free signup · ~10% is from the driver wallet, not your shop.
+                    Next: kitchen — upload photos. Riders only see an active shop
+                    with a menu.
                   </p>
                   <div className="mt-6 grid grid-cols-2 gap-2">
                     <Button type="button" variant="secondary" onClick={() => setStep(2)}>
@@ -349,67 +308,6 @@ export function ShopPortal({
           </>
         )}
       </Card>
-
-      <section className="ru-card p-5">
-        <h2 className="font-[family-name:var(--font-display)] text-lg font-bold">
-          Catalog
-        </h2>
-        <select
-          className="ru-input mt-3 max-w-md"
-          value={shopId}
-          onChange={(e) => setShopId(e.target.value)}
-        >
-          {shops.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-
-        <form onSubmit={addProduct} className="mt-4 grid gap-2 sm:grid-cols-3">
-          <input
-            required
-            placeholder="Product name"
-            className="ru-input"
-            value={newProduct.name}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, name: e.target.value })
-            }
-          />
-          <input
-            required
-            placeholder="Price"
-            className="ru-input"
-            value={newProduct.price}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, price: e.target.value })
-            }
-          />
-          <Button type="submit" disabled={pending || !shopId} variant="brand">
-            Add product
-          </Button>
-        </form>
-
-        <ul className="mt-4 space-y-2 text-sm">
-          {shopProducts.map((p) => (
-            <li
-              key={p.id}
-              className="flex justify-between border-b border-[var(--ru-line)] py-2"
-            >
-              <span className="font-medium">{p.name}</span>
-              <span className="text-[var(--ru-muted)]">
-                {formatMoney(p.price)}
-              </span>
-            </li>
-          ))}
-        </ul>
-
-        {shopOrders.length > 0 ? (
-          <p className="mt-4 text-xs text-[var(--ru-muted)]">
-            {shopOrders.length} recent order(s) for this shop
-          </p>
-        ) : null}
-      </section>
     </div>
   );
 }

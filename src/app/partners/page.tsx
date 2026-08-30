@@ -35,7 +35,7 @@ export default function PartnersPage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                href="/shop"
+                href="/merchant/register"
                 className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-[#000000] transition active:scale-95"
               >
                 Sign up free
@@ -122,7 +122,7 @@ export default function PartnersPage() {
             Grow with referrals — invite other shops with your code.
           </p>
           <Link
-            href="/shop"
+            href="/merchant/register"
             className="mt-6 inline-block rounded-xl bg-[#000000] px-6 py-3 text-sm font-bold text-white transition active:scale-95"
           >
             Create partner account

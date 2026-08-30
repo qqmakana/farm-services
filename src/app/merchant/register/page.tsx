@@ -9,8 +9,8 @@ function queryFrom(sp: Record<string, string | string[] | undefined>) {
   return s ? `?${s}` : "";
 }
 
-/** Old Catalog (no photos) is dead. Signup → kitchen. */
-export default async function ShopPage({
+/** Canonical URL people type: /merchant/register */
+export default async function MerchantRegisterPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

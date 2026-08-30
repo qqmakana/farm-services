@@ -323,19 +323,20 @@ export function AccountView() {
           </button>
         </li>
         <ListRow href="/driver/join" label="Earn by driving" Icon={Car} testId="drive-signup-cta" />
+        <ListRow
+          href="/merchant/dashboard"
+          label="I own a shop — kitchen & menu"
+          Icon={Store}
+          testId="shop-owner-cta"
+        />
         <ListRow href="/account/delete" label="Delete account" Icon={Shield} />
         <ListRow href="/group" label="Saved groups" Icon={Users} />
         <ListRow
-          href="/partners"
-          label="Set up your business profile"
+          href="/merchant/register"
+          label="Register a shop"
           Icon={Briefcase}
         />
-        <ListRow
-          href="/merchant/dashboard"
-          label="Village Ride for Business"
-          Icon={Briefcase}
-        />
-        <ListRow href="/shops" label="Shops promotions" Icon={Store} />
+        <ListRow href="/shops" label="Browse shops" Icon={Store} />
         <ListRow href="/account/places" label="Saved places" Icon={MapPin} />
         <ListRow href="/account/payment" label="Payment methods" Icon={Wallet} />
         <ListRow href="/terms" label="Legal" Icon={Scale} />

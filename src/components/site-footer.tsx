@@ -26,8 +26,8 @@ const COLUMNS = [
       { href: "/farm", label: "Farm" },
       { href: "/courier", label: "Courier" },
       { href: "/shops", label: "Shops" },
-      { href: "/partners", label: "Village Ride for Business" },
-      { href: "/shop", label: "Merchants" },
+      { href: "/merchant/dashboard", label: "Shop owner kitchen" },
+      { href: "/merchant/register", label: "Register a shop" },
     ],
   },
   {

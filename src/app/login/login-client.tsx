@@ -130,7 +130,7 @@ export default function LoginClient() {
           {isMerchantLogin ? (
             <>
               Business email from Sell registration. Need an account?{" "}
-              <a className="font-medium text-black underline" href="/shop">
+              <a className="font-medium text-black underline" href="/merchant/register">
                 Register your shop
               </a>
               .
