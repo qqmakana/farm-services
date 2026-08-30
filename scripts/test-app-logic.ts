@@ -24,6 +24,10 @@ import {
 import { matchListedShop } from "../src/lib/shop-match";
 import { packageOfferCopy } from "../src/lib/package-job";
 import {
+  productPhotoSrc,
+  shopBannerSrc,
+} from "../src/lib/shop-photos";
+import {
   generateReferralCode,
   generateShopWeeklyReport,
 } from "../src/lib/partner";
@@ -315,6 +319,27 @@ test("wallet: cash-only driver owe number", () => {
   assert(amountOwedToPlatform(-42, 42) === 42, "negative wallet");
   assert(amountOwedToPlatform(0, 15) === 15, "owed field");
   assert(amountOwedToPlatform(80, 0) === 0, "card week owes nothing");
+});
+
+test("shops: food photos resolve when shop has no upload", () => {
+  const banner = shopBannerSrc({
+    image_url: null,
+    category: "food",
+    name: "Mama's Kitchen",
+  });
+  assert(banner.includes("shop-food"), banner);
+  const bread = productPhotoSrc({
+    image_url: null,
+    name: "Brown bread loaf",
+    description: "Fresh baked",
+  });
+  assert(bread.includes("prod-bread"), bread);
+  const own = shopBannerSrc({
+    image_url: "https://cdn.example/shop.jpg",
+    category: "food",
+    name: "Mama's Kitchen",
+  });
+  assert(own.includes("cdn.example"), own);
 });
 
 test("fetch: listed shop cross-sell from typed list", () => {

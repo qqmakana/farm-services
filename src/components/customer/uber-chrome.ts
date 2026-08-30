@@ -1,7 +1,7 @@
 /** Shared rider chrome — typography and buttons from the design tokens. */
 
 export const UBER_PAGE =
-  "ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-[#f3f3f3] px-4 pb-28 pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] tracking-[-0.02em] text-black";
+  "vr-page-enter ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-[#f3f3f3] px-4 pb-28 pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] tracking-[-0.02em] text-black";
 
 export const DRIVER_PAGE =
   "mx-auto min-h-dvh max-w-md touch-manipulation bg-[#0E0E0E] px-4 pb-28 pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] text-white";

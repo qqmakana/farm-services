@@ -1,130 +1,171 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { AppLink } from "@/components/ui/app-link";
-import { Clock, Star, Store } from "lucide-react";
+import { Search, Star } from "lucide-react";
 import type { Shop } from "@/lib/types";
-import { SERVICE_COPY } from "@/lib/service-guide";
-import { UBER_GLOSS, UBER_H1, UBER_SUB } from "@/components/customer/uber-chrome";
+import { SHOP_DELIVERY_FEE, SHOP_MIN_ORDER } from "@/lib/shop-constants";
+import {
+  SHOP_CATEGORY_PILLS,
+  etaForShop,
+  shopBannerSrc,
+  shopPillMatch,
+} from "@/lib/shop-photos";
+import { ShopPhoto } from "@/components/shops/shop-photo";
+import { formatMoney } from "@/lib/format";
 import { ShopsHowItWorks } from "@/components/shops/shops-how-it-works";
 
-const ACCENTS = [
-  "from-emerald-700 to-emerald-500",
-  "from-amber-700 to-orange-500",
-  "from-slate-700 to-slate-500",
-  "from-rose-700 to-rose-500",
-];
-
-function etaFor(shop: Shop) {
-  if (shop.category === "food" || shop.category === "groceries") return "20–30 min";
-  return "45–90 min";
-}
-
 export function ShopStorefront({ shops }: { shops: Shop[] }) {
+  const [q, setQ] = useState("");
+  const [pill, setPill] = useState<(typeof SHOP_CATEGORY_PILLS)[number]>("All");
+
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return shops.filter((shop) => {
+      if (!shopPillMatch(shop, pill)) return false;
+      if (!needle) return true;
+      const hay =
+        `${shop.name} ${shop.category} ${shop.description ?? ""} ${shop.notes ?? ""} ${shop.landmark}`.toLowerCase();
+      return hay.includes(needle);
+    });
+  }, [shops, q, pill]);
+
   return (
-    <div className="touch-manipulation space-y-5">
+    <div className="vr-page-enter touch-manipulation space-y-4">
       <header>
-        <h1 className={UBER_H1}>Shops</h1>
-        <p className={UBER_SUB}>
-          Browse a listed shop and pay in-app (Yoco) or cash. Delivery R35.
-          Shop not on Village Ride? Use Fetch — type a list and pay at the till.
+        <h1 className="text-[28px] font-bold leading-tight tracking-[-0.4px] text-black">
+          Shops
+        </h1>
+        <p className="mt-1 text-[14px] leading-snug text-[#6B6B6B]">
+          Browse, add to cart, pay in-app or cash. Delivery{" "}
+          {formatMoney(SHOP_DELIVERY_FEE)}. Not listed? Use Fetch.
         </p>
       </header>
 
-      <ShopsHowItWorks />
+      <label className="flex items-center gap-2 rounded-2xl bg-white px-3 py-3 shadow-[0_4px_12px_rgba(0,0,0,0.06)] ring-1 ring-black/[0.04]">
+        <Search className="h-5 w-5 shrink-0 text-[#8A8A8A]" aria-hidden />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search shops or products…"
+          className="min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-[#A6A6A6]"
+          enterKeyHint="search"
+        />
+      </label>
 
-      <div className="grid grid-cols-1 gap-3">
-        <AppLink
-          href="/delivery?kind=shop"
-          data-testid="shop-know"
-          className={`uber-press rounded-[28px] p-4 ${UBER_GLOSS}`}
-        >
-          <p className="text-[15px] font-bold text-[#0a0a0a]">
-            I know the shop
-          </p>
-          <p className="mt-1 text-[13px] font-medium text-[#6b6b6b]">
-            Shop & Deliver — send a list and the shop name. Pay for groceries
-            at the till. Village Ride charges the delivery fee only.
-          </p>
-        </AppLink>
-        <a
-          href="#find-shop"
-          data-testid="shop-find"
-          className={`uber-press rounded-[28px] p-4 ${UBER_GLOSS}`}
-        >
-          <p className="text-[15px] font-bold text-[#0a0a0a]">
-            Find a shop for me
-          </p>
-          <p className="mt-1 text-[13px] font-medium text-[#6b6b6b]">
-            {SERVICE_COPY.restaurantPickup.blurb}
-          </p>
-        </a>
+      <div
+        className="vr-hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1"
+        role="tablist"
+        aria-label="Shop categories"
+      >
+        {SHOP_CATEGORY_PILLS.map((name) => {
+          const on = pill === name;
+          return (
+            <button
+              key={name}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => setPill(name)}
+              className={`uber-press shrink-0 rounded-full px-3.5 py-2 text-[13px] font-bold ${
+                on
+                  ? "bg-[#06c167] text-white"
+                  : "border border-[#E8E8E8] bg-white text-black"
+              }`}
+            >
+              {name}
+            </button>
+          );
+        })}
       </div>
 
-      <h2 id="find-shop" className="scroll-mt-24 text-[17px] font-bold text-[#0a0a0a]">
-        Menus near you
-      </h2>
-
-      {shops.length === 0 ? (
-        <div className={`rounded-[28px] px-4 py-10 text-center ${UBER_GLOSS}`}>
-          <Store className="mx-auto h-8 w-8 text-[#6b6b6b]" />
-          <p className="mt-3 text-[15px] font-bold text-[#0a0a0a]">
-            No shops nearby yet
-          </p>
-          <AppLink
-            href="/delivery?kind=shop"
-            className="uber-press mt-4 inline-flex min-h-11 items-center rounded-full bg-black px-4 text-sm font-bold text-white"
-          >
-            I know the shop — send a list
-          </AppLink>
+      {filtered.length === 0 ? (
+        <div className="overflow-hidden rounded-[24px] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)]">
+          <ShopPhoto
+            src="/shops/shop-food.jpg"
+            alt=""
+            className="aspect-[16/9] w-full object-cover"
+          />
+          <div className="px-4 py-8 text-center">
+            <p className="text-[16px] font-bold text-black">
+              {shops.length === 0
+                ? "No shops nearby yet"
+                : "No shops match that search"}
+            </p>
+            <p className="mt-1 text-[13px] text-[#6B6B6B]">
+              Send a list with Fetch — the driver shops for you.
+            </p>
+            <AppLink
+              href="/delivery?kind=shop"
+              className="uber-press mt-5 inline-flex min-h-11 items-center rounded-full bg-black px-4 text-sm font-bold text-white"
+            >
+              I know the shop — send a list
+            </AppLink>
+          </div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {shops.map((shop, i) => (
+        <div id="find-shop" className="grid scroll-mt-20 grid-cols-2 gap-3">
+          {filtered.map((shop) => (
             <AppLink
               key={shop.id}
               href={`/shops/${shop.id}`}
-              className={`uber-press group overflow-hidden rounded-[28px] ${UBER_GLOSS}`}
+              className="uber-press group block overflow-hidden rounded-[16px] bg-white shadow-[0_4px_14px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]"
             >
-              <div
-                className={`relative h-32 bg-gradient-to-br ${ACCENTS[i % ACCENTS.length]}`}
-              >
-                {shop.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={shop.image_url}
-                    alt=""
-                    className="h-full w-full object-cover transition-transform duration-150 group-active:scale-105"
-                  />
-                ) : (
-                  <div className="flex h-full items-end p-3">
-                    <Store className="h-8 w-8 text-white/80" />
-                  </div>
-                )}
+              <div className="relative aspect-[16/9] overflow-hidden bg-[#F3E6D8]">
+                <ShopPhoto
+                  src={shopBannerSrc(shop)}
+                  alt=""
+                  className="h-full w-full object-cover transition-transform duration-200 group-active:scale-[1.03]"
+                />
+                <span className="absolute top-2 left-2 rounded-full bg-[#06c167] px-2 py-0.5 text-[10px] font-bold text-white">
+                  Open now
+                </span>
               </div>
-              <div className="space-y-1 p-3">
-                <p className="line-clamp-1 text-[15px] font-bold text-[#0a0a0a]">
+              <div className="space-y-1 p-2.5">
+                <p className="line-clamp-2 text-[14px] font-bold leading-snug text-black">
                   {shop.name}
                 </p>
-                <p className="line-clamp-2 text-[13px] font-medium text-[#6b6b6b]">
-                  {shop.description || shop.notes || shop.category}
-                </p>
-                <div className="flex items-center gap-2 pt-0.5 text-[11px] text-gray-500">
-                  <span className="inline-flex items-center gap-0.5">
-                    <Clock className="h-3 w-3" />
-                    {etaFor(shop)}
-                  </span>
-                  {shop.rating_avg != null && (
-                    <span className="inline-flex items-center gap-0.5">
-                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                      {shop.rating_avg.toFixed(1)}
+                <p className="flex items-center gap-1 text-[12px] font-semibold text-[#3D3D3D]">
+                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                  {shop.rating_avg != null
+                    ? shop.rating_avg.toFixed(1)
+                    : "New"}
+                  {shop.rating_count ? (
+                    <span className="font-medium text-[#8A8A8A]">
+                      ({shop.rating_count})
                     </span>
-                  )}
-                </div>
+                  ) : null}
+                </p>
+                <p className="text-[11px] font-medium text-[#6B6B6B]">
+                  {etaForShop(shop)} · {formatMoney(SHOP_DELIVERY_FEE)}
+                </p>
+                <p className="text-[11px] text-[#8A8A8A]">
+                  Min. {formatMoney(SHOP_MIN_ORDER)}
+                </p>
               </div>
             </AppLink>
           ))}
         </div>
       )}
+
+      <div className="grid grid-cols-2 gap-2">
+        <AppLink
+          href="/delivery?kind=shop"
+          data-testid="shop-know"
+          className="uber-press rounded-[16px] bg-[#FFF8F0] px-3 py-3 text-[12px] font-bold text-[#9A5B12]"
+        >
+          I know the shop — send a list
+        </AppLink>
+        <a
+          href="#find-shop"
+          data-testid="shop-find"
+          className="uber-press rounded-[16px] bg-white px-3 py-3 text-[12px] font-bold text-black ring-1 ring-black/[0.06]"
+        >
+          Find a shop for me
+        </a>
+      </div>
+
+      <ShopsHowItWorks />
     </div>
   );
 }

@@ -52,7 +52,7 @@ function ServicesContent() {
   return (
     <main
       data-testid="uber-services"
-      className="ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-40 pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] tracking-[-0.02em] text-black"
+      className="vr-page-enter ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-40 pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] tracking-[-0.02em] text-black"
     >
       <h1 className={UBER_H1}>Services</h1>
       <p className="mt-2 text-[15px] font-medium text-[#6B6B6B]">
