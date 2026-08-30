@@ -148,6 +148,17 @@ export function driverEligibleForDispatch(driver: {
   return bal >= walletCreditFloor(driver.country_code);
 }
 
+/** Cash 10% the driver still owes Village Ride (Sunday settlement). */
+export function amountOwedToPlatform(
+  walletBalance?: number | null,
+  commissionOwed?: number | null,
+): number {
+  return Math.max(
+    Math.round(Number(commissionOwed) || 0),
+    Math.round(-Math.min(0, Number(walletBalance) || 0)),
+  );
+}
+
 export function isCashPaymentMethod(
   method: string | null | undefined,
 ): boolean {

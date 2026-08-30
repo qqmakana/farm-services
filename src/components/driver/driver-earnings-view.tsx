@@ -15,6 +15,7 @@ import {
   walletTopUpWhatsAppHref,
 } from "@/lib/whatsapp";
 import {
+  amountOwedToPlatform,
   isApproachingCreditLimit,
   walletCreditFloor,
   walletCreditLimitAmount,
@@ -74,6 +75,7 @@ export function DriverEarningsView() {
 
   const wallet = Number(driver?.wallet_balance ?? 0);
   const owed = Number(driver?.commission_owed ?? 0);
+  const oweVillage = amountOwedToPlatform(wallet, owed);
 
   useEffect(() => {
     if (owed > 0 || wallet < 0) setShowTopUp(true);
@@ -192,15 +194,33 @@ export function DriverEarningsView() {
       <FoundingBonusPoolCard />
 
       <p className="mt-4 rounded-2xl bg-[#F3F3F3] px-4 py-3 text-[13px] text-[#6B6B6B]">
-        Card trips are collected by Yoco into Village Ride. Your 90% is paid
-        weekly by EFT — Sunday night totals, then marked Paid when sent.
+        Card trips: Yoco holds the fare. You get 90% by Sunday EFT. Cash trips:
+        you already collected the cash — the 10% is taken off that same Sunday
+        payout (or top up via WhatsApp if you owe more than we owe you).
       </p>
 
       <section className="ru-card mt-4 p-5">
         <p className="ru-section-label">Driver wallet</p>
+        {oweVillage > 0 ? (
+          <div
+            data-testid="cash-owe-banner"
+            className="mt-3 rounded-2xl border-2 border-rose-600 bg-rose-50 px-4 py-4"
+          >
+            <p className="text-xs font-bold uppercase tracking-wide text-rose-800">
+              Sunday settlement
+            </p>
+            <p className="mt-1 text-3xl font-bold leading-tight text-rose-950">
+              You owe Village Ride {formatMoney(oweVillage)}
+            </p>
+            <p className="mt-2 text-sm text-rose-900">
+              Cash-only week: we pay you R0. This is the 10% from cash trips.
+              Top up on WhatsApp before Sunday so there is no argument.
+            </p>
+          </div>
+        ) : null}
         <p
           data-testid="wallet-balance"
-          className={`mt-1 font-[family-name:var(--font-display)] text-4xl font-bold ${
+          className={`mt-3 font-[family-name:var(--font-display)] text-4xl font-bold ${
             wallet < 0 ? "text-[var(--ru-error)]" : "text-black"
           }`}
         >

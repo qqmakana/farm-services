@@ -2,7 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { mockRepo } from "@/lib/mock-store";
-import { SHOP_DELIVERY_FEE, SHOP_MIN_ORDER } from "@/lib/shop-constants";
+import {
+  SHOP_DELIVERY_FEE,
+  SHOP_DRIVER_COLLECT,
+  SHOP_MIN_ORDER,
+  SHOP_PLATFORM_DELIVERY,
+} from "@/lib/shop-constants";
+import { insertPaidJob } from "@/lib/matching";
 import {
   isYocoConfigured,
   looksLikeYocoCheckoutId,
@@ -18,7 +24,6 @@ import type {
   ShopOrderItem,
   ShopOrderStatus,
 } from "@/lib/types";
-import { suggestVehicle } from "@/lib/vehicles";
 
 function useAdmin() {
   return isSupabaseConfigured() && hasServiceRole();
@@ -63,6 +68,13 @@ export async function placeShopCartOrder(
   const order = !useAdmin()
     ? mockRepo.placeShopCartOrder(input)
     : await placeShopCartOrderDb(input);
+
+  try {
+    const { notifyShopNewCartOrder } = await import("@/lib/partner");
+    await notifyShopNewCartOrder(order);
+  } catch {
+    /* order already placed */
+  }
 
   revalidateShopPaths(input.shop_id);
   return order;
@@ -110,61 +122,13 @@ async function placeShopCartOrderDb(
   }
   const delivery_fee = SHOP_DELIVERY_FEE;
   const total_amount = subtotal + delivery_fee;
-  const summary = lines
-    .map((l) => `${l.quantity}x ${l.product.name}`)
-    .join(", ");
-  const maxSize = lines.reduce<"small" | "medium" | "large" | "xl">(
-    (acc, l) => {
-      const order = ["small", "medium", "large", "xl"] as const;
-      return order.indexOf(l.product.size) > order.indexOf(acc)
-        ? l.product.size
-        : acc;
-    },
-    "small",
-  );
-
-  const required = suggestVehicle({
-    service_type: "delivery",
-    delivery_size: maxSize,
-  });
-
-  let jobId: string | null = null;
-  try {
-    const { createJob } = await import("@/lib/actions");
-    const job = await createJob({
-      service_type: "delivery",
-      required_vehicle: required,
-      customer_name: input.customer_name.trim(),
-      customer_phone: input.customer_phone.trim(),
-      pickup_lat: shop.lat,
-      pickup_lng: shop.lng,
-      pickup_landmark: `${shop.name} — ${shop.landmark}`,
-      dropoff_lat: input.delivery_lat ?? null,
-      dropoff_lng: input.delivery_lng ?? null,
-      dropoff_landmark: input.delivery_address.trim(),
-      details: {
-        item_description: summary,
-        size: maxSize,
-        needs_helpers: maxSize === "large" || maxSize === "xl",
-      },
-      fee_amount: delivery_fee,
-      shop_id: shop.id,
-      product_summary: `${summary} · goods ${subtotal}`,
-      dispatcher_notes: `Eats order from ${shop.name} — goods R${subtotal} + delivery R${delivery_fee}`,
-      payment: { method: "cash" },
-    });
-    jobId = job.id;
-  } catch {
-    /* Shop order still saved if dispatch job fails */
-  }
-
   const now = new Date().toISOString();
   const { data: orderRow, error: orderErr } = await admin
     .from("rr_shop_orders")
     .insert({
       reference_code: refCode(),
       shop_id: shop.id,
-      job_id: jobId,
+      job_id: null,
       customer_name: input.customer_name.trim(),
       customer_phone: input.customer_phone.trim(),
       delivery_address: input.delivery_address.trim(),
@@ -272,9 +236,85 @@ export async function updateShopOrderStatus(
     throw new Error(error.message);
   }
 
-  const order = data as ShopOrder;
+  let order = data as ShopOrder;
+  if (status === "ready") {
+    try {
+      order = await dispatchShopDelivery(order);
+    } catch {
+      /* shop still marked ready */
+    }
+  }
   revalidateShopPaths(order.shop_id);
   return order;
+}
+
+async function dispatchShopDelivery(order: ShopOrder): Promise<ShopOrder> {
+  if (order.job_id) return order;
+  const admin = createAdminClient();
+  const shop = await getShopById(order.shop_id);
+  if (!shop) return order;
+
+  const pickupLat = shop.lat ?? order.delivery_lat;
+  const pickupLng = shop.lng ?? order.delivery_lng;
+  const dropLat = order.delivery_lat ?? shop.lat;
+  const dropLng = order.delivery_lng ?? shop.lng;
+  if (pickupLat == null || pickupLng == null || dropLat == null || dropLng == null) {
+    return order;
+  }
+
+  const yocoId = order.notes?.startsWith("yoco:")
+    ? order.notes.slice(5)
+    : `shop-${order.id}`;
+  const card = order.payment_method === "card";
+  const itemCount = (order.items ?? []).reduce(
+    (s, i) => s + Math.max(0, Number(i.quantity) || 0),
+    0,
+  );
+  const itemsLabel =
+    itemCount > 0
+      ? `${itemCount} item${itemCount === 1 ? "" : "s"}`
+      : "packed bag";
+
+  const job = await insertPaidJob({
+    status: "searching_driver",
+    service_type: "delivery",
+    required_vehicle: "sedan",
+    customer_name: order.customer_name,
+    customer_phone: order.customer_phone,
+    pickup_lat: pickupLat,
+    pickup_lng: pickupLng,
+    pickup_landmark: `${shop.name} — ${shop.landmark}`,
+    dropoff_lat: dropLat,
+    dropoff_lng: dropLng,
+    dropoff_landmark: order.delivery_address,
+    details: {
+      item_description: `Package delivery — no passenger. Collect ${itemsLabel} from ${shop.name}.`,
+      shop_name: shop.name,
+      item_count: itemCount,
+      size: "small",
+      needs_helpers: false,
+    },
+    fee_amount: SHOP_DELIVERY_FEE,
+    platform_commission: SHOP_PLATFORM_DELIVERY,
+    driver_payout: SHOP_DRIVER_COLLECT,
+    fee_currency: "ZAR",
+    country_code: "ZA",
+    payment_status: card ? "paid_online" : "unpaid",
+    payment_method: card ? "card" : "cash",
+    paypal_order_id: card ? yocoId : null,
+    paypal_capture_id: card ? yocoId : null,
+    shop_id: shop.id,
+    product_summary: `${order.reference_code} · ${itemsLabel} · collect from ${shop.name}`,
+    dispatcher_notes: `Shop ready: ${shop.name}. Package delivery — no passenger. Collect ${itemsLabel}, deliver to rider.`,
+  });
+
+  const { data } = await admin
+    .from("rr_shop_orders")
+    .update({ job_id: job.id, updated_at: new Date().toISOString() })
+    .eq("id", order.id)
+    .select("*, items:rr_shop_order_items(*)")
+    .single();
+  return (data as ShopOrder) ?? { ...order, job_id: job.id };
 }
 
 export async function captureYocoAndPlaceShopCart(

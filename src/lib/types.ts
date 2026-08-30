@@ -65,6 +65,8 @@ export type DeliveryDetails = {
   shop_mode?: "shop_and_deliver";
   shop_name?: string;
   shopping_list?: string;
+  /** Packed items on a shop-catalog delivery. */
+  item_count?: number;
   photo_proof_requested?: boolean;
   /** Optional goods cover — adds insurance_fee to the delivery quote. */
   insurance?: boolean;

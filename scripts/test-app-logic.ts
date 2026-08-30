@@ -11,15 +11,18 @@ import {
   mergeDriverArrivedDetails,
 } from "../src/lib/job-status";
 import { mockRepo } from "../src/lib/mock-store";
-import type { Driver } from "../src/lib/types";
+import type { Driver, Job } from "../src/lib/types";
 import {
   applyCommissionToWallet,
+  amountOwedToPlatform,
   cashPlatformRemittance,
   creditLimitBlockMessage,
   driverEligibleForDispatch,
   WALLET_ONLINE_FLOOR,
   walletCreditFloor,
 } from "../src/lib/wallet";
+import { matchListedShop } from "../src/lib/shop-match";
+import { packageOfferCopy } from "../src/lib/package-job";
 import {
   generateReferralCode,
   generateShopWeeklyReport,
@@ -306,6 +309,44 @@ test("wallet: positive balance clears commission_owed", () => {
   const r = applyCommissionToWallet({ walletBalance: 100, commission: 15 });
   assert(r.wallet_balance === 85, `balance ${r.wallet_balance}`);
   assert(r.commission_owed === 0, `owed ${r.commission_owed}`);
+});
+
+test("wallet: cash-only driver owe number", () => {
+  assert(amountOwedToPlatform(-42, 42) === 42, "negative wallet");
+  assert(amountOwedToPlatform(0, 15) === 15, "owed field");
+  assert(amountOwedToPlatform(80, 0) === 0, "card week owes nothing");
+});
+
+test("fetch: listed shop cross-sell from typed list", () => {
+  const shops = [
+    { id: "s1", name: "Mama's Spaza" },
+    { id: "s2", name: "Shoprite Alice" },
+  ] as import("../src/lib/types").Shop[];
+  const hit = matchListedShop(shops, ["2 loaves from Mama's"]);
+  assert(hit?.id === "s1", "Mama's from shopping list");
+  const miss = matchListedShop(shops, ["milk bread"]);
+  assert(miss === null, "generic list does not match");
+});
+
+test("driver ping: shop job is package not passenger", () => {
+  const copy = packageOfferCopy({
+    service_type: "delivery",
+    shop_id: "s1",
+    pickup_landmark: "Mama's Spaza — Main Rd",
+    product_summary: "SO-AB12 · 3 items · collect from Mama's Spaza",
+    dispatcher_notes: "Shop ready: Mama's Spaza.",
+    details: { shop_name: "Mama's Spaza", item_count: 3 },
+  } as Job);
+  assert(copy != null, "shop job has offer copy");
+  assert(
+    copy!.headline.includes("Mama's Spaza"),
+    `headline ${copy!.headline}`,
+  );
+  assert(
+    /no passenger/i.test(copy!.eyebrow),
+    `eyebrow ${copy!.eyebrow}`,
+  );
+  assert(/3 packed item/i.test(copy!.detail), `detail ${copy!.detail}`);
 });
 
 test("dispatch: post-paid credit limit -R100", () => {

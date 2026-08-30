@@ -6,7 +6,7 @@ export const SERVICE_COPY = {
   trip: {
     title: "Trip",
     blurb:
-      "Standard ride from pickup to drop-off. Nearest driver, live tracking, cash or PayPal.",
+      "Standard ride from pickup to drop-off. Nearest driver, live tracking, cash or card (Yoco).",
   },
   reserve: {
     title: "Reserve",
@@ -28,7 +28,7 @@ export const SERVICE_COPY = {
   delivery: {
     title: "Fetch",
     blurb:
-      "Driver collects or buys and brings it to you — shop list, farm goods, or clinic meds. You pay for goods at the shop. Village Ride charges the Fetch fee only.",
+      "Not on the app? Type a list — shop, farm, or clinic. The driver buys and brings it. You pay for goods at the till. Village Ride charges the Fetch fee only. To browse a shop menu and pay in-app, use Shops.",
   },
   courier: {
     title: "Send",
@@ -48,12 +48,12 @@ export const SERVICE_COPY = {
   shops: {
     title: "Shops",
     blurb:
-      "I know the shop — send a shopping list. Or find a shop for me from menus nearby. You pay for goods at the shop. Village Ride only charges the delivery fee — cash or PayPal.",
+      "Browse a shop on Village Ride, add to cart, pay in-app (Yoco) or cash. Delivery R35. Shop not listed? Use Fetch and pay for goods at the till.",
   },
   shopAndDeliver: {
     title: "I know the shop",
     blurb:
-      "Write the shop name and a shopping list. The driver buys the items (you pay at the till) and brings them to you. Village Ride charges the delivery fee only.",
+      "Write the shop name and a list. The driver buys the items — you pay at the till. Village Ride charges the Fetch fee only. Shop on the app? Open Shops and pay in-app.",
   },
   restaurantPickup: {
     title: "Find a shop for me",

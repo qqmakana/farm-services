@@ -48,7 +48,8 @@ export function KitchenOrders({ orders }: { orders: ShopOrder[] }) {
         <h2 className="text-lg font-bold tracking-tight">Kitchen orders</h2>
       </div>
       <p className="mt-1 text-sm text-gray-500">
-        Incoming storefront orders — prepare, then mark ready for pickup.
+        Incoming storefront orders. Mark Ready — the nearest online driver
+        gets a collect-and-deliver offer.
       </p>
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}

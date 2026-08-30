@@ -207,6 +207,44 @@ async function deliverPartnerEmailOptional(params: {
   }
 }
 
+/** Cart checkout — shop must hear about the order before they mark Ready. */
+export async function notifyShopNewCartOrder(order: {
+  shop_id: string;
+  reference_code: string;
+  customer_name: string;
+  delivery_address: string;
+  items?: Array<{ quantity: number }>;
+}) {
+  const itemCount = (order.items ?? []).reduce(
+    (s, i) => s + Math.max(0, Number(i.quantity) || 0),
+    0,
+  );
+  const itemsLabel =
+    itemCount > 0
+      ? `${itemCount} item${itemCount === 1 ? "" : "s"}`
+      : "items";
+
+  let userId: string | null = null;
+  if (useAdmin()) {
+    const admin = createAdminClient();
+    const { data: shop } = await admin
+      .from("rr_shops")
+      .select("user_id")
+      .eq("id", order.shop_id)
+      .maybeSingle();
+    userId = shop?.user_id ?? null;
+  }
+
+  await notifyPartner({
+    shopId: order.shop_id,
+    userId,
+    type: "order_created",
+    title: "New order on Village Ride",
+    body: `${order.reference_code}: pack ${itemsLabel} for ${order.customer_name}. Open your dashboard now.`,
+    emailBody: `New order on Village Ride\n\n${order.reference_code} for ${order.customer_name}\n${itemsLabel}\nDeliver to: ${order.delivery_address}\n\nOpen: /merchant/dashboard`,
+  });
+}
+
 export async function notifyPartnerForJob(
   job: Pick<Job, "id" | "shop_id" | "reference_code" | "status" | "customer_name">,
   kind: "order_created" | "driver_assigned" | "order_completed",

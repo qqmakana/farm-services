@@ -23,6 +23,7 @@ import {
 import { getCapturedReferrer } from "@/lib/rider-referral";
 import { stashPaypalApproveUrl, stashPaypalBooking } from "@/lib/paypal-draft";
 import { SERVICE_COPY } from "@/lib/service-guide";
+import { ListedShopCrossSell } from "@/components/uber/listed-shop-cross-sell";
 import type { CourierPackageType, JobDetails, NewJobInput, ServiceType } from "@/lib/types";
 import { suggestVehicle, VEHICLE_LABELS } from "@/lib/vehicles";
 
@@ -264,6 +265,11 @@ export function SimpleGoodsSheet({
     <div className="space-y-3 text-black">
       <h1 className="text-center text-[22px] font-bold">{heading}</h1>
       <p className="text-center text-[13px] text-[#6B6B6B]">{copy.blurb}</p>
+      {service === "delivery" ? (
+        <ListedShopCrossSell
+          queries={[shopName, pickup, list, item]}
+        />
+      ) : null}
       {service === "delivery" ? (
         <div
           className="grid grid-cols-3 gap-2"

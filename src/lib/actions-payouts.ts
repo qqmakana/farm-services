@@ -82,14 +82,33 @@ export async function generateWeeklyPayoutsAction() {
     byDriver.set(job.driver_id, cur);
   }
 
+  const driverIds = [...byDriver.keys()];
+  const { data: wallets } = driverIds.length
+    ? await admin
+        .from("rr_drivers")
+        .select("id, wallet_balance, commission_owed")
+        .in("id", driverIds)
+    : { data: [] as { id: string; wallet_balance: number; commission_owed: number }[] };
+  const debtById = new Map(
+    (wallets ?? []).map((d) => {
+      const owed = Math.max(
+        0,
+        Math.round(Number(d.commission_owed) || 0),
+        Math.round(-Math.min(0, Number(d.wallet_balance) || 0)),
+      );
+      return [d.id, owed] as const;
+    }),
+  );
+
   for (const [driver_id, cur] of byDriver) {
+    const debt = debtById.get(driver_id) ?? 0;
     await admin.from("rr_driver_payouts").upsert(
       {
         driver_id,
         week_starting,
         week_ending,
         job_count: cur.count,
-        amount: cur.amount,
+        amount: Math.max(0, cur.amount - debt),
         status: "pending",
       },
       { onConflict: "driver_id,week_starting" },

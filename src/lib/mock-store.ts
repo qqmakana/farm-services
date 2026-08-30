@@ -988,58 +988,12 @@ export const mockRepo = {
     }
     const delivery_fee = SHOP_DELIVERY_FEE;
     const total_amount = subtotal + delivery_fee;
-    const summary = lines
-      .map((l) => `${l.quantity}x ${l.product.name}`)
-      .join(", ");
-    const maxSize = lines.reduce<"small" | "medium" | "large" | "xl">(
-      (acc, l) => {
-        const order = ["small", "medium", "large", "xl"] as const;
-        return order.indexOf(l.product.size) > order.indexOf(acc)
-          ? l.product.size
-          : acc;
-      },
-      "small",
-    );
-
-    let jobId: string | null = null;
-    try {
-      const required = suggestVehicle({
-        service_type: "delivery",
-        delivery_size: maxSize,
-      });
-      const job = mockRepo.createJob({
-        service_type: "delivery",
-        required_vehicle: required,
-        customer_name: input.customer_name.trim(),
-        customer_phone: input.customer_phone.trim(),
-        pickup_lat: shop.lat,
-        pickup_lng: shop.lng,
-        pickup_landmark: `${shop.name} — ${shop.landmark}`,
-        dropoff_lat: input.delivery_lat ?? null,
-        dropoff_lng: input.delivery_lng ?? null,
-        dropoff_landmark: input.delivery_address.trim(),
-        details: {
-          item_description: summary,
-          size: maxSize,
-          needs_helpers: maxSize === "large" || maxSize === "xl",
-        },
-        fee_amount: delivery_fee,
-        shop_id: shop.id,
-        product_summary: `${summary} · goods ${subtotal}`,
-        dispatcher_notes: `Eats order from ${shop.name}`,
-        payment: { method: "cash" },
-      });
-      jobId = job.id;
-    } catch {
-      /* keep shop order even if job fails */
-    }
-
     const now = new Date().toISOString();
     const order: ShopOrder = {
       id: uid(),
       reference_code: `SO-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
       shop_id: shop.id,
-      job_id: jobId,
+      job_id: null,
       customer_name: input.customer_name.trim(),
       customer_phone: input.customer_phone.trim(),
       delivery_address: input.delivery_address.trim(),
@@ -1089,6 +1043,46 @@ export const mockRepo = {
     if (!order) throw new Error("Order not found.");
     order.status = status;
     order.updated_at = new Date().toISOString();
+    if (status === "ready" && !order.job_id) {
+      const shop = store().shops.find((s) => s.id === order.shop_id);
+      const items = store().shopOrderItems.filter((i) => i.order_id === order.id);
+      const itemCount = items.reduce((s, i) => s + i.quantity, 0);
+      const itemsLabel =
+        itemCount > 0
+          ? `${itemCount} item${itemCount === 1 ? "" : "s"}`
+          : "packed bag";
+      if (shop && shop.lat != null && shop.lng != null) {
+        try {
+          const job = mockRepo.createJob({
+            service_type: "delivery",
+            required_vehicle: "sedan",
+            customer_name: order.customer_name,
+            customer_phone: order.customer_phone,
+            pickup_lat: shop.lat,
+            pickup_lng: shop.lng,
+            pickup_landmark: `${shop.name} — ${shop.landmark}`,
+            dropoff_lat: order.delivery_lat ?? shop.lat,
+            dropoff_lng: order.delivery_lng ?? shop.lng,
+            dropoff_landmark: order.delivery_address,
+            details: {
+              item_description: `Package delivery — no passenger. Collect ${itemsLabel} from ${shop.name}.`,
+              shop_name: shop.name,
+              item_count: itemCount,
+              size: "small",
+              needs_helpers: false,
+            },
+            fee_amount: SHOP_DELIVERY_FEE,
+            shop_id: shop.id,
+            product_summary: `${order.reference_code} · ${itemsLabel} · collect from ${shop.name}`,
+            dispatcher_notes: `Shop ready: ${shop.name}. Package delivery — no passenger. Collect ${itemsLabel}.`,
+            payment: { method: "cash" },
+          });
+          order.job_id = job.id;
+        } catch {
+          /* kitchen status still updates */
+        }
+      }
+    }
     return {
       ...order,
       items: store().shopOrderItems.filter((i) => i.order_id === order.id),

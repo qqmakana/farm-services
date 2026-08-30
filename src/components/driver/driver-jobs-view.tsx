@@ -25,6 +25,7 @@ import {
 } from "@/lib/format";
 import { pickupPhotoFromDetails } from "@/lib/pickup-photo";
 import { driverHasArrived, isConfirmedStatus } from "@/lib/job-status";
+import { packageOfferCopy } from "@/lib/package-job";
 import { isCashPaymentMethod } from "@/lib/wallet";
 import type { JobStatus, JobWithDriver } from "@/lib/types";
 
@@ -71,6 +72,8 @@ export function DriverJobsView() {
     }
     return jobs.filter((j) => j.status === "cancelled");
   }, [jobs, segment]);
+
+  const activeOffer = active ? packageOfferCopy(active) : null;
 
   function run(fn: () => Promise<unknown>) {
     setError(null);
@@ -120,12 +123,25 @@ export function DriverJobsView() {
               : STATUS_LABELS[active.status]}
           </h2>
           <p className="mt-2 text-sm text-[var(--ru-muted)]">
-            {SERVICE_LABELS[active.service_type]} ·{" "}
+            {activeOffer?.eyebrow ?? SERVICE_LABELS[active.service_type]} ·{" "}
             {formatMoney(Number(active.fee_amount))} ·{" "}
             {isCashPaymentMethod(active.payment_method)
               ? "Cash"
               : "Card / PayPal"}
           </p>
+          {activeOffer ? (
+            <div
+              data-testid="package-delivery-offer"
+              className="mt-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5"
+            >
+              <p className="text-[15px] font-bold leading-snug text-black">
+                {activeOffer.headline}
+              </p>
+              <p className="mt-1 text-xs font-semibold text-amber-950">
+                {activeOffer.detail}
+              </p>
+            </div>
+          ) : null}
           <div className="mt-3">
             <PickupDescribeCard
               pickup={active.pickup_landmark}

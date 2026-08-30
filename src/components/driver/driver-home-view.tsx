@@ -30,7 +30,9 @@ import {
   buildSimpleWalletTopUpMessage,
   walletTopUpWhatsAppHref,
 } from "@/lib/whatsapp";
+import { packageOfferCopy } from "@/lib/package-job";
 import {
+  amountOwedToPlatform,
   isApproachingCreditLimit,
   walletCreditFloor,
 } from "@/lib/wallet";
@@ -183,6 +185,7 @@ export function DriverHomeView() {
   }
 
   const job = selected?.jobs;
+  const offerCopy = job ? packageOfferCopy(job) : null;
   const verificationBlocked =
     Boolean(driver) && getDriverVerificationUiStatus(driver!) !== "verified";
 
@@ -262,6 +265,44 @@ export function DriverHomeView() {
                 </strong>
               </span>
             </div>
+            {amountOwedToPlatform(
+              driver.wallet_balance,
+              driver.commission_owed,
+            ) > 0 ? (
+              <div
+                data-testid="cash-owe-banner"
+                className="space-y-2 rounded-2xl border-2 border-rose-500 bg-rose-50 px-3 py-3"
+              >
+                <p className="text-[11px] font-bold uppercase tracking-wide text-rose-800">
+                  Sunday settlement
+                </p>
+                <p className="text-[22px] font-bold leading-tight text-rose-950">
+                  You owe Village Ride{" "}
+                  {formatMoney(
+                    amountOwedToPlatform(
+                      driver.wallet_balance,
+                      driver.commission_owed,
+                    ),
+                  )}
+                </p>
+                <p className="text-xs text-rose-900">
+                  Cash-only week: we pay you R0. This is the 10% from cash
+                  trips. Top up on WhatsApp before Sunday.
+                </p>
+                <a
+                  href={walletTopUpWhatsAppHref(
+                    BRAND.phoneWhatsApp,
+                    buildSimpleWalletTopUpMessage(driver.id),
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  data-testid="top-up-wallet-button"
+                  className="block rounded-xl bg-[#25D366] px-3 py-2 text-center text-xs font-bold text-white"
+                >
+                  Top Up Wallet on WhatsApp
+                </a>
+              </div>
+            ) : null}
             {Number(driver.wallet_balance ?? 0) <
               walletCreditFloor(driver.country_code) ? (
               <div
@@ -333,8 +374,22 @@ export function DriverHomeView() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold tracking-wide text-[var(--ru-muted)] uppercase">
-                  {SERVICE_LABELS[job.service_type]} · {job.reference_code}
+                  {offerCopy?.eyebrow ?? SERVICE_LABELS[job.service_type]} ·{" "}
+                  {job.reference_code}
                 </p>
+                {offerCopy ? (
+                  <div
+                    data-testid="package-delivery-offer"
+                    className="mt-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-black"
+                  >
+                    <p className="text-[15px] font-bold leading-snug">
+                      {offerCopy.headline}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-amber-950">
+                      {offerCopy.detail}
+                    </p>
+                  </div>
+                ) : null}
                 <div className="mt-2">
                   <PickupDescribeCard
                     pickup={job.pickup_landmark}

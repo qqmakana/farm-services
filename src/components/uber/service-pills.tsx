@@ -1,13 +1,21 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AppLink } from "@/components/ui/app-link";
+import {
+  ArtCourier,
+  ArtGrocery,
+  ArtReserve,
+  ArtSafety,
+  ArtTripStop,
+} from "@/components/customer/uber-service-tile";
 
 const PILLS: {
   href: string;
   label: string;
-  src: string;
+  src?: string;
+  art?: ReactNode;
   match: (p: string, when: string | null, stop: string | null) => boolean;
 }[] = [
   {
@@ -20,31 +28,31 @@ const PILLS: {
   {
     href: "/ride?stop=1",
     label: "+ Stop",
-    src: "/home/icons/car.png",
+    art: <ArtTripStop />,
     match: (p, _when, stop) => p.startsWith("/ride") && stop === "1",
   },
   {
     href: "/courier",
     label: "Send",
-    src: "/home/icons/courier.png",
+    art: <ArtCourier />,
     match: (p) => p.startsWith("/courier"),
   },
   {
     href: "/delivery",
     label: "Fetch",
-    src: "/home/icons/courier.png",
+    art: <ArtGrocery />,
     match: (p) => p.startsWith("/delivery"),
   },
   {
     href: "/ride?when=later",
     label: "Reserve",
-    src: "/home/icons/car.png",
+    art: <ArtReserve />,
     match: (p, when) => p.startsWith("/ride") && when === "later",
   },
   {
     href: "/safety",
     label: "Safety",
-    src: "/home/icons/car.png",
+    art: <ArtSafety />,
     match: (p) => p.startsWith("/safety"),
   },
 ];
@@ -76,13 +84,19 @@ function ServicePillsInner({ className = "" }: { className?: string }) {
                 : "font-semibold text-[#6b6b6b]"
             }`}
           >
-            <span className="relative h-8 w-8 shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={pill.src}
-                alt=""
-                className="pointer-events-none h-8 w-8 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)]"
-              />
+            <span className="relative flex h-8 w-8 shrink-0 items-center justify-center">
+              {pill.src ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={pill.src}
+                  alt=""
+                  className="pointer-events-none h-8 w-8 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)]"
+                />
+              ) : (
+                <span className="pointer-events-none flex h-8 w-8 items-center justify-center [&>svg]:h-8 [&>svg]:w-8">
+                  {pill.art}
+                </span>
+              )}
             </span>
             {pill.label}
             {active ? (
