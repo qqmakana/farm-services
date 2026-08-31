@@ -12,22 +12,24 @@ export default async function MerchantDashboardPage() {
     return (
       <>
         <SiteNav active="shop" compact />
-        <main className="ru-page max-w-lg text-center">
-          <h1 className="ru-page-title">Shop owner sign-in</h1>
-          <p className="ru-page-sub">
+        <main className="ru-force-light ru-page max-w-lg bg-white text-center text-[#111111]">
+          <h1 className="text-[28px] font-bold tracking-tight text-[#111111]">
+            Shop owner sign-in
+          </h1>
+          <p className="mt-2 text-sm text-[#6B6B6B]">
             This is the kitchen — menu photos, incoming orders, mark Ready.
             Sign in with the email you used when you registered the shop.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
               href="/login?next=/merchant/dashboard"
-              className="ru-btn ru-btn-primary !inline-flex"
+              className="uber-press inline-flex min-h-12 items-center justify-center rounded-full bg-black px-6 text-[16px] font-bold text-white"
             >
               Sign in
             </Link>
             <Link
               href="/merchant/register"
-              className="ru-btn ru-btn-secondary !inline-flex"
+              className="uber-press inline-flex min-h-12 items-center justify-center rounded-full bg-[#06c167] px-6 text-[16px] font-bold text-white"
             >
               Register a shop
             </Link>
@@ -46,16 +48,18 @@ export default async function MerchantDashboardPage() {
     return (
       <>
         <SiteNav active="shop" compact />
-        <main className="ru-page max-w-lg text-center">
-          <h1 className="ru-page-title">This is a rider account</h1>
-          <p className="ru-page-sub">
-            You are signed in as <strong className="text-black">{data.role}</strong>.
+        <main className="ru-force-light ru-page max-w-lg bg-white text-center text-[#111111]">
+          <h1 className="text-[28px] font-bold tracking-tight text-[#111111]">
+            This is a rider account
+          </h1>
+          <p className="mt-2 text-sm text-[#6B6B6B]">
+            You are signed in as <strong className="text-[#111111]">{data.role}</strong>.
             Shop kitchen needs a shop-owner login. Register the shop, or sign
             out and use the business email.
           </p>
           <Link
             href="/merchant/register"
-            className="ru-btn ru-btn-primary mt-6 !inline-flex"
+            className="uber-press mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-6 text-[16px] font-bold text-white"
           >
             Register a shop
           </Link>

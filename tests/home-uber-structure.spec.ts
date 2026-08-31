@@ -256,18 +256,12 @@ test.describe("Home Uber structure", () => {
 
     await page.goto("/shops");
     await dismissCountryModalIfPresent(page);
-    await expect(page.getByTestId("shops-how-it-works")).toBeVisible({
+    await expect(page.getByTestId("shop-owner-kitchen")).toBeVisible({
       timeout: 15_000,
     });
     await expect(
-      page.getByRole("heading", { name: /Two ways to shop/i }),
+      page.getByRole("link", { name: /Are you a shop owner\? Join Village Ride/i }),
     ).toBeVisible();
-    await page.getByTestId("shops-how-next").click();
-    await expect(
-      page.getByRole("heading", { name: /A driver goes for you/i }),
-    ).toBeVisible();
-    await expect(page.getByText(/Shop & Deliver/i).first()).toBeVisible();
-    await expect(page.getByTestId("shop-know")).toBeVisible();
     await expect(page.getByTestId("shop-find")).toBeVisible();
   });
 });

@@ -199,14 +199,16 @@ export function MerchantDashboard({
 
   if (!shop) {
     return (
-      <main className="ru-page max-w-3xl">
-        <h1 className="ru-page-title">Shop owner kitchen</h1>
-        <p className="ru-page-sub">
+      <main className="ru-force-light ru-page-enter mx-auto max-w-3xl bg-white px-4 py-8 pb-20 text-[#111111]">
+        <h1 className="text-[28px] font-bold tracking-tight text-[#111111]">
+          Shop owner kitchen
+        </h1>
+        <p className="mt-2 text-sm text-[#6B6B6B]">
           Signed in as {email ?? "shop owner"}, but no shop is linked yet.
         </p>
         <Link
           href="/merchant/register"
-          className="ru-btn ru-btn-primary mt-6 !inline-flex"
+          className="uber-press mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-6 text-[16px] font-bold text-white"
         >
           Register your shop
         </Link>
@@ -309,16 +311,16 @@ export function MerchantDashboard({
   }
 
   return (
-    <main className="ru-page-enter mx-auto max-w-3xl px-4 py-8 pb-20 text-black">
+    <main className="ru-force-light ru-page-enter mx-auto max-w-3xl bg-white px-4 py-8 pb-20 text-[#111111]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold tracking-wide text-[var(--ru-muted)] uppercase">
+          <p className="text-xs font-bold uppercase tracking-wide text-[#6B6B6B]">
             Shop owner
           </p>
-          <h1 className="mt-1 font-[family-name:var(--font-display)] text-[28px] font-bold tracking-tight text-black">
+          <h1 className="mt-1 text-[28px] font-bold tracking-tight text-[#111111]">
             Hello, {shop.name}
           </h1>
-          <p className="mt-1 text-sm text-[var(--ru-muted)]">
+          <p className="mt-1 text-sm text-[#6B6B6B]">
             {formatMoney(revenue)} this{" "}
             {period === "today" ? "day" : period === "week" ? "week" : "month"}{" "}
             · {shop.landmark}
@@ -327,14 +329,14 @@ export function MerchantDashboard({
         <div className="flex flex-wrap gap-2">
           <Link
             href="/merchant/referrals"
-            className="ru-btn ru-btn-secondary !min-h-11 !px-4 !text-sm"
+            className="uber-press inline-flex min-h-11 items-center justify-center rounded-full bg-black px-5 text-sm font-bold text-white"
           >
             Referrals
           </Link>
           <button
             type="button"
             onClick={() => setShowForm((v) => !v)}
-            className="ru-btn ru-btn-primary !min-h-11 !px-4 !text-sm"
+            className="uber-press inline-flex min-h-11 items-center justify-center rounded-full bg-[#06c167] px-5 text-sm font-bold text-white"
           >
             {showForm ? "Close" : "Create delivery"}
           </button>

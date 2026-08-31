@@ -14,7 +14,6 @@ import {
 } from "@/lib/shop-photos";
 import { ShopPhoto } from "@/components/shops/shop-photo";
 import { formatMoney } from "@/lib/format";
-import { ShopsHowItWorks } from "@/components/shops/shops-how-it-works";
 import { useCountry } from "@/components/country/country-provider";
 
 export function ShopStorefront({ shops }: { shops: Shop[] }) {
@@ -180,27 +179,22 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
       )}
 
       {filtered.length > 0 ? (
-        <>
-          <ShopsHowItWorks />
-          <AppLink
-            href="/delivery?kind=shop"
-            data-testid="shop-know"
-            className="sr-only"
-          >
-            I know the shop — send a list
-          </AppLink>
-        </>
+        <AppLink
+          href="/delivery?kind=shop"
+          data-testid="shop-know"
+          className="sr-only"
+        >
+          I know the shop — send a list
+        </AppLink>
       ) : null}
 
-      <p className="mt-8 pb-2 text-center text-[13px]">
-        <AppLink
-          href="/merchant/register"
-          data-testid="shop-owner-kitchen"
-          className="font-medium text-[#6B6B6B] underline-offset-2"
-        >
-          Are you a shop owner? Join Village Ride →
-        </AppLink>
-      </p>
+      <AppLink
+        href="/merchant/register"
+        data-testid="shop-owner-kitchen"
+        className="uber-press mt-8 flex min-h-14 w-full items-center justify-center rounded-full bg-[#06c167] px-5 text-center text-[16px] font-bold text-white"
+      >
+        Are you a shop owner? Join Village Ride
+      </AppLink>
     </div>
   );
 }

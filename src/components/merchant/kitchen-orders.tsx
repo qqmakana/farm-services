@@ -56,10 +56,12 @@ export function KitchenOrders({ orders }: { orders: ShopOrder[] }) {
   return (
     <section className="mt-8 touch-manipulation">
       <div className="flex items-center gap-2">
-        <CookingPot className="h-5 w-5 text-black" />
-        <h2 className="text-lg font-bold tracking-tight">Kitchen orders</h2>
+        <CookingPot className="h-5 w-5 text-[#111111]" />
+        <h2 className="text-lg font-bold tracking-tight text-[#111111]">
+          Kitchen orders
+        </h2>
       </div>
-      <p className="mt-1 text-sm text-gray-500">
+      <p className="mt-1 text-sm text-[#6B6B6B]">
         Incoming storefront orders. Mark Ready — the nearest online driver
         gets a collect-and-deliver offer.
       </p>
