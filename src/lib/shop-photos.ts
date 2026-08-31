@@ -81,14 +81,14 @@ export function productPhotoSrc(
 
 export function productCategory(name: string): string {
   const n = name.toLowerCase();
-  if (/bread|loaf|vetkoek|roll/.test(n)) return "Bakery";
-  if (/milk|amasi|cheese|yoghurt/.test(n)) return "Dairy";
-  if (/egg/.test(n)) return "Eggs";
-  if (/stew|chicken|curry|pap|mince|beef|meat/.test(n)) return "Meals";
-  if (/coke|fanta|drink|cola|juice/.test(n)) return "Drinks";
+  if (/stew|chicken|curry|pap|mince|beef|meat|meal|plate|platter/.test(n))
+    return "Meals";
+  if (/coke|fanta|drink|cola|juice|soda|amasi/.test(n)) return "Drinks";
+  if (/bread|loaf|vetkoek|roll|side|salad|chakalaka/.test(n)) return "Sides";
   if (/soap|cleaner/.test(n)) return "Household";
-  if (/oil|maize|flour|sugar|rice|salt|tea|coffee/.test(n)) return "Staples";
-  return "More";
+  if (/oil|maize|flour|sugar|rice|salt|tea|coffee|milk|egg|staple/.test(n))
+    return "Staples";
+  return "Meals";
 }
 
 export function shopPillMatch(shop: Shop, pill: string): boolean {

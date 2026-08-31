@@ -21,6 +21,7 @@ export function ShopMenuEditor({
   const router = useRouter();
   const [pending, start] = useTransition();
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -58,11 +59,13 @@ export function ShopMenuEditor({
         await createProduct({
           shop_id: shopId,
           name: name.trim(),
+          description: description.trim() || null,
           price: amount,
           size: "small",
           image_url,
         });
         setName("");
+        setDescription("");
         setPrice("");
         onFile(null);
         setOk("On the menu. Riders will see it on your shop page.");
@@ -77,8 +80,8 @@ export function ShopMenuEditor({
     <section className="ru-card mt-6 p-5" data-testid="shop-menu-editor">
       <h2 className="text-lg font-bold text-black">Your menu — add photos here</h2>
       <p className="mt-1 text-sm text-[#6B6B6B]">
-        This is the shop-owner kitchen. Name, price, and a photo of the real plate.
-        Riders see it on your shop page.
+        This is the shop-owner kitchen. Name, short description, price, and a photo.
+        Riders see all four on your shop page.
       </p>
 
       <form onSubmit={submit} className="mt-4 space-y-3">
@@ -88,6 +91,17 @@ export function ShopMenuEditor({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Beef stew + pap"
+            className="mt-1 w-full rounded-2xl bg-[#F3F3F3] px-4 py-3 text-[16px] outline-none"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-bold text-[#6B6B6B]">
+            Short description
+          </span>
+          <input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Slow-cooked beef with pap"
             className="mt-1 w-full rounded-2xl bg-[#F3F3F3] px-4 py-3 text-[16px] outline-none"
           />
         </label>
@@ -146,6 +160,9 @@ export function ShopMenuEditor({
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold">{p.name}</p>
+                <p className="truncate text-sm text-[#6B6B6B]">
+                  {p.description?.trim() || "No description yet"}
+                </p>
                 <p className="text-sm font-bold">{formatMoney(Number(p.price))}</p>
               </div>
             </li>

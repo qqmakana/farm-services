@@ -107,7 +107,7 @@ export function ShopMenu({
     }
     return [...map.entries()];
   }, [products]);
-  const tabs = ["Popular", ...groups.map(([c]) => c)];
+  const tabs = groups.length > 1 ? ["Popular", ...groups.map(([c]) => c)] : [];
 
   const cartDraft = () => ({
     shop_id: shop.id,
@@ -221,7 +221,33 @@ export function ShopMenu({
 
   return (
     <div className="vr-page-enter relative min-h-dvh touch-manipulation bg-[#f3f3f3] pb-28">
-      <div className="relative h-52 overflow-hidden bg-[#3d2a1a]">
+      <div className="flex items-center justify-between bg-white px-3 py-2">
+        <AppLink
+          href="/shops"
+          className="uber-press inline-flex min-h-11 items-center gap-1 text-[15px] font-bold text-[#111111]"
+          aria-label="Back"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          Shops
+        </AppLink>
+        <button
+          type="button"
+          onClick={() => count > 0 && setSheetOpen(true)}
+          className="uber-press relative inline-flex min-h-11 items-center gap-1.5 px-2 text-[15px] font-bold text-[#111111]"
+          aria-label="Cart"
+        >
+          <ShoppingBag className="h-5 w-5" />
+          {count > 0 ? (
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#06c167] px-1 text-[10px] font-bold text-white">
+              {count}
+            </span>
+          ) : (
+            <span className="text-[13px] font-medium text-[#6B6B6B]">Cart</span>
+          )}
+        </button>
+      </div>
+
+      <div className="relative h-32 overflow-hidden bg-[#3d2a1a]">
         {shopCoverUrl(shop) ? (
           <ShopPhoto
             src={shopCoverUrl(shop)!}
@@ -232,27 +258,7 @@ export function ShopMenu({
         ) : (
           <div className="h-full w-full bg-[linear-gradient(160deg,#2b2b2b_0%,#5a4636_55%,#8a6a4a_100%)]" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-black/20" />
-        <AppLink
-          href="/shops"
-          className="uber-press absolute top-4 left-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-md"
-          aria-label="Back"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </AppLink>
-        <button
-          type="button"
-          onClick={() => count > 0 && setSheetOpen(true)}
-          className="uber-press absolute top-4 right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-md"
-          aria-label="Cart"
-        >
-          <ShoppingBag className="h-5 w-5" />
-          {count > 0 ? (
-            <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#06c167] px-1 text-[10px] font-bold text-white">
-              {count}
-            </span>
-          ) : null}
-        </button>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         <div className="absolute right-4 bottom-4 left-4 text-white">
           <h1 className="text-[26px] font-bold leading-tight tracking-[-0.4px]">
             {shop.name}
@@ -271,60 +277,44 @@ export function ShopMenu({
         </div>
       </div>
 
-      <div
-        className="vr-hide-scrollbar sticky top-0 z-20 flex gap-2 overflow-x-auto border-b border-[#E8E8E8] bg-white px-4 py-2.5"
-        role="tablist"
-        aria-label="Menu sections"
-      >
-        {tabs.map((cat) => (
-          <button
-            key={cat}
-            type="button"
-            role="tab"
-            aria-selected={activeCat === cat}
-            onClick={() => scrollToCat(cat)}
-            className={`uber-press shrink-0 rounded-full px-3 py-1.5 text-[13px] font-bold ${
-              activeCat === cat
-                ? "bg-black text-white"
-                : "bg-[#F3F3F3] text-[#3D3D3D]"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
+      {tabs.length > 0 ? (
+        <div
+          className="vr-hide-scrollbar sticky top-0 z-20 flex gap-2 overflow-x-auto border-b border-[#E8E8E8] bg-white px-4 py-2.5"
+          role="tablist"
+          aria-label="Menu sections"
+        >
+          {tabs.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              role="tab"
+              aria-selected={activeCat === cat}
+              onClick={() => scrollToCat(cat)}
+              className={`uber-press shrink-0 rounded-full px-3 py-1.5 text-[13px] font-bold ${
+                activeCat === cat
+                  ? "bg-black text-white"
+                  : "bg-[#F3F3F3] text-[#3D3D3D]"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
-      <div className="mx-auto max-w-md px-4 pb-8">
-        {popular.length > 0 ? (
+      <div className="mx-auto max-w-md space-y-6 px-4 pb-8 pt-5">
+        {tabs.length > 0 && popular.length > 0 ? (
           <section id="shop-popular" className="scroll-mt-16 pt-5">
-            <h2 className="text-[17px] font-bold">Most ordered</h2>
-            <div className="vr-hide-scrollbar -mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-1">
+            <h2 className="text-[17px] font-bold text-[#111111]">Most ordered</h2>
+            <div className="mt-3 space-y-3">
               {popular.map((product) => (
-                <article
+                <ProductCard
                   key={product.id}
-                  className="w-[132px] shrink-0 overflow-hidden rounded-[12px] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
-                >
-                  <ShopPhoto
-                    src={productPhotoSrc(product)}
-                    alt=""
-                    fallback="/shops/prod-staples.jpg"
-                    className="h-[120px] w-full object-cover"
-                  />
-                  <div className="p-2">
-                    <p className="line-clamp-2 text-[13px] font-bold leading-snug">
-                      {product.name}
-                    </p>
-                    <p className="mt-1 text-[15px] font-bold">
-                      {formatMoney(Number(product.price))}
-                    </p>
-                    <AddControl
-                      product={product}
-                      qty={qtyFor(shopLines, product.id)}
-                      popped={justAdded === product.id}
-                      onAdd={() => onAdd(product)}
-                    />
-                  </div>
-                </article>
+                  product={product}
+                  qty={qtyFor(shopLines, product.id)}
+                  popped={justAdded === product.id}
+                  onAdd={() => onAdd(product)}
+                />
               ))}
             </div>
           </section>
@@ -334,51 +324,20 @@ export function ShopMenu({
           <section
             key={cat}
             id={`shop-cat-${cat}`}
-            className="scroll-mt-16 pt-6"
+            className="scroll-mt-16"
           >
-            <h2 className="text-[17px] font-bold">{cat}</h2>
-            <ul className="mt-2 divide-y divide-[#F0F0F0] overflow-hidden rounded-[16px] bg-white">
+            <h2 className="text-[17px] font-bold text-[#111111]">{cat}</h2>
+            <div className="mt-3 space-y-3">
               {items.map((product) => (
-                <li
+                <ProductCard
                   key={product.id}
-                  className={`flex gap-3 p-3 ${
-                    product.in_stock ? "" : "opacity-50"
-                  }`}
-                >
-                  <ShopPhoto
-                    src={productPhotoSrc(product)}
-                    alt=""
-                    fallback="/shops/prod-staples.jpg"
-                    className={`h-20 w-20 shrink-0 rounded-[12px] object-cover ${
-                      product.in_stock ? "" : "grayscale"
-                    }`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-bold text-black">{product.name}</p>
-                    {product.description ? (
-                      <p className="mt-0.5 line-clamp-1 text-[13px] text-[#6B6B6B]">
-                        {product.description}
-                      </p>
-                    ) : null}
-                    <p className="mt-1 text-[16px] font-bold">
-                      {formatMoney(Number(product.price))}
-                    </p>
-                    {!product.in_stock ? (
-                      <p className="mt-1 text-[12px] font-bold text-[#8A8A8A]">
-                        Unavailable
-                      </p>
-                    ) : (
-                      <AddControl
-                        product={product}
-                        qty={qtyFor(shopLines, product.id)}
-                        popped={justAdded === product.id}
-                        onAdd={() => onAdd(product)}
-                      />
-                    )}
-                  </div>
-                </li>
+                  product={product}
+                  qty={qtyFor(shopLines, product.id)}
+                  popped={justAdded === product.id}
+                  onAdd={() => onAdd(product)}
+                />
               ))}
-            </ul>
+            </div>
           </section>
         ))}
       </div>
@@ -554,6 +513,64 @@ export function ShopMenu({
   );
 }
 
+function productBlurb(product: Product) {
+  const d = product.description?.trim();
+  if (d) return d;
+  return productCategory(product.name);
+}
+
+function ProductCard({
+  product,
+  qty,
+  popped,
+  onAdd,
+}: {
+  product: Product;
+  qty: number;
+  popped: boolean;
+  onAdd: () => void;
+}) {
+  return (
+    <article
+      className={`overflow-hidden rounded-[12px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] ${
+        product.in_stock ? "" : "opacity-50"
+      }`}
+    >
+      <ShopPhoto
+        src={productPhotoSrc(product)}
+        alt=""
+        fallback="/shops/prod-staples.jpg"
+        className={`h-44 w-full object-cover ${
+          product.in_stock ? "" : "grayscale"
+        }`}
+      />
+      <div className="p-3">
+        <p className="text-[16px] font-bold leading-snug text-[#111111]">
+          {product.name}
+        </p>
+        <p className="mt-0.5 overflow-hidden text-ellipsis whitespace-nowrap text-[14px] text-[#666666]">
+          {productBlurb(product)}
+        </p>
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <p className="text-[18px] font-bold text-[#111111]">
+            {formatMoney(Number(product.price))}
+          </p>
+          {product.in_stock ? (
+            <AddControl
+              product={product}
+              qty={qty}
+              popped={popped}
+              onAdd={onAdd}
+            />
+          ) : (
+            <p className="text-[12px] font-bold text-[#8A8A8A]">Unavailable</p>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function AddControl({
   product,
   qty,
@@ -566,7 +583,7 @@ function AddControl({
   onAdd: () => void;
 }) {
   return (
-    <div className={`mt-2 ${popped ? "vr-add-pop" : ""}`}>
+    <div className={`shrink-0 ${popped ? "vr-add-pop" : ""}`}>
       {qty === 0 ? (
         <button
           type="button"
