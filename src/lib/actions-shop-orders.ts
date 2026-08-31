@@ -333,7 +333,7 @@ async function patchShopOrderByJobId(
     .update(payload)
     .eq("job_id", jobId);
   if (error && /column|schema cache/i.test(error.message)) {
-    const slim = { ...payload };
+    const slim: Record<string, unknown> = { ...payload };
     delete slim.driver_id;
     delete slim.driver_accepted_at;
     delete slim.collected_at;
