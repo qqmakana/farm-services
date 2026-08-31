@@ -304,7 +304,7 @@ export function LiveTrip({
     : eta != null && confirmed
       ? `Pick-up in ${eta} min`
       : noDrivers
-        ? "No drivers available"
+        ? "No drivers nearby right now"
         : STATUS_LABELS[job.status];
 
   const subhead = arrived && job.drivers
@@ -395,20 +395,20 @@ export function LiveTrip({
         ) : null}
 
         {noDrivers ? (
-          <div className="rounded-[16px] bg-[#fdecea] px-4 py-6 text-center">
-            <p className="text-[20px] font-bold text-black">
+          <div className="rounded-[16px] bg-white px-4 py-10 text-center shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+            <p className="text-[18px] font-bold text-[#111111]">
               {job.required_vehicle === "motorcycle"
                 ? "No motorcycle drivers nearby. Try again shortly."
-                : "No drivers available right now"}
+                : "No drivers nearby right now. Try again in a few minutes."}
             </p>
-            <p className="mt-2 text-[15px] text-[#6B6B6B]">
+            <p className="mt-2 text-[14px] text-[#666666]">
               {Number(job.dispatch_attempts) > 0
                 ? `${Number(job.dispatch_attempts)} driver${
                     Number(job.dispatch_attempts) === 1 ? "" : "s"
                   } ${
                     Number(job.dispatch_attempts) === 1 ? "was" : "were"
                   } offered and none accepted.`
-                : "No drivers are online near you right now."}{" "}
+                : "This is not an error — nobody is online near you yet."}{" "}
               Book again, schedule for later, or WhatsApp dispatch on{" "}
               {BRAND.phone}.
             </p>

@@ -460,7 +460,7 @@ export async function cancelMerchantOrder(
   const reasonLabel: Record<CancelReason, string> = {
     customer_changed_mind: "Customer changed mind",
     wrong_items: "Wrong items",
-    no_drivers: "No drivers available",
+    no_drivers: "No drivers nearby right now. Try again in a few minutes.",
     other: note?.trim() || "Other",
   };
 

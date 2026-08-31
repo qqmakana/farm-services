@@ -271,6 +271,7 @@ export type NewDriverApplicationInput = {
 
 export type Shop = {
   id: string;
+  /** Display name from the shops table. Rename in Supabase — not hardcoded. */
   name: string;
   phone: string;
   category: string;

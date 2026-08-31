@@ -7,6 +7,7 @@ import {
 } from "@/components/uber/places-autocomplete";
 import { DescribePlaceExamples } from "@/components/location/describe-place-examples";
 import { SavedPlacesChips } from "@/components/location/saved-places-chips";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 
 export type Loc = {
   lat: number | null;
@@ -108,7 +109,7 @@ export function useGpsPin(
         setLoading(false);
       },
       () => {
-        setGpsError("Couldn’t get GPS — tap the map or type a landmark.");
+        setGpsError("Village Ride needs your location to find nearby drivers.");
         setLoading(false);
       },
       { enableHighAccuracy: true, timeout: 12000 },
@@ -133,10 +134,19 @@ export function GpsButton({
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#000000]/25 bg-[#f5f5f5] px-3 py-3 text-sm font-semibold text-[#000000] transition hover:bg-[#f5f5f5] active:scale-95 disabled:opacity-60"
       >
         <span aria-hidden>◎</span>
-        {loading ? "Updating location…" : "Refresh my GPS location"}
+        {loading ? <ButtonSpinner dark /> : "Refresh my GPS location"}
       </button>
       {gpsError ? (
-        <p className="mt-1.5 text-xs text-amber-800">{gpsError}</p>
+        <div className="mt-2 space-y-2">
+          <p className="text-[12px] text-[#666666]">{gpsError}</p>
+          <button
+            type="button"
+            onClick={captureGps}
+            className="uber-press uber-btn-outline h-11 min-h-11 w-full text-sm"
+          >
+            Open Settings
+          </button>
+        </div>
       ) : null}
     </div>
   );

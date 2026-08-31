@@ -34,20 +34,16 @@ test.describe("Activity & Account — Uber-style functionality", () => {
       page.getByRole("heading", { name: /^Activity$/i }),
     ).toBeVisible({ timeout: 15_000 });
 
-    const phoneGate = page.getByPlaceholder(/Phone number/i);
+    const phoneGate = page.getByLabel(/Phone number/i);
     if (await phoneGate.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await phoneGate.fill("0821234567");
       await page.getByPlaceholder(/Name/i).fill("Uber Check");
       await page.getByRole("button", { name: /View activity/i }).click();
     }
 
-    await expect(page.getByRole("heading", { name: /^Upcoming$/i })).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(page.getByRole("heading", { name: /^Past$/i })).toBeVisible();
     await expect(
-      page.getByText(/You have no upcoming trips|No past trips yet|R\s?\d+/i).first(),
-    ).toBeVisible({ timeout: 10_000 });
+      page.getByText(/No trips yet|Upcoming|R\s?\d+/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
   });
 
   test("Account: profile, tiles, menu, sign out", async ({ page }) => {

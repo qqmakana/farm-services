@@ -3,11 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import { Calendar, RotateCw } from "lucide-react";
+import { Receipt, RotateCw } from "lucide-react";
 import { listJobsByCustomerPhone, cancelRiderJobAction } from "@/lib/actions";
 import { listShopOrdersByPhone } from "@/lib/actions-shop-orders";
 import { ShopOrderTrack } from "@/components/shops/shop-order-track";
-import { formatMoney, SERVICE_LABELS } from "@/lib/format";
+import { formatMoney, formatPhoneDisplay, SERVICE_LABELS } from "@/lib/format";
+import { ActivityRowSkeleton } from "@/components/ui/skeleton";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   getGuestProfile,
   setGuestProfile,
@@ -147,9 +150,9 @@ export function ActivityView() {
 
   function savePhone(e: React.FormEvent) {
     e.preventDefault();
-    const phone = phoneInput.trim();
+    const phone = phoneInput.replace(/\D/g, "");
     if (!phone) {
-      setError("Enter your phone number");
+      setError("Phone number is required.");
       return;
     }
     setGuestProfile({ name: nameInput.trim(), phone });
@@ -172,7 +175,12 @@ export function ActivityView() {
   if (!hydrated) {
     return (
       <main className={UBER_PAGE}>
-        <p className="text-[15px] font-medium text-[#6b6b6b]">Loading…</p>
+        <h1 className={UBER_H1}>Activity</h1>
+        <div className="vr-overscroll mt-6 space-y-3" aria-busy="true" aria-label="Loading trips">
+          <ActivityRowSkeleton />
+          <ActivityRowSkeleton />
+          <ActivityRowSkeleton />
+        </div>
       </main>
     );
   }
@@ -185,10 +193,12 @@ export function ActivityView() {
         <form onSubmit={savePhone} className="mt-8 space-y-3">
           <input
             className={UBER_INPUT}
-            placeholder="Phone number"
+            placeholder="082 123 4567"
+            aria-label="Phone number"
             inputMode="tel"
+            autoComplete="tel"
             value={phoneInput}
-            onChange={(e) => setPhoneInput(e.target.value)}
+            onChange={(e) => setPhoneInput(formatPhoneDisplay(e.target.value))}
           />
           <input
             className={UBER_INPUT}
@@ -196,9 +206,11 @@ export function ActivityView() {
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
           />
-          {error ? <p className="text-sm font-medium text-[#f02d3a]">{error}</p> : null}
+          {error ? (
+            <p className="text-[12px] font-normal text-[#CB4040]">{error}</p>
+          ) : null}
           <button type="submit" disabled={pending} className={UBER_BTN_BLACK}>
-            {pending ? "Loading…" : "View activity"}
+            {pending ? <ButtonSpinner /> : "View activity"}
           </button>
         </form>
       </main>
@@ -213,25 +225,28 @@ export function ActivityView() {
       <h1 className={UBER_H1}>Activity</h1>
 
       {shopOrders.length > 0 ? (
-        <section className="mt-6 space-y-3">
-          <h2 className="text-[17px] font-bold text-[#0a0a0a]">Shop orders</h2>
+        <section className="mt-6 space-y-4">
+          <h2 className="text-[17px] font-bold text-[#111111]">Shop orders</h2>
           {shopOrders.map((order) => (
             <ShopOrderTrack key={order.id} order={order} />
           ))}
         </section>
       ) : null}
 
+      {upcoming.length === 0 && past.length === 0 && shopOrders.length === 0 && !pending ? (
+        <EmptyState
+          icon={Receipt}
+          title="No trips yet"
+          body="Your trip history will appear here"
+        />
+      ) : (
+        <>
       <section className="mt-6">
-        <h2 className="text-[17px] font-bold text-[#0a0a0a]">Upcoming</h2>
+        <h2 className="text-[17px] font-bold text-[#111111]">Upcoming</h2>
         {upcoming.length === 0 ? (
-          <div className={`mt-4 flex items-center gap-4 rounded-[28px] p-4 ${UBER_GLOSS}`}>
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white">
-              <Calendar className="h-6 w-6 text-[#71717a]" strokeWidth={2} aria-hidden />
-            </span>
-            <p className="font-semibold text-[#0a0a0a]">You have no upcoming trips</p>
-          </div>
+          <p className="mt-3 text-[14px] text-[#666666]">No upcoming trips</p>
         ) : (
-          <ul className="mt-3">
+          <ul className="vr-overscroll vr-stagger mt-3 space-y-4">
             {upcoming.map((job) => (
               <TripRow
                 key={job.id}
@@ -274,18 +289,19 @@ export function ActivityView() {
       </section>
 
       <section className="mt-8">
-        <h2 className="text-[17px] font-bold text-[#0a0a0a]">Past</h2>
+        <h2 className="text-[17px] font-bold text-[#111111]">Past</h2>
         {error ? (
-          <p className="mt-3 rounded-2xl bg-rose-50 px-3 py-2 text-sm text-rose-800">
-            {error}
-          </p>
+          <p className="mt-3 text-[12px] text-[#CB4040]">{error}</p>
         ) : null}
         {pending && jobs.length === 0 ? (
-          <p className="mt-4 text-sm text-gray-500">Loading…</p>
+          <div className="vr-overscroll mt-4 space-y-3" aria-busy="true">
+            <ActivityRowSkeleton />
+            <ActivityRowSkeleton />
+          </div>
         ) : past.length === 0 ? (
-          <p className="mt-3 text-[15px] font-medium text-[#6b6b6b]">No past trips yet</p>
+          <p className="mt-3 text-[14px] text-[#666666]">No past trips yet</p>
         ) : (
-          <ul className="mt-3 space-y-3">
+          <ul className="vr-overscroll vr-stagger mt-3 space-y-4">
             {past.map((job) => (
               <PastTripCard
                 key={job.id}
@@ -300,6 +316,8 @@ export function ActivityView() {
           </ul>
         )}
       </section>
+        </>
+      )}
 
       {receiptJob ? (
         <TripReceipt job={receiptJob} onClose={() => setReceiptJob(null)} />

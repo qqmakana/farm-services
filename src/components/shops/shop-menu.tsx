@@ -30,7 +30,9 @@ import { createPayPalOrderAction } from "@/lib/actions";
 import { PaymentSelector, type CheckoutPaymentChoice } from "@/components/checkout/payment-selector";
 import { SafeCardPay } from "@/components/uber/safe-card-pay";
 import { stashPaypalBooking } from "@/lib/paypal-draft";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, formatPhoneDisplay } from "@/lib/format";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   etaForShop,
   productCategory,
@@ -112,7 +114,7 @@ export function ShopMenu({
   const cartDraft = () => ({
     shop_id: shop.id,
     customer_name: name,
-    customer_phone: phone,
+    customer_phone: phone.replace(/\D/g, ""),
     delivery_address: address,
     items: shopLines.map((l) => ({
       product_id: l.productId,
@@ -147,7 +149,7 @@ export function ShopMenu({
         const order = await placeShopCartOrder({
           shop_id: shop.id,
           customer_name: name,
-          customer_phone: phone,
+          customer_phone: phone.replace(/\D/g, ""),
           delivery_address: address,
           items: shopLines.map((l) => ({
             product_id: l.productId,
@@ -166,13 +168,14 @@ export function ShopMenu({
 
   if (success) {
     return (
-      <div className="vr-page-enter flex min-h-dvh touch-manipulation flex-col bg-[#f3f3f3] px-4 pb-28 pt-8">
+      <div className="vr-page-enter flex min-h-dvh touch-manipulation flex-col bg-[#F5F5F5] px-4 pb-28 pt-8">
         <div className="mx-auto w-full max-w-md">
           <div className="rounded-[20px] bg-white px-4 py-6 shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-            <p className="text-[13px] font-bold uppercase tracking-wide text-[#06c167]">
+            <p className="text-[13px] font-semibold text-[#06c167]">
               Order placed
             </p>
-            <h1 className="mt-1 text-[24px] font-bold tracking-tight">
+            {/* TODO: shop.name is from the shops table in Supabase. Rename there — not in code. */}
+            <h1 className="mt-1 text-[24px] font-bold tracking-tight text-[#111111]">
               {shop.name} is packing
             </h1>
             <p className="mt-1 text-sm text-[#6B6B6B]">
@@ -220,7 +223,7 @@ export function ShopMenu({
   }
 
   return (
-    <div className="vr-page-enter relative min-h-dvh touch-manipulation bg-[#f3f3f3] pb-28">
+    <div className="vr-page-enter relative min-h-dvh touch-manipulation bg-[#F5F5F5] pb-28">
       <div className="flex items-center justify-between bg-white px-3 py-2">
         <AppLink
           href="/shops"
@@ -232,13 +235,15 @@ export function ShopMenu({
         </AppLink>
         <button
           type="button"
-          onClick={() => count > 0 && setSheetOpen(true)}
-          className="uber-press relative inline-flex min-h-11 items-center gap-1.5 px-2 text-[15px] font-bold text-[#111111]"
+          onClick={() => setSheetOpen(true)}
+          className="uber-press relative inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2 text-[15px] font-bold text-[#111111]"
           aria-label="Cart"
         >
           <ShoppingBag className="h-5 w-5" />
           {count > 0 ? (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#06c167] px-1 text-[10px] font-bold text-white">
+            <span
+              className={`flex h-5 min-w-5 items-center justify-center rounded-full bg-[#06c167] px-1 text-[10px] font-bold text-white ${justAdded ? "vr-add-pop" : ""}`}
+            >
               {count}
             </span>
           ) : (
@@ -261,6 +266,7 @@ export function ShopMenu({
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         <div className="absolute right-4 bottom-4 left-4 text-white">
           <h1 className="text-[26px] font-bold leading-tight tracking-[-0.4px]">
+            {/* TODO: shop.name is from the shops table in Supabase. Rename there — not in code. */}
             {shop.name}
           </h1>
           <p className="mt-1 flex flex-wrap items-center gap-x-2 text-[12px] font-semibold text-white/90">
@@ -368,8 +374,25 @@ export function ShopMenu({
             aria-label="Close cart"
             onClick={() => setSheetOpen(false)}
           />
-          <div className="uber-sheet-panel relative max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-[1.75rem] bg-white px-4 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-2xl">
-            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-gray-300" />
+          <div className="uber-sheet-panel relative max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-[1.75rem] bg-white px-4 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#E0E0E0]" />
+            {count === 0 ? (
+              <EmptyState
+                icon={ShoppingBag}
+                title="Your cart is empty"
+                body="Add items from a shop to get started"
+                action={
+                  <button
+                    type="button"
+                    className="uber-press uber-btn-black"
+                    onClick={() => setSheetOpen(false)}
+                  >
+                    Browse shops
+                  </button>
+                }
+              />
+            ) : (
+              <>
             <div className="mb-1 flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-bold tracking-tight">Your order</h3>
@@ -447,20 +470,21 @@ export function ShopMenu({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your name"
-                className="w-full rounded-2xl bg-[#F3F3F3] px-4 py-3.5 text-[16px] outline-none"
+                className="h-12 w-full rounded-[12px] border border-[#E0E0E0] bg-white px-4 text-[16px] outline-none focus:border-2 focus:border-[#111111]"
               />
               <input
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Phone number"
+                onChange={(e) => setPhone(formatPhoneDisplay(e.target.value))}
+                placeholder="082 123 4567"
                 inputMode="tel"
-                className="w-full rounded-2xl bg-[#F3F3F3] px-4 py-3.5 text-[16px] outline-none"
+                autoComplete="tel"
+                className="h-12 w-full rounded-[12px] border border-[#E0E0E0] bg-white px-4 text-[16px] outline-none focus:border-2 focus:border-[#111111]"
               />
               <input
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="Delivery address / landmark"
-                className="w-full rounded-2xl bg-[#F3F3F3] px-4 py-3.5 text-[16px] outline-none"
+                className="h-12 w-full rounded-[12px] border border-[#E0E0E0] bg-white px-4 text-[16px] outline-none focus:border-2 focus:border-[#111111]"
               />
             </div>
 
@@ -475,7 +499,9 @@ export function ShopMenu({
               <PaymentSelector value={payMethod} onChange={setPayMethod} />
             </div>
 
-            {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+            {error ? (
+              <p className="mt-3 text-[12px] text-[#CB4040]">{error}</p>
+            ) : null}
 
             {payMethod === "card" && needMore === 0 ? (
               <div className="mt-4">
@@ -501,10 +527,10 @@ export function ShopMenu({
                 onClick={placeOrder}
                 className="uber-press uber-btn-black mt-5 w-full"
               >
-                {pending
-                  ? "Processing…"
-                  : `Place order · ${formatMoney(total)}`}
+                {pending ? <ButtonSpinner /> : `Place order · ${formatMoney(total)}`}
               </button>
+            )}
+              </>
             )}
           </div>
         </div>
@@ -535,7 +561,7 @@ function ProductCard({
 
   return (
     <article
-      className={`overflow-hidden rounded-[12px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] ${
+      className={`overflow-hidden rounded-[12px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] ${
         product.in_stock ? "" : "opacity-50"
       }`}
     >
@@ -556,9 +582,7 @@ function ProductCard({
         </p>
         <div className="mt-2 flex items-center justify-between gap-3">
           <div>
-            <p className="text-[18px] font-bold text-[#111111]">
-              {formatMoney(lineTotal)}
-            </p>
+            <p className="vr-price">{formatMoney(lineTotal)}</p>
             {qty > 1 ? (
               <p className="text-[11px] font-medium text-[#8A8A8A]">
                 {qty} × {formatMoney(unit)}
@@ -598,10 +622,12 @@ function AddControl({
         <button
           type="button"
           onClick={onAdd}
-          className="uber-press flex h-8 w-8 items-center justify-center rounded-full bg-[#06c167] text-white shadow-[0_2px_8px_rgba(6,193,103,0.35)]"
+          className="uber-add-plus uber-press"
           aria-label={`Add ${product.name}`}
         >
-          <Plus className="h-4 w-4" strokeWidth={2.75} />
+          <span>
+            <Plus className="h-4 w-4" strokeWidth={2.75} />
+          </span>
         </button>
       ) : (
         <div className="uber-qty-stepper">

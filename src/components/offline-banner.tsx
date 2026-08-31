@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { trackClientPageView, trackClientEvent } from "@/lib/actions-ops";
+import { useToast } from "@/components/ui/toast";
 
 function subscribe(cb: () => void) {
   window.addEventListener("online", cb);
@@ -83,6 +84,15 @@ async function replayQueue(items: QueuedAction[]) {
 export function OfflineBanner() {
   const online = useOnlineStatus();
   const [syncedMsg, setSyncedMsg] = useState<string | null>(null);
+  const { warning } = useToast();
+  const wasOnline = useRef(true);
+
+  useEffect(() => {
+    if (!online && wasOnline.current) {
+      warning("Connection lost. Retrying...");
+    }
+    wasOnline.current = online;
+  }, [online, warning]);
 
   useEffect(() => {
     if (!online) return;
@@ -107,14 +117,14 @@ export function OfflineBanner() {
 
   return (
     <div
-      className={`fixed top-0 left-1/2 z-[80] w-full max-w-md -translate-x-1/2 px-3 py-2 text-center text-sm font-semibold ${
-        online ? "bg-emerald-600 text-white" : "bg-amber-500 text-amber-950"
+      className={`fixed top-0 left-1/2 z-[80] w-full max-w-md -translate-x-1/2 px-4 py-2 text-center text-sm font-semibold ${
+        online ? "bg-[#06c167] text-white" : "bg-[#FF9800] text-white"
       }`}
       role="status"
     >
       {online
         ? syncedMsg
-        : "You're offline — landmark booking & saved places still work on this phone."}
+        : "You're offline. Some features may not work."}
     </div>
   );
 }

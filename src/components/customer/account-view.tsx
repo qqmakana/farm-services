@@ -24,6 +24,7 @@ import {
 import { CountrySelector } from "@/components/country/country-selector";
 import { useCountry } from "@/components/country/country-provider";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
+import { formatPhoneDisplay } from "@/lib/format";
 import {
   clearGuestProfile,
   getGuestProfile,
@@ -79,10 +80,10 @@ export function AccountView() {
 
   function saveDetails(e: React.FormEvent) {
     e.preventDefault();
-    if (!phoneInput.trim()) return;
+    if (!phoneInput.replace(/\D/g, "")) return;
     setGuestProfile({
       name: nameInput,
-      phone: phoneInput,
+      phone: phoneInput.replace(/\D/g, ""),
       country_code: countryCode,
     });
     refreshProfile();
@@ -194,7 +195,7 @@ export function AccountView() {
           <input
             className={UBER_INPUT}
             value={phoneInput}
-            onChange={(e) => setPhoneInput(e.target.value)}
+            onChange={(e) => setPhoneInput(formatPhoneDisplay(e.target.value))}
             placeholder={formatPhonePlaceholder(countryCode)}
             inputMode="tel"
             required

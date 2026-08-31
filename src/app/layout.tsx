@@ -78,10 +78,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#FFFFFF",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
 };
 
@@ -92,7 +93,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en-ZA" className={`${sans.variable} h-full`}>
-      <body className="min-h-full bg-[#F3F3F3] font-[family-name:var(--font-sans)] text-[var(--ru-ink)] antialiased">
+      <body className="min-h-full bg-[#F5F5F5] font-[family-name:var(--font-sans)] text-[#111111] antialiased">
         <CountryProvider>
           <ThemeProvider>
             <ToastProvider>

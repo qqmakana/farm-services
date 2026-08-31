@@ -34,7 +34,7 @@ export function LocationPinPicker({ lat, lng, onChange }: Props) {
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => onChange(pos.coords.latitude, pos.coords.longitude),
-      () => setHint("Could not get GPS — tap the map to place a pin."),
+      () => setHint("Village Ride needs your location to find nearby drivers."),
       { enableHighAccuracy: true, timeout: 12000 },
     );
   }, [onChange]);
@@ -65,7 +65,20 @@ export function LocationPinPicker({ lat, lng, onChange }: Props) {
           ? ` · ${lat.toFixed(5)}, ${lng.toFixed(5)}`
           : ""}
       </p>
-      {hint ? <p className="text-xs text-rose-600">{hint}</p> : null}
+      {hint ? (
+        <div className="space-y-2">
+          <p className="text-[12px] text-[#666666]">{hint}</p>
+          {hint.includes("location") ? (
+            <button
+              type="button"
+              onClick={useGps}
+              className="uber-press uber-btn-outline h-11 min-h-11 text-sm"
+            >
+              Open Settings
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { formatMoney } from "@/lib/format";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 import {
   readPaypalApproveUrl,
   stashCardCheckoutId,
@@ -66,9 +67,7 @@ export function SafeCardPay({
     return (
       <div className="space-y-2">
         {error ? (
-          <p className="rounded-xl bg-[#fdecea] px-3 py-2 text-[13px] text-[#b01000]">
-            {error}
-          </p>
+          <p className="text-[12px] text-[#CB4040]">{error}</p>
         ) : null}
         <button
           type="button"
@@ -78,15 +77,17 @@ export function SafeCardPay({
             setBusy(true);
             void onLocalPay()
               .catch((e) => {
-                setError(e instanceof Error ? e.message : "Payment failed");
+                setError(
+                  e instanceof Error
+                    ? e.message
+                    : "Payment failed. Try again or use a different card.",
+                );
               })
               .finally(() => setBusy(false));
           }}
-          className="uber-press min-h-12 w-full rounded-full bg-black py-4 text-[17px] font-medium text-white disabled:opacity-50"
+          className="uber-press uber-btn-black w-full"
         >
-          {busy
-            ? "Creating trip…"
-            : `${submitLabel ?? "Pay"} · ${formatMoney(amount)}`}
+          {busy ? <ButtonSpinner /> : `${submitLabel ?? "Pay"} · ${formatMoney(amount)}`}
         </button>
       </div>
     );
@@ -94,11 +95,6 @@ export function SafeCardPay({
 
   return (
     <div className="space-y-2">
-      {error ? (
-        <p className="rounded-xl bg-[#fdecea] px-3 py-2 text-[13px] text-[#b01000]">
-          {error}
-        </p>
-      ) : null}
       <button
         type="button"
         disabled={disabled || busy}
@@ -119,25 +115,30 @@ export function SafeCardPay({
               const url = approveUrl || readPaypalApproveUrl();
               if (!url) {
                 throw new Error(
-                  "Card checkout did not open. Choose Cash, or try Card again.",
+                  "Payment failed. Try again or use a different card.",
                 );
               }
               window.location.assign(url);
             } catch (e) {
               setError(
-                e instanceof Error ? e.message : "Could not start card payment.",
+                e instanceof Error
+                  ? e.message
+                  : "Payment failed. Try again or use a different card.",
               );
               setBusy(false);
             }
           })();
         }}
-        className="uber-press min-h-12 w-full rounded-full bg-black py-4 text-[17px] font-medium text-white disabled:opacity-50"
+        className="uber-press uber-btn-black w-full"
       >
-        {busy
-          ? "Opening card pay…"
-          : `${submitLabel ?? "Pay with card"} · ${formatMoney(amount)}`}
+        {busy ? (
+          <ButtonSpinner />
+        ) : (
+          `${submitLabel ?? "Pay with card"} · ${formatMoney(amount)}`
+        )}
       </button>
-      <p className="text-center text-[12px] text-[#6B6B6B]">
+      {error ? <p className="text-[12px] text-[#CB4040]">{error}</p> : null}
+      <p className="text-center text-[12px] text-[#666666]">
         Yoco opens to finish card payment, then brings you back here.
       </p>
     </div>

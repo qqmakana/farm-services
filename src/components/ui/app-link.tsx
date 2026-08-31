@@ -6,10 +6,11 @@ import type { AnchorHTMLAttributes } from "react";
 export function AppLink({
   href,
   children,
+  className,
   ...rest
 }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
   return (
-    <a href={href} {...rest}>
+    <a href={href} className={`no-underline ${className ?? ""}`} {...rest}>
       {children}
     </a>
   );

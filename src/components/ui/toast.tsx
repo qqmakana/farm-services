@@ -28,10 +28,10 @@ type ToastApi = {
 const ToastContext = createContext<ToastApi | null>(null);
 
 const TONE_CLASS: Record<ToastTone, string> = {
-  success: "bg-[#05944F] text-white",
+  success: "bg-[#06c167] text-white",
   error: "bg-[#CB4040] text-white",
-  info: "bg-[#0E0E0E] text-white",
-  warning: "bg-[#0E0E0E] text-white",
+  info: "bg-[#111111] text-white",
+  warning: "bg-[#FF9800] text-white",
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {

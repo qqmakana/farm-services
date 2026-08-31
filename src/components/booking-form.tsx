@@ -124,7 +124,7 @@ export function BookingForm({
         if (which === "pickup") setPickup((p) => ({ ...p, ...next }));
         else setDropoff((p) => ({ ...p, ...next }));
       },
-      () => setGpsError("Could not read GPS. Allow location or type landmarks."),
+      () => setGpsError("Village Ride needs your location to find nearby drivers."),
       { enableHighAccuracy: true, timeout: 12000 },
     );
   }

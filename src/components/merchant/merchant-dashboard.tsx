@@ -314,10 +314,11 @@ export function MerchantDashboard({
     <main className="ru-force-light ru-page-enter mx-auto max-w-3xl bg-white px-4 py-8 pb-20 text-[#111111]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-[#6B6B6B]">
+          <p className="text-xs font-semibold tracking-wide text-[#666666]">
             Shop owner
           </p>
           <h1 className="mt-1 text-[28px] font-bold tracking-tight text-[#111111]">
+            {/* TODO: shop.name comes from the shops table. Rename in Supabase — do not hardcode. */}
             Hello, {shop.name}
           </h1>
           <p className="mt-1 text-sm text-[#6B6B6B]">
@@ -715,20 +716,22 @@ export function MerchantDashboard({
               return (
                 <li key={job.id} className="ru-card p-4">
                   {exhausted ? (
-                    <div className="mb-3 rounded-xl border border-[var(--ru-error)]/30 bg-[color-mix(in_srgb,var(--ru-error)_8%,white)] px-3 py-2 text-xs text-black">
-                      <p className="font-semibold">No drivers available right now</p>
-                      <p className="mt-0.5 text-[var(--ru-muted)]">
+                    <div className="mb-3 rounded-xl bg-[#F5F5F5] px-3 py-3 text-sm text-[#333333]">
+                      <p className="font-semibold text-[#111111]">
+                        No drivers nearby right now. Try again in a few minutes.
+                      </p>
+                      <p className="mt-0.5 text-[13px] text-[#666666]">
                         Schedule for later when more drivers are online.
                       </p>
                       <button
                         type="button"
-                        className="mt-2 font-semibold text-black underline"
+                        className="mt-2 font-semibold text-[#06c167]"
                         onClick={() => {
                           setWhenMode("later");
                           setShowForm(true);
                         }}
                       >
-                        Schedule another delivery
+                        Schedule another delivery →
                       </button>
                     </div>
                   ) : null}

@@ -13,6 +13,7 @@ import {
   shopPillMatch,
 } from "@/lib/shop-photos";
 import { ShopPhoto } from "@/components/shops/shop-photo";
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatMoney } from "@/lib/format";
 import { useCountry } from "@/components/country/country-provider";
 
@@ -38,13 +39,13 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
 
   return (
     <div className="vr-page-enter touch-manipulation pb-8">
-      <header className="sticky top-0 z-20 -mx-4 bg-[#f3f3f3]/95 px-4 pb-3 pt-1 backdrop-blur-sm">
-        <p className="flex items-center gap-1 text-[12px] font-medium text-[#6B6B6B]">
+      <header className="sticky top-0 z-20 -mx-4 bg-[#F5F5F5]/95 px-4 pb-3 pt-1 backdrop-blur-sm">
+        <p className="flex items-center gap-1 text-[12px] font-medium text-[#666666]">
           <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
           {place}
         </p>
-        <label className="mt-2 flex items-center gap-2 rounded-[24px] border border-[#E8E8E8] bg-white px-3.5 py-3">
-          <Search className="h-5 w-5 shrink-0 text-[#8A8A8A]" aria-hidden />
+        <label className="mt-2 flex h-12 items-center gap-2 rounded-[12px] border border-[#E0E0E0] bg-white px-4">
+          <Search className="h-5 w-5 shrink-0 text-[#999999]" aria-hidden />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -70,8 +71,8 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
                 onClick={() => setPill(name)}
                 className={`uber-press shrink-0 rounded-full px-3.5 py-2 text-[13px] font-bold ${
                   on
-                    ? "bg-black text-white"
-                    : "border border-[#E8E8E8] bg-white text-black"
+                    ? "bg-[#111111] text-white"
+                    : "border border-[#E0E0E0] bg-white text-[#111111]"
                 }`}
               >
                 {name}
@@ -82,46 +83,39 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
       </header>
 
       {filtered.length === 0 ? (
-        <div className="mt-10 px-2 text-center">
-          <ShoppingBag
-            className="mx-auto h-10 w-10 text-[#C4C4C4]"
-            strokeWidth={1.5}
-            aria-hidden
-          />
-          <p className="mt-4 text-[18px] font-bold text-[#3D3D3D]">
-            {shops.length === 0
+        <EmptyState
+          icon={ShoppingBag}
+          title={
+            shops.length === 0
               ? "No shops nearby yet"
-              : "No shops match that search"}
-          </p>
-          <p className="mt-2 text-[14px] leading-relaxed text-[#8A8A8A]">
-            We&apos;re adding local spazas and grocery stores daily.
-          </p>
-          <AppLink
-            href="/delivery?kind=shop"
-            data-testid="shop-know"
-            className="uber-press mt-6 inline-flex min-h-11 items-center rounded-full bg-black px-5 text-sm font-bold text-white"
-          >
-            Browse with Fetch instead
-          </AppLink>
-          <p className="mt-5 text-[12px] font-semibold tracking-wide text-[#C4C4C4]">
-            ─── OR ───
-          </p>
-          <AppLink
-            href="/merchant/register"
-            className="uber-press mt-4 inline-flex min-h-11 items-center rounded-full border border-black px-5 text-sm font-bold text-black"
-          >
-            I own a shop — Join Village
-          </AppLink>
-        </div>
+              : `No results for '${q.trim() || "that search"}'`
+          }
+          body={
+            shops.length === 0
+              ? "We're adding local spazas daily"
+              : "Try searching for 'milk' or 'stew'"
+          }
+          action={
+            shops.length === 0 ? (
+              <AppLink
+                href="/delivery?kind=shop"
+                data-testid="shop-know"
+                className="uber-press uber-btn-black inline-flex no-underline"
+              >
+                Browse with Fetch instead
+              </AppLink>
+            ) : undefined
+          }
+        />
       ) : (
-        <div id="find-shop" className="mt-3 space-y-4">
+        <div id="find-shop" className="vr-overscroll vr-stagger mt-3 space-y-4">
           {filtered.map((shop) => {
             const cover = shopCoverUrl(shop);
             return (
               <AppLink
                 key={shop.id}
                 href={`/shops/${shop.id}`}
-                className="uber-press block overflow-hidden rounded-[12px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-transform duration-100 active:scale-[0.98]"
+                className="uber-press block overflow-hidden rounded-[12px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
               >
                 <div className="relative aspect-[16/9] overflow-hidden bg-[#1A1A1A]">
                   {cover ? (
@@ -147,11 +141,11 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
                     </span>
                   ) : null}
                 </div>
-                <div className="px-3.5 py-3">
-                  <p className="text-[18px] font-bold leading-tight text-black">
+                <div className="p-3">
+                  <p className="text-[16px] font-bold leading-tight text-[#111111]">
                     {shop.name}
                   </p>
-                  <p className="mt-1 flex items-center gap-1 text-[14px] font-semibold text-[#3D3D3D]">
+                  <p className="mt-1 flex items-center gap-1 text-[13px] text-[#666666]">
                     <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                     {shop.rating_avg != null
                       ? shop.rating_avg.toFixed(1)
@@ -162,7 +156,7 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
                       </span>
                     ) : null}
                   </p>
-                  <div className="mt-1.5 flex items-start justify-between gap-3 text-[14px] text-[#6B6B6B]">
+                  <div className="mt-1.5 flex items-start justify-between gap-3 text-[13px] text-[#666666]">
                     <p>
                       {shopCategoryLabel(shop.category)} · {etaForShop(shop)} ·{" "}
                       {formatMoney(SHOP_DELIVERY_FEE)}

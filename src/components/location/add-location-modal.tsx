@@ -8,6 +8,7 @@ import { getGuestProfile } from "@/lib/guest-profile";
 import { useCountry } from "@/components/country/country-provider";
 import type { PlaceValue } from "@/components/uber/places-autocomplete";
 import type { LocationCategory } from "@/lib/types";
+import { ButtonSpinner } from "@/components/ui/button-spinner";
 
 type Props = {
   initialName?: string;
@@ -233,7 +234,7 @@ export function AddLocationModal({ initialName = "", onClose, onCreated }: Props
             disabled={pending || !canSubmit}
             className="ru-btn ru-btn-primary"
           >
-            {pending ? "Saving…" : "Submit"}
+            {pending ? <ButtonSpinner /> : "Save"}
           </button>
         </div>
       </form>

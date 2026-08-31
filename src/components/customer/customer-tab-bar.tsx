@@ -2,7 +2,7 @@
 
 import { AppLink } from "@/components/ui/app-link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Grid2X2, Home, Receipt, User } from "lucide-react";
 import { applySimpleModeClass } from "@/lib/simple-mode";
 
@@ -46,16 +46,31 @@ export function CustomerTabBar() {
   const pathname = usePathname() ?? "/";
   const hideOnMap =
     pathname.startsWith("/ride") || pathname.startsWith("/trip");
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
 
   useEffect(() => {
     applySimpleModeClass();
   }, []);
 
-  if (hideOnMap) return null;
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const sync = () => {
+      setKeyboardOpen(window.innerHeight - vv.height > 120);
+    };
+    vv.addEventListener("resize", sync);
+    vv.addEventListener("scroll", sync);
+    return () => {
+      vv.removeEventListener("resize", sync);
+      vv.removeEventListener("scroll", sync);
+    };
+  }, []);
+
+  if (hideOnMap || keyboardOpen) return null;
 
   return (
     <nav
-      className="fixed bottom-[max(0.4rem,env(safe-area-inset-bottom))] left-1/2 z-[60] w-[calc(100%-1.25rem)] max-w-md -translate-x-1/2 rounded-[28px] bg-white shadow-[0_8px_28px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.06] font-[family-name:var(--font-sans)]"
+      className="fixed bottom-0 left-1/2 z-[60] w-full max-w-md -translate-x-1/2 bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_10px_rgba(0,0,0,0.05)] font-[family-name:var(--font-sans)]"
       aria-label="Main"
       data-testid="customer-tab-bar"
     >
@@ -68,10 +83,10 @@ export function CustomerTabBar() {
               <AppLink
                 href={tab.href}
                 data-testid={`customer-tab-${tab.label.toLowerCase()}`}
-                className={`uber-press flex min-h-12 flex-1 flex-col items-center justify-center gap-0.5 py-1.5 ${
+                className={`uber-press flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 py-1.5 no-underline ${
                   active
-                    ? "font-semibold text-black"
-                    : "font-medium text-[#6B6B6B]"
+                    ? "font-semibold text-[#111111]"
+                    : "font-medium text-[#666666]"
                 }`}
               >
                 <span
@@ -82,7 +97,7 @@ export function CustomerTabBar() {
                   <Icon
                     className="h-6 w-6"
                     strokeWidth={active ? 2.25 : 2}
-                    fill="none"
+                    fill={active ? "currentColor" : "none"}
                     aria-hidden
                   />
                 </span>

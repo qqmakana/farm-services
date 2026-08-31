@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { PageShell } from "@/components/ui/page-shell";
 import { UBER_GLOSS } from "@/components/customer/uber-chrome";
+import { ActivityRowSkeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { listJobsByCustomerPhone } from "@/lib/actions";
 import { getGuestProfile } from "@/lib/guest-profile";
@@ -146,7 +147,10 @@ export default function NotificationsPage() {
       subtitle="Trip updates from this phone"
     >
       {notes == null ? (
-        <p className="text-sm text-[var(--ru-muted)]">Loading…</p>
+        <div className="space-y-3">
+          <ActivityRowSkeleton />
+          <ActivityRowSkeleton />
+        </div>
       ) : empty ? (
         <div className={`rounded-[28px] px-4 py-8 text-center ${UBER_GLOSS}`}>
           <Bell className="mx-auto h-8 w-8 text-gray-400" aria-hidden />

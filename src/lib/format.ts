@@ -37,6 +37,10 @@ export function formatMoney(
 ) {
   const country = countryCode ? getCountry(countryCode) : null;
   const code = currency || country?.currency || "ZAR";
+  const n = Math.round(Number(amount) || 0);
+  if (code === "ZAR") {
+    return `R ${n}`;
+  }
   const locale = country?.locale || CURRENCY_LOCALE[code] || "en-ZA";
   try {
     return new Intl.NumberFormat(locale, {
@@ -44,11 +48,19 @@ export function formatMoney(
       currency: code,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount);
+    }).format(n);
   } catch {
     const sym = country?.currencySymbol ?? code;
-    return `${sym}${Math.round(amount)}`;
+    return `${sym} ${n}`;
   }
+}
+
+/** Display helper: `082 123 4567`. Strip non-digits before saving. */
+export function formatPhoneDisplay(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 10);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+  return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
 }
 
 export function formatWhen(

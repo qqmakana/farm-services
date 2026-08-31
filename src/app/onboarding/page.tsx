@@ -14,8 +14,8 @@ export default function OnboardingPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-dvh items-center justify-center bg-white text-sm text-[var(--ru-muted)]">
-          Loading…
+        <div className="flex min-h-dvh items-center justify-center bg-[#F5F5F5]">
+          <span className="vr-spin vr-spin-dark" aria-hidden />
         </div>
       }
     >

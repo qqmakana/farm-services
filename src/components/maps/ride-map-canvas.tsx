@@ -236,6 +236,7 @@ export function RideMapCanvas({
   const onSelectRef = useRef(onSelect);
   const onSelectJobRef = useRef(onSelectJob);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const [routeLine, setRouteLine] = useState<[number, number][] | null>(null);
   onSelectRef.current = onSelect;
   onSelectJobRef.current = onSelectJob;
@@ -483,6 +484,7 @@ export function RideMapCanvas({
 
     syncRef.current = sync;
     map.on("style.load", sync);
+    map.on("load", () => setMapReady(true));
     map.on("error", (event) => {
       const message = event.error?.message ?? "Map failed to load";
       if (/token|401|403|style/i.test(message)) setMapError(message);
@@ -530,9 +532,14 @@ export function RideMapCanvas({
         ref={wrapRef}
         data-testid="ride-map"
         className={`vr-mapbox h-full w-full ${
-          variant === "rider" ? "bg-[#E5E3DF]" : "bg-[#1a1a1a]"
+          variant === "rider" ? "bg-[#F5F5F5]" : "bg-[#1a1a1a]"
         }`}
       />
+      {!mapReady && !mapError ? (
+        <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center bg-[#F5F5F5]">
+          <span className="vr-map-pulse" aria-hidden />
+        </div>
+      ) : null}
       {mapError ? (
         <p className="absolute inset-x-3 top-24 z-10 rounded-lg bg-black/80 px-3 py-2 text-xs text-white">
           Map style did not load. Add NEXT_PUBLIC_MAPBOX_TOKEN on Vercel, then

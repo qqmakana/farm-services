@@ -31,10 +31,6 @@ do $$ begin
 exception when others then null;
 end $$;
 
--- Food-delivery test driver → motorcycle (phone from mock Lebo Shops Bike).
--- Also match notes that say food/shops bike.
-update public.rr_drivers
-set vehicle_type = 'motorcycle'
-where phone in ('27827770000', '0827770000')
-   or lower(coalesce(notes, '')) like '%food delivery%';
+-- STOP. Postgres will not let you SET vehicle_type = 'motorcycle' in this
+-- same query (error 55P04). Open a new SQL tab and run DRIVER_VEHICLE_FOOD_BIKE.sql.
 

@@ -32,7 +32,7 @@ export function DriverOnboardingGate({ children }: { children: ReactNode }) {
   if (!ready) {
     return (
       <div className="flex min-h-dvh items-center justify-center pb-24">
-        <p className="text-sm text-slate-500">Loading…</p>
+        <span className="vr-spin vr-spin-dark" aria-hidden />
       </div>
     );
   }

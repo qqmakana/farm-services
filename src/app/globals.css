@@ -1,35 +1,38 @@
 @import "tailwindcss";
 
 :root {
-  --ru-ink: #000000;
-  --ru-muted: #6b6b6b;
+  --ru-ink: #111111;
+  --ru-body: #333333;
+  --ru-muted: #666666;
   --ru-line: #eeeeee;
+  --ru-border: #e0e0e0;
   --ru-surface: #ffffff;
-  --ru-canvas: #f3f3f3;
+  --ru-canvas: #f5f5f5;
   --ru-elevated: #ffffff;
-  --ru-brand: #000000;
-  --ru-brand-2: #000000;
-  --ru-black: #000000;
+  --ru-brand: #111111;
+  --ru-brand-2: #111111;
+  --ru-black: #111111;
   --ru-dark: #0e0e0e;
-  --ru-gray-50: #f3f3f3;
+  --ru-gray-50: #f5f5f5;
   --ru-gray-100: #eeeeee;
-  --ru-gray-200: #d2d2d2;
+  --ru-gray-200: #e0e0e0;
   --ru-gray-300: #a6a6a6;
-  --ru-gray-400: #6b6b6b;
-  --ru-gray-500: #3d3d3d;
-  --ru-accent: #05944f;
-  --ru-success: #05944f;
+  --ru-gray-400: #666666;
+  --ru-gray-500: #333333;
+  --vr-green: #06c167;
+  --ru-accent: #06c167;
+  --ru-success: #06c167;
   --ru-warning: #ffb300;
   --ru-error: #cb4040;
   --ru-info: #276ef1;
   --vr-red: #cb4040;
   --vr-card: #ffffff;
-  --ru-shadow: 0 4px 12px rgb(0 0 0 / 8%);
+  --ru-shadow: 0 2px 8px rgb(0 0 0 / 6%);
   --ru-shadow-sm: 0 1px 2px rgb(0 0 0 / 5%);
-  --ru-shadow-md: 0 4px 12px rgb(0 0 0 / 8%);
-  --ru-shadow-lg: 0 8px 24px rgb(0 0 0 / 12%);
-  --ru-shadow-float: 0 12px 32px rgb(0 0 0 / 15%);
-  --ru-shadow-sheet: 0 -8px 24px rgb(0 0 0 / 12%);
+  --ru-shadow-md: 0 2px 8px rgb(0 0 0 / 6%);
+  --ru-shadow-lg: 0 4px 20px rgb(0 0 0 / 15%);
+  --ru-shadow-float: 0 4px 20px rgb(0 0 0 / 15%);
+  --ru-shadow-sheet: 0 -2px 10px rgb(0 0 0 / 5%);
   --ru-radius-sm: 8px;
   --ru-radius: 16px;
   --ru-radius-md: 12px;
@@ -49,16 +52,19 @@
 }
 
 html[data-theme="dark"] {
-  --ru-ink: #ffffff;
-  --ru-muted: #b0b0b0;
+  --ru-ink: #f4f4f5;
+  --ru-body: #d4d4d8;
+  --ru-muted: #a1a1aa;
   --ru-line: #2a2a2a;
+  --ru-border: #3f3f46;
   --ru-surface: #1e1e1e;
   --ru-canvas: #121212;
   --ru-elevated: #2a2a2a;
-  --ru-black: #ffffff;
-  --ru-brand: #ffffff;
+  --ru-black: #f4f4f5;
+  --ru-brand: #f4f4f5;
   --ru-brand-2: #e5e5e5;
-  --ru-accent: #05944f;
+  --vr-green: #06c167;
+  --ru-accent: #06c167;
   --background: var(--ru-canvas);
   --foreground: var(--ru-ink);
   --ru-shadow: 0 2px 12px rgb(0 0 0 / 40%);
@@ -80,9 +86,16 @@ html {
   --font-display: var(--font-sans);
 }
 
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
 body {
   background: var(--background);
-  color: var(--foreground);
+  color: var(--ru-body);
+  font-size: 15px;
+  font-weight: 400;
   font-family:
     var(--font-sans),
     Inter,
@@ -137,14 +150,15 @@ body {
   font-weight: 700;
   letter-spacing: -0.5px;
   line-height: 1.1;
-  color: var(--ru-ink);
+  color: #111111;
 }
 
 .ru-page-sub {
   margin-top: 0.35rem;
-  font-size: 0.9375rem;
+  font-size: 15px;
+  font-weight: 400;
   line-height: 1.45;
-  color: var(--ru-muted);
+  color: #666666;
 }
 
 .ru-section-label {
@@ -156,10 +170,11 @@ body {
 }
 
 .ru-card {
-  background: var(--ru-surface);
+  background: #ffffff;
   border: none;
-  border-radius: var(--ru-radius);
-  box-shadow: var(--ru-shadow-md);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
 }
 
 .ru-list {
@@ -333,9 +348,8 @@ body {
 }
 
 .ru-btn:disabled {
-  background: var(--ru-gray-100);
-  color: var(--ru-gray-300);
-  opacity: 1;
+  opacity: 0.4;
+  cursor: not-allowed;
   pointer-events: none;
 }
 
@@ -397,18 +411,20 @@ html.vr-simple-mode {
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   transition:
-    transform 0.15s ease-out,
-    background-color 0.15s ease-out,
-    box-shadow 0.15s ease-out,
-    opacity 0.15s ease-out,
-    color 0.15s ease-out,
-    border-color 0.15s ease-out;
+    transform 100ms ease-out,
+    background-color 100ms ease-out,
+    box-shadow 100ms ease-out,
+    opacity 100ms ease-out,
+    color 100ms ease-out,
+    border-color 100ms ease-out;
 }
 .uber-press:active:not(:disabled) {
-  transform: scale(0.98);
+  transform: scale(0.97);
+  opacity: 0.9;
 }
 .uber-press:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
+  cursor: not-allowed;
   pointer-events: none;
 }
 
@@ -417,21 +433,43 @@ html.vr-simple-mode {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  height: 48px;
   min-height: 48px;
-  border-radius: var(--ru-radius-pill);
-  background: #000000;
-  padding: 16px 24px;
-  font-size: 17px;
-  font-weight: 500;
+  border-radius: 24px;
+  background: #111111;
+  padding: 0 24px;
+  font-size: 16px;
+  font-weight: 600;
   letter-spacing: 0;
   color: #fff;
+  text-align: center;
 }
 .uber-btn-black:hover:not(:disabled) {
-  background: #171717;
+  background: #1a1a1a;
 }
 .uber-btn-black:active:not(:disabled) {
-  background: #000000;
+  background: #111111;
   transform: scale(0.97);
+  opacity: 0.9;
+}
+
+.uber-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  min-height: 48px;
+  border-radius: 24px;
+  border: 1.5px solid #111111;
+  background: #ffffff;
+  padding: 0 24px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111111;
+  text-align: center;
+}
+.uber-btn-outline:active:not(:disabled) {
+  background: #f5f5f5;
 }
 
 .uber-btn-soft {
@@ -458,15 +496,39 @@ html.vr-simple-mode {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2rem;
-  min-width: 2.75rem;
+  min-height: 44px;
+  min-width: 44px;
   border-radius: 9999px;
   background: #fff;
   padding: 0.25rem 0.75rem;
   font-size: 0.8125rem;
   font-weight: 700;
   color: #06c167;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 16%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
+}
+
+.uber-add-plus {
+  display: flex;
+  height: 44px;
+  width: 44px;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  padding: 0;
+}
+.uber-add-plus > span {
+  display: flex;
+  height: 40px;
+  width: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #06c167;
+  color: #fff;
+  transition: transform 100ms ease-out;
+}
+.uber-add-plus:active:not(:disabled) > span {
+  transform: scale(0.9);
 }
 .uber-add-chip:hover:not(:disabled) {
   background: #f7f7f7;
@@ -479,16 +541,16 @@ html.vr-simple-mode {
 .uber-qty-stepper {
   display: inline-flex;
   align-items: center;
-  gap: 0.15rem;
+  gap: 0;
   border-radius: 9999px;
   background: #fff;
-  padding: 0.15rem;
-  box-shadow: 0 2px 10px rgb(0 0 0 / 18%);
+  padding: 2px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
 }
 .uber-qty-stepper button {
   display: flex;
-  height: 1.85rem;
-  width: 1.85rem;
+  height: 44px;
+  width: 44px;
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
@@ -542,42 +604,151 @@ html.vr-simple-mode {
   animation: uber-fade-in 0.2s ease-out both;
 }
 .uber-sheet-panel {
-  animation: uber-sheet-up 0.32s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  animation: uber-sheet-up 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 @keyframes vr-page-in {
   from {
     opacity: 0;
-    transform: translate3d(16px, 0, 0);
   }
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 .vr-page-enter {
-  animation: vr-page-in 0.22s ease-out both;
+  animation: vr-page-in 200ms ease-out both;
+}
+
+@keyframes vr-screen-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.vr-screen-enter {
+  animation: vr-screen-in 300ms ease-out both;
+}
+
+.vr-overscroll {
+  overscroll-behavior: contain;
+}
+
+.vr-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111111;
+}
+
+@keyframes vr-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+.vr-skeleton {
+  background: linear-gradient(90deg, #e0e0e0 0%, #f5f5f5 50%, #e0e0e0 100%);
+  background-size: 200% 100%;
+  animation: vr-shimmer 1.5s linear infinite;
+  border-radius: 8px;
+}
+
+.vr-spin {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgb(255 255 255 / 35%);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: vr-spin 0.7s linear infinite;
+}
+.vr-spin-dark {
+  border-color: rgb(17 17 17 / 20%);
+  border-top-color: #111111;
+}
+@keyframes vr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.vr-img-fade {
+  opacity: 0;
+  background: #e0e0e0;
+  transition: opacity 300ms ease-out;
+}
+.vr-img-fade.is-loaded {
+  opacity: 1;
+}
+
+@keyframes vr-map-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.55;
+  }
+}
+.vr-map-pulse {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #06c167;
+  box-shadow: 0 0 0 8px rgb(6 193 103 / 22%);
+  animation: vr-map-pulse 1.4s ease-in-out infinite;
+}
+
+.vr-stagger > * {
+  animation: vr-page-in 250ms ease-out both;
+}
+.vr-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.vr-stagger > *:nth-child(2) {
+  animation-delay: 50ms;
+}
+.vr-stagger > *:nth-child(3) {
+  animation-delay: 100ms;
+}
+.vr-stagger > *:nth-child(4) {
+  animation-delay: 150ms;
+}
+.vr-stagger > *:nth-child(5) {
+  animation-delay: 200ms;
+}
+.vr-stagger > *:nth-child(6) {
+  animation-delay: 250ms;
+}
+.vr-stagger > *:nth-child(n + 7) {
+  animation-delay: 300ms;
 }
 html.vr-simple-mode .vr-page-enter,
+html.vr-simple-mode .vr-screen-enter,
 html.vr-simple-mode .uber-sheet-panel,
 html.vr-simple-mode .uber-cart-enter,
-html.vr-simple-mode .uber-sheet-scrim {
+html.vr-simple-mode .uber-sheet-scrim,
+html.vr-simple-mode .vr-stagger > * {
   animation: none;
 }
 
 @keyframes vr-add-pop {
   0% {
-    transform: scale(0.86);
+    transform: scale(1);
   }
-  55% {
-    transform: scale(1.08);
+  40% {
+    transform: scale(1.3);
   }
   100% {
     transform: scale(1);
   }
 }
 .vr-add-pop {
-  animation: vr-add-pop 0.18s ease-out;
+  animation: vr-add-pop 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .vr-hide-scrollbar {
@@ -645,19 +816,22 @@ html.vr-simple-mode .uber-sheet-scrim {
 
 .ru-input {
   width: 100%;
-  border: none;
-  border-bottom: 1.5px solid var(--ru-line);
-  border-radius: 0;
-  background: transparent;
-  padding: 0.85rem 0.15rem;
-  font-size: 1rem;
-  color: var(--ru-ink);
-  transition: border-color 0.2s ease;
+  height: 48px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0 16px;
+  font-size: 16px;
+  color: #111111;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .ru-input:focus {
   outline: none;
-  border-bottom-color: var(--ru-black);
+  border: 2px solid #111111;
+  box-shadow: 0 0 0 3px rgb(0 0 0 / 5%);
 }
 
 .ru-input::placeholder {
@@ -711,42 +885,42 @@ html[data-theme="dark"] :where(.text-slate-500, .text-gray-500) {
 /* Light “paper” shells that must stay readable in dark mode (forms, join pages) */
 .ru-force-light {
   color-scheme: light;
-  --ru-ink: #0f172a;
-  --ru-muted: #475569;
-  --ru-line: #e2e8f0;
+  --ru-ink: #111111;
+  --ru-muted: #666666;
+  --ru-line: #eeeeee;
   --ru-surface: #ffffff;
-  --ru-canvas: #ffffff;
-  --ru-black: #0f172a;
-  --foreground: #0f172a;
-  --background: #ffffff;
-  background: #ffffff;
-  color: #0f172a;
+  --ru-canvas: #f5f5f5;
+  --ru-black: #111111;
+  --foreground: #111111;
+  --background: #f5f5f5;
+  background: #f5f5f5;
+  color: #333333;
 }
 
 .ru-force-light .ru-card {
   background: #ffffff;
-  border-color: #e2e8f0;
-  color: #0f172a;
-  box-shadow: 0 2px 8px rgb(15 23 42 / 6%);
+  border-color: #e0e0e0;
+  color: #111111;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
 }
 
 .ru-force-light .ru-input {
-  border: 1.5px solid #cbd5e1;
-  border-radius: 0.75rem;
-  background: #f8fafc;
-  padding: 0.75rem 0.85rem;
-  color: #0f172a;
-  caret-color: #0f172a;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0 16px;
+  color: #111111;
+  caret-color: #111111;
 }
 
 .ru-force-light .ru-input:focus {
-  border-color: #000000;
-  outline: 2px solid color-mix(in srgb, #000000 25%, transparent);
-  outline-offset: 0;
+  border: 2px solid #111111;
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(0 0 0 / 5%);
 }
 
 .ru-force-light .ru-input::placeholder {
-  color: #94a3b8;
+  color: #999999;
 }
 
 .ru-force-light :where(
@@ -755,15 +929,15 @@ html[data-theme="dark"] :where(.text-slate-500, .text-gray-500) {
   .text-slate-800,
   .text-gray-900
 ) {
-  color: #0f172a !important;
+  color: #111111 !important;
 }
 
 .ru-force-light :where(.text-slate-700, .text-slate-600) {
-  color: #334155 !important;
+  color: #333333 !important;
 }
 
 .ru-force-light :where(.text-slate-500, .text-slate-400) {
-  color: #64748b !important;
+  color: #666666 !important;
 }
 
 .ru-force-light select.ru-input option {
@@ -836,9 +1010,9 @@ a.ru-btn {
 .ru-skeleton {
   background: linear-gradient(
     90deg,
-    #f3f3f3 25%,
-    #eeeeee 50%,
-    #f3f3f3 75%
+    #e0e0e0 0%,
+    #f5f5f5 50%,
+    #e0e0e0 100%
   );
   background-size: 200% 100%;
   animation: ru-shimmer 1.5s linear infinite;
