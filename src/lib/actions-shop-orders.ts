@@ -16,9 +16,13 @@ import {
 } from "@/lib/yoco";
 import { createAdminClient, hasServiceRole } from "@/lib/supabase/admin";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
+import { mergeJobDetails } from "@/lib/job-status";
+import {
+  SHOP_DELIVERY_FALLBACK,
+  type ShopDeliveryStage,
+} from "@/lib/shop-delivery";
 import type {
   Product,
-  Shop,
   ShopCartOrderInput,
   ShopOrder,
   ShopOrderItem,
@@ -240,27 +244,204 @@ export async function updateShopOrderStatus(
   if (status === "ready") {
     try {
       order = await dispatchShopDelivery(order);
-    } catch {
-      /* shop still marked ready */
+    } catch (err) {
+      console.error("[shop] dispatch after ready failed", err);
     }
   }
   revalidateShopPaths(order.shop_id);
   return order;
 }
 
+export async function retryShopDeliveryDispatch(
+  orderId: string,
+): Promise<ShopOrder> {
+  if (!useAdmin()) {
+    const order = mockRepo.retryShopDeliveryDispatch(orderId);
+    revalidateShopPaths(order.shop_id);
+    return order;
+  }
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("rr_shop_orders")
+    .select("*, items:rr_shop_order_items(*)")
+    .eq("id", orderId)
+    .single();
+  if (error) throw new Error(error.message);
+  const order = await dispatchShopDelivery(data as ShopOrder);
+  revalidateShopPaths(order.shop_id);
+  return order;
+}
+
+export async function listShopOrdersByPhone(
+  phone: string,
+): Promise<ShopOrder[]> {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 9) return [];
+  if (!useAdmin()) return mockRepo.listShopOrdersByPhone(phone);
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("rr_shop_orders")
+    .select("*, items:rr_shop_order_items(*)")
+    .order("created_at", { ascending: false })
+    .limit(40);
+  if (error) {
+    if (/rr_shop_orders|does not exist|schema cache/i.test(error.message)) {
+      return mockRepo.listShopOrdersByPhone(phone);
+    }
+    throw new Error(error.message);
+  }
+  return ((data ?? []) as ShopOrder[])
+    .filter((o) =>
+      o.customer_phone.replace(/\D/g, "").endsWith(digits.slice(-9)),
+    )
+    .map((o) => ({ ...o, items: o.items ?? [] }));
+}
+
+async function patchShopOrderByJobId(
+  jobId: string,
+  patch: Record<string, unknown>,
+) {
+  if (!useAdmin()) {
+    mockRepo.patchShopOrderByJobId(jobId, patch);
+    return;
+  }
+  const admin = createAdminClient();
+  const payload = { ...patch, updated_at: new Date().toISOString() };
+  const { error } = await admin
+    .from("rr_shop_orders")
+    .update(payload)
+    .eq("job_id", jobId);
+  if (error && /column|schema cache/i.test(error.message)) {
+    const slim = { ...payload };
+    delete slim.driver_id;
+    delete slim.driver_accepted_at;
+    delete slim.collected_at;
+    delete slim.delivered_at;
+    await admin.from("rr_shop_orders").update(slim).eq("job_id", jobId);
+  }
+}
+
+export async function syncShopOrderDriverAccepted(
+  jobId: string,
+  driverId: string,
+) {
+  await patchShopOrderByJobId(jobId, {
+    driver_id: driverId,
+    driver_accepted_at: new Date().toISOString(),
+  });
+}
+
+export async function syncShopOrderOutForDelivery(jobId: string) {
+  await patchShopOrderByJobId(jobId, { status: "out_for_delivery" });
+}
+
+export async function syncShopOrderDelivered(jobId: string) {
+  await patchShopOrderByJobId(jobId, {
+    status: "delivered",
+    delivered_at: new Date().toISOString(),
+  });
+}
+
+export async function advanceShopDelivery(
+  jobId: string,
+  driverId: string,
+  stage: ShopDeliveryStage,
+  collectedPhoto?: string | null,
+): Promise<void> {
+  if (!useAdmin()) {
+    mockRepo.advanceShopDelivery(jobId, driverId, stage, collectedPhoto);
+    revalidateShopPaths();
+    return;
+  }
+
+  const { markDriverArrived, startTrip, completeTrip } = await import(
+    "@/lib/actions"
+  );
+  const admin = createAdminClient();
+
+  async function patchDetails(patch: Record<string, unknown>) {
+    const { data: job, error } = await admin
+      .from("rr_jobs")
+      .select("details, driver_id, payment_method")
+      .eq("id", jobId)
+      .single();
+    if (error || !job) throw new Error(error?.message ?? "Job not found");
+    if (job.driver_id !== driverId) throw new Error("Not your job");
+    await admin
+      .from("rr_jobs")
+      .update({
+        details: mergeJobDetails(job.details, patch),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", jobId)
+      .eq("driver_id", driverId);
+    return job;
+  }
+
+  if (stage === "at_shop") {
+    await markDriverArrived(jobId, driverId);
+    await patchDetails({ shop_delivery_stage: "at_shop" });
+    return;
+  }
+  if (stage === "collected") {
+    if (!collectedPhoto?.startsWith("data:image")) {
+      throw new Error("Take a photo of the packed bag before collecting.");
+    }
+    await patchDetails({
+      shop_delivery_stage: "collected",
+      collected_photo_data_url: collectedPhoto.slice(0, 400_000),
+    });
+    await patchShopOrderByJobId(jobId, {
+      collected_at: new Date().toISOString(),
+    });
+    return;
+  }
+  if (stage === "on_the_way") {
+    await startTrip(jobId, driverId);
+    await patchDetails({ shop_delivery_stage: "on_the_way" });
+    await syncShopOrderOutForDelivery(jobId);
+    return;
+  }
+  if (stage === "at_dropoff") {
+    await patchDetails({
+      shop_delivery_stage: "at_dropoff",
+      dropoff_arrived_at: new Date().toISOString(),
+    });
+    return;
+  }
+  if (stage === "delivered") {
+    const job = await patchDetails({ shop_delivery_stage: "delivered" });
+    const cash = job.payment_method === "cash";
+    await completeTrip(
+      jobId,
+      driverId,
+      cash ? { cashCollected: true } : undefined,
+    );
+    await syncShopOrderDelivered(jobId);
+  }
+}
+
 async function dispatchShopDelivery(order: ShopOrder): Promise<ShopOrder> {
-  if (order.job_id) return order;
+  if (order.job_id) {
+    try {
+      const { matchJobAfterCreate } = await import("@/lib/matching");
+      await matchJobAfterCreate(order.job_id);
+    } catch {
+      /* offer already in flight */
+    }
+    return order;
+  }
   const admin = createAdminClient();
   const shop = await getShopById(order.shop_id);
   if (!shop) return order;
 
-  const pickupLat = shop.lat ?? order.delivery_lat;
-  const pickupLng = shop.lng ?? order.delivery_lng;
-  const dropLat = order.delivery_lat ?? shop.lat;
-  const dropLng = order.delivery_lng ?? shop.lng;
-  if (pickupLat == null || pickupLng == null || dropLat == null || dropLng == null) {
-    return order;
-  }
+  const pickupLat =
+    shop.lat ?? order.delivery_lat ?? SHOP_DELIVERY_FALLBACK.lat;
+  const pickupLng =
+    shop.lng ?? order.delivery_lng ?? SHOP_DELIVERY_FALLBACK.lng;
+  const dropLat = order.delivery_lat ?? pickupLat;
+  const dropLng = order.delivery_lng ?? pickupLng;
 
   const yocoId = order.notes?.startsWith("yoco:")
     ? order.notes.slice(5)
@@ -290,6 +471,7 @@ async function dispatchShopDelivery(order: ShopOrder): Promise<ShopOrder> {
     details: {
       item_description: `Package delivery — no passenger. Collect ${itemsLabel} from ${shop.name}.`,
       shop_name: shop.name,
+      shop_phone: shop.phone,
       item_count: itemCount,
       size: "small",
       needs_helpers: false,

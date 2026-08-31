@@ -603,6 +603,42 @@ test("mock: merchant shop + product + shop order", () => {
   assert(linked.length >= 1, "merchant orders visible");
 });
 
+test("mock: ready shop cart order pings an online sedan driver", () => {
+  const shop = mockRepo.createShop({
+    name: "Ping Kitchen",
+    phone: "0821112222",
+    category: "food",
+    landmark: "Westdene",
+    lat: -31.589,
+    lng: 28.785,
+  });
+  shop.is_active = true;
+  const product = mockRepo.createProduct({
+    shop_id: shop.id,
+    name: "Beef stew + pap",
+    price: 65,
+    size: "small",
+  });
+  const order = mockRepo.placeShopCartOrder({
+    shop_id: shop.id,
+    customer_name: "Rider",
+    customer_phone: "0830001111",
+    delivery_address: "97 Perth Road",
+    items: [{ product_id: product.id, quantity: 2 }],
+    payment_method: "cash",
+  });
+  const ready = mockRepo.updateShopOrderStatus(order.id, "ready");
+  assert(Boolean(ready.job_id), "job created for driver ping");
+  const offers = mockRepo.listIncomingOffers("d2");
+  assert(
+    offers.some((o) => o.jobs?.id === ready.job_id),
+    "sedan driver sees shop delivery offer",
+  );
+  mockRepo.acceptOffer(ready.job_id!, "d2");
+  const after = mockRepo.listShopOrders(shop.id).find((o) => o.id === order.id);
+  assert(after?.driver_id === "d2", "shop order linked to driver");
+});
+
 test("mock: phone job lookup variants", () => {
   const rows = mockRepo.listJobsByCustomerPhone([
     "0820001111",

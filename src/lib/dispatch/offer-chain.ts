@@ -5,14 +5,31 @@ import {
   MAX_DISPATCH_ATTEMPTS,
 } from "@/lib/job-status";
 import { incrementDriverOfferStat } from "@/lib/matching-stats";
+import { isShopPackageJob, shopNameFromJob } from "@/lib/package-job";
+import { SHOP_DRIVER_COLLECT } from "@/lib/shop-constants";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Driver, Job, VehicleType } from "@/lib/types";
 import { driverEligibleForDispatch } from "@/lib/wallet";
 
 /** Exclusive offer window before cascading to the next-ranked driver. */
 export const OFFER_TIMEOUT_SEC = 30;
+export const SHOP_OFFER_TIMEOUT_SEC = 15;
 
 export function buildDriverOfferPush(job: Job) {
+  if (isShopPackageJob(job)) {
+    const shop = shopNameFromJob(job);
+    return {
+      title: "📦 NEW DELIVERY",
+      body: `Collect from ${shop}. You earn R${SHOP_DRIVER_COLLECT}.`,
+      data: {
+        booking_id: job.id,
+        jobId: job.id,
+        reference: job.reference_code,
+        url: "/driver",
+        type: "job_offer",
+      },
+    };
+  }
   const service = SERVICE_LABELS[job.service_type];
   const price = Math.round(Number(job.fee_amount));
   return {
@@ -162,7 +179,10 @@ export async function offerNextDriver(jobId: string): Promise<Job | null> {
     }
 
     const now = new Date();
-    const expires = new Date(now.getTime() + OFFER_TIMEOUT_SEC * 1000);
+    const timeoutSec = isShopPackageJob(typed)
+      ? SHOP_OFFER_TIMEOUT_SEC
+      : OFFER_TIMEOUT_SEC;
+    const expires = new Date(now.getTime() + timeoutSec * 1000);
     const nextAttempts = attempts + 1;
 
     const { data: updated, error: upErr } = await admin

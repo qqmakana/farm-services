@@ -67,6 +67,16 @@ export type DeliveryDetails = {
   shopping_list?: string;
   /** Packed items on a shop-catalog delivery. */
   item_count?: number;
+  shop_phone?: string;
+  shop_delivery_stage?:
+    | "accepted"
+    | "at_shop"
+    | "collected"
+    | "on_the_way"
+    | "at_dropoff"
+    | "delivered";
+  collected_photo_data_url?: string;
+  dropoff_arrived_at?: string;
   photo_proof_requested?: boolean;
   /** Optional goods cover — adds insurance_fee to the delivery quote. */
   insurance?: boolean;
@@ -315,6 +325,10 @@ export type ShopOrder = {
   total_amount: number;
   payment_method: string;
   notes: string | null;
+  driver_id?: string | null;
+  driver_accepted_at?: string | null;
+  collected_at?: string | null;
+  delivered_at?: string | null;
   created_at: string;
   updated_at: string;
   items?: ShopOrderItem[];

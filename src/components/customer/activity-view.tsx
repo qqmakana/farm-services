@@ -5,13 +5,15 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { Calendar, RotateCw } from "lucide-react";
 import { listJobsByCustomerPhone, cancelRiderJobAction } from "@/lib/actions";
+import { listShopOrdersByPhone } from "@/lib/actions-shop-orders";
+import { ShopOrderTrack } from "@/components/shops/shop-order-track";
 import { formatMoney, SERVICE_LABELS } from "@/lib/format";
 import {
   getGuestProfile,
   setGuestProfile,
   type GuestProfile,
 } from "@/lib/guest-profile";
-import type { JobStatus, JobWithDriver, ServiceType } from "@/lib/types";
+import type { JobStatus, JobWithDriver, ServiceType, ShopOrder } from "@/lib/types";
 import { TripReceipt } from "@/components/customer/trip-receipt";
 import {
   UBER_BTN_BLACK,
@@ -112,6 +114,7 @@ export function ActivityView() {
   const [phoneInput, setPhoneInput] = useState("");
   const [nameInput, setNameInput] = useState("");
   const [jobs, setJobs] = useState<JobWithDriver[]>([]);
+  const [shopOrders, setShopOrders] = useState<ShopOrder[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [hydrated, setHydrated] = useState(false);
@@ -121,11 +124,16 @@ export function ActivityView() {
     startTransition(async () => {
       setError(null);
       try {
-        const rows = await listJobsByCustomerPhone(phone);
+        const [rows, shopRows] = await Promise.all([
+          listJobsByCustomerPhone(phone),
+          listShopOrdersByPhone(phone),
+        ]);
         setJobs(rows);
+        setShopOrders(shopRows);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Could not load trips");
         setJobs([]);
+        setShopOrders([]);
       }
     });
   }, []);
@@ -203,6 +211,15 @@ export function ActivityView() {
       className={UBER_PAGE}
     >
       <h1 className={UBER_H1}>Activity</h1>
+
+      {shopOrders.length > 0 ? (
+        <section className="mt-6 space-y-3">
+          <h2 className="text-[17px] font-bold text-[#0a0a0a]">Shop orders</h2>
+          {shopOrders.map((order) => (
+            <ShopOrderTrack key={order.id} order={order} />
+          ))}
+        </section>
+      ) : null}
 
       <section className="mt-6">
         <h2 className="text-[17px] font-bold text-[#0a0a0a]">Upcoming</h2>

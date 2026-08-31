@@ -3008,6 +3008,10 @@ export async function acceptOffer(jobId: string, driverId: string) {
     if (job.shop_id) {
       const { notifyPartnerForJob } = await import("./partner");
       await notifyPartnerForJob(job, "driver_assigned");
+      mockRepo.patchShopOrderByJobId(jobId, {
+        driver_id: driverId,
+        driver_accepted_at: new Date().toISOString(),
+      });
     }
     revalidateAll();
     return job;
@@ -3083,6 +3087,14 @@ export async function acceptOffer(jobId: string, driverId: string) {
   if ((assigned as Job).shop_id) {
     const { notifyPartnerForJob } = await import("./partner");
     await notifyPartnerForJob(assigned as Job, "driver_assigned");
+    try {
+      const { syncShopOrderDriverAccepted } = await import(
+        "./actions-shop-orders"
+      );
+      await syncShopOrderDriverAccepted(jobId, driverId);
+    } catch {
+      /* job is assigned */
+    }
   }
 
   revalidateAll();
@@ -3242,6 +3254,9 @@ export async function startTrip(jobId: string, driverId: string) {
         buildCustomerTripStartedPush(job, driver),
       );
     }
+    if (job.shop_id) {
+      mockRepo.patchShopOrderByJobId(jobId, { status: "out_for_delivery" });
+    }
     revalidateAll();
     return job;
   }
@@ -3280,6 +3295,17 @@ export async function startTrip(jobId: string, driverId: string) {
       (jobRow as Job).customer_fcm_token,
       buildCustomerTripStartedPush(typed, driverRow),
     );
+  }
+
+  if (typed.shop_id) {
+    try {
+      const { syncShopOrderOutForDelivery } = await import(
+        "./actions-shop-orders"
+      );
+      await syncShopOrderOutForDelivery(jobId);
+    } catch {
+      /* trip already started */
+    }
   }
 
   revalidateAll();
@@ -3321,6 +3347,10 @@ export async function completeTrip(
           ? "Cash not confirmed — flagged for ops (no fee deducted)."
           : `Platform fee R${remit} deducted from driver wallet.`;
       await notifyPartnerForJob(job, "order_completed", note);
+      mockRepo.patchShopOrderByJobId(jobId, {
+        status: "delivered",
+        delivered_at: new Date().toISOString(),
+      });
     }
     try {
       await claimWeeklyTripBonus(driverId);
@@ -3451,6 +3481,12 @@ export async function completeTrip(
         ? "Cash not confirmed — flagged for ops (no fee deducted)."
         : `Platform fee R${remit} deducted from driver wallet.`;
     await notifyPartnerForJob(data as Job, "order_completed", note);
+    try {
+      const { syncShopOrderDelivered } = await import("./actions-shop-orders");
+      await syncShopOrderDelivered(jobId);
+    } catch {
+      /* job already completed */
+    }
   }
 
   if ((jobRow as Job).customer_fcm_token) {

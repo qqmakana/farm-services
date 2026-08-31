@@ -25,7 +25,8 @@ import {
 } from "@/lib/format";
 import { pickupPhotoFromDetails } from "@/lib/pickup-photo";
 import { driverHasArrived, isConfirmedStatus } from "@/lib/job-status";
-import { packageOfferCopy } from "@/lib/package-job";
+import { packageOfferCopy, isShopPackageJob } from "@/lib/package-job";
+import { ShopDeliveryTrip } from "@/components/driver/shop-delivery-trip";
 import { isCashPaymentMethod } from "@/lib/wallet";
 import type { JobStatus, JobWithDriver } from "@/lib/types";
 
@@ -34,7 +35,7 @@ type Segment = "active" | "completed" | "cancelled";
 const ACTIVE: JobStatus[] = ["confirmed", "assigned", "in_progress"];
 
 export function DriverJobsView() {
-  const { driverId, refresh } = useDriverApp();
+  const { driver, driverId, refresh } = useDriverApp();
   const [segment, setSegment] = useState<Segment>("active");
   const [active, setActive] = useState<JobWithDriver | null>(null);
   const [jobs, setJobs] = useState<JobWithDriver[]>([]);
@@ -113,7 +114,25 @@ export function DriverJobsView() {
         </p>
       ) : null}
 
-      {segment === "active" && active ? (
+      {segment === "active" && active && isShopPackageJob(active) && driverId ? (
+        <div className="mt-5">
+          <ShopDeliveryTrip
+            job={active}
+            driverId={driverId}
+            driverLoc={
+              driver?.last_lat != null && driver?.last_lng != null
+                ? { lat: driver.last_lat, lng: driver.last_lng }
+                : null
+            }
+            onChanged={() => {
+              void load();
+              refresh();
+            }}
+          />
+        </div>
+      ) : null}
+
+      {segment === "active" && active && !isShopPackageJob(active) ? (
         <section className="ru-card mt-5 p-4">
           <p className="ru-section-label">Current job</p>
           <h2 className="mt-1 font-[family-name:var(--font-display)] text-lg font-bold text-black">

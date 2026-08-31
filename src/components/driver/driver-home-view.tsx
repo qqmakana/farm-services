@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import {
   acceptOffer,
@@ -30,7 +31,8 @@ import {
   buildSimpleWalletTopUpMessage,
   walletTopUpWhatsAppHref,
 } from "@/lib/whatsapp";
-import { packageOfferCopy } from "@/lib/package-job";
+import { packageOfferCopy, isShopPackageJob } from "@/lib/package-job";
+import { ShopDeliveryOffer } from "@/components/driver/shop-delivery-offer";
 import {
   amountOwedToPlatform,
   isApproachingCreditLimit,
@@ -59,6 +61,7 @@ const DriverJobsMap = dynamic(
 const RADIUS_KM = 20;
 
 export function DriverHomeView() {
+  const router = useRouter();
   const { driver, driverId, refresh } = useDriverApp();
   const [offers, setOffers] = useState<JobApplication[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -99,6 +102,7 @@ export function DriverHomeView() {
   const nearby = useMemo(() => {
     return offers.filter((o) => {
       const job = o.jobs;
+      if (job?.offered_driver_id === driverId) return true;
       if (!job?.pickup_lat || !job?.pickup_lng) return true;
       if (!driverLoc) return true;
       return (
@@ -108,7 +112,7 @@ export function DriverHomeView() {
         }) <= RADIUS_KM
       );
     });
-  }, [offers, driverLoc]);
+  }, [offers, driverLoc, driverId]);
 
   const mapPins = useMemo(
     () =>
@@ -186,6 +190,7 @@ export function DriverHomeView() {
 
   const job = selected?.jobs;
   const offerCopy = job ? packageOfferCopy(job) : null;
+  const shopDelivery = job ? isShopPackageJob(job) : false;
   const verificationBlocked =
     Boolean(driver) && getDriverVerificationUiStatus(driver!) !== "verified";
 
@@ -195,6 +200,24 @@ export function DriverHomeView() {
       style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))" }}
     >
       {driverId ? <DriverPushPrompt driverId={driverId} /> : null}
+
+      {shopDelivery && job && driverId && driver?.is_online ? (
+        <ShopDeliveryOffer
+          job={job}
+          pending={pending}
+          onAccept={() => {
+            if (verificationBlocked) {
+              setError(VERIFICATION_BLOCK_MESSAGE);
+              return;
+            }
+            run(async () => {
+              await acceptOffer(job.id, driverId);
+              router.push("/driver/jobs");
+            });
+          }}
+          onDecline={() => run(() => declineOffer(job.id, driverId))}
+        />
+      ) : null}
 
       <div className="relative min-h-0 flex-1">
         <DriverJobsMap
@@ -368,6 +391,10 @@ export function DriverHomeView() {
           <p className="py-4 text-center text-sm text-[var(--ru-muted)]">
             No pending jobs within {RADIUS_KM} km. Stay online — new requests
             appear here.
+          </p>
+        ) : shopDelivery ? (
+          <p className="py-4 text-center text-sm text-[var(--ru-muted)]">
+            Incoming shop delivery — accept on the screen above.
           </p>
         ) : (
           <div className="space-y-3">

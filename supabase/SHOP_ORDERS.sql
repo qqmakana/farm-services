@@ -26,9 +26,19 @@ CREATE TABLE IF NOT EXISTS public.rr_shop_orders (
   total_amount integer NOT NULL DEFAULT 0,
   payment_method text NOT NULL DEFAULT 'cash',
   notes text,
+  driver_id uuid,
+  driver_accepted_at timestamptz,
+  collected_at timestamptz,
+  delivered_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE public.rr_shop_orders
+  ADD COLUMN IF NOT EXISTS driver_id uuid,
+  ADD COLUMN IF NOT EXISTS driver_accepted_at timestamptz,
+  ADD COLUMN IF NOT EXISTS collected_at timestamptz,
+  ADD COLUMN IF NOT EXISTS delivered_at timestamptz;
 
 CREATE TABLE IF NOT EXISTS public.rr_shop_order_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

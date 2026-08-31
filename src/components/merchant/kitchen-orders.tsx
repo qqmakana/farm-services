@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { CheckCircle, Clock, CookingPot } from "lucide-react";
-import { updateShopOrderStatus } from "@/lib/actions-shop-orders";
+import { updateShopOrderStatus, retryShopDeliveryDispatch } from "@/lib/actions-shop-orders";
 import { formatMoney, formatWhen } from "@/lib/format";
 import type { ShopOrder, ShopOrderStatus } from "@/lib/types";
 
@@ -37,6 +37,18 @@ export function KitchenOrders({ orders }: { orders: ShopOrder[] }) {
         router.refresh();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Update failed");
+      }
+    });
+  }
+
+  function retryPing(orderId: string) {
+    setError(null);
+    startTransition(async () => {
+      try {
+        await retryShopDeliveryDispatch(orderId);
+        router.refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not ping driver");
       }
     });
   }
@@ -116,7 +128,35 @@ export function KitchenOrders({ orders }: { orders: ShopOrder[] }) {
                       Ready for pickup
                     </button>
                   )}
+                  {order.status === "ready" && !order.driver_id ? (
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => retryPing(order.id)}
+                      className="uber-press rounded-full bg-black px-4 py-2 text-sm font-bold text-white"
+                    >
+                      {order.job_id ? "Ping driver again" : "Ping a driver"}
+                    </button>
+                  ) : null}
                 </div>
+                {order.status === "ready" && order.job_id && !order.driver_id ? (
+                  <p className="mt-2 text-xs font-semibold text-[#067a4c]">
+                    Driver offer sent. Waiting for accept.
+                  </p>
+                ) : null}
+                {order.status === "ready" && !order.job_id ? (
+                  <p className="mt-2 text-xs font-semibold text-[#b45309]">
+                    Packed — no driver pinged yet. Go online a driver, then tap
+                    Ping a driver.
+                  </p>
+                ) : null}
+                {order.driver_id ? (
+                  <p className="mt-2 text-xs font-semibold text-[#067a4c]">
+                    Driver assigned
+                    {order.collected_at ? " · Collected" : ""}
+                    {order.delivered_at ? " · Delivered" : ""}
+                  </p>
+                ) : null}
               </li>
             );
           })}

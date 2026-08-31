@@ -41,7 +41,8 @@ import {
   mergeJobDetails,
 } from "./job-status";
 import { jobNeedsFromJob } from "./job-needs";
-import { SHOP_DELIVERY_FEE, SHOP_MIN_ORDER } from "./shop-constants";
+import { SHOP_DELIVERY_FEE, SHOP_DRIVER_COLLECT, SHOP_MIN_ORDER } from "./shop-constants";
+import { SHOP_DELIVERY_FALLBACK, type ShopDeliveryStage } from "./shop-delivery";
 import { suggestVehicle, vehicleFitsJob } from "./vehicles";
 import { assertCourierWithinLimit } from "./courier-limits";
 import {
@@ -1051,22 +1052,27 @@ export const mockRepo = {
         itemCount > 0
           ? `${itemCount} item${itemCount === 1 ? "" : "s"}`
           : "packed bag";
-      if (shop && shop.lat != null && shop.lng != null) {
+      if (shop) {
+        const pickupLat =
+          shop.lat ?? order.delivery_lat ?? SHOP_DELIVERY_FALLBACK.lat;
+        const pickupLng =
+          shop.lng ?? order.delivery_lng ?? SHOP_DELIVERY_FALLBACK.lng;
         try {
           const job = mockRepo.createJob({
             service_type: "delivery",
             required_vehicle: "sedan",
             customer_name: order.customer_name,
             customer_phone: order.customer_phone,
-            pickup_lat: shop.lat,
-            pickup_lng: shop.lng,
+            pickup_lat: pickupLat,
+            pickup_lng: pickupLng,
             pickup_landmark: `${shop.name} — ${shop.landmark}`,
-            dropoff_lat: order.delivery_lat ?? shop.lat,
-            dropoff_lng: order.delivery_lng ?? shop.lng,
+            dropoff_lat: order.delivery_lat ?? pickupLat,
+            dropoff_lng: order.delivery_lng ?? pickupLng,
             dropoff_landmark: order.delivery_address,
             details: {
               item_description: `Package delivery — no passenger. Collect ${itemsLabel} from ${shop.name}.`,
               shop_name: shop.name,
+              shop_phone: shop.phone,
               item_count: itemCount,
               size: "small",
               needs_helpers: false,
@@ -1077,6 +1083,7 @@ export const mockRepo = {
             dispatcher_notes: `Shop ready: ${shop.name}. Package delivery — no passenger. Collect ${itemsLabel}.`,
             payment: { method: "cash" },
           });
+          job.driver_payout = SHOP_DRIVER_COLLECT;
           order.job_id = job.id;
         } catch {
           /* kitchen status still updates */
@@ -1087,6 +1094,93 @@ export const mockRepo = {
       ...order,
       items: store().shopOrderItems.filter((i) => i.order_id === order.id),
     };
+  },
+
+  retryShopDeliveryDispatch(orderId: string): ShopOrder {
+    const order = store().shopOrders.find((o) => o.id === orderId);
+    if (!order) throw new Error("Order not found.");
+    if (order.job_id) {
+      const job = store().jobs.find((j) => j.id === order.job_id);
+      if (job && (job.status === "new" || job.status === "searching_driver")) {
+        mockRepo.broadcastOffers(job);
+        mockRepo.autoMatchIfPossible(job);
+      }
+    } else {
+      mockRepo.updateShopOrderStatus(orderId, "ready");
+    }
+    return {
+      ...order,
+      items: store().shopOrderItems.filter((i) => i.order_id === order.id),
+    };
+  },
+
+  listShopOrdersByPhone(phone: string): ShopOrder[] {
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 9) return [];
+    const tail = digits.slice(-9);
+    return store()
+      .shopOrders.filter((o) =>
+        o.customer_phone.replace(/\D/g, "").endsWith(tail),
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      )
+      .map((o) => ({
+        ...o,
+        items: store().shopOrderItems.filter((i) => i.order_id === o.id),
+      }));
+  },
+
+  patchShopOrderByJobId(jobId: string, patch: Record<string, unknown>): void {
+    const order = store().shopOrders.find((o) => o.job_id === jobId);
+    if (!order) return;
+    Object.assign(order, patch);
+    order.updated_at = new Date().toISOString();
+  },
+
+  advanceShopDelivery(
+    jobId: string,
+    driverId: string,
+    stage: ShopDeliveryStage,
+    collectedPhoto?: string | null,
+  ): JobWithDriver {
+    if (stage === "at_shop") {
+      mockRepo.markDriverArrived(jobId, driverId);
+      return mockRepo.patchJobDetails(jobId, { shop_delivery_stage: "at_shop" });
+    }
+    if (stage === "collected") {
+      if (!collectedPhoto?.startsWith("data:image")) {
+        throw new Error("Take a photo of the packed bag before collecting.");
+      }
+      mockRepo.patchShopOrderByJobId(jobId, {
+        collected_at: new Date().toISOString(),
+      });
+      return mockRepo.patchJobDetails(jobId, {
+        shop_delivery_stage: "collected",
+        collected_photo_data_url: collectedPhoto.slice(0, 400_000),
+      });
+    }
+    if (stage === "on_the_way") {
+      mockRepo.startTrip(jobId, driverId);
+      mockRepo.patchShopOrderByJobId(jobId, { status: "out_for_delivery" });
+      return mockRepo.patchJobDetails(jobId, {
+        shop_delivery_stage: "on_the_way",
+      });
+    }
+    if (stage === "at_dropoff") {
+      return mockRepo.patchJobDetails(jobId, {
+        shop_delivery_stage: "at_dropoff",
+        dropoff_arrived_at: new Date().toISOString(),
+      });
+    }
+    mockRepo.patchJobDetails(jobId, { shop_delivery_stage: "delivered" });
+    const job = mockRepo.completeTrip(jobId, driverId, { cashCollected: true });
+    mockRepo.patchShopOrderByJobId(jobId, {
+      status: "delivered",
+      delivered_at: new Date().toISOString(),
+    });
+    return job;
   },
 
   listApplications(jobId?: string): JobApplication[] {
@@ -1209,7 +1303,7 @@ export const mockRepo = {
       const nowIso = new Date().toISOString();
       job.offered_driver_id = driver.id;
       job.offer_expires_at = new Date(
-        Date.now() + 30_000,
+        Date.now() + (job.shop_id ? 15_000 : 30_000),
       ).toISOString();
       job.offered_at = nowIso;
       job.dispatch_index = i;
@@ -1441,6 +1535,12 @@ export const mockRepo = {
     job.dispatch_exhausted = false;
     driver.offers_accepted = (driver.offers_accepted ?? 0) + 1;
     rejectOtherPendingApps(jobId, app.id);
+    if (job.shop_id) {
+      mockRepo.patchShopOrderByJobId(jobId, {
+        driver_id: driverId,
+        driver_accepted_at: nowIso,
+      });
+    }
     return withDriver(job);
   },
 
