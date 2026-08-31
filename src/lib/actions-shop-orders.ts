@@ -23,6 +23,7 @@ import {
 } from "@/lib/shop-delivery";
 import type {
   Product,
+  Shop,
   ShopCartOrderInput,
   ShopOrder,
   ShopOrderItem,
