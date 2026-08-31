@@ -32,6 +32,7 @@ export function jobNeedsFromJob(
     | "pickup_landmark"
     | "dropoff_landmark"
     | "pickup_lat"
+    | "required_vehicle"
   >,
 ): JobNeeds {
   const when = job.scheduled_for
@@ -42,10 +43,12 @@ export function jobNeedsFromJob(
     isNightWindow(when) ||
     notes.includes("night ride") ||
     notes.includes("after-hours");
+  const motorcycle = job.required_vehicle === "motorcycle";
   const heavy =
-    job.service_type === "delivery" ||
-    job.service_type === "farm" ||
-    job.service_type === "courier";
+    !motorcycle &&
+    (job.service_type === "delivery" ||
+      job.service_type === "farm" ||
+      job.service_type === "courier");
 
   const placeText = `${job.pickup_landmark ?? ""} ${job.dropoff_landmark ?? ""}`;
   const streetLike = looksLikeStreetAddress(placeText);
@@ -76,6 +79,7 @@ export function jobNeedsFromService(
     pickup_landmark: "",
     dropoff_landmark: "",
     pickup_lat: null,
+    required_vehicle: "sedan",
   });
 }
 

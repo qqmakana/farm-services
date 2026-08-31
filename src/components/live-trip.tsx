@@ -37,6 +37,7 @@ import {
   STATUS_LABELS,
   VEHICLE_LABELS,
 } from "@/lib/format";
+import { VEHICLE_EMOJI } from "@/lib/vehicles";
 import { distanceKm, etaMinutes } from "@/lib/geo";
 import {
   driverHasArrived,
@@ -359,6 +360,9 @@ export function LiveTrip({
 
         {searching ? (
           <div className="flex flex-col items-center gap-3 rounded-[16px] bg-[#F3F3F3] px-4 py-8 text-center">
+            <span className="text-[40px] leading-none">
+              {VEHICLE_EMOJI[job.required_vehicle] ?? "🚗"}
+            </span>
             <span className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-black border-t-transparent" />
             <p className="text-[16px] font-medium text-black">
               Finding your driver...
@@ -393,7 +397,9 @@ export function LiveTrip({
         {noDrivers ? (
           <div className="rounded-[16px] bg-[#fdecea] px-4 py-6 text-center">
             <p className="text-[20px] font-bold text-black">
-              No drivers available right now
+              {job.required_vehicle === "motorcycle"
+                ? "No motorcycle drivers nearby. Try again shortly."
+                : "No drivers available right now"}
             </p>
             <p className="mt-2 text-[15px] text-[#6B6B6B]">
               {Number(job.dispatch_attempts) > 0
@@ -459,6 +465,7 @@ export function LiveTrip({
                 </p>
                 <p className="text-[13px] text-[#6B6B6B]">
                   {[
+                    VEHICLE_EMOJI[job.drivers.vehicle_type],
                     job.drivers.vehicle_color,
                     job.drivers.vehicle_make,
                     job.drivers.vehicle_model,

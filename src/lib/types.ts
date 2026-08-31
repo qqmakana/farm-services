@@ -92,7 +92,11 @@ export type FarmDetails = {
 };
 
 export type CourierWeight = "under_5" | "5_10" | "10_20";
-export type CourierPackageType = "documents" | "small_package";
+export type CourierPackageType =
+  | "documents"
+  | "small_package"
+  | "medium_package"
+  | "furniture";
 
 /** Person-to-person packages across villages, towns & cities (not shop furniture). */
 export type CourierDetails = {
@@ -332,6 +336,8 @@ export type ShopOrder = {
   created_at: string;
   updated_at: string;
   items?: ShopOrderItem[];
+  /** From the linked delivery job — motorcycle ping failed. */
+  dispatch_exhausted?: boolean;
 };
 
 export type ShopCartLineInput = {

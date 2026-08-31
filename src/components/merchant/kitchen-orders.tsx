@@ -139,9 +139,17 @@ export function KitchenOrders({ orders }: { orders: ShopOrder[] }) {
                     </button>
                   ) : null}
                 </div>
-                {order.status === "ready" && order.job_id && !order.driver_id ? (
+                {order.status === "ready" &&
+                !order.driver_id &&
+                order.dispatch_exhausted ? (
+                  <p className="mt-2 text-xs font-semibold text-[#b45309]">
+                    No motorcycle drivers nearby. Try again shortly.
+                  </p>
+                ) : order.status === "ready" &&
+                  order.job_id &&
+                  !order.driver_id ? (
                   <p className="mt-2 text-xs font-semibold text-[#067a4c]">
-                    Driver offer sent. Waiting for accept.
+                    🏍️ Driver offer sent. Waiting for accept.
                   </p>
                 ) : null}
                 {order.status === "ready" && !order.job_id ? (

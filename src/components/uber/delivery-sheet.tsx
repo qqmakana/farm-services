@@ -28,9 +28,15 @@ import { useCountry } from "@/components/country/country-provider";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
 import type { VehicleType, WeightCategory } from "@/lib/types";
 import { WEIGHT_CATEGORIES } from "@/lib/pricing";
-import { suggestVehicle } from "@/lib/vehicles";
-import { WeightCategoryField } from "@/components/uber/weight-category-field";
+import { suggestVehicle, type ItemSize } from "@/lib/vehicles";
+import { ItemSizePicker } from "@/components/uber/item-size-picker";
 import { FareBreakdownCard } from "@/components/uber/fare-breakdown-card";
+
+function weightFromSize(size: ItemSize): WeightCategory {
+  if (size === "small") return "light";
+  if (size === "large") return "heavy";
+  return "medium";
+}
 
 export function DeliverySheet({
   onPinChange,
@@ -57,11 +63,10 @@ export function DeliverySheet({
   const [itemDescription, setItemDescription] = useState("");
   const [shopName, setShopName] = useState("");
   const [shoppingList, setShoppingList] = useState("");
-  const [weight, setWeight] = useState<WeightCategory>(
-    shopMode ? "light" : "medium",
-  );
+  const [fetchSize, setFetchSize] = useState<ItemSize>("medium");
+  const weight = weightFromSize(fetchSize);
   const [notes, setNotes] = useState("");
-  const [vehicle, setVehicle] = useState<VehicleType>("bakkie");
+  const [vehicle, setVehicle] = useState<VehicleType>("sedan");
   const [whenMode, setWhenMode] = useState<WhenMode>("now");
   const [scheduledLocal, setScheduledLocal] = useState(defaultLaterLocal);
   const [fee, setFee] = useState(country.pricing.delivery.base);
@@ -92,9 +97,12 @@ export function DeliverySheet({
 
   useEffect(() => {
     setVehicle(
-      suggestVehicle({ service_type: "delivery", weight_category: weight }),
+      suggestVehicle({
+        service_type: "delivery",
+        delivery_size: fetchSize,
+      }),
     );
-  }, [weight]);
+  }, [fetchSize]);
 
   useEffect(() => {
     onPinChange?.(
@@ -326,11 +334,7 @@ export function DeliverySheet({
         </label>
       )}
 
-      <WeightCategoryField
-        value={weight}
-        onChange={setWeight}
-        serviceLabel="delivery"
-      />
+      <ItemSizePicker value={fetchSize} onChange={setFetchSize} />
 
       <div>
         <p className="text-sm font-semibold text-black">Goods insurance</p>
@@ -441,15 +445,8 @@ export function DeliverySheet({
           details: {
             item_description: itemLabel,
             weight_category: weight,
-            size:
-              weight === "light"
-                ? "small"
-                : weight === "medium"
-                  ? "medium"
-                  : weight === "heavy"
-                    ? "large"
-                    : "xl",
-            needs_helpers: weight === "heavy" || weight === "extra_heavy",
+            size: fetchSize === "large" ? "large" : fetchSize,
+            needs_helpers: fetchSize === "large",
             sender_type: senderType,
             recipient_name: recipientName.trim() || undefined,
             recipient_phone: recipientPhone.trim() || undefined,

@@ -59,7 +59,24 @@ export function courierTooHeavyError(params: {
   if (params.service_type !== "courier") return null;
 
   const vehicle = String(params.required_vehicle || "").toLowerCase();
-  if (vehicle === "bakkie" || vehicle === "truck") {
+  if (vehicle === "truck") {
+    return COURIER_TOO_HEAVY;
+  }
+
+  const details = params.details;
+  const pack =
+    details && typeof details === "object"
+      ? String((details as Record<string, unknown>).package_type ?? "")
+      : "";
+  const size =
+    details && typeof details === "object"
+      ? String((details as Record<string, unknown>).size ?? "")
+      : "";
+  const largeSend =
+    pack === "furniture" || size === "large" || size === "xl";
+
+  if (vehicle === "bakkie") {
+    if (largeSend) return null;
     return COURIER_TOO_HEAVY;
   }
 

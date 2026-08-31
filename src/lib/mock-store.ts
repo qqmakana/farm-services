@@ -78,6 +78,15 @@ function refCode() {
   return `RU-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 }
 
+function withShopPing(o: ShopOrder): ShopOrder {
+  const job = o.job_id ? store().jobs.find((j) => j.id === o.job_id) : null;
+  return {
+    ...o,
+    items: store().shopOrderItems.filter((i) => i.order_id === o.id),
+    dispatch_exhausted: Boolean(job?.dispatch_exhausted),
+  };
+}
+
 const ENGCOBO = { lat: -31.588, lng: 28.784 };
 
 const seedDrivers: Driver[] = [
@@ -193,6 +202,44 @@ const seedDrivers: Driver[] = [
     vehicle_model: "NPR",
     vehicle_color: "Blue",
     vehicle_registration: "EC 555-321",
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "d4",
+    full_name: "Lebo Shops Bike",
+    phone: "27827770000",
+    vehicle_type: "motorcycle",
+    is_active: true,
+    approval_status: "approved",
+    id_verified: true,
+    is_online: true,
+    last_lat: -31.589,
+    last_lng: 28.785,
+    last_location_at: new Date().toISOString(),
+    rating_avg: 4.8,
+    rating_count: 40,
+    notes: "Food delivery — shops",
+    prefer_night: true,
+    prefer_heavy: false,
+    prefer_village_routes: true,
+    offers_received: 40,
+    offers_accepted: 36,
+    offers_declined: 4,
+    wallet_balance: 0,
+    commission_owed: 0,
+    verification_status: "verified",
+    id_doc_url: "mock://id/lebo.jpg",
+    selfie_url: "mock://selfie/lebo.jpg",
+    vehicle_front_url: "mock://vfront/lebo.jpg",
+    vehicle_side_url: "mock://vside/lebo.jpg",
+    code_of_conduct_accepted_at: new Date().toISOString(),
+    vehicle_make: "Honda",
+    vehicle_model: "Click",
+    vehicle_color: "Red",
+    vehicle_registration: "EC 400-111",
+    home_city: "Johannesburg",
+    is_founding_driver: false,
+    accumulated_bonus_balance: 0,
     created_at: new Date().toISOString(),
   },
 ];
@@ -1030,10 +1077,7 @@ export const mockRepo = {
         (a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       )
-      .map((o) => ({
-        ...o,
-        items: store().shopOrderItems.filter((i) => i.order_id === o.id),
-      }));
+      .map((o) => withShopPing(o));
   },
 
   updateShopOrderStatus(
@@ -1060,7 +1104,7 @@ export const mockRepo = {
         try {
           const job = mockRepo.createJob({
             service_type: "delivery",
-            required_vehicle: "sedan",
+            required_vehicle: "motorcycle",
             customer_name: order.customer_name,
             customer_phone: order.customer_phone,
             pickup_lat: pickupLat,
@@ -1090,10 +1134,7 @@ export const mockRepo = {
         }
       }
     }
-    return {
-      ...order,
-      items: store().shopOrderItems.filter((i) => i.order_id === order.id),
-    };
+    return withShopPing(order);
   },
 
   retryShopDeliveryDispatch(orderId: string): ShopOrder {
@@ -1108,10 +1149,7 @@ export const mockRepo = {
     } else {
       mockRepo.updateShopOrderStatus(orderId, "ready");
     }
-    return {
-      ...order,
-      items: store().shopOrderItems.filter((i) => i.order_id === order.id),
-    };
+    return withShopPing(order);
   },
 
   listShopOrdersByPhone(phone: string): ShopOrder[] {
@@ -1126,10 +1164,7 @@ export const mockRepo = {
         (a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       )
-      .map((o) => ({
-        ...o,
-        items: store().shopOrderItems.filter((i) => i.order_id === o.id),
-      }));
+      .map((o) => withShopPing(o));
   },
 
   patchShopOrderByJobId(jobId: string, patch: Record<string, unknown>): void {
@@ -1894,7 +1929,7 @@ export const mockRepo = {
 
     const required = suggestVehicle({
       service_type: "delivery",
-      delivery_size: product.size,
+      shop_catalog: true,
     });
 
     const fare = calculateFare({

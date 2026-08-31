@@ -24,8 +24,14 @@ import { getCapturedReferrer } from "@/lib/rider-referral";
 import { stashPaypalApproveUrl, stashPaypalBooking } from "@/lib/paypal-draft";
 import { SERVICE_COPY } from "@/lib/service-guide";
 import { ListedShopCrossSell } from "@/components/uber/listed-shop-cross-sell";
+import { ItemSizePicker } from "@/components/uber/item-size-picker";
 import type { CourierPackageType, JobDetails, NewJobInput, ServiceType } from "@/lib/types";
-import { suggestVehicle, VEHICLE_LABELS } from "@/lib/vehicles";
+import {
+  SIZE_VEHICLE,
+  VEHICLE_EMOJI,
+  VEHICLE_LABELS,
+  type ItemSize,
+} from "@/lib/vehicles";
 
 type Pin = { lat: number; lng: number };
 type GoodsService = "delivery" | "courier" | "farm";
@@ -68,6 +74,7 @@ export function SimpleGoodsSheet({
   const [weight, setWeight] = useState<WeightCategory>(
     service === "delivery" ? "medium" : "light",
   );
+  const [fetchSize, setFetchSize] = useState<ItemSize>("medium");
   const [insured, setInsured] = useState(false);
   const [pkg, setPkg] = useState<CourierPackageType>("documents");
   const [recipientPhone, setRecipientPhone] = useState("");
@@ -126,15 +133,14 @@ export function SimpleGoodsSheet({
   const heading =
     service === "delivery" && shopMode ? "I know the shop" : copy.title;
 
+  const sendSize: ItemSize =
+    pkg === "furniture" ? "large" : pkg === "medium_package" ? "medium" : "small";
   const vehicle =
     service === "courier"
-      ? "sedan"
+      ? SIZE_VEHICLE[sendSize]
       : service === "farm"
         ? vehicleForWeight(weight)
-        : suggestVehicle({
-            service_type: "delivery",
-            weight_category: weight,
-          });
+        : SIZE_VEHICLE[fetchSize];
 
   const estimate =
     service === "courier"
@@ -165,8 +171,8 @@ export function SimpleGoodsSheet({
     if (service === "courier") {
       return {
         item_description: item.trim() || (pkg === "documents" ? "Documents" : "Small package"),
-        item_weight: "under_5",
-        size: "small",
+        item_weight: sendSize === "large" ? "10_20" : "under_5",
+        size: sendSize === "medium" ? "medium" : "small",
         needs_helpers: false,
         recipient_phone: recipientPhone.trim(),
         package_type: pkg,
@@ -187,8 +193,13 @@ export function SimpleGoodsSheet({
       item_description: shopMode
         ? list.trim().slice(0, 80) || item.trim() || "Shopping list"
         : item.trim(),
-      weight_category: weight,
-      needs_helpers: weight === "heavy" || weight === "extra_heavy",
+      weight_category:
+        fetchSize === "small"
+          ? "light"
+          : fetchSize === "large"
+            ? "heavy"
+            : "medium",
+      needs_helpers: fetchSize === "large",
       photo_proof_requested: true,
       insurance: insured,
       ...(shopMode
@@ -305,6 +316,9 @@ export function SimpleGoodsSheet({
           </button>
         </div>
       ) : null}
+      {service === "delivery" ? (
+        <ItemSizePicker value={fetchSize} onChange={setFetchSize} />
+      ) : null}
       <p className="text-center text-[13px] text-[#6B6B6B]">
         Type landmarks, then tap the map for pickup and drop-off pins.
       </p>
@@ -360,24 +374,25 @@ export function SimpleGoodsSheet({
       ) : service === "courier" ? (
         <>
           <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => setPkg("documents")}
-              className={`min-h-12 rounded-full text-[14px] font-semibold ${
-                pkg === "documents" ? "bg-black text-white" : "bg-[#F3F3F3]"
-              }`}
-            >
-              Documents
-            </button>
-            <button
-              type="button"
-              onClick={() => setPkg("small_package")}
-              className={`min-h-12 rounded-full text-[14px] font-semibold ${
-                pkg === "small_package" ? "bg-black text-white" : "bg-[#F3F3F3]"
-              }`}
-            >
-              Small package
-            </button>
+            {(
+              [
+                ["documents", "Documents", "small"],
+                ["small_package", "Small package", "small"],
+                ["medium_package", "Medium package", "medium"],
+                ["furniture", "Furniture / farm", "large"],
+              ] as const
+            ).map(([id, label, size]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setPkg(id)}
+                className={`min-h-12 rounded-full text-[14px] font-semibold ${
+                  pkg === id ? "bg-black text-white" : "bg-[#F3F3F3]"
+                }`}
+              >
+                {VEHICLE_EMOJI[SIZE_VEHICLE[size]]} {label}
+              </button>
+            ))}
           </div>
           <input
             className="w-full rounded-[12px] bg-[#F3F3F3] p-4 text-[17px] outline-none"

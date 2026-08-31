@@ -15,7 +15,8 @@ import {
   shopPhoneFromJob,
   telHref,
 } from "@/lib/shop-delivery";
-import type { JobWithDriver } from "@/lib/types";
+import type { JobWithDriver, VehicleType } from "@/lib/types";
+import { VEHICLE_EMOJI } from "@/lib/vehicles";
 
 const DriverJobsMap = dynamic(
   () =>
@@ -122,6 +123,7 @@ export function ShopDeliveryTrip({
 
       <div className="p-4">
         <p className="text-[12px] font-bold uppercase tracking-wide text-[#06c167]">
+          {VEHICLE_EMOJI[(job.required_vehicle || "motorcycle") as VehicleType]}{" "}
           Delivery · {formatMoney(lines.earn)}
         </p>
         <h2 className="mt-1 text-[20px] font-bold text-[#111111]">

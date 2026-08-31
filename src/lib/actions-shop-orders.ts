@@ -197,9 +197,28 @@ export async function listShopOrdersForShop(
     throw new Error(error.message);
   }
 
-  return ((data ?? []) as ShopOrder[]).map((o) => ({
+  return attachShopPing(
+    ((data ?? []) as ShopOrder[]).map((o) => ({
+      ...o,
+      items: o.items ?? [],
+    })),
+  );
+}
+
+async function attachShopPing(orders: ShopOrder[]): Promise<ShopOrder[]> {
+  const jobIds = orders.map((o) => o.job_id).filter((id): id is string => Boolean(id));
+  if (!jobIds.length) return orders;
+  const admin = createAdminClient();
+  const { data: jobs } = await admin
+    .from("rr_jobs")
+    .select("id, dispatch_exhausted")
+    .in("id", jobIds);
+  const byId = new Map(
+    (jobs ?? []).map((j) => [j.id as string, Boolean(j.dispatch_exhausted)]),
+  );
+  return orders.map((o) => ({
     ...o,
-    items: o.items ?? [],
+    dispatch_exhausted: o.job_id ? byId.get(o.job_id) : false,
   }));
 }
 
@@ -459,7 +478,7 @@ async function dispatchShopDelivery(order: ShopOrder): Promise<ShopOrder> {
   const job = await insertPaidJob({
     status: "searching_driver",
     service_type: "delivery",
-    required_vehicle: "sedan",
+    required_vehicle: "motorcycle",
     customer_name: order.customer_name,
     customer_phone: order.customer_phone,
     pickup_lat: pickupLat,
@@ -496,7 +515,13 @@ async function dispatchShopDelivery(order: ShopOrder): Promise<ShopOrder> {
     .eq("id", order.id)
     .select("*, items:rr_shop_order_items(*)")
     .single();
-  return (data as ShopOrder) ?? { ...order, job_id: job.id };
+  const next = (data as ShopOrder) ?? { ...order, job_id: job.id };
+  return {
+    ...next,
+    dispatch_exhausted: Boolean(
+      (job as { dispatch_exhausted?: boolean }).dispatch_exhausted,
+    ),
+  };
 }
 
 export async function captureYocoAndPlaceShopCart(

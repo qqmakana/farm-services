@@ -19,7 +19,12 @@ import { locsFromSearchParams } from "@/lib/booking-query";
 import { getGuestProfile } from "@/lib/guest-profile";
 import { useCountry } from "@/components/country/country-provider";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
-import type { CourierPackageType, CourierWeight, VehicleType } from "@/lib/types";
+import type {
+  CourierPackageType,
+  CourierWeight,
+  VehicleType,
+} from "@/lib/types";
+import { SIZE_VEHICLE, suggestVehicle, VEHICLE_EMOJI } from "@/lib/vehicles";
 import { SERVICE_COPY } from "@/lib/service-guide";
 import { FareBreakdownCard } from "@/components/uber/fare-breakdown-card";
 
@@ -27,16 +32,30 @@ const PACKAGE_OPTIONS = [
   {
     id: "documents" as const,
     label: "Documents",
-    hint: "Letters, IDs, contracts — curb handover",
+    hint: "Letters, IDs, contracts",
     weight: "under_5" as CourierWeight,
     size: "small" as const,
   },
   {
     id: "small_package" as const,
     label: "Small package",
-    hint: "Sealed bag or box, max 15 kg",
+    hint: "Sealed bag or box",
     weight: "under_5" as CourierWeight,
     size: "small" as const,
+  },
+  {
+    id: "medium_package" as const,
+    label: "Medium package",
+    hint: "Groceries-size bag",
+    weight: "5_10" as CourierWeight,
+    size: "medium" as const,
+  },
+  {
+    id: "furniture" as const,
+    label: "Furniture / farm goods",
+    hint: "Needs a bakkie",
+    weight: "10_20" as CourierWeight,
+    size: "medium" as const,
   },
 ] as const;
 
@@ -80,8 +99,20 @@ export function CourierSheet({
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [quoteReady, setQuoteReady] = useState(false);
 
-  const pack = PACKAGE_OPTIONS.find((o) => o.id === packageType)!;
+  const pack = PACKAGE_OPTIONS.find((o) => o.id === packageType) ?? PACKAGE_OPTIONS[0];
   const itemDescription = pack.label;
+
+  useEffect(() => {
+    const size =
+      packageType === "furniture"
+        ? "large"
+        : packageType === "medium_package"
+          ? "medium"
+          : "small";
+    setVehicle(
+      suggestVehicle({ service_type: "courier", delivery_size: size }),
+    );
+  }, [packageType]);
 
   const atIso = useMemo(
     () => (whenMode === "later" ? localInputToIso(scheduledLocal) : null),
@@ -92,10 +123,6 @@ export function CourierSheet({
     const guest = getGuestProfile();
     if (guest?.name) setSenderName((n) => n || guest.name);
     if (guest?.phone) setSenderPhone((p) => p || guest.phone);
-  }, []);
-
-  useEffect(() => {
-    setVehicle("sedan");
   }, []);
 
   useEffect(() => {
@@ -272,10 +299,17 @@ export function CourierSheet({
       <LandmarkHelperText />
 
       <div role="group" aria-label="Package type">
-        <p className="text-sm font-semibold text-black">What are you sending</p>
+        <p className="text-sm font-semibold text-black">What are you sending?</p>
         <div className="mt-2 grid grid-cols-2 gap-2">
           {PACKAGE_OPTIONS.map((o) => {
             const selected = packageType === o.id;
+            const size =
+              o.id === "furniture"
+                ? "large"
+                : o.id === "medium_package"
+                  ? "medium"
+                  : "small";
+            const v = SIZE_VEHICLE[size];
             return (
               <button
                 key={o.id}
@@ -287,7 +321,10 @@ export function CourierSheet({
                     : "border border-transparent bg-gray-50"
                 }`}
               >
-                <span className="block text-sm font-semibold text-black">
+                <span className="block text-lg leading-none">
+                  {VEHICLE_EMOJI[v]}
+                </span>
+                <span className="mt-1 block text-sm font-semibold text-black">
                   {o.label}
                 </span>
                 <span className="mt-0.5 block text-xs text-gray-500">

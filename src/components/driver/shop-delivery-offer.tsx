@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { formatMoney } from "@/lib/format";
 import { shopDeliveryOfferLines } from "@/lib/shop-delivery";
-import type { Job } from "@/lib/types";
+import type { Job, VehicleType } from "@/lib/types";
+import { VEHICLE_EMOJI, VEHICLE_LABELS } from "@/lib/vehicles";
 
 export function ShopDeliveryOffer({
   job,
@@ -17,6 +18,7 @@ export function ShopDeliveryOffer({
   onDecline: () => void;
 }) {
   const lines = shopDeliveryOfferLines(job);
+  const vehicle = (job.required_vehicle || "motorcycle") as VehicleType;
   const [left, setLeft] = useState(() => remaining(job.offer_expires_at));
   const expired = useRef(false);
 
@@ -40,7 +42,10 @@ export function ShopDeliveryOffer({
       className="absolute inset-0 z-[700] flex flex-col bg-[#0E0E0E] px-5 pb-8 pt-10 text-white"
     >
       <p className="text-center text-[13px] font-bold tracking-[0.18em] text-[#06c167]">
-        📦 NEW DELIVERY
+        {VEHICLE_EMOJI[vehicle]} NEW DELIVERY
+      </p>
+      <p className="mt-1 text-center text-sm font-semibold text-white/70">
+        {VEHICLE_LABELS[vehicle]}
       </p>
       <div className="mx-auto mt-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#06c167] text-3xl font-black tabular-nums text-white">
         {left ?? 15}

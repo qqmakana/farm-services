@@ -8,37 +8,87 @@ export const VEHICLE_LABELS: Record<VehicleType, string> = {
   motorcycle: "Motorcycle",
 };
 
+export const VEHICLE_EMOJI: Record<VehicleType, string> = {
+  sedan: "🚗",
+  bakkie: "🛻",
+  truck: "🚚",
+  motorcycle: "🏍️",
+};
+
 export const VEHICLE_BLURBS: Record<VehicleType, string> = {
   sedan: "People only — village ↔ town rides",
   bakkie: "Boxes, farm crates, small furniture, TVs",
   truck: "Fridges, couches, wardrobes, heavy loads",
-  motorcycle: "Boda / Okada / short village hops",
+  motorcycle: "Food delivery, documents, small bags",
 };
+
+export type ItemSize = "small" | "medium" | "large";
+
+/** Fetch / Send size → vehicle. Shops catalog is always motorcycle. */
+export const SIZE_VEHICLE: Record<ItemSize, VehicleType> = {
+  small: "motorcycle",
+  medium: "sedan",
+  large: "bakkie",
+};
+
+export const FETCH_SEND_SIZES: {
+  id: ItemSize;
+  label: string;
+  hint: string;
+}[] = [
+  { id: "small", label: "Small", hint: "Documents, bread" },
+  { id: "medium", label: "Medium", hint: "Groceries bag" },
+  { id: "large", label: "Large", hint: "Hardware, feed bag" },
+];
 
 /** Local label for motorcycle-class modes (Boda, Okada, Auto, etc.). */
 export function localModeLabel(mode: LocalRideMode | null | undefined): string {
   return mode?.label ?? VEHICLE_LABELS.motorcycle;
 }
 
-/** SA Uber-style rule: people → car; goods → bakkie/truck. */
+export function itemSizeFromWeight(
+  weight?: "light" | "medium" | "heavy" | "extra_heavy" | null,
+): ItemSize {
+  if (weight === "light") return "small";
+  if (weight === "heavy" || weight === "extra_heavy") return "large";
+  return "medium";
+}
+
+export function itemSizeFromDeliverySize(
+  size?: "small" | "medium" | "large" | "xl" | null,
+): ItemSize {
+  if (size === "small") return "small";
+  if (size === "large" || size === "xl") return "large";
+  return "medium";
+}
+
+/**
+ * Trip / +Stop → sedan.
+ * Shops catalog → motorcycle only.
+ * Fetch & Send → motorcycle / sedan / bakkie by item size.
+ */
 export function suggestVehicle(params: {
   service_type: ServiceType;
   delivery_size?: "small" | "medium" | "large" | "xl";
   weight_category?: "light" | "medium" | "heavy" | "extra_heavy";
+  /** Pay-in-app shop menu (not Fetch). */
+  shop_catalog?: boolean;
 }): VehicleType {
   if (params.service_type === "ride") return "sedan";
-  if (params.service_type === "courier") return "sedan";
-  const w = params.weight_category;
-  if (w === "heavy" || w === "extra_heavy") return "truck";
-  if (w === "light" || w === "medium") return "bakkie";
-  if (params.service_type === "farm") return "bakkie";
-  if (params.delivery_size === "xl" || params.delivery_size === "large") {
-    return "truck";
+  if (params.shop_catalog) return "motorcycle";
+
+  const size = params.delivery_size
+    ? itemSizeFromDeliverySize(params.delivery_size)
+    : itemSizeFromWeight(params.weight_category);
+
+  if (params.service_type === "courier" || params.service_type === "delivery") {
+    return SIZE_VEHICLE[size];
   }
-  return "bakkie";
+  if (params.service_type === "farm") return "bakkie";
+  return SIZE_VEHICLE[size];
 }
 
-/** Can this vehicle do this job? Truck can cover bakkie; bakkie cannot do truck-only. */
+/** Can this vehicle do this job? No sedan/bakkie fallback for motorcycle shops. */
 export function vehicleFitsJob(
   driverVehicle: string,
   required: VehicleType,

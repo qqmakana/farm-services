@@ -1658,6 +1658,7 @@ async function createJobInner(input: NewJobInput) {
     const msg = err instanceof Error ? err.message : String(err);
     if (
       row.required_vehicle === "motorcycle" &&
+      !row.shop_id &&
       /motorcycle|enum|invalid input|check constraint/i.test(msg)
     ) {
       try {
@@ -2585,7 +2586,7 @@ export async function createShopOrder(input: ShopOrderInput) {
 
   const required = suggestVehicle({
     service_type: "delivery",
-    delivery_size: product.size as "small" | "medium" | "large" | "xl",
+    shop_catalog: true,
   });
 
   const fare = await resolveFare({

@@ -143,7 +143,7 @@ export function DriverApplyForm({
           <select
             name="vehicle_type"
             className="ru-input mt-1.5"
-            defaultValue={"bakkie" satisfies VehicleType}
+            defaultValue={"sedan" satisfies VehicleType}
           >
             {(Object.keys(VEHICLE_LABELS) as VehicleType[]).map((v) => (
               <option key={v} value={v}>

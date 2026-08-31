@@ -43,6 +43,7 @@ import {
 } from "../src/lib/sa-id";
 import { decideKyc } from "../src/lib/kyc/verify";
 import { courierTooHeavyError } from "../src/lib/courier-limits";
+import { suggestVehicle, vehicleFitsJob } from "../src/lib/vehicles";
 import { getCountry } from "../src/lib/countries";
 import { distanceKm, jitterLatLng } from "../src/lib/geo";
 import {
@@ -603,7 +604,7 @@ test("mock: merchant shop + product + shop order", () => {
   assert(linked.length >= 1, "merchant orders visible");
 });
 
-test("mock: ready shop cart order pings an online sedan driver", () => {
+test("mock: ready shop cart order pings a motorcycle driver only", () => {
   const shop = mockRepo.createShop({
     name: "Ping Kitchen",
     phone: "0821112222",
@@ -629,14 +630,66 @@ test("mock: ready shop cart order pings an online sedan driver", () => {
   });
   const ready = mockRepo.updateShopOrderStatus(order.id, "ready");
   assert(Boolean(ready.job_id), "job created for driver ping");
-  const offers = mockRepo.listIncomingOffers("d2");
+  const job = mockRepo.listJobs().find((j) => j.id === ready.job_id);
+  assert(job?.required_vehicle === "motorcycle", "shops ping motorcycle");
+  const sedanOffers = mockRepo.listIncomingOffers("d2");
   assert(
-    offers.some((o) => o.jobs?.id === ready.job_id),
-    "sedan driver sees shop delivery offer",
+    !sedanOffers.some((o) => o.jobs?.id === ready.job_id),
+    "sedan driver does not see shop motorcycle offer",
   );
-  mockRepo.acceptOffer(ready.job_id!, "d2");
+  const bikeOffers = mockRepo.listIncomingOffers("d4");
+  assert(
+    bikeOffers.some((o) => o.jobs?.id === ready.job_id),
+    "motorcycle driver sees shop delivery offer",
+  );
+  mockRepo.acceptOffer(ready.job_id!, "d4");
   const after = mockRepo.listShopOrders(shop.id).find((o) => o.id === order.id);
-  assert(after?.driver_id === "d2", "shop order linked to driver");
+  assert(after?.driver_id === "d4", "shop order linked to motorcycle driver");
+});
+
+test("mock: shop ready with no motorcycle sets dispatch_exhausted", () => {
+  const bike = mockRepo.listDrivers().find((d) => d.id === "d4");
+  assert(bike != null, "d4 exists");
+  const wasOnline = bike!.is_online;
+  bike!.is_online = false;
+  try {
+    const shop = mockRepo.createShop({
+      name: "No Bike Kitchen",
+      phone: "0821113333",
+      category: "food",
+      landmark: "Westdene",
+      lat: -31.589,
+      lng: 28.785,
+    });
+    shop.is_active = true;
+    const product = mockRepo.createProduct({
+      shop_id: shop.id,
+      name: "Pap",
+      price: 50,
+      size: "small",
+    });
+    const order = mockRepo.placeShopCartOrder({
+      shop_id: shop.id,
+      customer_name: "Rider",
+      customer_phone: "0830002222",
+      delivery_address: "97 Perth Road",
+      items: [{ product_id: product.id, quantity: 1 }],
+      payment_method: "cash",
+    });
+    const ready = mockRepo.updateShopOrderStatus(order.id, "ready");
+    assert(Boolean(ready.job_id), "job created");
+    assert(
+      ready.dispatch_exhausted === true,
+      "no motorcycle nearby",
+    );
+    const sedanOffers = mockRepo.listIncomingOffers("d2");
+    assert(
+      !sedanOffers.some((o) => o.jobs?.id === ready.job_id),
+      "no sedan fallback",
+    );
+  } finally {
+    bike!.is_online = wasOnline;
+  }
 });
 
 test("mock: phone job lookup variants", () => {
@@ -895,7 +948,7 @@ test("reserve window: 30 minutes to 30 days", () => {
   assert(reserveWindowError(null, now) == null, "unset ok");
 });
 
-test("courier: reject over 15kg, bakkie, and 10–20kg band", () => {
+test("courier: reject over 15kg, bakkie small, and 10–20kg band", () => {
   assert(
     courierTooHeavyError({
       service_type: "courier",
@@ -923,6 +976,18 @@ test("courier: reject over 15kg, bakkie, and 10–20kg band", () => {
   assert(
     courierTooHeavyError({
       service_type: "courier",
+      required_vehicle: "bakkie",
+      details: {
+        package_type: "furniture",
+        item_weight: "10_20",
+        size: "medium",
+      },
+    }) == null,
+    "bakkie furniture ok",
+  );
+  assert(
+    courierTooHeavyError({
+      service_type: "courier",
       required_vehicle: "sedan",
       details: { item_weight: "under_5", package_type: "documents" },
     }) == null,
@@ -943,6 +1008,72 @@ test("courier: reject over 15kg, bakkie, and 10–20kg band", () => {
       details: { item_weight_kg: 80 },
     }) == null,
     "delivery not limited to 15kg",
+  );
+});
+
+test("vehicles: match by service and size", () => {
+  assert(
+    suggestVehicle({ service_type: "ride" }) === "sedan",
+    "trip sedan",
+  );
+  assert(
+    suggestVehicle({ service_type: "delivery", shop_catalog: true }) ===
+      "motorcycle",
+    "shops motorcycle",
+  );
+  assert(
+    suggestVehicle({
+      service_type: "delivery",
+      delivery_size: "small",
+    }) === "motorcycle",
+    "fetch small motorcycle",
+  );
+  assert(
+    suggestVehicle({
+      service_type: "delivery",
+      delivery_size: "medium",
+    }) === "sedan",
+    "fetch medium sedan",
+  );
+  assert(
+    suggestVehicle({
+      service_type: "delivery",
+      delivery_size: "large",
+    }) === "bakkie",
+    "fetch large bakkie",
+  );
+  assert(
+    suggestVehicle({
+      service_type: "courier",
+      delivery_size: "small",
+    }) === "motorcycle",
+    "send documents motorcycle",
+  );
+  assert(
+    suggestVehicle({
+      service_type: "courier",
+      delivery_size: "medium",
+    }) === "sedan",
+    "send medium sedan",
+  );
+  assert(
+    suggestVehicle({
+      service_type: "courier",
+      delivery_size: "large",
+    }) === "bakkie",
+    "send furniture bakkie",
+  );
+  assert(
+    vehicleFitsJob("motorcycle", "motorcycle"),
+    "bike fits shops",
+  );
+  assert(
+    !vehicleFitsJob("sedan", "motorcycle"),
+    "sedan does not fill shops",
+  );
+  assert(
+    !vehicleFitsJob("bakkie", "motorcycle"),
+    "bakkie does not fill shops",
   );
 });
 

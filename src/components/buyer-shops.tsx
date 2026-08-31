@@ -52,7 +52,7 @@ export function BuyerShops({
   const vehicle: VehicleType | null = selected
     ? suggestVehicle({
         service_type: "delivery",
-        delivery_size: selected.size,
+        shop_catalog: true,
       })
     : null;
 
