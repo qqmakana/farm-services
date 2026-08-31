@@ -530,6 +530,9 @@ function ProductCard({
   popped: boolean;
   onAdd: () => void;
 }) {
+  const unit = Number(product.price);
+  const lineTotal = unit * Math.max(qty, 1);
+
   return (
     <article
       className={`overflow-hidden rounded-[12px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] ${
@@ -552,9 +555,16 @@ function ProductCard({
           {productBlurb(product)}
         </p>
         <div className="mt-2 flex items-center justify-between gap-3">
-          <p className="text-[18px] font-bold text-[#111111]">
-            {formatMoney(Number(product.price))}
-          </p>
+          <div>
+            <p className="text-[18px] font-bold text-[#111111]">
+              {formatMoney(lineTotal)}
+            </p>
+            {qty > 1 ? (
+              <p className="text-[11px] font-medium text-[#8A8A8A]">
+                {qty} × {formatMoney(unit)}
+              </p>
+            ) : null}
+          </div>
           {product.in_stock ? (
             <AddControl
               product={product}
