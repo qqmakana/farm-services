@@ -79,10 +79,8 @@ import type {
 } from "./types";
 import {
   allowLocalTestPayments,
-  getPayPalCurrency,
   isPayPalConfigured,
   paypalCaptureOrder,
-  paypalCreateOrder,
 } from "./paypal";
 import {
   isYocoConfigured,
@@ -1366,7 +1364,7 @@ export async function listApplications(jobId?: string) {
 }
 
 /**
- * Create a PayPal order. Prefer passing `vehicle` (+ optional lat/lng) so the
+ * Create a Yoco checkout. Prefer passing `vehicle` (+ optional lat/lng) so the
  * amount is computed server-side. Amount-only is kept for shop checkout after
  * the client has already called `quoteFareAction` (or product pricing).
  */
@@ -1385,9 +1383,9 @@ export async function createPayPalOrderAction(params: {
   details?: unknown;
   is_express?: boolean;
 }) {
-  if (!isYocoConfigured() && !isPayPalConfigured()) {
+  if (!isYocoConfigured()) {
     throw new Error(
-      "Add YOCO_SECRET_KEY (and NEXT_PUBLIC_YOCO_ENABLED=1) to take card payments.",
+      "Card payments use Yoco. Add YOCO_SECRET_KEY (and NEXT_PUBLIC_YOCO_ENABLED=1).",
     );
   }
 
@@ -1418,29 +1416,16 @@ export async function createPayPalOrderAction(params: {
     throw new Error("Invalid amount.");
   }
 
-  if (isYocoConfigured()) {
-    const checkout = await yocoCreateCheckout({
-      amountZar,
-      description: params.description,
-      successPath: "/yoco/complete",
-      cancelPath: "/ride",
-    });
-    return {
-      orderId: checkout.id,
-      approveUrl: checkout.redirectUrl,
-      currency: "ZAR",
-      amount: amountZar,
-    };
-  }
-
-  const order = await paypalCreateOrder({
+  const checkout = await yocoCreateCheckout({
     amountZar,
     description: params.description,
+    successPath: "/yoco/complete",
+    cancelPath: "/ride",
   });
   return {
-    orderId: order.id,
-    approveUrl: order.approveUrl,
-    currency: getPayPalCurrency(),
+    orderId: checkout.id,
+    approveUrl: checkout.redirectUrl,
+    currency: "ZAR",
     amount: amountZar,
   };
 }
@@ -1501,7 +1486,7 @@ async function createJobInner(input: NewJobInput) {
     Boolean(onlinePayment.paypalCaptureId);
 
   if (!isCash && !isOnline) {
-    throw new Error("Valid payment required (Cash or PayPal / Card).");
+    throw new Error("Valid payment required (cash or card).");
   }
 
   // Never trust client fee_amount for charging (includes night surcharge).
@@ -2575,7 +2560,7 @@ export async function createShopOrder(input: ShopOrderInput) {
     Boolean(input.payment.paypalOrderId) &&
     Boolean(input.payment.paypalCaptureId);
   if (!isCash && !isPayPal) {
-    throw new Error("Cash or PayPal payment required.");
+    throw new Error("Cash or card payment required.");
   }
 
   const shops = await listShops();
@@ -2619,7 +2604,7 @@ export async function createShopOrder(input: ShopOrderInput) {
     shop_id: shop.id,
     product_summary: `${product.name} (${product.price})`,
     dispatcher_notes: `Shop order from ${shop.name} — paid with ${
-      isCash ? "cash" : "PayPal"
+      isCash ? "cash" : "card"
     }`,
     payment: input.payment,
   }).then(async (job) => {
@@ -3988,7 +3973,7 @@ export async function createLocalPaidJob(draft: Omit<NewJobInput, "payment">) {
     );
   }
   if (isPayPalConfigured()) {
-    throw new Error("PayPal is configured — use the PayPal button.");
+    throw new Error("Yoco is configured — use the card button.");
   }
   const stamp = Date.now().toString(36).toUpperCase();
   return createJob({
@@ -4165,7 +4150,7 @@ export async function createLocalPaidShopOrder(
     );
   }
   if (isPayPalConfigured()) {
-    throw new Error("PayPal is configured — use the PayPal button.");
+    throw new Error("Yoco is configured — use the card button.");
   }
   const stamp = Date.now().toString(36).toUpperCase();
   return createShopOrder({

@@ -103,7 +103,7 @@ export function SubscribeButton({
         </p>
         <p className="mt-1 text-xs text-[var(--ru-muted)]">
           On Village Ride — Trip, Fetch, Send and Shops. Fares stay the
-          same: driver keeps 90%, Village Ride 10%. Cash or card (PayPal).
+          same: driver keeps 90%, Village Ride 10%. Cash or card (Yoco).
         </p>
         <ul className="mt-2 space-y-1 text-xs text-[var(--ru-muted)]">
           <li>✓ Priority matching</li>
@@ -128,11 +128,10 @@ export function SubscribeButton({
         onClick={subscribe}
         className="uber-press uber-btn-black w-full"
       >
-        {pending ? "Starting PayPal…" : "Get Village Pass"}
+        {pending ? <span className="vr-spin" aria-hidden /> : "Get Village Pass"}
       </button>
       <p className="text-[11px] text-[var(--ru-muted)]">
-        PayPal on the web. Cancel anytime in PayPal. Does not discount the
-        driver fare.
+        Does not discount the driver fare.
       </p>
     </div>
   );

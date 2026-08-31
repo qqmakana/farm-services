@@ -80,7 +80,7 @@ export function UberFeatureTile({
     <AppLink
       href={href}
       data-testid={testId}
-      className="uber-press flex min-h-[8.25rem] flex-col justify-between rounded-[16px] bg-[#F3F3F3] p-4"
+      className="uber-press flex min-h-[8.25rem] flex-col justify-between rounded-[16px] bg-white p-3 shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
     >
       <span>
         <span className="block text-[15px] font-bold text-[#0a0a0a]">

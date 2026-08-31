@@ -250,9 +250,7 @@ export function DispatchBoard({
                           ? "Cash collected"
                           : "Cash — unpaid"
                         : job.payment_status === "paid_online"
-                          ? job.payment_method === "paypal"
-                            ? "Paid · PayPal"
-                            : `Paid · card ••${job.card_last4 ?? "****"}`
+                          ? "Paid · Card (Yoco)"
                           : "Payment pending"}
                     </p>
                     <p className="text-stone-500">{formatWhen(job.scheduled_for)}</p>

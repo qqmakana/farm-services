@@ -144,7 +144,7 @@ export function UberHome() {
   return (
     <main
       data-testid="uber-home"
-      className="ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-32 pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] text-black"
+      className="ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-[#F5F5F5] px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] text-[#111111]"
     >
       <Suspense fallback={null}>
         <CaptureReferral />
@@ -188,8 +188,8 @@ export function UberHome() {
                 onClick={() => setMode("ride")}
                 className={`uber-press relative flex min-h-14 flex-1 flex-col items-center gap-1 pb-2.5 text-[15px] ${
                   selected
-                    ? "font-bold text-black"
-                    : "font-medium text-[#6B6B6B]"
+                    ? "font-bold text-[#111111]"
+                    : "font-medium text-[#666666]"
                 }`}
               >
                 {inner}
@@ -205,8 +205,8 @@ export function UberHome() {
               onClick={() => setMode(m.id)}
               className={`uber-press relative flex min-h-14 flex-1 flex-col items-center gap-1 pb-2.5 text-[15px] ${
                 selected
-                  ? "font-bold text-black"
-                  : "font-medium text-[#6B6B6B]"
+                  ? "font-bold text-[#111111]"
+                  : "font-medium text-[#666666]"
               }`}
             >
               {inner}
@@ -215,28 +215,28 @@ export function UberHome() {
         })}
       </div>
 
-      <div className="mt-5 flex items-center rounded-full bg-[#EEEEEE] py-1.5 pl-5 pr-1.5">
+      <div className="mt-5 flex h-12 items-center rounded-[12px] border border-[#E0E0E0] bg-white pl-4 pr-1.5">
         <button
           type="button"
           data-testid="home-where-to"
           onClick={() => setWhereOpen(true)}
-          className="uber-press flex min-h-12 flex-1 items-center gap-3 text-left"
+          className="uber-press flex min-h-11 flex-1 items-center gap-3 text-left"
         >
           <Search
-            className="h-5 w-5 shrink-0 text-[#6B6B6B]"
+            className="h-5 w-5 shrink-0 text-[#999999]"
             strokeWidth={2}
             aria-hidden
           />
-          <span className="text-[17px] font-normal text-[#A6A6A6]">
+          <span className="text-[16px] font-normal text-[#999999]">
             Where to?
           </span>
         </button>
-        <span className="mx-1 h-8 w-px bg-[#D2D2D2]" aria-hidden />
+        <span className="mx-1 h-8 w-px bg-[#EEEEEE]" aria-hidden />
         <button
           type="button"
           data-testid="home-later"
           onClick={() => setLaterOpen(true)}
-          className="uber-press flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-white px-4 text-[15px] font-medium text-black shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+          className="uber-press flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-[15px] font-semibold text-[#111111]"
         >
           <CalendarClock className="h-4 w-4" strokeWidth={2} aria-hidden />
           Later
@@ -251,7 +251,7 @@ export function UberHome() {
 
       <section className="relative z-10 mt-6" data-testid="home-chips">
         <div className="flex items-center justify-between">
-          <h2 className="text-[24px] font-bold leading-[1.2] tracking-[-0.3px] text-black">
+          <h2 className="text-[24px] font-bold leading-[1.2] tracking-[-0.3px] text-[#111111]">
             For you
           </h2>
           <AppLink
@@ -314,7 +314,7 @@ export function UberHome() {
 
       <DriveSignupCard variant="compact" className="mt-5" />
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-4 space-y-4">
         <UberFeatureTile
           href="/ride?stop=1"
           title={SERVICE_COPY.tripStop.title}
@@ -332,20 +332,20 @@ export function UberHome() {
 
       <AppLink
         href="/ride"
-        className="uber-press mt-4 block rounded-[16px] bg-black px-4 py-4 text-white"
+        className="uber-press uber-btn-black mt-4 flex h-auto min-h-12 w-full flex-col !items-start !rounded-[16px] px-4 py-4"
       >
-        <span className="text-[15px] font-bold">20% off 10 trips</span>
-        <span className="mt-0.5 block text-[13px] text-white/70">
+        <span className="text-[15px] font-semibold">20% off 10 trips</span>
+        <span className="mt-0.5 block text-[13px] font-normal text-white/70">
           Village Pass · cash or card
         </span>
       </AppLink>
       <AppLink
         href="/account"
-        className="uber-press mt-3 block rounded-[16px] bg-[#F3F3F3] px-4 py-4 text-black"
+        className="uber-press mt-3 block rounded-[16px] bg-white px-4 py-4 text-[#111111] shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
       >
-        <span className="text-[15px] font-bold">Refer a friend, get R50</span>
-        <span className="mt-0.5 block text-[13px] text-[#6B6B6B]">
-          Share your VR code from Account
+        <span className="text-[15px] font-bold">Refer a friend, get R 50</span>
+        <span className="mt-0.5 block text-[13px] text-[#666666]">
+          Share your VR code from Account →
         </span>
       </AppLink>
 

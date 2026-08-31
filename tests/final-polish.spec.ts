@@ -51,7 +51,7 @@ test.describe("Final polish", () => {
     await expect(page.getByText(/Invite friends|Refer a friend/i)).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByText(/R50/i).first()).toBeVisible();
+    await expect(page.getByText(/R\s?50/i).first()).toBeVisible();
     await expect(
       page.getByRole("button", { name: /Share invite|Share|WhatsApp/i }).first(),
     ).toBeVisible();

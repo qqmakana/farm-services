@@ -24,7 +24,7 @@ export function HomeInstallCard() {
       data-testid="home-install-card"
       className="mb-5 rounded-[20px] bg-black px-4 py-4 text-white"
     >
-      <p className="text-[11px] font-bold tracking-[0.12em] text-[#f0c14b] uppercase">
+      <p className="text-[11px] font-semibold text-[#f0c14b]">
         Not on Play Store yet
       </p>
       <p className="mt-1 text-[16px] font-bold leading-snug">
@@ -41,7 +41,13 @@ export function HomeInstallCard() {
         disabled={installing}
         className="uber-press mt-3 flex min-h-12 w-full items-center justify-center rounded-full bg-white text-[15px] font-bold text-black disabled:opacity-60"
       >
-        {installing ? "Opening…" : ios ? "How to install" : "Install app"}
+            {installing ? (
+              <span className="vr-spin vr-spin-dark" aria-hidden />
+            ) : ios ? (
+              "How to install"
+            ) : (
+              "Install app"
+            )}
       </button>
       {helpOpen ? (
         <InstallHelpPanel ios={ios} onClose={() => setHelpOpen(false)} />

@@ -56,14 +56,14 @@ export default function PricingPage() {
         <section className="mt-10 rounded-xl border bg-slate-50 p-5">
           <h2 className="font-bold">What the rider pays</h2>
           <ul className="mt-3 space-y-2 text-sm text-slate-700">
-            <li>Under 2 km: <strong>R15</strong> flat</li>
-            <li>Over 2 km: <strong>R15 + R5/km</strong> after the first 2 km</li>
-            <li>Cash or card (PayPal)</li>
+            <li>Under 2 km: <strong>R 15</strong> flat</li>
+            <li>Over 2 km: <strong>R 15 + R 5/km</strong> after the first 2 km</li>
+            <li>Cash or card (Yoco)</li>
           </ul>
           <h2 className="mt-6 font-bold">Who gets what</h2>
           <p className="mt-2 text-sm text-slate-700">
-            Example: <strong>R50</strong> trip → driver gets{" "}
-            <strong>R45</strong>, {BRAND.appName} keeps <strong>R5</strong>.
+            Example: <strong>R 50</strong> trip → driver gets{" "}
+            <strong>R 45</strong>, {BRAND.appName} keeps <strong>R 5</strong>.
             Founding drivers (first trip by 30 Aug) also share a 2% city
             revenue pool at month-end. Card payouts settle weekly.
           </p>

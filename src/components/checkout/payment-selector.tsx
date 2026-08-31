@@ -41,7 +41,7 @@ export function PaymentSelector({
       aria-label="Payment method"
     >
       {compact ? null : (
-        <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+        <p className="text-xs font-semibold text-[#666666]">
           Payment
         </p>
       )}

@@ -42,11 +42,11 @@ export function DriveSignupCard({
       <section
         data-testid="drive-signup-card"
         data-variant="compact"
-        className={`relative overflow-hidden rounded-[24px] shadow-[0_8px_28px_rgba(0,0,0,0.08)] ${className}`}
+        className={`relative overflow-hidden rounded-[16px] shadow-[0_2px_8px_rgba(0,0,0,0.06)] ${className}`}
       >
         <div className="flex min-h-[5.5rem] items-stretch">
           <div className="flex min-w-0 flex-[2] flex-col justify-center bg-[#f0c14b] px-5 py-4">
-            <p className="text-[11px] font-bold tracking-[0.12em] text-[#0a0a0a]/55 uppercase">
+            <p className="text-[11px] font-semibold text-[#0a0a0a]/55">
               Opens end of September
             </p>
             <p className="mt-1 font-[family-name:var(--font-display)] text-[16px] font-bold leading-snug tracking-[-0.02em] text-[#0a0a0a]">

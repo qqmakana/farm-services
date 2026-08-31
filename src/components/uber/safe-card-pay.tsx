@@ -10,17 +10,8 @@ import {
 } from "@/lib/paypal-draft";
 import { isYocoPublicEnabled } from "@/lib/yoco";
 
-const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "";
-
-function paypalReady() {
-  const id = clientId.trim();
-  if (!id) return false;
-  if (/your[_./]|example|placeholder/i.test(id) || id.length < 10) return false;
-  return true;
-}
-
 function cardReady() {
-  return isYocoPublicEnabled() || paypalReady();
+  return isYocoPublicEnabled();
 }
 
 function allowLocalTestPay() {
@@ -30,7 +21,7 @@ function allowLocalTestPay() {
 
 /**
  * Card pay without a JS SDK — old WebViews crash SDKs. Server creates a
- * Yoco (or PayPal) hosted checkout and we open that page.
+ * Yoco hosted checkout — we open that page. No PayPal SDK.
  */
 export function SafeCardPay({
   amount,
