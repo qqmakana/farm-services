@@ -46,8 +46,8 @@ self.addEventListener('notificationclick', function (event) {
 `
     : "";
 
-  const body = `/* Village Ride service worker v5 — PWA + FCM (network-first app shell) */
-const CACHE = "village-ride-v5";
+  const body = `/* Village Ride service worker v6 — PWA + FCM (network-first app shell) */
+const CACHE = "village-ride-v6";
 const PRECACHE = ["/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 function isStaticAsset(pathname) {

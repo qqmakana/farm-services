@@ -26,6 +26,7 @@ import { SERVICE_COPY } from "@/lib/service-guide";
 import { ListedShopCrossSell } from "@/components/uber/listed-shop-cross-sell";
 import { ItemSizePicker } from "@/components/uber/item-size-picker";
 import { PackageTypePicker } from "@/components/uber/item-visual";
+import { ServicePills } from "@/components/uber/service-pills";
 import type { CourierPackageType, JobDetails, NewJobInput, ServiceType } from "@/lib/types";
 import {
   courierPackageSize,
@@ -274,6 +275,7 @@ export function SimpleGoodsSheet({
 
   return (
     <div className="space-y-3 text-black">
+      <ServicePills className="!px-0 !pb-1 !pt-0" />
       <h1 className="text-center text-[22px] font-bold">{heading}</h1>
       <p className="text-center text-[13px] text-[#6B6B6B]">{copy.blurb}</p>
       {service === "delivery" ? (

@@ -61,7 +61,7 @@ function RideInner() {
 
 export default function RidePage() {
   return (
-    <BookingTabChrome>
+    <BookingTabChrome hideTabBar>
       <Suspense
         fallback={
           <div className="flex min-h-dvh items-center justify-center bg-[#F3F3F3] text-[var(--ru-ink)]">
