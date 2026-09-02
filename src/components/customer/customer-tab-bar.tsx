@@ -75,11 +75,11 @@ export function CustomerTabBar() {
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 z-[60] w-full max-w-md -translate-x-1/2 bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_10px_rgba(0,0,0,0.05)] font-[family-name:var(--font-sans)]"
+      className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[60] w-[calc(100%-1.5rem)] max-w-[22rem] -translate-x-1/2 rounded-full bg-white px-2 py-1.5 shadow-[0_8px_28px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.04] font-[family-name:var(--font-sans)]"
       aria-label="Main"
       data-testid="customer-tab-bar"
     >
-      <ul className="flex h-16 items-stretch justify-around px-2">
+      <ul className="flex h-14 items-stretch justify-around">
         {TABS.map((tab) => {
           const active = tab.match(pathname);
           const Icon = tab.icon;
@@ -88,25 +88,25 @@ export function CustomerTabBar() {
               <AppLink
                 href={tab.href}
                 data-testid={`customer-tab-${tab.label.toLowerCase()}`}
-                className={`uber-press flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 py-1.5 no-underline transition-colors duration-200 ${
+                className={`uber-press flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 no-underline transition-colors duration-200 ${
                   active
                     ? "font-semibold text-[#111111]"
-                    : "font-medium text-[#666666]"
+                    : "font-medium text-[#6B6B6B]"
                 }`}
               >
                 <span
-                  className={`flex h-9 w-14 items-center justify-center rounded-full transition-colors duration-200 ${
-                    active ? "bg-[#EEEEEE]" : "bg-transparent"
+                  className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-200 ${
+                    active ? "bg-[#111111] text-white" : "bg-transparent"
                   }`}
                 >
                   <Icon
-                    className="h-6 w-6 transition-[fill,stroke-width] duration-200"
+                    className="h-[22px] w-[22px]"
                     strokeWidth={active ? 2.25 : 2}
                     fill={active ? "currentColor" : "none"}
                     aria-hidden
                   />
                 </span>
-                <span className="text-[11px] font-semibold leading-none tracking-[0.5px]">
+                <span className="text-[10px] font-semibold leading-none tracking-[0.2px]">
                   {tab.label}
                 </span>
               </AppLink>

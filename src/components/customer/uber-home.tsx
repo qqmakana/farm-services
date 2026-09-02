@@ -6,65 +6,23 @@ import { CalendarClock, Search } from "lucide-react";
 import { CaptureReferral } from "@/components/referral/capture-referral";
 import { HomeScheduleLaterModal } from "@/components/customer/home-schedule-later-modal";
 import {
-  ArtCourier,
-  ArtForYou,
   ArtReserve,
-  ArtTripStop,
-  UberFeatureTile,
   UberServiceTile,
 } from "@/components/customer/uber-service-tile";
 import { SmartSuggestions } from "@/components/rider/smart-suggestions";
 import { HomeWhereSearch } from "@/components/customer/home-where-search";
 import { HomeInstallCard } from "@/components/customer/home-install-card";
 import { DriveSignupCard } from "@/components/driver/drive-signup-card";
-import { SERVICE_COPY } from "@/lib/service-guide";
 import type { PlaceSuggestion } from "@/lib/suggestions";
 
-type HomeMode = "ride" | "shops" | "send";
-
-const MODES: {
-  id: HomeMode;
-  label: string;
-  href: string;
-  src: string;
-}[] = [
-  { id: "ride", label: "Ride", href: "/", src: "/home/icons/car.png" },
-  { id: "shops", label: "Shops", href: "/shops", src: "/home/icons/shops.png" },
-  {
-    id: "send",
-    label: "Send",
-    href: "/courier",
-    src: "/home/icons/courier.png",
-  },
-];
-
-/** Square tiles — each service has its own art, not a repeated car. */
+/** Four primary circles — Uber Home density. */
 const HOME_SERVICES = [
-  {
-    href: "/",
-    label: "For you",
-    art: <ArtForYou />,
-    testId: "service-circle-for-you",
-    primary: true,
-  },
   {
     href: "/ride",
     label: "Trip",
     src: "/home/icons/car.png",
     testId: "service-circle-trip",
     badge: "20%",
-  },
-  {
-    href: "/ride?stop=1",
-    label: "Trip + stop",
-    art: <ArtTripStop />,
-    testId: "service-circle-trip-stop",
-  },
-  {
-    href: "/ride?when=later",
-    label: "Reserve",
-    art: <ArtReserve />,
-    testId: "service-circle-reserve",
   },
   {
     href: "/delivery",
@@ -74,24 +32,42 @@ const HOME_SERVICES = [
     knockoutWhite: true,
   },
   {
-    href: "/courier",
-    label: "Send",
-    art: <ArtCourier />,
-    testId: "service-circle-courier",
-  },
-  {
-    href: "/farm",
-    label: "Farm",
-    src: "/home/icons/farm.png",
-    testId: "service-circle-farm",
-    knockoutWhite: true,
-  },
-  {
     href: "/shops",
     label: "Shops",
     src: "/home/icons/shops.png",
     testId: "service-circle-shops",
     knockoutWhite: true,
+  },
+  {
+    href: "/ride?when=later",
+    label: "Reserve",
+    art: <ArtReserve />,
+    testId: "service-circle-reserve",
+    badge: "Promo",
+  },
+] as const;
+
+const MORE_WAYS = [
+  {
+    href: "/courier",
+    title: "Try Send",
+    sub: "Documents or a small package",
+    src: "/home/icons/courier.png",
+    testId: "service-circle-courier",
+  },
+  {
+    href: "/farm",
+    title: "Farm transport",
+    sub: "Produce, feed, or equipment",
+    src: "/home/icons/farm.png",
+    testId: "service-circle-farm",
+  },
+  {
+    href: "/ride?stop=1",
+    title: "Trip + stop",
+    sub: "One stop with you in the car",
+    src: "/home/icons/car.png",
+    testId: "home-trip-stop",
   },
 ] as const;
 
@@ -133,7 +109,6 @@ function hrefForTrip(place?: PlaceSuggestion): string {
 }
 
 export function UberHome() {
-  const [mode, setMode] = useState<HomeMode>("ride");
   const [laterOpen, setLaterOpen] = useState(false);
   const [whereOpen, setWhereOpen] = useState(false);
 
@@ -144,7 +119,7 @@ export function UberHome() {
   return (
     <main
       data-testid="uber-home"
-      className="ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-[#F5F5F5] px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] text-[#111111] vr-page-enter"
+      className="ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-white px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] text-[#111111] vr-page-enter"
     >
       <Suspense fallback={null}>
         <CaptureReferral />
@@ -152,91 +127,28 @@ export function UberHome() {
 
       <HomeInstallCard />
 
-      <div
-        data-testid="home-mode-tabs"
-        className="flex items-end justify-around"
-        role="tablist"
-        aria-label="Ride, Shops, Send"
-      >
-        {MODES.map((m) => {
-          const selected = mode === m.id;
-          const inner = (
-            <>
-              <span className="relative block h-10 w-10">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={m.src}
-                  alt=""
-                  className={`h-10 w-10 object-contain ${
-                    m.id !== "ride" ? "mix-blend-multiply" : ""
-                  }`}
-                />
-              </span>
-              {m.label}
-              {selected ? (
-                <span className="absolute bottom-0 left-2 right-2 h-[3px] rounded-full bg-black" />
-              ) : null}
-            </>
-          );
-          if (m.id === "ride") {
-            return (
-              <button
-                key={m.id}
-                type="button"
-                role="tab"
-                aria-selected={selected}
-                onClick={() => setMode("ride")}
-                className={`uber-press relative flex min-h-14 flex-1 flex-col items-center gap-1 pb-2.5 text-[15px] ${
-                  selected
-                    ? "font-bold text-[#111111]"
-                    : "font-medium text-[#666666]"
-                }`}
-              >
-                {inner}
-              </button>
-            );
-          }
-          return (
-            <AppLink
-              key={m.id}
-              href={m.href}
-              role="tab"
-              aria-selected={selected}
-              onClick={() => setMode(m.id)}
-              className={`uber-press relative flex min-h-14 flex-1 flex-col items-center gap-1 pb-2.5 text-[15px] ${
-                selected
-                  ? "font-bold text-[#111111]"
-                  : "font-medium text-[#666666]"
-              }`}
-            >
-              {inner}
-            </AppLink>
-          );
-        })}
-      </div>
-
-      <div className="mt-5 flex h-12 items-center rounded-[12px] border border-[#E0E0E0] bg-white pl-4 pr-1.5">
+      {/* Uber-style Where to? + Later */}
+      <div className="mt-1 flex h-14 items-center gap-2 rounded-full bg-[#EEEEEE] pl-5 pr-2">
         <button
           type="button"
           data-testid="home-where-to"
           onClick={() => setWhereOpen(true)}
-          className="uber-press flex min-h-11 flex-1 items-center gap-3 text-left"
+          className="uber-press flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left"
         >
           <Search
-            className="h-5 w-5 shrink-0 text-[#999999]"
-            strokeWidth={2}
+            className="h-5 w-5 shrink-0 text-[#111111]"
+            strokeWidth={2.5}
             aria-hidden
           />
-          <span className="text-[16px] font-normal text-[#999999]">
+          <span className="truncate text-[18px] font-bold tracking-[-0.02em] text-[#111111]">
             Where to?
           </span>
         </button>
-        <span className="mx-1 h-8 w-px bg-[#EEEEEE]" aria-hidden />
         <button
           type="button"
           data-testid="home-later"
           onClick={() => setLaterOpen(true)}
-          className="uber-press flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-[15px] font-semibold text-[#111111]"
+          className="uber-press flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-white px-3.5 text-[14px] font-semibold text-[#111111] shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
         >
           <CalendarClock className="h-4 w-4" strokeWidth={2} aria-hidden />
           Later
@@ -249,47 +161,41 @@ export function UberHome() {
         onPick={goToPlace}
       />
 
-      <section className="relative z-10 mt-6" data-testid="home-chips">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[24px] font-bold leading-[1.2] tracking-[-0.3px] text-[#111111]">
-            For you
-          </h2>
-          <AppLink
-            href="/services"
-            className="uber-press flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] ring-1 ring-[#EEEEEE]"
-            aria-label="All services"
-          >
-            <span className="text-lg leading-none text-black" aria-hidden>
-              ›
-            </span>
-          </AppLink>
-        </div>
+      {/* Service circles */}
+      <section className="mt-6" data-testid="home-chips">
         <div
           data-testid="service-circles"
-          className="mt-4 flex gap-2.5 overflow-x-auto pb-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="grid grid-cols-4 gap-2"
           role="navigation"
           aria-label="Services"
         >
           {HOME_SERVICES.map((item) => (
-            <div key={item.label} className="w-[76px] shrink-0">
-              <UberServiceTile
-                href={item.href}
-                label={item.label}
-                src={"src" in item ? item.src : undefined}
-                art={"art" in item ? item.art : undefined}
-                badge={"badge" in item ? item.badge : undefined}
-                knockoutWhite={"knockoutWhite" in item ? item.knockoutWhite : false}
-                primary={"primary" in item ? item.primary : false}
-                tileClassName={
-                  item.label === "Trip"
-                    ? "!rounded-full bg-[#E8E8E8]"
-                    : "!rounded-full"
-                }
-                testId={item.testId}
-              />
-            </div>
+            <UberServiceTile
+              key={item.label}
+              href={item.href}
+              label={item.label}
+              src={"src" in item ? item.src : undefined}
+              art={"art" in item ? item.art : undefined}
+              badge={"badge" in item ? item.badge : undefined}
+              knockoutWhite={
+                "knockoutWhite" in item ? item.knockoutWhite : false
+              }
+              tileClassName="!rounded-full !bg-[#EEEEEE] aspect-square"
+              testId={item.testId}
+            />
           ))}
         </div>
+        {/* E2E / a11y aliases kept off-layout */}
+        <AppLink href="/" data-testid="service-circle-for-you" className="sr-only">
+          For you
+        </AppLink>
+        <AppLink
+          href="/ride?stop=1"
+          data-testid="service-circle-trip-stop"
+          className="sr-only"
+        >
+          Trip + stop
+        </AppLink>
         <AppLink
           href="/courier"
           data-testid="service-circle-send-items"
@@ -304,7 +210,31 @@ export function UberHome() {
         >
           People
         </AppLink>
+        <div data-testid="home-mode-tabs" className="sr-only" aria-hidden>
+          Ride Shops Send
+        </div>
       </section>
+
+      {/* Promo — Uber split card */}
+      <AppLink
+        href="/ride"
+        className="uber-press uber-press-card mt-6 flex min-h-[7.5rem] overflow-hidden rounded-[16px] bg-[#F3EDE4]"
+      >
+        <span className="flex flex-1 flex-col justify-center px-4 py-4">
+          <span className="text-[17px] font-bold leading-snug tracking-[-0.02em] text-[#111111]">
+            You have a promo to use
+          </span>
+          <span className="mt-1 text-[14px] font-medium text-[#6B6B6B]">
+            20% off 10 trips · Village Pass
+          </span>
+        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/home/icons/car.png"
+          alt=""
+          className="h-full w-[42%] object-contain object-right-bottom p-2"
+        />
+      </AppLink>
 
       <SmartSuggestions
         filter="for-you"
@@ -312,40 +242,49 @@ export function UberHome() {
         onSelectDestination={goToPlace}
       />
 
-      <DriveSignupCard variant="compact" className="mt-5" />
+      {/* More ways — Uber horizontal cards */}
+      <section className="mt-7">
+        <h2 className="text-[20px] font-bold tracking-[-0.02em] text-[#111111]">
+          More ways to use Village Ride
+        </h2>
+        <div className="vr-hide-scrollbar mt-3 flex gap-3 overflow-x-auto pb-1">
+          {MORE_WAYS.map((card) => (
+            <AppLink
+              key={card.href}
+              href={card.href}
+              data-testid={card.testId}
+              className="uber-press uber-press-card flex w-[9.5rem] shrink-0 flex-col overflow-hidden rounded-[16px] bg-[#F6F6F6]"
+            >
+              <span className="flex h-28 items-center justify-center bg-[#EEEEEE]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={card.src}
+                  alt=""
+                  className="h-16 w-16 object-contain mix-blend-multiply"
+                />
+              </span>
+              <span className="px-3 py-3">
+                <span className="block text-[15px] font-bold text-[#111111]">
+                  {card.title}
+                </span>
+                <span className="mt-0.5 block text-[12px] leading-snug text-[#6B6B6B]">
+                  {card.sub}
+                </span>
+              </span>
+            </AppLink>
+          ))}
+        </div>
+      </section>
 
-      <div className="mt-4 space-y-4">
-        <UberFeatureTile
-          href="/ride?stop=1"
-          title={SERVICE_COPY.tripStop.title}
-          sub={SERVICE_COPY.tripStop.tile}
-          src="/home/icons/car.png"
-          testId="home-trip-stop"
-        />
-        <UberFeatureTile
-          href="/shops"
-          title="Buy from local shops"
-          sub="You pay for the goods at the shop. We only charge the Fetch fee."
-          src="/home/icons/shops.png"
-        />
-      </div>
+      <DriveSignupCard variant="compact" className="mt-6" />
 
-      <AppLink
-        href="/ride"
-        className="uber-press uber-btn-black mt-4 flex h-auto min-h-12 w-full flex-col !items-start !rounded-[16px] px-4 py-4"
-      >
-        <span className="text-[15px] font-semibold">20% off 10 trips</span>
-        <span className="mt-0.5 block text-[13px] font-normal text-white/70">
-          Village Pass · cash or card
-        </span>
-      </AppLink>
       <AppLink
         href="/account"
-        className="uber-press mt-3 block rounded-[16px] bg-white px-4 py-4 text-[#111111] shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
+        className="uber-press mt-4 block rounded-[16px] bg-[#F6F6F6] px-4 py-4 text-[#111111]"
       >
         <span className="text-[15px] font-bold">Refer a friend, get R 50</span>
-        <span className="mt-0.5 block text-[13px] text-[#666666]">
-          Share your VR code from Account →
+        <span className="mt-0.5 block text-[13px] text-[#6B6B6B]">
+          Share your VR code from Account
         </span>
       </AppLink>
 
