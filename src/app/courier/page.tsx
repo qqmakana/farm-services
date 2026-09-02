@@ -15,7 +15,7 @@ function CourierInner() {
   return (
     <UberShell
       showServicePills
-      showTabBar
+      showTabBar={false}
       initialSnap="mid"
       pin={pin}
       dropoffPin={dropoffPin}

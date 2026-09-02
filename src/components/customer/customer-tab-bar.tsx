@@ -44,8 +44,13 @@ const TABS = [
 
 export function CustomerTabBar() {
   const pathname = usePathname() ?? "/";
+  // Map booking screens need the full viewport for pin taps.
   const hideOnMap =
-    pathname.startsWith("/ride") || pathname.startsWith("/trip");
+    pathname.startsWith("/ride") ||
+    pathname.startsWith("/trip") ||
+    pathname.startsWith("/courier") ||
+    pathname.startsWith("/delivery") ||
+    pathname.startsWith("/farm");
   const [keyboardOpen, setKeyboardOpen] = useState(false);
 
   useEffect(() => {
