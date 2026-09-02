@@ -233,6 +233,12 @@ export async function submitDriverApplication(
       driver.id_verified = false;
       driver.docs_submitted_at = now;
       driver.approval_status = "approved";
+      try {
+        const { notifyAdminDriverSignup } = await import("./notifications");
+        await notifyAdminDriverSignup(full_name);
+      } catch {
+        /* application already saved */
+      }
       return { ok: true, driverId: driver.id };
     }
 
@@ -373,6 +379,12 @@ export async function submitDriverApplication(
         }
       }
 
+      try {
+        const { notifyAdminDriverSignup } = await import("./notifications");
+        await notifyAdminDriverSignup(full_name);
+      } catch {
+        /* application already saved */
+      }
       return { ok: true, driverId };
     } catch (err) {
       // Keep the driver row so they can retry / ops can see the attempt

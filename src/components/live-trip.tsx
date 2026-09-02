@@ -4,7 +4,6 @@ import { useEffect, useState, useTransition, useCallback } from "react";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
 import { DriverVehiclePhotos } from "@/components/driver-vehicle-photos";
 import { RiderSafetyTips } from "@/components/trip/rider-safety-tips";
-import { TripQuickReplies } from "@/components/trip/trip-quick-replies";
 import { TripSafetyPanel } from "@/components/trip/trip-safety-panel";
 import { UberShell } from "@/components/uber/uber-shell";
 import { isDriverTrustVerified } from "@/lib/trust";
@@ -17,8 +16,10 @@ import {
   setTripTip,
   triggerSos,
 } from "@/lib/actions";
-import { MessageCircle, Phone, Share2, Star } from "lucide-react";
+import { Car, Share2, Star } from "lucide-react";
 import { ContactSupportActions } from "@/components/support/contact-support";
+import { DisputeButton } from "@/components/support/dispute-button";
+import { TripRelayContact } from "@/components/support/trip-relay-contact";
 import {
   BRAND,
   BRAND_WHATSAPP_HREF,
@@ -45,11 +46,9 @@ import {
   isConfirmedStatus,
   isSearchingStatus,
 } from "@/lib/job-status";
-import {
-  leaveByLabel,
-  RIDER_QUICK_REPLIES,
-  tripWhatsAppHref,
-} from "@/lib/trip-quick-replies";
+import { leaveByLabel, RIDER_QUICK_REPLIES } from "@/lib/trip-quick-replies";
+import { CANCEL_FEE_ZAR, CANCEL_POLICY_LINE, cancelFeeApplies } from "@/lib/ops-policy";
+import { HOBBY_POLL_MS } from "@/lib/hosting";
 import { splitRiderFare } from "@/lib/pricing";
 import type { JobWithDriver, Rating } from "@/lib/types";
 import { tipAmountFromDetails, tipPresetAmounts } from "@/lib/tips";
@@ -93,14 +92,20 @@ export function LiveTrip({
   useJobRealtime(job.id, refresh);
 
   useEffect(() => {
+    if (job.status === "completed" || job.status === "cancelled") return;
+    const searchingNow =
+      isSearchingStatus(job.status) && !job.dispatch_exhausted;
+    const ms = searchingNow ? HOBBY_POLL_MS.searching : HOBBY_POLL_MS.liveTrip;
     const t = setInterval(() => {
-      void fetch("/api/dispatch/tick?source=client", { method: "POST" }).catch(
-        () => null,
-      );
+      if (searchingNow) {
+        void fetch("/api/dispatch/tick?source=client", { method: "POST" }).catch(
+          () => null,
+        );
+      }
       refresh();
-    }, 4000);
+    }, ms);
     return () => clearInterval(t);
-  }, [refresh]);
+  }, [refresh, job.status, job.dispatch_exhausted]);
 
   useEffect(() => {
     if (!isSearchingStatus(job.status)) return;
@@ -153,11 +158,6 @@ export function LiveTrip({
         )
       : null;
   const leaveBy = leaveByLabel(eta);
-  const driverChatHref = tripWhatsAppHref(
-    job.drivers?.phone,
-    `Hi ${job.drivers?.full_name?.split(" ")[0] || "there"} — I'm your Village Ride rider for ${job.reference_code}. Pickup: ${job.pickup_landmark}`,
-    job.country_code,
-  );
 
   const fare = Number(job.fee_amount) || 0;
   const split = splitRiderFare(fare);
@@ -202,9 +202,17 @@ export function LiveTrip({
       setMsg("Add your phone on this trip to cancel.");
       return;
     }
-    if (
-      !window.confirm("Cancel this trip? You can book again from Home.")
-    ) {
+    const fee = cancelFeeApplies({
+      createdAt: job.created_at,
+      status: job.status,
+      villagePass: Boolean(job.village_pass),
+    });
+    const card =
+      job.payment_method === "card" || job.payment_method === "paypal";
+    const confirmMsg = fee
+      ? `Cancel after 2 min: ${formatMoney(CANCEL_FEE_ZAR)} goes to the driver.${card ? " The rest of a card payment is refunded in Yoco (2–7 days)." : ""} Continue?`
+      : `Cancel within 2 min: full refund.${card ? " Card refunds take 2–7 days via Yoco." : ""} Continue?`;
+    if (!window.confirm(confirmMsg)) {
       return;
     }
     setMsg(null);
@@ -374,6 +382,9 @@ export function LiveTrip({
                 : ""}
               . If they don&apos;t accept in 30 seconds, we try the next one.
             </p>
+            <p className="max-w-sm text-[13px] text-[#6B6B6B]">
+              {CANCEL_POLICY_LINE}
+            </p>
             <button
               type="button"
               data-testid="cancel-trip"
@@ -396,7 +407,12 @@ export function LiveTrip({
 
         {noDrivers ? (
           <div className="rounded-[16px] bg-white px-4 py-10 text-center shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-            <p className="text-[18px] font-bold text-[#111111]">
+            <Car
+              className="mx-auto h-12 w-12 text-[#666666]"
+              strokeWidth={1.5}
+              aria-hidden
+            />
+            <p className="mt-4 text-[18px] font-bold text-[#111111]">
               {job.required_vehicle === "motorcycle"
                 ? "No motorcycle drivers nearby. Try again shortly."
                 : "No drivers nearby right now. Try again in a few minutes."}
@@ -483,34 +499,15 @@ export function LiveTrip({
                 />
               </div>
               <div className="flex shrink-0 gap-2">
-                {driverChatHref ? (
-                  <a
-                    href={driverChatHref}
-                    className="uber-press flex h-11 w-11 items-center justify-center rounded-full bg-[#F3F3F3] text-black"
-                    aria-label="Send a message"
-                  >
-                    <MessageCircle className="h-5 w-5" aria-hidden />
-                  </a>
-                ) : null}
-                {job.drivers.phone ? (
-                  <a
-                    href={`tel:${job.drivers.phone}`}
-                    className="uber-press flex h-11 w-11 items-center justify-center rounded-full bg-black text-white"
-                    aria-label="Call driver"
-                  >
-                    <Phone className="h-5 w-5" aria-hidden />
-                  </a>
-                ) : null}
+                <DisputeButton code={job.reference_code} className="!min-h-11 !px-3 !text-sm" />
               </div>
             </div>
 
-            {job.drivers.phone && confirmed ? (
-              <TripQuickReplies
-                phone={job.drivers.phone}
-                countryCode={job.country_code}
-                replies={RIDER_QUICK_REPLIES}
-              />
-            ) : null}
+            <TripRelayContact
+              code={job.reference_code}
+              peer="driver"
+              replies={RIDER_QUICK_REPLIES}
+            />
 
             <div className="flex gap-2">
               {isActiveTrip ? (
@@ -534,15 +531,20 @@ export function LiveTrip({
             </div>
 
             {confirmed ? (
-              <button
-                type="button"
-                data-testid="cancel-trip"
-                disabled={pending}
-                onClick={cancelTrip}
-                className="uber-press w-full min-h-11 text-[15px] font-semibold text-[#CB4040]"
-              >
-                Cancel trip
-              </button>
+              <>
+                <p className="text-center text-[12px] text-[#666666]">
+                  {CANCEL_POLICY_LINE}
+                </p>
+                <button
+                  type="button"
+                  data-testid="cancel-trip"
+                  disabled={pending}
+                  onClick={cancelTrip}
+                  className="uber-press w-full min-h-11 text-[15px] font-semibold text-[#CB4040]"
+                >
+                  Cancel trip
+                </button>
+              </>
             ) : null}
           </div>
         ) : null}
@@ -703,6 +705,8 @@ export function LiveTrip({
         {cancelled ? (
           <div className="space-y-3 text-center">
             <p className="text-[17px] font-bold">This trip was cancelled</p>
+            <p className="text-[13px] text-[#666666]">{CANCEL_POLICY_LINE}</p>
+            <DisputeButton code={job.reference_code} className="w-full" />
             <a
               href={bookAgainHref}
               className="uber-press flex min-h-12 items-center justify-center rounded-full bg-black text-[17px] font-medium text-white"

@@ -82,10 +82,23 @@ async function replayQueue(items: QueuedAction[]) {
 
 /** Banner + sync queued analytics when connection returns. */
 export function OfflineBanner() {
-  const online = useOnlineStatus();
+  const navigatorOnline = useOnlineStatus();
+  const [eventOnline, setEventOnline] = useState<boolean | null>(null);
+  const online = eventOnline ?? navigatorOnline;
   const [syncedMsg, setSyncedMsg] = useState<string | null>(null);
   const { warning } = useToast();
   const wasOnline = useRef(true);
+
+  useEffect(() => {
+    const goOn = () => setEventOnline(true);
+    const goOff = () => setEventOnline(false);
+    window.addEventListener("online", goOn);
+    window.addEventListener("offline", goOff);
+    return () => {
+      window.removeEventListener("online", goOn);
+      window.removeEventListener("offline", goOff);
+    };
+  }, []);
 
   useEffect(() => {
     if (!online && wasOnline.current) {
@@ -121,10 +134,11 @@ export function OfflineBanner() {
         online ? "bg-[#06c167] text-white" : "bg-[#FF9800] text-white"
       }`}
       role="status"
+      data-testid="offline-banner"
     >
       {online
         ? syncedMsg
-        : "You're offline. Some features may not work."}
+        : "No connection. Check your signal and try again."}
     </div>
   );
 }

@@ -1,4 +1,3 @@
-import { sendPushToToken } from "@/lib/firebase/admin";
 import { SERVICE_LABELS, VEHICLE_LABELS } from "@/lib/format";
 import {
   isSearchingStatus,
@@ -213,10 +212,12 @@ export async function offerNextDriver(jobId: string): Promise<Job | null> {
     );
     await incrementDriverOfferStat(driverId, "offers_received");
 
-    await sendPushToToken(
-      (driver as Driver).fcm_token,
-      buildDriverOfferPush(updated as Job),
-    );
+    try {
+      const { notifyDriverNewOffer } = await import("@/lib/notifications");
+      await notifyDriverNewOffer(updated as Job, driver as Driver);
+    } catch {
+      /* offer is live even if push fails */
+    }
 
     console.log("[dispatch] offered + FCM", {
       jobId,

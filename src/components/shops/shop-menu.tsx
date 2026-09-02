@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -26,6 +26,7 @@ import {
 } from "@/lib/shop-cart";
 import { SHOP_MIN_ORDER } from "@/lib/shop-constants";
 import { placeShopCartOrder } from "@/lib/actions-shop-orders";
+import { trackClientEvent } from "@/lib/actions-ops";
 import { createPayPalOrderAction } from "@/lib/actions";
 import { PaymentSelector, type CheckoutPaymentChoice } from "@/components/checkout/payment-selector";
 import { SafeCardPay } from "@/components/uber/safe-card-pay";
@@ -40,6 +41,9 @@ import {
   shopCoverUrl,
 } from "@/lib/shop-photos";
 import { ShopPhoto } from "@/components/shops/shop-photo";
+import { DisputeButton } from "@/components/support/dispute-button";
+import { TripRelayContact } from "@/components/support/trip-relay-contact";
+import { useDelayedUnmount } from "@/hooks/use-delayed-unmount";
 import type { Product, Shop } from "@/lib/types";
 
 function qtyFor(lines: CartLine[], productId: string) {
@@ -64,6 +68,8 @@ export function ShopMenu({
   const router = useRouter();
   const [lines, setLines] = useState<CartLine[]>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const { mounted: cartMounted, leaving: cartLeaving } =
+    useDelayedUnmount(sheetOpen, 300);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -98,6 +104,19 @@ export function ShopMenu({
   const subtotal = cartSubtotal(shopLines);
   const total = subtotal + SHOP_DELIVERY_FEE;
   const needMore = Math.max(0, SHOP_MIN_ORDER - subtotal);
+  const linesRef = useRef(shopLines);
+  linesRef.current = shopLines;
+
+  useEffect(() => {
+    return () => {
+      if (linesRef.current.length > 0) {
+        void trackClientEvent("cart_abandoned", {
+          shopId: shop.id,
+          count: linesRef.current.length,
+        });
+      }
+    };
+  }, [shop.id]);
   const popular = products.filter((p) => p.in_stock).slice(0, 4);
   const groups = useMemo(() => {
     const map = new Map<string, Product[]>();
@@ -124,6 +143,10 @@ export function ShopMenu({
 
   function onAdd(product: Product) {
     if (!product.in_stock) return;
+    void trackClientEvent("shop_product_viewed", {
+      shopId: shop.id,
+      productId: product.id,
+    });
     addToCart({
       productId: product.id,
       shopId: shop.id,
@@ -203,6 +226,14 @@ export function ShopMenu({
                 </li>
               ))}
             </ol>
+            <div className="mt-5 space-y-2">
+              <TripRelayContact code={success} peer="shop" />
+              <DisputeButton
+                code={success}
+                extra="Shop order — need a refund or the shop is out of stock."
+                className="w-full"
+              />
+            </div>
           </div>
           <button
             type="button"
@@ -223,11 +254,11 @@ export function ShopMenu({
   }
 
   return (
-    <div className="vr-page-enter relative min-h-dvh touch-manipulation bg-[#F5F5F5] pb-28">
+    <div className="vr-screen-enter relative min-h-dvh touch-manipulation bg-[#F5F5F5] pb-28">
       <div className="flex items-center justify-between bg-white px-3 py-2">
         <AppLink
           href="/shops"
-          className="uber-press inline-flex min-h-11 items-center gap-1 text-[15px] font-bold text-[#111111]"
+          className="uber-press uber-press-icon inline-flex min-h-11 items-center gap-1 text-[15px] font-bold text-[#111111]"
           aria-label="Back"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -346,6 +377,14 @@ export function ShopMenu({
             </div>
           </section>
         ))}
+
+        {products.length === 0 ? (
+          <EmptyState
+            icon={ShoppingBag}
+            title="No items yet"
+            body="This local shop is still adding products. Check back soon."
+          />
+        ) : null}
       </div>
 
       {count > 0 && !sheetOpen ? (
@@ -366,21 +405,30 @@ export function ShopMenu({
         </div>
       ) : null}
 
-      {sheetOpen ? (
-        <div className="uber-sheet-scrim fixed inset-0 z-50 flex items-end justify-center bg-black/45">
+      {cartMounted ? (
+        <div
+          className={`uber-sheet-scrim fixed inset-0 z-50 flex items-end justify-center bg-black/45 ${
+            cartLeaving ? "is-leaving pointer-events-none" : ""
+          }`}
+        >
           <button
             type="button"
             className="absolute inset-0"
             aria-label="Close cart"
             onClick={() => setSheetOpen(false)}
           />
-          <div className="uber-sheet-panel relative max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-[1.75rem] bg-white px-4 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
+          <div
+            className={`uber-sheet-panel relative max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-[1.75rem] bg-white px-4 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-[0_4px_20px_rgba(0,0,0,0.15)] ${
+              cartLeaving ? "is-leaving" : ""
+            }`}
+          >
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#E0E0E0]" />
             {count === 0 ? (
               <EmptyState
+                compact
                 icon={ShoppingBag}
                 title="Your cart is empty"
-                body="Add items from a shop to get started"
+                body="Add items from a local shop"
                 action={
                   <button
                     type="button"

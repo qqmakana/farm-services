@@ -18,17 +18,14 @@ import { listNearbySupplyPins } from "@/lib/actions-supply";
 import { BRAND } from "@/lib/brand";
 import type { JobMapPin } from "@/components/maps/ride-map-canvas";
 import { ClientErrorBoundary } from "@/components/ui/client-error-boundary";
+import { MapLoading } from "@/components/ui/map-loading";
 
 const VillageMap = dynamic(
   () =>
     import("@/components/maps/village-map").then((m) => m.VillageMap),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex h-full w-full items-center justify-center bg-[#E5E3DF] text-sm text-black/50">
-        Loading map…
-      </div>
-    ),
+    loading: () => <MapLoading />,
   },
 );
 
@@ -248,7 +245,7 @@ export function UberShell({
               <button
                 type="button"
                 onClick={onBack}
-                className="uber-press flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#0a0a0a] shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
+                className="uber-press uber-press-icon flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#0a0a0a] shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
                 aria-label="Back"
               >
                 <ArrowLeft className="h-5 w-5" strokeWidth={2.2} />
@@ -256,7 +253,7 @@ export function UberShell({
             ) : backHref ? (
               <AppLink
                 href={backHref}
-                className="uber-press flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#0a0a0a] shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
+                className="uber-press uber-press-icon flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#0a0a0a] shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
                 aria-label="Back"
               >
                 <ArrowLeft className="h-5 w-5" strokeWidth={2.2} />

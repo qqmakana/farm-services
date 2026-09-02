@@ -38,8 +38,17 @@ export const FETCH_SEND_SIZES: {
 }[] = [
   { id: "small", label: "Small", hint: "Documents, bread" },
   { id: "medium", label: "Medium", hint: "Groceries bag" },
-  { id: "large", label: "Large", hint: "Hardware, feed bag" },
+  { id: "large", label: "Large", hint: "Fridge, furniture" },
 ];
+
+export function courierPackageSize(
+  pkg: import("./types").CourierPackageType | null | undefined,
+): ItemSize {
+  if (pkg === "furniture" || pkg === "appliance") return "large";
+  // Documents + groceries dispatch a car; sealed small bags stay motorcycle.
+  if (pkg === "documents" || pkg === "medium_package") return "medium";
+  return "small";
+}
 
 /** Local label for motorcycle-class modes (Boda, Okada, Auto, etc.). */
 export function localModeLabel(mode: LocalRideMode | null | undefined): string {

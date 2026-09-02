@@ -10,6 +10,7 @@ import {
   quoteFareAction,
 } from "@/lib/actions";
 import { stashPaypalApproveUrl, stashPaypalBooking } from "@/lib/paypal-draft";
+import { ensureLocationConsent } from "@/lib/location-consent";
 import type { ServiceType, VehicleType } from "@/lib/types";
 import {
   defaultFeeForVehicle,
@@ -111,6 +112,10 @@ export function BookingForm({
 
   function captureGps(which: "pickup" | "dropoff") {
     setGpsError(null);
+    if (!ensureLocationConsent()) {
+      setGpsError("Location is optional — type a landmark or tap the map.");
+      return;
+    }
     if (!navigator.geolocation) {
       setGpsError("GPS not available on this device.");
       return;

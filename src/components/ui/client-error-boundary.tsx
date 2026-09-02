@@ -35,7 +35,7 @@ export class ClientErrorBoundary extends React.Component<Props, State> {
           <button
             type="button"
             onClick={() => this.setState({ error: null })}
-            className="flex min-h-12 w-full items-center justify-center rounded-full bg-black text-[15px] font-semibold text-white"
+            className="uber-press flex min-h-12 w-full items-center justify-center rounded-full bg-black text-[15px] font-semibold text-white"
           >
             Try again
           </button>

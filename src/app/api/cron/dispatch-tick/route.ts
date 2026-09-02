@@ -20,6 +20,12 @@ export async function GET(request: Request) {
   }
 
   const result = await runDispatchTick("cron");
+  try {
+    const { maybeNotifyLowDriverCount } = await import("@/lib/notifications");
+    await maybeNotifyLowDriverCount();
+  } catch {
+    /* dispatch tick already ran */
+  }
   return NextResponse.json(result);
 }
 

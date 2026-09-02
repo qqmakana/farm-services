@@ -96,7 +96,8 @@ export type CourierPackageType =
   | "documents"
   | "small_package"
   | "medium_package"
-  | "furniture";
+  | "furniture"
+  | "appliance";
 
 /** Person-to-person packages across villages, towns & cities (not shop furniture). */
 export type CourierDetails = {
@@ -358,6 +359,24 @@ export type ShopCartOrderInput = {
   notes?: string | null;
 };
 
+export type NotificationAudience = "rider" | "driver" | "shop" | "admin";
+
+export type AppNotification = {
+  id: string;
+  audience: NotificationAudience;
+  rider_phone: string | null;
+  driver_id: string | null;
+  shop_id: string | null;
+  type: string;
+  title: string;
+  body: string;
+  href: string | null;
+  job_id: string | null;
+  shop_order_id: string | null;
+  read_at: string | null;
+  created_at: string;
+};
+
 export type PartnerNotification = {
   id: string;
   shop_id: string;
@@ -366,6 +385,8 @@ export type PartnerNotification = {
     | "order_created"
     | "driver_assigned"
     | "order_completed"
+    | "order_cancelled"
+    | "payment_received"
     | "weekly_report"
     | "referral"
     | "system";

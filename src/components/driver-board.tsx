@@ -23,6 +23,7 @@ import {
 import { DriverPushPrompt } from "@/components/driver-push-prompt";
 import { DriverTrustPanel } from "@/components/driver-trust-panel";
 import { useDriverGpsPing } from "@/components/driver/use-driver-gps";
+import { HOBBY_POLL_MS } from "@/lib/hosting";
 import { DriverVerifiedBadge } from "@/components/driver-verified-badge";
 import { BRAND } from "@/lib/brand";
 import {
@@ -85,7 +86,10 @@ export function DriverBoard({
   useEffect(() => {
     if (!driverId) return;
     void refreshDriverViews(driverId);
-    const t = setInterval(() => void refreshDriverViews(driverId), 4000);
+    const t = setInterval(
+      () => void refreshDriverViews(driverId),
+      HOBBY_POLL_MS.driverOffers,
+    );
     return () => clearInterval(t);
   }, [driverId, jobs, refreshDriverViews]);
 

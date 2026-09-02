@@ -21,8 +21,8 @@ const SECTIONS: { title: string; body: string[] }[] = [
     body: [
       "Account details: name, phone number, email, and role (customer, driver, or partner).",
       "Booking details: pickup and drop-off landmarks, service type, payment preference, and trip status.",
-      "Location: approximate or precise location when you allow it, to match rides, show nearby jobs, or improve maps. Landmark text works without GPS.",
-      "Driver verification: ID and vehicle photos submitted for safety checks before going online.",
+      "Location: we only use GPS after you agree (in-app). Landmark text still works if you say no.",
+      "Driver and shop verification: ID and vehicle photos stored on our host (Supabase) for safety checks. Access limited to ops.",
       "Device data: app/browser type, push notification tokens (FCM), and basic diagnostics to keep the service reliable.",
       "Payments: cash is settled between customer and driver. Card or wallet top-ups are processed by our payment providers; we do not store full card numbers.",
     ],
@@ -41,11 +41,21 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: "Sharing",
     body: [
-      "Drivers see the booking details needed to complete a trip (landmarks, contact info when required).",
+      "Drivers see the booking details needed to complete a trip (landmarks and first name — not your phone).",
       "Partners see orders and trip links related to their shop.",
       "Service providers help us run the app (hosting, database, maps, push notifications, payments). They process data only to provide those services.",
       "We may disclose information if required by law or to protect users’ safety.",
       "We do not sell your personal information.",
+      "We do not share a driver or rider phone number with the other party. Messages go through Village Ride WhatsApp so we can relay them (POPIA).",
+    ],
+  },
+  {
+    title: "POPIA",
+    body: [
+      "We process personal information to run bookings, pay drivers/shops, and keep the platform safe. You may request access, correction, or deletion at " +
+        BRAND.email +
+        ".",
+      "You can refuse location. You can refuse marketing. You cannot refuse the phone number we need to complete a trip you booked.",
     ],
   },
   {
@@ -87,7 +97,7 @@ export default function PrivacyPage() {
           Privacy Policy
         </h1>
         <p className="mt-2 text-sm text-slate-600">
-          Last updated: 30 July 2026
+          Last updated: 31 August 2026
         </p>
         <div className="mt-8 space-y-6">
           {SECTIONS.map((section) => (
@@ -102,6 +112,10 @@ export default function PrivacyPage() {
           ))}
         </div>
         <p className="mt-10 text-center text-sm text-slate-500">
+          <Link href="/legal" className="font-semibold text-[#000000] underline">
+            All policies
+          </Link>
+          {" · "}
           <Link href="/help" className="font-semibold text-[#000000] underline">
             Help
           </Link>

@@ -83,19 +83,19 @@ export function CustomerTabBar() {
               <AppLink
                 href={tab.href}
                 data-testid={`customer-tab-${tab.label.toLowerCase()}`}
-                className={`uber-press flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 py-1.5 no-underline ${
+                className={`uber-press flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 py-1.5 no-underline transition-colors duration-200 ${
                   active
                     ? "font-semibold text-[#111111]"
                     : "font-medium text-[#666666]"
                 }`}
               >
                 <span
-                  className={`flex h-9 w-14 items-center justify-center rounded-full ${
-                    active ? "bg-[#EEEEEE]" : ""
+                  className={`flex h-9 w-14 items-center justify-center rounded-full transition-colors duration-200 ${
+                    active ? "bg-[#EEEEEE]" : "bg-transparent"
                   }`}
                 >
                   <Icon
-                    className="h-6 w-6"
+                    className="h-6 w-6 transition-[fill,stroke-width] duration-200"
                     strokeWidth={active ? 2.25 : 2}
                     fill={active ? "currentColor" : "none"}
                     aria-hidden

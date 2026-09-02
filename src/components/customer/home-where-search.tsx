@@ -4,9 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Search } from "lucide-react";
 import { useCountry } from "@/components/country/country-provider";
 import { SmartSuggestions } from "@/components/rider/smart-suggestions";
+import { EmptyState } from "@/components/ui/empty-state";
 import { searchAddressesAction } from "@/lib/actions-mapbox";
 import type { AddressSuggestion } from "@/lib/mapbox-types";
 import type { PlaceSuggestion } from "@/lib/suggestions";
+import { trackClientEvent } from "@/lib/actions-ops";
+import { useDelayedUnmount } from "@/hooks/use-delayed-unmount";
 
 export function HomeWhereSearch({
   open,
@@ -20,7 +23,9 @@ export function HomeWhereSearch({
   const { countryCode } = useCountry();
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<AddressSuggestion[]>([]);
+  const [searching, setSearching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { mounted, leaving } = useDelayedUnmount(open, 300);
 
   useEffect(() => {
     if (!open) return;
@@ -40,19 +45,23 @@ export function HomeWhereSearch({
     const q = query.trim();
     if (q.length < 2) {
       setHits([]);
+      setSearching(false);
       return;
     }
+    setSearching(true);
     const timer = window.setTimeout(() => {
       void searchAddressesAction(q, countryCode, null)
         .then((res) => setHits(res.results))
-        .catch(() => setHits([]));
+        .catch(() => setHits([]))
+        .finally(() => setSearching(false));
     }, 220);
     return () => window.clearTimeout(timer);
   }, [query, open, countryCode]);
 
-  if (!open) return null;
+  if (!mounted) return null;
 
   function goHit(hit: AddressSuggestion) {
+    void trackClientEvent("search_destination", { label: hit.label });
     onPick({
       type: "nearby",
       id: hit.id,
@@ -75,16 +84,20 @@ export function HomeWhereSearch({
     }
   }
 
+  if (!mounted) return null;
+
   return (
     <div
-      className="ru-force-light fixed inset-0 z-[80] mx-auto flex max-w-md flex-col bg-white pt-[max(0.5rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] text-black animate-[uberFadeIn_220ms_ease-out]"
+      className={`ru-force-light fixed inset-0 z-[80] mx-auto flex max-w-md flex-col bg-white pt-[max(0.5rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] text-black uber-sheet-panel ${
+        leaving ? "is-leaving pointer-events-none" : ""
+      }`}
       data-testid="home-where-search"
     >
       <div className="flex items-center gap-1 px-2 pb-1">
         <button
           type="button"
           onClick={onClose}
-          className="uber-press flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
+          className="uber-press uber-press-icon flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
           aria-label="Back"
         >
           <ArrowLeft className="h-6 w-6" strokeWidth={2} aria-hidden />
@@ -139,7 +152,7 @@ export function HomeWhereSearch({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-1 pb-8">
         {hits.length > 0 ? (
-          <ul className="mt-2 divide-y divide-[#eee]">
+          <ul className="vr-stagger mt-2 divide-y divide-[#eee]">
             {hits.map((hit) => (
               <li key={hit.id}>
                 <button
@@ -169,6 +182,16 @@ export function HomeWhereSearch({
               </li>
             ))}
           </ul>
+        ) : searching ? (
+          <p className="px-4 pt-8 text-center text-[14px] text-[#666666]">
+            Searching…
+          </p>
+        ) : query.trim().length >= 2 ? (
+          <EmptyState
+            icon={Search}
+            title={`No results for '${query.trim()}'`}
+            body="Try a street, shop, or landmark"
+          />
         ) : (
           <SmartSuggestions
             filter="for-you"

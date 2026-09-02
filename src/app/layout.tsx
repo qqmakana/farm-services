@@ -14,6 +14,7 @@ import { OfflineBanner } from "@/components/offline-banner";
 import { FlushPendingPlaces } from "@/components/location/flush-pending-places";
 import { ErrorReporter } from "@/components/error-reporter";
 import { AnalyticsBeacon } from "@/components/analytics-beacon";
+import { GoogleAnalytics } from "@/components/analytics-ga";
 import { PhoneFrame } from "@/components/layout/phone-frame";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
@@ -74,6 +75,7 @@ export const metadata: Metadata = {
   },
   other: {
     "mobile-web-app-capable": "yes",
+    "view-transition": "same-origin",
   },
 };
 
@@ -105,6 +107,7 @@ export default function RootLayout({
                 <FlushPendingBookings />
                 <ErrorReporter />
                 <AnalyticsBeacon />
+                <GoogleAnalytics />
                 <div className="flex min-h-dvh flex-1 flex-col">
                   <div className="flex-1">{children}</div>
                   <ConditionalFooter />

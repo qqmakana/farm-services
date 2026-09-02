@@ -1,10 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { CheckCircle, Clock, CookingPot } from "lucide-react";
 import { updateShopOrderStatus, retryShopDeliveryDispatch } from "@/lib/actions-shop-orders";
 import { formatMoney, formatWhen } from "@/lib/format";
+import { DisputeButton } from "@/components/support/dispute-button";
+import { TripRelayContact } from "@/components/support/trip-relay-contact";
 import type { ShopOrder, ShopOrderStatus } from "@/lib/types";
 
 function statusStyle(status: ShopOrderStatus) {
@@ -64,6 +67,16 @@ export function KitchenOrders({ orders }: { orders: ShopOrder[] }) {
       <p className="mt-1 text-sm text-[#6B6B6B]">
         Incoming storefront orders. Mark Ready — the nearest online driver
         gets a collect-and-deliver offer.
+      </p>
+      <p className="mt-1 text-sm">
+        <Link
+          href="/legal/kitchen"
+          className="font-semibold text-[#111111] underline"
+        >
+          Print fridge steps
+        </Link>
+        {" · "}
+        First month: 0% commission on goods.
       </p>
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
@@ -140,7 +153,40 @@ export function KitchenOrders({ orders }: { orders: ShopOrder[] }) {
                       {order.job_id ? "Ping driver again" : "Ping a driver"}
                     </button>
                   ) : null}
+                  {order.status === "pending" ||
+                  order.status === "preparing" ? (
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => {
+                        if (
+                          !window.confirm(
+                            "Out of stock? This cancels the order. WhatsApp Village Ride so we refund the rider.",
+                          )
+                        ) {
+                          return;
+                        }
+                        setStatus(order.id, "cancelled");
+                      }}
+                      className="uber-press rounded-full bg-white px-4 py-2 text-sm font-bold text-[#CB4040] ring-1 ring-[#EEEEEE]"
+                    >
+                      Out of stock
+                    </button>
+                  ) : null}
                 </div>
+                {order.customer_name ? (
+                  <div className="mt-3 space-y-2">
+                    <TripRelayContact
+                      code={order.reference_code}
+                      peer="rider"
+                    />
+                    <DisputeButton
+                      code={order.reference_code}
+                      extra="Shop cancelled / out of stock. Please refund the rider."
+                      className="!min-h-10 !text-sm"
+                    />
+                  </div>
+                ) : null}
                 {order.status === "ready" &&
                 !order.driver_id &&
                 order.dispatch_exhausted ? (

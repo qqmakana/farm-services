@@ -132,8 +132,16 @@ export async function generateWeeklyPayoutsAction() {
     );
   }
 
+  const shopIds = [...byShop.keys()];
+  const { data: shopRows } = shopIds.length
+    ? await admin.from("rr_shops").select("id, created_at").in("id", shopIds)
+    : { data: [] as { id: string; created_at: string }[] };
+  const created = new Map(
+    (shopRows ?? []).map((s) => [s.id, s.created_at as string]),
+  );
+
   for (const [shop_id, sales] of byShop) {
-    const split = shopNetPayable(sales);
+    const split = shopNetPayable(sales, created.get(shop_id));
     await admin.from("rr_shop_settlements").upsert(
       {
         shop_id,

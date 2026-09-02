@@ -23,10 +23,20 @@ export async function GET(request: Request) {
   }
 
   const results = await generateAllPartnerWeeklyReports();
+  let driverDigests = 0;
+  try {
+    const { sendDriverWeeklyEarningsDigest } = await import(
+      "@/lib/notifications"
+    );
+    driverDigests = (await sendDriverWeeklyEarningsDigest()).drivers;
+  } catch {
+    /* partner reports already generated */
+  }
   return NextResponse.json({
     ok: true,
     generated: results.filter((r) => r.created).length,
     shops: results.length,
+    driverDigests,
   });
 }
 

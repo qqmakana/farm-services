@@ -64,7 +64,13 @@ export default async function AdminPayoutsPage() {
         <p className="mt-2 text-sm text-slate-600">
           Yoco collects all card money into Village Ride. Pay drivers and shops
           by EFT from Capitec, then mark paid here. Trips stay 90/10. Shops:
-          85% of goods.
+          first 30 days 0% on goods, then 85% of goods. Invoice numbers =
+          settlement id on each shop row. Export the money ledger weekly.
+        </p>
+        <p className="mt-2 text-sm">
+          <Link href="/admin/money" className="font-semibold underline">
+            Money ledger CSV →
+          </Link>
         </p>
         <form action={generate} className="mt-4">
           <button

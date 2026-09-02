@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { trackClientPageView } from "@/lib/actions-ops";
+import { trackClientPageView, trackClientEvent } from "@/lib/actions-ops";
 import {
   enqueueOfflineAction,
   useOnlineStatus,
@@ -25,6 +25,16 @@ export function AnalyticsBeacon() {
     }
     void trackClientPageView(payload);
   }, [pathname, online]);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem("vr_app_open")) return;
+      sessionStorage.setItem("vr_app_open", "1");
+    } catch {
+      /* private mode — still fire once this mount */
+    }
+    void trackClientEvent("app_open");
+  }, []);
 
   return null;
 }

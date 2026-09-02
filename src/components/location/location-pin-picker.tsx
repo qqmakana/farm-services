@@ -4,14 +4,17 @@ import dynamic from "next/dynamic";
 import { useCallback, useState } from "react";
 import { MapPin } from "lucide-react";
 import { DEFAULT_MAP_CENTER } from "@/lib/landmarks";
+import { ensureLocationConsent } from "@/lib/location-consent";
+
+import { MapLoading } from "@/components/ui/map-loading";
 
 const PinMap = dynamic(
   () => import("@/components/location/pin-map-inner").then((m) => m.PinMapInner),
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-48 items-center justify-center rounded-xl bg-[#e8eef5] text-sm text-[#000000]">
-        Loading map…
+      <div className="h-48 overflow-hidden rounded-xl">
+        <MapLoading />
       </div>
     ),
   },
@@ -28,6 +31,10 @@ export function LocationPinPicker({ lat, lng, onChange }: Props) {
 
   const useGps = useCallback(() => {
     setHint(null);
+    if (!ensureLocationConsent()) {
+      setHint("Location is optional — tap the map instead.");
+      return;
+    }
     if (!navigator.geolocation) {
       setHint("GPS not available — tap the map instead.");
       return;

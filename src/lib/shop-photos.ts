@@ -29,7 +29,7 @@ const PRODUCT_PHOTO: { test: RegExp; src: string }[] = [
 export const SHOP_CATEGORY_PILLS = [
   "All",
   "Groceries",
-  "Spaza",
+  "Local shops",
   "Food",
   "Bakery",
   "Butchery",
@@ -95,8 +95,8 @@ export function shopPillMatch(shop: Shop, pill: string): boolean {
   if (pill === "All") return true;
   const hay = `${shop.category} ${shop.name} ${shop.description ?? ""} ${shop.notes ?? ""}`.toLowerCase();
   const map: Record<string, RegExp> = {
-    Groceries: /groc|spaza|shop|fresh|supermarket/,
-    Spaza: /spaza/,
+    Groceries: /groc|shop|fresh|supermarket/,
+    "Local shops": /spaza|local shop|tuck|corner shop/,
     Food: /food|kitchen|eat|meal|restaurant/,
     Bakery: /baker|bread/,
     Butchery: /butch|meat/,

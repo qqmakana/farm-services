@@ -205,6 +205,12 @@ export async function insertPaidJob(row: Record<string, unknown>) {
 
   const data = await insertJobRow(admin, { ...row, reference_code: code });
   try {
+    const { notifyRiderSearching } = await import("@/lib/notifications");
+    if (!data.shop_id) await notifyRiderSearching(data as Job);
+  } catch {
+    /* booking already saved */
+  }
+  try {
     await matchJobAfterCreate(data.id);
   } catch {
     /* Job is saved — dispatch can retry. Never fail the rider booking. */

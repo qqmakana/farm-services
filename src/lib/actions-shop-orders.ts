@@ -80,8 +80,24 @@ export async function placeShopCartOrder(
   } catch {
     /* order already placed */
   }
+  try {
+    const { notifyRiderOrderPlaced } = await import("@/lib/notifications");
+    await notifyRiderOrderPlaced(order);
+  } catch {
+    /* order already placed */
+  }
 
   revalidateShopPaths(input.shop_id);
+  try {
+    const { trackEvent } = await import("./analytics");
+    await trackEvent("trip_booked", {
+      service: "shop",
+      shop_id: input.shop_id,
+      code: order.reference_code,
+    });
+  } catch {
+    /* ignore */
+  }
   return order;
 }
 
@@ -239,6 +255,21 @@ export async function updateShopOrderStatus(
 
   if (!useAdmin()) {
     const order = mockRepo.updateShopOrderStatus(orderId, status);
+    try {
+      const { notifyRiderOrderReady } = await import("@/lib/notifications");
+      const { notifyPartner } = await import("@/lib/partner");
+      if (status === "ready") await notifyRiderOrderReady(order);
+      if (status === "cancelled") {
+        await notifyPartner({
+          shopId: order.shop_id,
+          type: "order_cancelled",
+          title: "Order canceled",
+          body: `Order ${order.reference_code} canceled by customer.`,
+        });
+      }
+    } catch {
+      /* status already saved */
+    }
     revalidateShopPaths(order.shop_id);
     return order;
   }
@@ -263,9 +294,29 @@ export async function updateShopOrderStatus(
   let order = data as ShopOrder;
   if (status === "ready") {
     try {
+      const { notifyRiderOrderReady } = await import("@/lib/notifications");
+      await notifyRiderOrderReady(order);
+    } catch {
+      /* kitchen already marked ready */
+    }
+    try {
       order = await dispatchShopDelivery(order);
     } catch (err) {
       console.error("[shop] dispatch after ready failed", err);
+    }
+  }
+  if (status === "cancelled") {
+    try {
+      const { notifyPartner } = await import("@/lib/partner");
+      await notifyPartner({
+        shopId: order.shop_id,
+        type: "order_cancelled",
+        title: "Order canceled",
+        body: `Order ${order.reference_code} canceled by customer.`,
+        jobId: order.job_id,
+      });
+    } catch {
+      /* status already saved */
     }
   }
   revalidateShopPaths(order.shop_id);

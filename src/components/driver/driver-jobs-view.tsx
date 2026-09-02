@@ -12,6 +12,7 @@ import {
   startTrip,
 } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
+import { HOBBY_POLL_MS } from "@/lib/hosting";
 import { CashCollectModal } from "@/components/driver/cash-collect-modal";
 import { PickupDescribeCard } from "@/components/driver/pickup-describe-card";
 import { RiderSpottingCard } from "@/components/driver/rider-spotting-card";
@@ -26,6 +27,7 @@ import {
 import { pickupPhotoFromDetails } from "@/lib/pickup-photo";
 import { driverHasArrived, isConfirmedStatus } from "@/lib/job-status";
 import { packageOfferCopy, isShopPackageJob } from "@/lib/package-job";
+import { JobItemBadge } from "@/components/uber/item-visual";
 import { ShopDeliveryTrip } from "@/components/driver/shop-delivery-trip";
 import { isCashPaymentMethod } from "@/lib/wallet";
 import type { JobStatus, JobWithDriver } from "@/lib/types";
@@ -60,7 +62,7 @@ export function DriverJobsView() {
 
   useEffect(() => {
     void load();
-    const t = setInterval(() => void load(), 5000);
+    const t = setInterval(() => void load(), HOBBY_POLL_MS.driverJobs);
     return () => clearInterval(t);
   }, [load]);
 
@@ -148,6 +150,7 @@ export function DriverJobsView() {
               ? "Cash"
               : "Card"}
           </p>
+          <JobItemBadge job={active} />
           {activeOffer ? (
             <div
               data-testid="package-delivery-offer"
@@ -173,6 +176,7 @@ export function DriverJobsView() {
               customerPhone={active.customer_phone}
               customerName={active.customer_name}
               countryCode={active.country_code}
+              tripCode={active.reference_code}
             />
           </div>
           {active.service_type === "ride" ? (

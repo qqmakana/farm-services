@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppLink } from "@/components/ui/app-link";
 import { MapPin, Search, ShoppingBag, Star } from "lucide-react";
 import type { Shop } from "@/lib/types";
@@ -21,6 +21,10 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
   const { country } = useCountry();
   const [q, setQ] = useState("");
   const [pill, setPill] = useState<(typeof SHOP_CATEGORY_PILLS)[number]>("All");
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
   const place =
     country.code === "ZA"
       ? "Westdene, Johannesburg"
@@ -44,17 +48,30 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
           <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
           {place}
         </p>
-        <label className="mt-2 flex h-12 items-center gap-2 rounded-[12px] border border-[#E0E0E0] bg-white px-4">
+        <form
+          role="search"
+          className="mt-2 flex h-12 items-center gap-2 rounded-[12px] border border-[#E0E0E0] bg-white px-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const value = new FormData(e.currentTarget).get("q");
+            setQ(String(value ?? ""));
+          }}
+        >
           <Search className="h-5 w-5 shrink-0 text-[#999999]" aria-hidden />
           <input
+            name="q"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search shops or products"
             className="min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-[#A6A6A6]"
             enterKeyHint="search"
+            autoComplete="off"
             data-testid="shop-find"
           />
-        </label>
+          <button type="submit" className="sr-only">
+            Search
+          </button>
+        </form>
         <div
           className="vr-hide-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4"
           role="tablist"
@@ -82,6 +99,12 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
         </div>
       </header>
 
+      <div
+        data-testid="shop-results"
+        data-count={filtered.length}
+        data-q={q}
+        data-hydrated={hydrated ? "1" : "0"}
+      >
       {filtered.length === 0 ? (
         <EmptyState
           icon={ShoppingBag}
@@ -92,8 +115,8 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
           }
           body={
             shops.length === 0
-              ? "We're adding local spazas daily"
-              : "Try searching for 'milk' or 'stew'"
+              ? "We're adding local shops daily"
+              : "Try searching for 'milk' or 'sugar'"
           }
           action={
             shops.length === 0 ? (
@@ -115,9 +138,9 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
               <AppLink
                 key={shop.id}
                 href={`/shops/${shop.id}`}
-                className="uber-press block overflow-hidden rounded-[12px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
+                className="uber-press uber-press-card block overflow-hidden rounded-[12px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
               >
-                <div className="relative aspect-[16/9] overflow-hidden bg-[#1A1A1A]">
+                <div className="relative aspect-[16/9] overflow-hidden bg-[#E0E0E0]">
                   {cover ? (
                     <ShopPhoto
                       src={cover}
@@ -171,6 +194,7 @@ export function ShopStorefront({ shops }: { shops: Shop[] }) {
           })}
         </div>
       )}
+      </div>
 
       {filtered.length > 0 ? (
         <AppLink

@@ -21,4 +21,24 @@ export const WhatsAppLinks = {
     waLink(
       `Hi ${BRAND.appName} — I'd like to chat about driving (rides, delivery & farm).`,
     ),
+  dispute: (code: string, extra?: string) =>
+    waLink(
+      [
+        `Hi ${BRAND.appName} — DISPUTE`,
+        `Order/trip: ${code}`,
+        extra?.trim() || "Please help. I need a refund or the shop/driver issue resolved.",
+      ].join("\n"),
+    ),
+  messageOtherParty: (code: string, role: "driver" | "rider" | "shop", text: string) =>
+    waLink(
+      [
+        `Hi ${BRAND.appName} — please pass this to my ${role} for ${code}.`,
+        "Do not share my phone number.",
+        text.trim() || "(type your message here)",
+      ].join("\n"),
+    ),
+  downtime: () =>
+    waLink(
+      `Village Ride is down. We're fixing it. You'll get a message here when it's back.`,
+    ),
 } as const;

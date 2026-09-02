@@ -3,9 +3,10 @@
 import {
   FETCH_SEND_SIZES,
   SIZE_VEHICLE,
-  VEHICLE_EMOJI,
+  VEHICLE_LABELS,
   type ItemSize,
 } from "@/lib/vehicles";
+import { FETCH_SIZE_ICON } from "@/components/uber/item-visual";
 
 export function ItemSizePicker({
   value,
@@ -23,6 +24,7 @@ export function ItemSizePicker({
         {FETCH_SEND_SIZES.map((s) => {
           const vehicle = SIZE_VEHICLE[s.id];
           const on = value === s.id;
+          const Icon = FETCH_SIZE_ICON[s.id];
           return (
             <button
               key={s.id}
@@ -32,14 +34,25 @@ export function ItemSizePicker({
                 on ? "bg-black text-white" : "bg-[#F3F3F3] text-black"
               }`}
             >
-              <span className="block text-[16px]">{VEHICLE_EMOJI[vehicle]}</span>
-              <span className="block text-[13px] font-bold">{s.label}</span>
+              <Icon
+                className="mx-auto h-6 w-6"
+                strokeWidth={1.75}
+                aria-hidden
+              />
+              <span className="mt-1 block text-[13px] font-bold">{s.label}</span>
               <span
                 className={`mt-0.5 block text-[10px] leading-tight ${
                   on ? "text-white/80" : "text-[#6B6B6B]"
                 }`}
               >
                 {s.hint}
+              </span>
+              <span
+                className={`mt-0.5 block text-[10px] ${
+                  on ? "text-white/70" : "text-[#8A8A8A]"
+                }`}
+              >
+                {VEHICLE_LABELS[vehicle]}
               </span>
             </button>
           );

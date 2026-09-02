@@ -6,14 +6,16 @@ export function EmptyState({
   title,
   body,
   action,
+  compact,
 }: {
   icon: LucideIcon;
   title: string;
   body: string;
   action?: ReactNode;
+  compact?: boolean;
 }) {
   return (
-    <div className="px-4 pt-16 text-center">
+    <div className={compact ? "px-4 py-8 text-center" : "px-4 pt-16 text-center"}>
       <Icon
         className="mx-auto h-12 w-12 text-[#666666]"
         strokeWidth={1.5}

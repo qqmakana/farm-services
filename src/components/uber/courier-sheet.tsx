@@ -19,45 +19,11 @@ import { locsFromSearchParams } from "@/lib/booking-query";
 import { getGuestProfile } from "@/lib/guest-profile";
 import { useCountry } from "@/components/country/country-provider";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
-import type {
-  CourierPackageType,
-  CourierWeight,
-  VehicleType,
-} from "@/lib/types";
-import { SIZE_VEHICLE, suggestVehicle, VEHICLE_EMOJI } from "@/lib/vehicles";
+import type { CourierPackageType, VehicleType } from "@/lib/types";
+import { courierPackageSize, suggestVehicle } from "@/lib/vehicles";
 import { SERVICE_COPY } from "@/lib/service-guide";
 import { FareBreakdownCard } from "@/components/uber/fare-breakdown-card";
-
-const PACKAGE_OPTIONS = [
-  {
-    id: "documents" as const,
-    label: "Documents",
-    hint: "Letters, IDs, contracts",
-    weight: "under_5" as CourierWeight,
-    size: "small" as const,
-  },
-  {
-    id: "small_package" as const,
-    label: "Small package",
-    hint: "Sealed bag or box",
-    weight: "under_5" as CourierWeight,
-    size: "small" as const,
-  },
-  {
-    id: "medium_package" as const,
-    label: "Medium package",
-    hint: "Groceries-size bag",
-    weight: "5_10" as CourierWeight,
-    size: "medium" as const,
-  },
-  {
-    id: "furniture" as const,
-    label: "Furniture / farm goods",
-    hint: "Needs a bakkie",
-    weight: "10_20" as CourierWeight,
-    size: "medium" as const,
-  },
-] as const;
+import { PackageTypePicker, packageVisual } from "@/components/uber/item-visual";
 
 export function CourierSheet({
   onPinChange,
@@ -99,16 +65,11 @@ export function CourierSheet({
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [quoteReady, setQuoteReady] = useState(false);
 
-  const pack = PACKAGE_OPTIONS.find((o) => o.id === packageType) ?? PACKAGE_OPTIONS[0];
+  const pack = packageVisual(packageType);
   const itemDescription = pack.label;
 
   useEffect(() => {
-    const size =
-      packageType === "furniture"
-        ? "large"
-        : packageType === "medium_package"
-          ? "medium"
-          : "small";
+    const size = courierPackageSize(packageType);
     setVehicle(
       suggestVehicle({ service_type: "courier", delivery_size: size }),
     );
@@ -298,47 +259,11 @@ export function CourierSheet({
       </p>
       <LandmarkHelperText />
 
-      <div role="group" aria-label="Package type">
-        <p className="text-sm font-semibold text-black">What are you sending?</p>
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          {PACKAGE_OPTIONS.map((o) => {
-            const selected = packageType === o.id;
-            const size =
-              o.id === "furniture"
-                ? "large"
-                : o.id === "medium_package"
-                  ? "medium"
-                  : "small";
-            const v = SIZE_VEHICLE[size];
-            return (
-              <button
-                key={o.id}
-                type="button"
-                onClick={() => setPackageType(o.id)}
-                className={`uber-press rounded-2xl border px-3 py-3 text-left ${
-                  selected
-                    ? "border-2 border-black bg-white"
-                    : "border border-transparent bg-gray-50"
-                }`}
-              >
-                <span className="block text-lg leading-none">
-                  {VEHICLE_EMOJI[v]}
-                </span>
-                <span className="mt-1 block text-sm font-semibold text-black">
-                  {o.label}
-                </span>
-                <span className="mt-0.5 block text-xs text-gray-500">
-                  {o.hint}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        <p className="mt-2 text-xs text-gray-500">
-          Curb-to-curb. Max 15 kg. No alcohol, medication, or dangerous goods.
-          Packages: agree a PIN with the recipient.
-        </p>
-      </div>
+      <PackageTypePicker value={packageType} onChange={setPackageType} />
+      <p className="text-xs text-gray-500">
+        Curb-to-curb. Max 15 kg for bags. Fridge and furniture need a bakkie.
+        No alcohol, medication, or dangerous goods.
+      </p>
 
       <div>
         <p className="text-sm font-semibold text-black">Speed</p>
@@ -440,8 +365,14 @@ export function CourierSheet({
               .join(" · ") || null,
           details: {
             item_description: itemDescription,
-            item_weight: pack.weight,
-            size: pack.size,
+            item_weight:
+              courierPackageSize(packageType) === "large"
+                ? "10_20"
+                : courierPackageSize(packageType) === "medium"
+                  ? "5_10"
+                  : "under_5",
+            size:
+              courierPackageSize(packageType) === "small" ? "small" : "medium",
             needs_helpers: false,
             package_type: packageType,
             is_express: isExpress,

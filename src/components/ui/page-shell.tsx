@@ -5,6 +5,7 @@ import {
   DRIVER_SUB,
   UBER_H1,
   UBER_PAGE,
+  UBER_PUSH,
   UBER_SUB,
 } from "@/components/customer/uber-chrome";
 
@@ -16,6 +17,7 @@ export function PageShell({
   className = "",
   actions,
   tone = "light",
+  enter = "tab",
 }: {
   title?: string;
   subtitle?: string;
@@ -23,10 +25,16 @@ export function PageShell({
   className?: string;
   actions?: ReactNode;
   tone?: "light" | "driver";
+  enter?: "tab" | "push";
 }) {
   const dark = tone === "driver";
+  const pageClass = dark
+    ? DRIVER_PAGE
+    : enter === "push"
+      ? UBER_PUSH
+      : UBER_PAGE;
   return (
-    <main className={`${dark ? DRIVER_PAGE : UBER_PAGE} ${className}`}>
+    <main className={`${pageClass} ${className}`}>
       {title || actions ? (
         <header className="mb-6 flex items-start justify-between gap-3">
           <div className="min-w-0">

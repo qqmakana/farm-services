@@ -2,10 +2,11 @@
 
 import { useEffect } from "react";
 import { updateDriverLocation } from "@/lib/actions";
+import { HOBBY_POLL_MS } from "@/lib/hosting";
 
-export const DRIVER_GPS_INTERVAL_MS = 3000;
+export const DRIVER_GPS_INTERVAL_MS = HOBBY_POLL_MS.driverGps;
 
-/** Push driver GPS to the server every 3 seconds while online. */
+/** Push driver GPS while online. 12s on Hobby (not 3s) so we do not burn function quota. */
 export function useDriverGpsPing(
   driverId: string | null | undefined,
   isOnline: boolean,

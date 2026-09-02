@@ -174,7 +174,7 @@ export function ShopPortal() {
                       }
                     >
                       <option value="food">Food / kitchen</option>
-                      <option value="spaza">Spaza</option>
+                      <option value="spaza">Local shop</option>
                       <option value="grocery">Grocery</option>
                       <option value="bakery">Bakery</option>
                       <option value="butchery">Butchery</option>

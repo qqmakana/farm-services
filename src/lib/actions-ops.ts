@@ -532,6 +532,25 @@ export async function cancelMerchantOrder(
       data: { url: "/driver/jobs", type: "order_cancelled" },
     });
   }
+  try {
+    const driverId = (updated as { driver_id?: string | null }).driver_id;
+    if (driverId) {
+      const { notifyInbox } = await import("@/lib/notifications");
+      await notifyInbox({
+        audience: "driver",
+        driverId,
+        jobId,
+        type: "order_cancelled",
+        title: "Order cancelled",
+        body: `${updated.reference_code} was cancelled by the merchant.`,
+        href: "/driver/jobs",
+        fcmToken: driver?.fcm_token,
+        push: false,
+      });
+    }
+  } catch {
+    /* FCM already sent */
+  }
 
   await trackEvent("order_cancelled", {
     jobId,
@@ -576,6 +595,12 @@ export async function submitDriverJoinApplication(input: {
     .single();
   if (error) throw new Error(error.message);
   await trackEvent("driver_application", { id: data.id });
+  try {
+    const { notifyAdminDriverSignup } = await import("@/lib/notifications");
+    await notifyAdminDriverSignup(input.full_name);
+  } catch {
+    /* application already saved */
+  }
   return data;
 }
 
@@ -796,4 +821,125 @@ export async function getAdminSignupsData() {
       (b.last_trip_at || "").localeCompare(a.last_trip_at || ""),
     ),
   };
+}
+
+export type MoneyLedgerRow = {
+  date: string;
+  code: string;
+  riderPaid: number;
+  driverPaid: number;
+  shopPaid: number;
+  villageKept: number;
+  yocoFee: number;
+  payment: string;
+  status: string;
+};
+
+export async function listMoneyLedgerAction(): Promise<MoneyLedgerRow[]> {
+  const gate = await requireAdminAccess();
+  if (!gate.ok) return [];
+  const { estimateYocoFee } = await import("@/lib/ops-policy");
+  const { shopNetPayable, SHOP_DRIVER_COLLECT, SHOP_PLATFORM_DELIVERY } =
+    await import("@/lib/shop-constants");
+
+  type JobRow = {
+    created_at: string;
+    reference_code: string;
+    fee_amount: number;
+    driver_payout: number;
+    platform_commission: number;
+    payment_method: string;
+    status: string;
+    shop_id?: string | null;
+  };
+  type OrderRow = {
+    created_at: string;
+    reference_code: string;
+    shop_id: string;
+    subtotal: number;
+    total_amount: number;
+    payment_method: string;
+    status: string;
+  };
+
+  let jobs: JobRow[] = [];
+  let orders: OrderRow[] = [];
+  const shopCreated = new Map<string, string>();
+
+  if (useAdminDb()) {
+    const admin = createAdminClient();
+    const [{ data: jobRows }, { data: orderRows }, { data: shops }] =
+      await Promise.all([
+        admin
+          .from("rr_jobs")
+          .select(
+            "created_at, reference_code, fee_amount, driver_payout, platform_commission, payment_method, status, shop_id",
+          )
+          .order("created_at", { ascending: false })
+          .limit(300),
+        admin
+          .from("rr_shop_orders")
+          .select(
+            "created_at, reference_code, shop_id, subtotal, total_amount, payment_method, status",
+          )
+          .order("created_at", { ascending: false })
+          .limit(300),
+        admin.from("rr_shops").select("id, created_at"),
+      ]);
+    jobs = (jobRows ?? []) as JobRow[];
+    orders = (orderRows ?? []) as OrderRow[];
+    for (const s of shops ?? []) {
+      shopCreated.set(String(s.id), String(s.created_at || ""));
+    }
+  } else {
+    jobs = mockRepo.listJobs().slice(0, 300) as JobRow[];
+    const shops = mockRepo.listShops();
+    for (const s of shops) shopCreated.set(s.id, s.created_at);
+    orders = shops.flatMap((s) => mockRepo.listShopOrders(s.id));
+  }
+
+  const tripRows: MoneyLedgerRow[] = jobs
+    .filter((j) => !j.shop_id)
+    .map((j) => {
+      const riderPaid = Math.round(Number(j.fee_amount) || 0);
+      const card =
+        j.payment_method === "card" || j.payment_method === "paypal";
+      return {
+        date: String(j.created_at || "").slice(0, 10),
+        code: String(j.reference_code || ""),
+        riderPaid,
+        driverPaid: Math.round(Number(j.driver_payout) || 0),
+        shopPaid: 0,
+        villageKept: Math.round(Number(j.platform_commission) || 0),
+        yocoFee: card ? estimateYocoFee(riderPaid) : 0,
+        payment: String(j.payment_method || "cash"),
+        status: String(j.status || ""),
+      };
+    });
+
+  const shopRows: MoneyLedgerRow[] = orders.map((o) => {
+    const split = shopNetPayable(
+      Number(o.subtotal) || 0,
+      shopCreated.get(o.shop_id),
+    );
+    const delivered = o.status === "delivered";
+    const riderPaid = Math.round(Number(o.total_amount) || 0);
+    const card =
+      o.payment_method === "card" || o.payment_method === "paypal";
+    return {
+      date: String(o.created_at || "").slice(0, 10),
+      code: String(o.reference_code || ""),
+      riderPaid,
+      driverPaid: delivered ? SHOP_DRIVER_COLLECT : 0,
+      shopPaid: split.net,
+      villageKept: split.commission + (delivered ? SHOP_PLATFORM_DELIVERY : 0),
+      yocoFee: card ? estimateYocoFee(riderPaid) : 0,
+      payment: String(o.payment_method || "cash"),
+      status: String(o.status || ""),
+    };
+  });
+
+  return [...tripRows, ...shopRows].sort((a, b) =>
+    (b.date + b.code).localeCompare(a.date + a.code),
+  );
 }

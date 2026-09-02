@@ -17,7 +17,7 @@ const ABOUT_LINKS = [
   { href: "/pricing", label: "Our offerings" },
   { href: "/countries", label: "Countries" },
   { href: "/help", label: "Safety" },
-  { href: "/terms", label: "Legal" },
+  { href: "/legal", label: "Legal" },
   { href: "/privacy", label: "Privacy" },
 ] as const;
 

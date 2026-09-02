@@ -3,11 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import { Receipt, RotateCw } from "lucide-react";
+import { Clock, RotateCw } from "lucide-react";
 import { listJobsByCustomerPhone, cancelRiderJobAction } from "@/lib/actions";
 import { listShopOrdersByPhone } from "@/lib/actions-shop-orders";
 import { ShopOrderTrack } from "@/components/shops/shop-order-track";
 import { formatMoney, formatPhoneDisplay, SERVICE_LABELS } from "@/lib/format";
+import { CANCEL_FEE_ZAR, cancelFeeApplies } from "@/lib/ops-policy";
 import { ActivityRowSkeleton } from "@/components/ui/skeleton";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -24,7 +25,6 @@ import {
   UBER_H1,
   UBER_INPUT,
   UBER_PAGE,
-  UBER_SUB,
 } from "@/components/customer/uber-chrome";
 
 const UPCOMING: JobStatus[] = [
@@ -120,7 +120,6 @@ export function ActivityView() {
   const [shopOrders, setShopOrders] = useState<ShopOrder[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [hydrated, setHydrated] = useState(false);
   const [receiptJob, setReceiptJob] = useState<JobWithDriver | null>(null);
 
   const loadTrips = useCallback((phone: string) => {
@@ -144,7 +143,6 @@ export function ActivityView() {
   useEffect(() => {
     const p = getGuestProfile();
     setProfile(p);
-    setHydrated(true);
     if (p?.phone) loadTrips(p.phone);
   }, [loadTrips]);
 
@@ -172,47 +170,43 @@ export function ActivityView() {
     [jobs],
   );
 
-  if (!hydrated) {
-    return (
-      <main className={UBER_PAGE}>
-        <h1 className={UBER_H1}>Activity</h1>
-        <div className="vr-overscroll mt-6 space-y-3" aria-busy="true" aria-label="Loading trips">
-          <ActivityRowSkeleton />
-          <ActivityRowSkeleton />
-          <ActivityRowSkeleton />
-        </div>
-      </main>
-    );
-  }
-
   if (!profile?.phone) {
     return (
       <main className={UBER_PAGE}>
         <h1 className={UBER_H1}>Activity</h1>
-        <p className={UBER_SUB}>Enter your phone to see trips.</p>
-        <form onSubmit={savePhone} className="mt-8 space-y-3">
-          <input
-            className={UBER_INPUT}
-            placeholder="082 123 4567"
-            aria-label="Phone number"
-            inputMode="tel"
-            autoComplete="tel"
-            value={phoneInput}
-            onChange={(e) => setPhoneInput(formatPhoneDisplay(e.target.value))}
-          />
-          <input
-            className={UBER_INPUT}
-            placeholder="Name (optional)"
-            value={nameInput}
-            onChange={(e) => setNameInput(e.target.value)}
-          />
-          {error ? (
-            <p className="text-[12px] font-normal text-[#CB4040]">{error}</p>
-          ) : null}
-          <button type="submit" disabled={pending} className={UBER_BTN_BLACK}>
-            {pending ? <ButtonSpinner /> : "View activity"}
-          </button>
-        </form>
+        <EmptyState
+          icon={Clock}
+          title="No trips yet"
+          body="Your trip history will appear here"
+          action={
+            <form onSubmit={savePhone} className="space-y-3 text-left">
+              <p className="text-center text-[14px] text-[#666666]">
+                Enter your phone to see trips.
+              </p>
+              <input
+                className={UBER_INPUT}
+                placeholder="082 123 4567"
+                aria-label="Phone number"
+                inputMode="tel"
+                autoComplete="tel"
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(formatPhoneDisplay(e.target.value))}
+              />
+              <input
+                className={UBER_INPUT}
+                placeholder="Name (optional)"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+              />
+              {error ? (
+                <p className="text-[12px] font-normal text-[#CB4040]">{error}</p>
+              ) : null}
+              <button type="submit" disabled={pending} className={UBER_BTN_BLACK}>
+                {pending ? <ButtonSpinner /> : "View activity"}
+              </button>
+            </form>
+          }
+        />
       </main>
     );
   }
@@ -235,7 +229,7 @@ export function ActivityView() {
 
       {upcoming.length === 0 && past.length === 0 && shopOrders.length === 0 && !pending ? (
         <EmptyState
-          icon={Receipt}
+          icon={Clock}
           title="No trips yet"
           body="Your trip history will appear here"
         />
@@ -258,6 +252,20 @@ export function ActivityView() {
                     job.status,
                   )
                     ? () => {
+                        const fee = cancelFeeApplies({
+                          createdAt: job.created_at,
+                          status: job.status,
+                          villagePass: Boolean(job.village_pass),
+                        });
+                        const card =
+                          job.payment_method === "card" ||
+                          job.payment_method === "paypal";
+                        const ok = window.confirm(
+                          fee
+                            ? `Cancel after 2 min: ${formatMoney(CANCEL_FEE_ZAR)} goes to the driver.${card ? " Card remainder refunded in Yoco (2–7 days)." : ""} Continue?`
+                            : `Cancel within 2 min: full refund.${card ? " Card refunds take 2–7 days via Yoco." : ""} Continue?`,
+                        );
+                        if (!ok) return;
                         startTransition(async () => {
                           try {
                             await cancelRiderJobAction({

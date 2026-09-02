@@ -144,7 +144,7 @@ export function UberHome() {
   return (
     <main
       data-testid="uber-home"
-      className="ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-[#F5F5F5] px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] text-[#111111]"
+      className="ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-[#F5F5F5] px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] text-[#111111] vr-page-enter"
     >
       <Suspense fallback={null}>
         <CaptureReferral />

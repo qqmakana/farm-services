@@ -143,6 +143,7 @@ export default function NotificationsPage() {
 
   return (
     <PageShell
+      enter="push"
       title="Notifications"
       subtitle="Trip updates from this phone"
     >

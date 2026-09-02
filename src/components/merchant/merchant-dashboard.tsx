@@ -341,6 +341,12 @@ export function MerchantDashboard({
           >
             {showForm ? "Close" : "Create delivery"}
           </button>
+          <Link
+            href="/legal/kitchen"
+            className="uber-press inline-flex min-h-11 items-center justify-center rounded-full bg-white px-5 text-sm font-bold text-black ring-1 ring-[#E0E0E0]"
+          >
+            Print fridge steps
+          </Link>
           </div>
         </div>
 
@@ -535,7 +541,9 @@ export function MerchantDashboard({
       </div>
       <p className="mt-2 text-[11px] text-[var(--ru-muted)]">
         Platform commission (~10% / {formatMoney(commissionShown)}) comes from
-        the driver wallet — not your shop. Open: {open}.
+        the driver wallet — not your shop. Open: {open}. First 30 days after
+        you join: 0% commission on menu goods (shop keeps 100%). After that,
+        shop keeps 85%.
       </p>
 
       <section className="ru-card mt-8 p-5">

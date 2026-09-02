@@ -361,7 +361,7 @@ export function SmartSuggestions({
 
       {display.nearby.length > 0 ? (
         <ul
-          className="overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white"
+          className="vr-stagger overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white"
           data-testid="home-nearby"
         >
           <li className="px-4 pt-3 text-[11px] font-semibold tracking-wide text-[#6B6B6B] uppercase">

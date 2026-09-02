@@ -11,6 +11,7 @@ import {
 } from "@/components/uber/schedule-when";
 import { reserveWindowError } from "@/lib/reserve-window";
 import { SERVICE_COPY } from "@/lib/service-guide";
+import { useDelayedUnmount } from "@/hooks/use-delayed-unmount";
 
 /** Mobile look-alike of Uber Reserve date/time pickers. */
 export function HomeScheduleLaterModal({
@@ -23,7 +24,9 @@ export function HomeScheduleLaterModal({
   const [scheduledLocal, setScheduledLocal] = useState(defaultLaterLocal);
   const [error, setError] = useState<string | null>(null);
 
-  if (!open) return null;
+  const { mounted, leaving } = useDelayedUnmount(open, 300);
+
+  if (!mounted) return null;
 
   const [datePart, timePart] = scheduledLocal.split("T");
 
@@ -54,14 +57,18 @@ export function HomeScheduleLaterModal({
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      className={`uber-sheet-scrim fixed inset-0 z-[80] flex items-end justify-center bg-black/40 ${
+        leaving ? "is-leaving" : ""
+      }`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="home-later-title"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl bg-[#E5F1F1] p-5 shadow-xl"
+        className={`uber-sheet-panel w-full max-w-md rounded-t-[1.75rem] bg-[#E5F1F1] p-5 shadow-xl ${
+          leaving ? "is-leaving" : ""
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3">

@@ -422,6 +422,14 @@ html.vr-simple-mode {
   transform: scale(0.97);
   opacity: 0.9;
 }
+.uber-press-card:active:not(:disabled) {
+  transform: scale(0.98);
+  opacity: 1;
+}
+.uber-press-icon:active:not(:disabled) {
+  transform: scale(0.9);
+  opacity: 0.9;
+}
 .uber-press:disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -528,7 +536,7 @@ html.vr-simple-mode {
   transition: transform 100ms ease-out;
 }
 .uber-add-plus:active:not(:disabled) > span {
-  transform: scale(0.9);
+  transform: scale(0.85);
 }
 .uber-add-chip:hover:not(:disabled) {
   background: #f7f7f7;
@@ -589,6 +597,14 @@ html.vr-simple-mode {
     transform: translateY(0);
   }
 }
+@keyframes uber-sheet-down {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
 @keyframes uber-fade-in {
   from {
     opacity: 0;
@@ -597,14 +613,28 @@ html.vr-simple-mode {
     opacity: 1;
   }
 }
+@keyframes uber-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
 .uber-cart-enter {
-  animation: uber-cart-up 0.28s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  animation: uber-cart-up 0.28s cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 .uber-sheet-scrim {
-  animation: uber-fade-in 0.2s ease-out both;
+  animation: uber-fade-in 200ms ease-out both;
+}
+.uber-sheet-scrim.is-leaving {
+  animation: uber-fade-out 200ms ease-out both;
 }
 .uber-sheet-panel {
-  animation: uber-sheet-up 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: uber-sheet-up 300ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.uber-sheet-panel.is-leaving {
+  animation: uber-sheet-down 280ms cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
 @keyframes vr-page-in {
@@ -627,8 +657,16 @@ html.vr-simple-mode {
     transform: translateX(0);
   }
 }
+@keyframes vr-screen-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
 .vr-screen-enter {
-  animation: vr-screen-in 300ms ease-out both;
+  animation: vr-screen-in 300ms cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
 .vr-overscroll {
@@ -703,8 +741,18 @@ html.vr-simple-mode {
   animation: vr-map-pulse 1.4s ease-in-out infinite;
 }
 
+@keyframes vr-stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 .vr-stagger > * {
-  animation: vr-page-in 250ms ease-out both;
+  animation: vr-stagger-in 250ms ease-out both;
 }
 .vr-stagger > *:nth-child(1) {
   animation-delay: 0ms;
@@ -734,6 +782,27 @@ html.vr-simple-mode .uber-cart-enter,
 html.vr-simple-mode .uber-sheet-scrim,
 html.vr-simple-mode .vr-stagger > * {
   animation: none;
+}
+
+/* Cross-document view transitions (Chromium) — tabs fade, no click intercept. */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root) {
+  animation: uber-fade-out 200ms ease-out both;
+}
+::view-transition-new(root) {
+  animation: uber-fade-in 200ms ease-out both;
+}
+html:active-view-transition .vr-page-enter,
+html:active-view-transition .vr-screen-enter {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
 }
 
 @keyframes vr-add-pop {

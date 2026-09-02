@@ -50,7 +50,7 @@ export const TRIP_STOP_TYPES: readonly {
   id: TripStopType;
   label: string;
 }[] = [
-  { id: "spaza", label: "Spaza" },
+  { id: "spaza", label: "Local shop" },
   { id: "grocery", label: "Grocery" },
   { id: "hardware", label: "Hardware" },
   { id: "clinic", label: "Clinic" },

@@ -61,7 +61,7 @@ function ServicesContent() {
       <div className="-mx-4 mt-4 border-b border-[#E8E8E8]" />
 
       <section className="mt-5">
-        <div className="grid grid-cols-3 gap-2.5">
+        <div className="vr-stagger mt-5 grid grid-cols-3 gap-2.5">
           {SERVICES.map((item) => (
             <UberServiceTile
               key={item.title}

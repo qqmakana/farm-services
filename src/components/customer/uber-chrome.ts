@@ -3,6 +3,10 @@
 export const UBER_PAGE =
   "vr-page-enter ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-[#F5F5F5] px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] tracking-[-0.02em] text-[#111111]";
 
+/** Push screens (shop, nested account) — slide in from the right. */
+export const UBER_PUSH =
+  "vr-screen-enter ru-force-light mx-auto min-h-dvh max-w-md touch-manipulation bg-[#F5F5F5] px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] tracking-[-0.02em] text-[#111111]";
+
 export const DRIVER_PAGE =
   "mx-auto min-h-dvh max-w-md touch-manipulation bg-[#0E0E0E] px-4 pb-28 pt-[max(1rem,env(safe-area-inset-top))] font-[family-name:var(--font-sans)] text-white";
 

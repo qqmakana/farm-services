@@ -13,6 +13,7 @@ import { t } from "@/lib/i18n";
 import type { AddressSuggestion } from "@/lib/mapbox-types";
 import { isInServiceArea } from "@/lib/service-area";
 import type { CommunityLocation } from "@/lib/types";
+import { ensureLocationConsent } from "@/lib/location-consent";
 
 export type PlaceValue = {
   label: string;
@@ -196,6 +197,11 @@ export function PlacesAutocomplete({
 
   function useGps() {
     setGpsError(null);
+    if (!ensureLocationConsent()) {
+      setGpsError("Location is optional — search for an address or tap the map.");
+      setFocused(true);
+      return;
+    }
     if (!navigator.geolocation) {
       setGpsError("GPS unavailable — tap the map or search for an address.");
       setFocused(true);

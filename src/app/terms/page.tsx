@@ -19,8 +19,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: "The service",
     body: [
-      `${BRAND.appName} connects customers, drivers, and local partners for rides, deliveries, Farm Connect, and courier jobs.`,
-      "We provide the technology platform. Drivers and partners are independent and are responsible for how they carry out trips, except where the law says otherwise.",
+      `${BRAND.appName} is a technology platform, not a transport company and not a shop. Drivers and shop owners are independent contractors. If a driver crashes, they (and their insurer) are responsible except where South African law says we cannot exclude liability.`,
     ],
   },
   {
@@ -34,9 +33,10 @@ const SECTIONS: { title: string; body: string[] }[] = [
     title: "Bookings and payments",
     body: [
       "Quotes and ETAs are estimates. Actual time and availability depend on drivers and conditions.",
-      "Customers typically pay drivers in cash for the trip fee unless another method is offered in-app.",
+      "Pay cash to the driver or card via Yoco. Card refunds are processed in the Yoco dashboard (2–7 days on the bank statement).",
+      "Cancel within 2 minutes: full refund. After 2 minutes with a driver assigned: R 15 goes to the driver. Village Pass: free cancel before the trip starts. Full policy: /legal/cancellations.",
       "Drivers pay platform commission from their prepaid wallet when a trip completes (about 10% unless stated otherwise).",
-      "Partners are responsible for accurate order details and legal sale of goods they ship.",
+      "Partners are responsible for accurate order details and legal sale of goods they ship. First 30 days: 0% commission on shop goods.",
     ],
   },
   {
@@ -74,7 +74,7 @@ export default function TermsPage() {
           Terms of Service
         </h1>
         <p className="mt-2 text-sm text-slate-600">
-          Last updated: 30 July 2026
+          Last updated: 31 August 2026
         </p>
         <div className="mt-8 space-y-6">
           {SECTIONS.map((section) => (
@@ -89,6 +89,14 @@ export default function TermsPage() {
           ))}
         </div>
         <p className="mt-10 text-center text-sm text-slate-500">
+          <Link href="/legal" className="font-semibold text-[#000000] underline">
+            All policies
+          </Link>
+          {" · "}
+          <Link href="/legal/cancellations" className="font-semibold text-[#000000] underline">
+            Cancellations
+          </Link>
+          {" · "}
           <Link href="/privacy" className="font-semibold text-[#000000] underline">
             Privacy
           </Link>

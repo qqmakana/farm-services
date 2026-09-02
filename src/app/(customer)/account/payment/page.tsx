@@ -8,7 +8,7 @@ import {
   UBER_GLOSS,
   UBER_H1,
   UBER_H2,
-  UBER_PAGE,
+  UBER_PUSH,
   UBER_SUB,
 } from "@/components/customer/uber-chrome";
 
@@ -16,7 +16,7 @@ export default function PaymentMethodsPage() {
   const { country } = useCountry();
 
   return (
-    <main className={UBER_PAGE}>
+    <main className={UBER_PUSH}>
       <Link
         href="/account"
         className={`uber-press inline-flex items-center gap-1 rounded-full px-3 py-2 text-sm font-bold text-[#0a0a0a] ${UBER_GLOSS}`}
@@ -28,7 +28,7 @@ export default function PaymentMethodsPage() {
         Cash or card (Yoco) at checkout in {country.flag} {country.name}.
       </p>
 
-      <ul className="mt-6 space-y-3">
+      <ul className="vr-stagger mt-6 space-y-3">
         <li className={`flex items-start gap-3 rounded-[28px] p-4 ${UBER_GLOSS}`}>
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black text-white">
             <Banknote className="h-5 w-5" />

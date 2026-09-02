@@ -21,6 +21,54 @@ export type JobMapPin = {
 
 const EMPTY_JOBS: JobMapPin[] = [];
 const EMPTY_CARS: JobMapPin[] = [];
+const MAP_CAM_KEY = "vr_map_cam_v1";
+
+type SavedCam = {
+  lng: number;
+  lat: number;
+  zoom: number;
+  pitch: number;
+  bearing: number;
+};
+
+function readSavedCamera(fallback: MapPin): SavedCam | null {
+  try {
+    const raw = sessionStorage.getItem(MAP_CAM_KEY);
+    if (!raw) return null;
+    const cam = JSON.parse(raw) as SavedCam;
+    if (
+      !Number.isFinite(cam.lng) ||
+      !Number.isFinite(cam.lat) ||
+      !Number.isFinite(cam.zoom)
+    ) {
+      return null;
+    }
+    const dlat = cam.lat - fallback.lat;
+    const dlng = cam.lng - fallback.lng;
+    if (dlat * dlat + dlng * dlng > 0.25) return null;
+    return cam;
+  } catch {
+    return null;
+  }
+}
+
+function writeSavedCamera(map: mapboxgl.Map) {
+  try {
+    const c = map.getCenter();
+    sessionStorage.setItem(
+      MAP_CAM_KEY,
+      JSON.stringify({
+        lng: c.lng,
+        lat: c.lat,
+        zoom: map.getZoom(),
+        pitch: map.getPitch(),
+        bearing: map.getBearing(),
+      }),
+    );
+  } catch {
+    /* private mode */
+  }
+}
 
 function shortCallout(raw: string) {
   const base = (raw.split(",")[0] || raw).trim();
@@ -315,15 +363,18 @@ export function RideMapCanvas({
 
     mapboxgl.accessToken = MAPBOX_TOKEN;
     let map: mapboxgl.Map;
+    const savedCam = readSavedCamera(center);
     try {
       map = new mapboxgl.Map({
         container: wrap,
         style:
           variant === "driver" ? MAPBOX_STYLE_DRIVER : MAPBOX_STYLE_RIDER,
-        center: [center.lng, center.lat],
-        zoom: 15.5,
-        pitch: cinematic && !lowEnd ? 45 : 0,
-        bearing: cinematic && !lowEnd ? -18 : 0,
+        center: savedCam
+          ? [savedCam.lng, savedCam.lat]
+          : [center.lng, center.lat],
+        zoom: savedCam?.zoom ?? 15.5,
+        pitch: savedCam?.pitch ?? (cinematic && !lowEnd ? 45 : 0),
+        bearing: savedCam?.bearing ?? (cinematic && !lowEnd ? -18 : 0),
         attributionControl: true,
         logoPosition: "bottom-left",
         minZoom: variant === "driver" ? 3 : 10,
@@ -472,6 +523,7 @@ export function RideMapCanvas({
       }
 
       const focus = s.pin ?? s.driverLocation ?? s.center;
+      if (savedCam && !s.pin && !s.driverLocation) return;
       m.easeTo({
         center: [focus.lng, focus.lat],
         zoom: s.pin || s.driverLocation ? 15.5 : 13.4,
@@ -492,11 +544,13 @@ export function RideMapCanvas({
     map.on("click", (e) => {
       onSelectRef.current?.({ lat: e.lngLat.lat, lng: e.lngLat.lng });
     });
+    map.on("moveend", () => writeSavedCamera(map));
 
     const ro = new ResizeObserver(() => map.resize());
     ro.observe(wrap);
 
     return () => {
+      writeSavedCamera(map);
       ro.disconnect();
       for (const marker of markersRef.current) marker.remove();
       markersRef.current = [];

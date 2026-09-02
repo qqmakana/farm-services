@@ -231,7 +231,7 @@ export function AccountView() {
         </div>
       ) : null}
 
-      <div className="mt-6 grid grid-cols-2 gap-3">
+      <div className="mt-6 grid grid-cols-2 gap-3 vr-stagger">
         <GridTile href="/help" label="Help" Icon={LifeBuoy} />
         <GridTile href="/account/payment" label="Wallet" Icon={Wallet} />
         <GridTile href="/safety" label="Safety" Icon={Shield} />
@@ -340,7 +340,9 @@ export function AccountView() {
         <ListRow href="/shops" label="Browse shops" Icon={Store} />
         <ListRow href="/account/places" label="Saved places" Icon={MapPin} />
         <ListRow href="/account/payment" label="Payment methods" Icon={Wallet} />
-        <ListRow href="/terms" label="Legal" Icon={Scale} />
+        <ListRow href="/legal" label="Legal" Icon={Scale} />
+        <ListRow href="/legal/cancellations" label="Cancellations" Icon={Scale} />
+        <ListRow href="/status" label="Service status" Icon={LifeBuoy} />
         <ListRow href="/help" label="Support" Icon={LifeBuoy} />
       </ul>
 

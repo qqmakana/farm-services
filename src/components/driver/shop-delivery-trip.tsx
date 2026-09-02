@@ -12,9 +12,9 @@ import {
   nextShopDeliveryStage,
   shopDeliveryOfferLines,
   shopDeliveryStageFromJob,
-  shopPhoneFromJob,
-  telHref,
 } from "@/lib/shop-delivery";
+import { MapLoading } from "@/components/ui/map-loading";
+import { TripRelayContact } from "@/components/support/trip-relay-contact";
 import type { JobWithDriver, VehicleType } from "@/lib/types";
 import { VEHICLE_EMOJI } from "@/lib/vehicles";
 
@@ -24,9 +24,7 @@ const DriverJobsMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-48 items-center justify-center bg-[#1b2433] text-sm text-white/70">
-        Loading map…
-      </div>
+      <MapLoading className="min-h-48 bg-[#1b2433] text-white/70" />
     ),
   },
 );
@@ -49,8 +47,6 @@ export function ShopDeliveryTrip({
   const lines = shopDeliveryOfferLines(job);
   const stage = shopDeliveryStageFromJob(job) ?? "accepted";
   const next = nextShopDeliveryStage(stage);
-  const shopTel = telHref(shopPhoneFromJob(job));
-  const riderTel = telHref(job.customer_phone);
   const pickupNav =
     job.pickup_lat != null && job.pickup_lng != null
       ? mapsHref(job.pickup_lat, job.pickup_lng)
@@ -150,14 +146,7 @@ export function ShopDeliveryTrip({
                 Navigate
               </a>
             ) : null}
-            {shopTel ? (
-              <a
-                href={shopTel}
-                className="uber-press rounded-full bg-white px-4 py-2 text-sm font-bold text-black ring-1 ring-gray-200"
-              >
-                Call Shop
-              </a>
-            ) : null}
+            <TripRelayContact code={job.reference_code} peer="shop" />
           </div>
         </div>
 
@@ -177,14 +166,7 @@ export function ShopDeliveryTrip({
                 Navigate
               </a>
             ) : null}
-            {riderTel ? (
-              <a
-                href={riderTel}
-                className="uber-press rounded-full bg-white px-4 py-2 text-sm font-bold text-black ring-1 ring-gray-200"
-              >
-                Call Rider
-              </a>
-            ) : null}
+            <TripRelayContact code={job.reference_code} peer="rider" />
           </div>
         </div>
 

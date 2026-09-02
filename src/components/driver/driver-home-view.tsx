@@ -12,6 +12,7 @@ import {
   setDriverOnline,
 } from "@/lib/actions";
 import { useDriverApp } from "@/components/driver/driver-app-provider";
+import { HOBBY_POLL_MS } from "@/lib/hosting";
 import { OutOfFuelPanel } from "@/components/driver/out-of-fuel-panel";
 import { FoundingBanner } from "@/components/driver/founding-banner";
 import { OfferCountdown } from "@/components/driver/offer-countdown";
@@ -32,6 +33,8 @@ import {
   walletTopUpWhatsAppHref,
 } from "@/lib/whatsapp";
 import { packageOfferCopy, isShopPackageJob } from "@/lib/package-job";
+import { Car } from "lucide-react";
+import { JobItemBadge } from "@/components/uber/item-visual";
 import { ShopDeliveryOffer } from "@/components/driver/shop-delivery-offer";
 import {
   amountOwedToPlatform,
@@ -43,6 +46,7 @@ import {
   getDriverVerificationUiStatus,
   VERIFICATION_BLOCK_MESSAGE,
 } from "@/components/driver/driver-verification-status-chip";
+import { MapLoading } from "@/components/ui/map-loading";
 import type { JobApplication } from "@/lib/types";
 
 const DriverJobsMap = dynamic(
@@ -51,9 +55,7 @@ const DriverJobsMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full items-center justify-center bg-[#1b2433] text-sm text-white/70">
-        Loading map…
-      </div>
+      <MapLoading className="min-h-48 bg-[#1b2433] text-white/70" />
     ),
   },
 );
@@ -84,7 +86,7 @@ export function DriverHomeView() {
 
   useEffect(() => {
     void loadOffers();
-    const t = setInterval(() => void loadOffers(), 4000);
+    const t = setInterval(() => void loadOffers(), HOBBY_POLL_MS.driverOffers);
     return () => clearInterval(t);
   }, [loadOffers]);
 
@@ -388,10 +390,17 @@ export function DriverHomeView() {
                 to see requests.
           </p>
         ) : !job ? (
-          <p className="py-4 text-center text-sm text-[var(--ru-muted)]">
-            No pending jobs within {RADIUS_KM} km. Stay online — new requests
-            appear here.
-          </p>
+          <div className="py-6 text-center">
+            <Car
+              className="mx-auto h-10 w-10 text-[var(--ru-muted)]"
+              strokeWidth={1.5}
+              aria-hidden
+            />
+            <p className="mt-3 text-sm text-[var(--ru-muted)]">
+              No pending jobs within {RADIUS_KM} km. Stay online — new requests
+              appear here.
+            </p>
+          </div>
         ) : shopDelivery ? (
           <p className="py-4 text-center text-sm text-[var(--ru-muted)]">
             Incoming shop delivery — accept on the screen above.
@@ -404,6 +413,7 @@ export function DriverHomeView() {
                   {offerCopy?.eyebrow ?? SERVICE_LABELS[job.service_type]} ·{" "}
                   {job.reference_code}
                 </p>
+                <JobItemBadge job={job} />
                 {offerCopy ? (
                   <div
                     data-testid="package-delivery-offer"
@@ -429,6 +439,7 @@ export function DriverHomeView() {
                     customerPhone={job.customer_phone}
                     customerName={job.customer_name}
                     countryCode={job.country_code}
+                    tripCode={job.reference_code}
                   />
                 </div>
                 {job.service_type === "courier" ? (

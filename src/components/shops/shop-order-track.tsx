@@ -2,6 +2,8 @@
 
 import { RIDER_SHOP_TRACK, riderShopTrackIndex } from "@/lib/shop-delivery";
 import { formatMoney } from "@/lib/format";
+import { DisputeButton } from "@/components/support/dispute-button";
+import { TripRelayContact } from "@/components/support/trip-relay-contact";
 import type { ShopOrder } from "@/lib/types";
 
 export function ShopOrderTrack({ order }: { order: ShopOrder }) {
@@ -44,6 +46,17 @@ export function ShopOrderTrack({ order }: { order: ShopOrder }) {
           </li>
         ))}
       </ol>
+      <div className="mt-4 space-y-2">
+        <TripRelayContact code={order.reference_code} peer="shop" />
+        {order.driver_id ? (
+          <TripRelayContact code={order.reference_code} peer="driver" />
+        ) : null}
+        <DisputeButton
+          code={order.reference_code}
+          extra="Shop order — refund or out of stock."
+          className="w-full"
+        />
+      </div>
     </article>
   );
 }

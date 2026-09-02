@@ -33,6 +33,7 @@ export function DriverApplyForm({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [conduct, setConduct] = useState(false);
+  const [popia, setPopia] = useState(false);
   const [saId, setSaId] = useState("");
   const needSaId = saIdRequiredForCountry(countryCode);
 
@@ -285,10 +286,32 @@ export function DriverApplyForm({
           </span>
         </label>
 
+        <label className="flex items-start gap-2 text-sm text-slate-800 sm:col-span-2">
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4 accent-[#000000]"
+            checked={popia}
+            onChange={(e) => setPopia(e.target.checked)}
+            required
+          />
+          <span>
+            I agree that Village Ride may process my ID photo, phone, and
+            location to verify me and dispatch jobs (POPIA).{" "}
+            <Link
+              href="/privacy"
+              className="font-semibold text-[#000000] underline"
+              target="_blank"
+            >
+              Privacy Policy
+            </Link>
+            .
+          </span>
+        </label>
+
         <div className="sm:col-span-2">
           <button
             type="submit"
-            disabled={pending || !conduct}
+            disabled={pending || !conduct || !popia}
             className="w-full rounded-xl bg-[#000000] px-5 py-3.5 text-sm font-bold text-white disabled:opacity-50 sm:w-auto"
           >
             {pending ? "Uploading photos…" : "Submit for verification"}

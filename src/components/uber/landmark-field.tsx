@@ -8,6 +8,7 @@ import {
 import { DescribePlaceExamples } from "@/components/location/describe-place-examples";
 import { SavedPlacesChips } from "@/components/location/saved-places-chips";
 import { ButtonSpinner } from "@/components/ui/button-spinner";
+import { ensureLocationConsent } from "@/lib/location-consent";
 
 export type Loc = {
   lat: number | null;
@@ -98,6 +99,10 @@ export function useGpsPin(
 
   function captureGps() {
     setGpsError(null);
+    if (!ensureLocationConsent()) {
+      setGpsError("Location is optional — type a landmark or tap the map.");
+      return;
+    }
     if (!navigator.geolocation) {
       setGpsError("GPS unavailable — you can still tap the map or type a landmark.");
       return;

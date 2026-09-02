@@ -32,7 +32,7 @@ import {
   UBER_BTN_BLACK,
   UBER_GLOSS,
   UBER_H1,
-  UBER_PAGE,
+  UBER_PUSH,
   UBER_SUB,
 } from "@/components/customer/uber-chrome";
 
@@ -146,7 +146,7 @@ export default function SavedPlacesPage() {
   }
 
   return (
-    <main className={UBER_PAGE}>
+    <main className={UBER_PUSH}>
       <Link
         href="/account"
         className={`uber-press inline-flex items-center gap-1 rounded-full px-3 py-2 text-sm font-bold text-[#0a0a0a] ${UBER_GLOSS}`}

@@ -77,6 +77,19 @@ export default function DriverJoinPage() {
               <span className="text-[var(--ru-muted)]" aria-hidden>
                 ·
               </span>
+              First 10 approved drivers: R 100 after 5 completed trips
+            </li>
+            <li className="flex gap-2">
+              <span className="text-[var(--ru-muted)]" aria-hidden>
+                ·
+              </span>
+              Slow days: work 6 hours, earn at least R 150 — WhatsApp us and we
+              top up the difference
+            </li>
+            <li className="flex gap-2">
+              <span className="text-[var(--ru-muted)]" aria-hidden>
+                ·
+              </span>
               Apply now — paid jobs start at the end of September
             </li>
             <li className="flex gap-2">

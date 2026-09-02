@@ -239,8 +239,8 @@ export async function notifyShopNewCartOrder(order: {
     shopId: order.shop_id,
     userId,
     type: "order_created",
-    title: "New order on Village Ride",
-    body: `${order.reference_code}: pack ${itemsLabel} for ${order.customer_name}. Open your dashboard now.`,
+    title: "New order",
+    body: `New order ${order.reference_code}. Prepare items.`,
     emailBody: `New order on Village Ride\n\n${order.reference_code} for ${order.customer_name}\n${itemsLabel}\nDeliver to: ${order.delivery_address}\n\nOpen: /merchant/dashboard`,
   });
 }
@@ -253,15 +253,15 @@ export async function notifyPartnerForJob(
   if (!job.shop_id) return;
 
   const titles = {
-    order_created: "New delivery created",
-    driver_assigned: "Driver accepted your order",
-    order_completed: "Delivery completed",
+    order_created: "New order",
+    driver_assigned: "Order ready",
+    order_completed: "Order delivered",
   } as const;
 
   const bodies = {
-    order_created: `Order ${job.reference_code} for ${job.customer_name} is searching for a driver.`,
-    driver_assigned: `A driver accepted ${job.reference_code}. Track live on your dashboard.`,
-    order_completed: `${job.reference_code} was completed.${extra ? ` ${extra}` : ""}`,
+    order_created: `New order ${job.reference_code}. Prepare items.`,
+    driver_assigned: `Order ${job.reference_code} marked ready. Driver assigned.`,
+    order_completed: `Order ${job.reference_code} completed.${extra ? ` ${extra}` : ""}`,
   } as const;
 
   let userId: string | null = null;

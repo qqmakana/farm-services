@@ -25,10 +25,11 @@ import { stashPaypalApproveUrl, stashPaypalBooking } from "@/lib/paypal-draft";
 import { SERVICE_COPY } from "@/lib/service-guide";
 import { ListedShopCrossSell } from "@/components/uber/listed-shop-cross-sell";
 import { ItemSizePicker } from "@/components/uber/item-size-picker";
+import { PackageTypePicker } from "@/components/uber/item-visual";
 import type { CourierPackageType, JobDetails, NewJobInput, ServiceType } from "@/lib/types";
 import {
+  courierPackageSize,
   SIZE_VEHICLE,
-  VEHICLE_EMOJI,
   VEHICLE_LABELS,
   type ItemSize,
 } from "@/lib/vehicles";
@@ -133,8 +134,7 @@ export function SimpleGoodsSheet({
   const heading =
     service === "delivery" && shopMode ? "I know the shop" : copy.title;
 
-  const sendSize: ItemSize =
-    pkg === "furniture" ? "large" : pkg === "medium_package" ? "medium" : "small";
+  const sendSize: ItemSize = courierPackageSize(pkg);
   const vehicle =
     service === "courier"
       ? SIZE_VEHICLE[sendSize]
@@ -373,27 +373,7 @@ export function SimpleGoodsSheet({
         </>
       ) : service === "courier" ? (
         <>
-          <div className="grid grid-cols-2 gap-2">
-            {(
-              [
-                ["documents", "Documents", "small"],
-                ["small_package", "Small package", "small"],
-                ["medium_package", "Medium package", "medium"],
-                ["furniture", "Furniture / farm", "large"],
-              ] as const
-            ).map(([id, label, size]) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setPkg(id)}
-                className={`min-h-12 rounded-full text-[14px] font-semibold ${
-                  pkg === id ? "bg-black text-white" : "bg-[#F3F3F3]"
-                }`}
-              >
-                {VEHICLE_EMOJI[SIZE_VEHICLE[size]]} {label}
-              </button>
-            ))}
-          </div>
+          <PackageTypePicker value={pkg} onChange={setPkg} />
           <input
             className="w-full rounded-[12px] bg-[#F3F3F3] p-4 text-[17px] outline-none"
             placeholder="What are you sending (optional)"
@@ -411,7 +391,7 @@ export function SimpleGoodsSheet({
             <button
               type="button"
               onClick={() => setExpress(false)}
-              className={`min-h-12 rounded-full text-[14px] font-semibold ${
+              className={`uber-press min-h-12 rounded-full text-[14px] font-semibold ${
                 !express ? "bg-black text-white" : "bg-[#F3F3F3]"
               }`}
             >
@@ -420,7 +400,7 @@ export function SimpleGoodsSheet({
             <button
               type="button"
               onClick={() => setExpress(true)}
-              className={`min-h-12 rounded-full text-[14px] font-semibold ${
+              className={`uber-press min-h-12 rounded-full text-[14px] font-semibold ${
                 express ? "bg-black text-white" : "bg-[#F3F3F3]"
               }`}
             >

@@ -34,7 +34,7 @@ const COLUMNS = [
     title: "Global citizenship",
     links: [
       { href: "/help", label: "Safety" },
-      { href: "/terms", label: "Legal" },
+      { href: "/legal", label: "Legal" },
       { href: "/privacy", label: "Privacy" },
     ],
   },

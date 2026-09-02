@@ -43,6 +43,14 @@ const FAQS = [
     a: "Yes. Drivers submit ID and vehicle photos and must be approved before going online. You can see name, photos, and star rating on assigned orders.",
   },
   {
+    q: "How do cancellations and refunds work?",
+    a: "Cancel within 2 minutes: full refund. After 2 minutes with a driver assigned, R 15 goes to the driver. Card (Yoco) refunds are done in the Yoco dashboard and can take 2–7 days. Tap Dispute on the trip — it WhatsApps Village Ride with the order code. Policy: /legal/cancellations.",
+  },
+  {
+    q: "How do I message the driver or shop?",
+    a: "We do not share phone numbers (POPIA). Tap Message driver / Message shop — it opens WhatsApp to Village Ride and we pass the message on.",
+  },
+  {
     q: "Need human support?",
     a: `WhatsApp ${BRAND.phone} or email ${BRAND.email}. We reply as soon as we can.`,
   },

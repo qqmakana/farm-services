@@ -19,14 +19,9 @@ import {
   driverCanGoOnline,
 } from "./trust";
 import {
-  buildCustomerConfirmPush,
-  buildCustomerDriverArrivedPush,
-  buildCustomerTripCompletedPush,
-  buildCustomerTripStartedPush,
   expireStaleOffers,
   offerNextDriver,
 } from "./dispatch/offer-chain";
-import { sendPushToToken } from "./firebase/admin";
 import {
   driverHasArrived,
   isConfirmedStatus,
@@ -1540,6 +1535,22 @@ async function createJobInner(input: NewJobInput) {
         country: countryCode,
       });
     }
+    try {
+      const { trackEvent } = await import("./analytics");
+      await trackEvent("trip_booked", {
+        service: job.service_type,
+        payment: job.payment_method,
+        code: job.reference_code,
+      });
+    } catch {
+      /* ignore */
+    }
+    try {
+      const { notifyRiderSearching } = await import("./notifications");
+      await notifyRiderSearching(job);
+    } catch {
+      /* booking already saved */
+    }
     revalidateAll();
     return job;
   }
@@ -1635,6 +1646,16 @@ async function createJobInner(input: NewJobInput) {
       await recordRecentFromJob(data as JobWithDriver);
     } catch {
       /* recents are best-effort */
+    }
+    try {
+      const { trackEvent } = await import("./analytics");
+      await trackEvent("trip_booked", {
+        service: data.service_type,
+        payment: data.payment_method,
+        code: data.reference_code,
+      });
+    } catch {
+      /* ignore */
     }
     revalidateAll();
     return data as JobWithDriver;
@@ -1810,6 +1831,12 @@ export async function capturePayPalAndCreateShopOrder(
 export async function createShop(input: NewShopInput) {
   if (!useAdmin()) {
     const shop = mockRepo.createShop(input);
+    try {
+      const { notifyAdminShopSignup } = await import("./notifications");
+      await notifyAdminShopSignup(shop.name);
+    } catch {
+      /* shop already saved */
+    }
     revalidateAll();
     return shop;
   }
@@ -1830,6 +1857,12 @@ export async function createShop(input: NewShopInput) {
     .single();
 
   if (error) throw new Error(error.message);
+  try {
+    const { notifyAdminShopSignup } = await import("./notifications");
+    await notifyAdminShopSignup((data as Shop).name);
+  } catch {
+    /* shop already saved */
+  }
   revalidateAll();
   return data;
 }
@@ -1914,6 +1947,12 @@ export async function registerMerchantShop(input: MerchantRegisterInput): Promis
       });
     } catch (err) {
       console.error("[locations] shop publish failed", err);
+    }
+    try {
+      const { notifyAdminShopSignup } = await import("./notifications");
+      await notifyAdminShopSignup(shop.name);
+    } catch {
+      /* shop already saved */
     }
     revalidateAll();
     return { shop, email };
@@ -2073,6 +2112,13 @@ export async function registerMerchantShop(input: MerchantRegisterInput): Promis
     });
   } catch (err) {
     console.error("[locations] shop publish failed", err);
+  }
+
+  try {
+    const { notifyAdminShopSignup } = await import("./notifications");
+    await notifyAdminShopSignup(input.name.trim());
+  } catch {
+    /* shop already saved */
   }
 
   revalidateAll();
@@ -2758,6 +2804,8 @@ export async function cancelRiderJobAction(params: {
   const phoneDigits = params.customerPhone.replace(/\D/g, "");
   if (phoneDigits.length < 9) throw new Error("Phone required to cancel.");
 
+  const { cancelFeeApplies, CANCEL_FEE_ZAR } = await import("./ops-policy");
+
   if (!useAdmin()) {
     const job = mockRepo.listJobs().find((j) => j.id === params.jobId);
     if (!job) throw new Error("Trip not found.");
@@ -2773,10 +2821,33 @@ export async function cancelRiderJobAction(params: {
     ) {
       throw new Error("This trip can no longer be cancelled in-app.");
     }
-    // Village Pass perk: free cancellations (no fee applied either way today)
+    const fee = cancelFeeApplies({
+      createdAt: job.created_at,
+      status: job.status,
+      villagePass: Boolean(job.village_pass),
+    });
+    if (fee && job.driver_id) {
+      mockRepo.creditWallet(
+        job.driver_id,
+        CANCEL_FEE_ZAR,
+        `Cancel fee ${job.reference_code}`,
+      );
+    }
     const updated = mockRepo.updateStatus(params.jobId, "cancelled");
+    try {
+      const { notifyDriverRiderCanceled } = await import("./notifications");
+      if (updated) await notifyDriverRiderCanceled(updated);
+    } catch {
+      /* cancel already saved */
+    }
     revalidateAll();
-    return { job: updated, freeCancel: Boolean(job.village_pass) };
+    return {
+      job: updated,
+      freeCancel: !fee,
+      cancelFee: fee ? CANCEL_FEE_ZAR : 0,
+      yocoRefund:
+        job.payment_method === "card" || job.payment_method === "paypal",
+    };
   }
 
   const admin = createAdminClient();
@@ -2798,6 +2869,23 @@ export async function cancelRiderJobAction(params: {
     throw new Error("This trip can no longer be cancelled in-app.");
   }
 
+  const fee = cancelFeeApplies({
+    createdAt: job.created_at,
+    status: job.status,
+    villagePass: Boolean(job.village_pass),
+  });
+  if (fee && job.driver_id) {
+    try {
+      await creditDriverWallet(
+        job.driver_id,
+        CANCEL_FEE_ZAR,
+        `Cancel fee ${job.reference_code}`,
+      );
+    } catch {
+      /* still cancel the trip */
+    }
+  }
+
   const { data, error } = await admin
     .from("rr_jobs")
     .update({
@@ -2808,7 +2896,9 @@ export async function cancelRiderJobAction(params: {
         job.dispatcher_notes,
         job.village_pass
           ? "Cancelled by rider (Village Pass — free cancel)"
-          : "Cancelled by rider",
+          : fee
+            ? `Cancelled by rider after 2 min — R${CANCEL_FEE_ZAR} to driver. If card: refund remainder in Yoco dashboard.`
+            : "Cancelled by rider within 2 min — full refund. If card: refund in Yoco dashboard.",
       ]
         .filter(Boolean)
         .join(" · "),
@@ -2818,8 +2908,20 @@ export async function cancelRiderJobAction(params: {
     .single();
 
   if (error) throw new Error(error.message);
+  try {
+    const { notifyDriverRiderCanceled } = await import("./notifications");
+    await notifyDriverRiderCanceled(data as Job);
+  } catch {
+    /* cancel already saved */
+  }
   revalidateAll();
-  return { job: data as JobWithDriver, freeCancel: Boolean(job.village_pass) };
+  return {
+    job: data as JobWithDriver,
+    freeCancel: !fee,
+    cancelFee: fee ? CANCEL_FEE_ZAR : 0,
+    yocoRefund:
+      job.payment_method === "card" || job.payment_method === "paypal",
+  };
 }
 
 /* Uber-style driver realtime ops */
@@ -2845,6 +2947,20 @@ export async function setDriverOnline(
     }
     const driver = mockRepo.setDriverOnline(driverId, online, lat, lng);
     revalidateAll();
+    if (online) {
+      try {
+        const { trackEvent } = await import("./analytics");
+        await trackEvent("driver_online", { driverId });
+      } catch {
+        /* ignore */
+      }
+      try {
+        const { notifyAdminDriverOnline } = await import("./notifications");
+        await notifyAdminDriverOnline(driver.full_name);
+      } catch {
+        /* ignore */
+      }
+    }
     return driver;
   }
 
@@ -2895,6 +3011,20 @@ export async function setDriverOnline(
 
   if (error) throw new Error(error.message);
   revalidateAll();
+  if (online) {
+    try {
+      const { trackEvent } = await import("./analytics");
+      await trackEvent("driver_online", { driverId });
+    } catch {
+      /* ignore */
+    }
+    try {
+      const { notifyAdminDriverOnline } = await import("./notifications");
+      await notifyAdminDriverOnline((data as Driver).full_name);
+    } catch {
+      /* ignore */
+    }
+  }
   return data as Driver;
 }
 
@@ -2982,9 +3112,17 @@ export async function saveCustomerFcmToken(jobId: string, token: string) {
     .from("rr_jobs")
     .update({ customer_fcm_token: token.trim() })
     .eq("id", jobId)
-    .select("id")
+    .select("id, customer_phone")
     .maybeSingle();
   if (error) throw new Error(error.message);
+  if (data?.customer_phone) {
+    try {
+      const { saveRiderPushToken } = await import("./notifications");
+      await saveRiderPushToken(String(data.customer_phone), token);
+    } catch {
+      /* job token is enough for this trip */
+    }
+  }
   return data;
 }
 
@@ -2998,6 +3136,15 @@ export async function acceptOffer(jobId: string, driverId: string) {
         driver_id: driverId,
         driver_accepted_at: new Date().toISOString(),
       });
+    }
+    try {
+      const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
+      const { notifyRiderDriverAssigned, notifyDriverRideAccepted } =
+        await import("./notifications");
+      if (driver) await notifyRiderDriverAssigned(job, driver);
+      await notifyDriverRideAccepted(job, driverId);
+    } catch {
+      /* assignment already saved */
     }
     revalidateAll();
     return job;
@@ -3065,10 +3212,14 @@ export async function acceptOffer(jobId: string, driverId: string) {
 
   await incrementDriverOfferStat(driverId, "offers_accepted");
 
-  await sendPushToToken(
-    (jobRow as Job).customer_fcm_token,
-    buildCustomerConfirmPush(assigned as Job, driverRow as Driver),
-  );
+  try {
+    const { notifyRiderDriverAssigned, notifyDriverRideAccepted } =
+      await import("./notifications");
+    await notifyRiderDriverAssigned(assigned as Job, driverRow as Driver);
+    await notifyDriverRideAccepted(assigned as Job, driverId);
+  } catch {
+    /* assignment already saved */
+  }
 
   if ((assigned as Job).shop_id) {
     const { notifyPartnerForJob } = await import("./partner");
@@ -3172,11 +3323,13 @@ export async function markDriverArrived(jobId: string, driverId: string) {
     const already = driverHasArrived(mockRepo.getJob(jobId));
     const job = mockRepo.markDriverArrived(jobId, driverId);
     const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
-    if (!already && driver && job.customer_fcm_token) {
-      await sendPushToToken(
-        job.customer_fcm_token,
-        buildCustomerDriverArrivedPush(job, driver),
-      );
+    if (!already && driver) {
+      try {
+        const { notifyRiderArriving } = await import("./notifications");
+        await notifyRiderArriving(job, driver);
+      } catch {
+        /* arrival already saved */
+      }
     }
     revalidateAll();
     return job;
@@ -3219,11 +3372,13 @@ export async function markDriverArrived(jobId: string, driverId: string) {
 
   const typed = data as JobWithDriver;
   const driverRow = typed.drivers;
-  if (driverRow && (jobRow as Job).customer_fcm_token) {
-    await sendPushToToken(
-      (jobRow as Job).customer_fcm_token,
-      buildCustomerDriverArrivedPush(typed, driverRow),
-    );
+  if (driverRow) {
+    try {
+      const { notifyRiderArriving } = await import("./notifications");
+      await notifyRiderArriving(typed, driverRow);
+    } catch {
+      /* arrival already saved */
+    }
   }
 
   revalidateAll();
@@ -3233,12 +3388,20 @@ export async function markDriverArrived(jobId: string, driverId: string) {
 export async function startTrip(jobId: string, driverId: string) {
   if (!useAdmin()) {
     const job = mockRepo.startTrip(jobId, driverId);
-    const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
-    if (driver && job.customer_fcm_token) {
-      await sendPushToToken(
-        job.customer_fcm_token,
-        buildCustomerTripStartedPush(job, driver),
-      );
+    try {
+      const { notifyRiderTripStarted, notifyRiderOrderOnTheWay } =
+        await import("./notifications");
+      if (job.shop_id) {
+        await notifyRiderOrderOnTheWay({
+          id: job.id,
+          shop_id: job.shop_id,
+          customer_phone: job.customer_phone,
+        });
+      } else {
+        await notifyRiderTripStarted(job);
+      }
+    } catch {
+      /* trip already started */
     }
     if (job.shop_id) {
       mockRepo.patchShopOrderByJobId(jobId, { status: "out_for_delivery" });
@@ -3275,12 +3438,20 @@ export async function startTrip(jobId: string, driverId: string) {
   if (error) throw new Error(error.message);
 
   const typed = data as JobWithDriver;
-  const driverRow = typed.drivers;
-  if (driverRow && (jobRow as Job).customer_fcm_token) {
-    await sendPushToToken(
-      (jobRow as Job).customer_fcm_token,
-      buildCustomerTripStartedPush(typed, driverRow),
-    );
+  try {
+    const { notifyRiderTripStarted, notifyRiderOrderOnTheWay } =
+      await import("./notifications");
+    if (typed.shop_id) {
+      await notifyRiderOrderOnTheWay({
+        id: typed.id,
+        shop_id: typed.shop_id,
+        customer_phone: typed.customer_phone,
+      });
+    } else {
+      await notifyRiderTripStarted(typed);
+    }
+  } catch {
+    /* trip already started */
   }
 
   if (typed.shop_id) {
@@ -3317,11 +3488,26 @@ export async function completeTrip(
 ) {
   if (!useAdmin()) {
     const job = mockRepo.completeTrip(jobId, driverId, options);
-    if (job.customer_fcm_token) {
-      await sendPushToToken(
-        job.customer_fcm_token,
-        buildCustomerTripCompletedPush(job),
-      );
+    try {
+      const driver = mockRepo.listDrivers().find((d) => d.id === driverId);
+      const earned = Number(job.driver_payout) || Math.round(Number(job.fee_amount) * 0.9);
+      const {
+        notifyRiderTripCompleted,
+        notifyRiderOrderDelivered,
+        notifyDriverTripCompleted,
+      } = await import("./notifications");
+      if (job.shop_id) {
+        await notifyRiderOrderDelivered({
+          id: job.id,
+          shop_id: job.shop_id,
+          customer_phone: job.customer_phone,
+        });
+      } else {
+        await notifyRiderTripCompleted(job, driver);
+      }
+      await notifyDriverTripCompleted(job, driverId, earned);
+    } catch {
+      /* trip already completed */
     }
     if (job.shop_id) {
       const { notifyPartnerForJob } = await import("./partner");
@@ -3342,6 +3528,11 @@ export async function completeTrip(
       await claimWeeklyTripBonus(driverId);
     } catch {
       /* ignore — not eligible yet */
+    }
+    try {
+      await claimLaunchSignupBonus(driverId);
+    } catch {
+      /* ignore */
     }
     try {
       const { processFoundingBonusOnTripComplete } = await import(
@@ -3475,17 +3666,37 @@ export async function completeTrip(
     }
   }
 
-  if ((jobRow as Job).customer_fcm_token) {
-    await sendPushToToken(
-      (jobRow as Job).customer_fcm_token,
-      buildCustomerTripCompletedPush(data as Job),
-    );
+  try {
+    const typed = data as JobWithDriver;
+    const earned = Number(typed.driver_payout) || payout;
+    const {
+      notifyRiderTripCompleted,
+      notifyRiderOrderDelivered,
+      notifyDriverTripCompleted,
+    } = await import("./notifications");
+    if (typed.shop_id) {
+      await notifyRiderOrderDelivered({
+        id: typed.id,
+        shop_id: typed.shop_id,
+        customer_phone: typed.customer_phone,
+      });
+    } else {
+      await notifyRiderTripCompleted(typed, typed.drivers);
+    }
+    await notifyDriverTripCompleted(typed, driverId, earned);
+  } catch {
+    /* trip already completed */
   }
 
   try {
     await claimWeeklyTripBonus(driverId);
   } catch {
     /* not eligible yet */
+  }
+  try {
+    await claimLaunchSignupBonus(driverId);
+  } catch {
+    /* ignore */
   }
 
   try {
@@ -3582,6 +3793,12 @@ export async function claimWeeklyTripBonus(driverId: string): Promise<{
       WEEKLY_TRIP_BONUS,
       `${claimKey} Weekly trip bonus`,
     );
+    try {
+      const { notifyDriverBonus } = await import("./notifications");
+      await notifyDriverBonus(driverId, WEEKLY_TRIP_BONUS);
+    } catch {
+      /* wallet already credited */
+    }
     revalidateAll();
     return {
       claimed: true,
@@ -3635,6 +3852,12 @@ export async function claimWeeklyTripBonus(driverId: string): Promise<{
     WEEKLY_TRIP_BONUS,
     `Weekly trip bonus ${periodKey}`,
   );
+  try {
+    const { notifyDriverBonus } = await import("./notifications");
+    await notifyDriverBonus(driverId, WEEKLY_TRIP_BONUS);
+  } catch {
+    /* wallet already credited */
+  }
   await admin.from("rr_driver_incentive_claims").insert({
     driver_id: driverId,
     period_key: periodKey,
@@ -3654,6 +3877,66 @@ export async function claimWeeklyTripBonus(driverId: string): Promise<{
   };
 }
 
+async function claimLaunchSignupBonus(driverId: string) {
+  const {
+    LAUNCH_DRIVER_BONUS_SLOTS,
+    LAUNCH_DRIVER_BONUS_ZAR,
+    LAUNCH_DRIVER_BONUS_TRIPS,
+  } = await import("./ops-policy");
+  const tag = "LAUNCH_SIGNUP_BONUS";
+
+  if (!useAdmin()) {
+    const drivers = mockRepo
+      .listDrivers()
+      .filter((d) => d.approval_status === "approved")
+      .sort((a, b) => a.created_at.localeCompare(b.created_at));
+    const rank = drivers.findIndex((d) => d.id === driverId);
+    if (rank < 0 || rank >= LAUNCH_DRIVER_BONUS_SLOTS) return;
+    const me = drivers[rank];
+    if (me.notes?.includes(tag)) return;
+    const trips = mockRepo
+      .listJobs()
+      .filter((j) => j.driver_id === driverId && j.status === "completed")
+      .length;
+    if (trips < LAUNCH_DRIVER_BONUS_TRIPS) return;
+    mockRepo.creditWallet(
+      driverId,
+      LAUNCH_DRIVER_BONUS_ZAR,
+      `${tag} after ${LAUNCH_DRIVER_BONUS_TRIPS} trips`,
+    );
+    return;
+  }
+
+  const admin = createAdminClient();
+  const { data: me } = await admin
+    .from("rr_drivers")
+    .select("id, created_at, notes, approval_status")
+    .eq("id", driverId)
+    .maybeSingle();
+  if (!me || me.approval_status !== "approved") return;
+  if (String(me.notes || "").includes(tag)) return;
+
+  const { count: earlier } = await admin
+    .from("rr_drivers")
+    .select("id", { count: "exact", head: true })
+    .eq("approval_status", "approved")
+    .lte("created_at", me.created_at);
+  if ((earlier ?? 99) > LAUNCH_DRIVER_BONUS_SLOTS) return;
+
+  const { count: trips } = await admin
+    .from("rr_jobs")
+    .select("id", { count: "exact", head: true })
+    .eq("driver_id", driverId)
+    .eq("status", "completed");
+  if ((trips ?? 0) < LAUNCH_DRIVER_BONUS_TRIPS) return;
+
+  await creditDriverWallet(
+    driverId,
+    LAUNCH_DRIVER_BONUS_ZAR,
+    `${tag} after ${LAUNCH_DRIVER_BONUS_TRIPS} trips`,
+  );
+}
+
 /** Ops: credit a driver's wallet after EFT / eWallet top-up. */
 export async function creditDriverWallet(
   driverId: string,
@@ -3667,6 +3950,18 @@ export async function creditDriverWallet(
 
   if (!useAdmin()) {
     const driver = mockRepo.creditWallet(driverId, amount, note);
+    try {
+      if (!/bonus|incentive/i.test(note || "")) {
+        const { notifyDriverWalletTopUp } = await import("./notifications");
+        await notifyDriverWalletTopUp(
+          driverId,
+          amount,
+          Number(driver.wallet_balance),
+        );
+      }
+    } catch {
+      /* top-up already saved */
+    }
     revalidateAll();
     return driver;
   }
@@ -3696,6 +3991,18 @@ export async function creditDriverWallet(
     .select("*")
     .single();
   if (upErr) throw new Error(upErr.message);
+  try {
+    if (!/bonus|incentive/i.test(note || "")) {
+      const { notifyDriverWalletTopUp } = await import("./notifications");
+      await notifyDriverWalletTopUp(
+        driverId,
+        amount,
+        Number((data as Driver).wallet_balance),
+      );
+    }
+  } catch {
+    /* top-up already saved */
+  }
   revalidateAll();
   return data as Driver;
 }

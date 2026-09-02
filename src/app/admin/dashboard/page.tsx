@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
 import { formatMoney } from "@/lib/format";
+import { CANCEL_FEE_ZAR } from "@/lib/ops-policy";
 import {
   adminIssueRefundNote,
   getAdminDashboardData,
@@ -76,6 +77,12 @@ export default async function AdminDashboardPage() {
             <Link href="/admin/payouts" className="rounded-lg border px-3 py-1.5 font-semibold">
               Yoco payouts
             </Link>
+            <Link href="/admin/money" className="rounded-lg border px-3 py-1.5 font-semibold">
+              Money ledger
+            </Link>
+            <Link href="/legal/cancellations" className="rounded-lg border px-3 py-1.5 font-semibold">
+              Cancel policy
+            </Link>
             <Link href="/dispatch" className="rounded-lg border px-3 py-1.5 font-semibold">
               Dispatch
             </Link>
@@ -146,8 +153,10 @@ export default async function AdminDashboardPage() {
             <div className="rounded-xl border bg-white p-4">
               <h3 className="font-semibold">Issue refund note</h3>
               <p className="mt-1 text-xs text-slate-500">
-                Logs a REFUND note on the job for ops follow-up (cash model —
-                no card capture reverse here).
+                Card: log into Yoco dashboard → find the checkout → Refund
+                (full, or minus {formatMoney(CANCEL_FEE_ZAR)} if a driver already moved). Then save a
+                note here so we have a paper trail. Cash: note the amount
+                returned to the rider. Banks take 2–7 days for card.
               </p>
               <form action={refundAction} className="mt-3 space-y-2">
                 <input
