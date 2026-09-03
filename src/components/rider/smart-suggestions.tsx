@@ -126,17 +126,25 @@ function RowButton({
   onSelect: (place: PlaceSuggestion) => void;
   icon: ReactNode;
 }) {
+  const dist = place.distance?.trim() || "";
   return (
     <button
       type="button"
       onClick={() => onSelect(place)}
-      className="uber-press flex min-h-12 w-full items-center gap-4 px-4 py-3.5 text-left"
+      className="uber-press flex min-h-12 w-full items-center gap-3 px-4 py-3.5 text-left"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEEEEE]">
-        {icon}
+      <span className="flex w-12 shrink-0 flex-col items-center gap-0.5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#EEEEEE]">
+          {icon}
+        </span>
+        {dist ? (
+          <span className="text-[11px] font-medium leading-tight text-[#6B6B6B]">
+            {dist}
+          </span>
+        ) : null}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] font-semibold text-black">
+        <span className="block truncate text-[15px] font-semibold text-[#111111]">
           {place.name}
         </span>
         <span className="mt-0.5 block truncate text-[13px] font-normal text-[#6B6B6B]">

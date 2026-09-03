@@ -163,8 +163,8 @@ test("suggestions: For you keeps the mix; Trip hides grocery nearby", () => {
 
 test("suggestions: distance labels", () => {
   assert(formatSuggestionDistance(0.02) === "Nearby", "very close");
-  assert(formatSuggestionDistance(0.8) === "800m", "metres");
-  assert(formatSuggestionDistance(1.24) === "1.2km", "km");
+  assert(formatSuggestionDistance(0.8) === "0.8 km", "metres");
+  assert(formatSuggestionDistance(1.24) === "1.2 km", "km");
 });
 
 test("suggestions: drop obscure POI names", () => {

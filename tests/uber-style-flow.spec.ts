@@ -120,11 +120,8 @@ test.describe.serial("Uber-style ride-hailing flow", () => {
 
     await expect(rider.getByText(/On the way|Pick-up in/i).first()).toBeVisible();
     await expect(
-      rider.getByRole("link", { name: /Call driver/i }).first(),
+      rider.getByRole("link", { name: /Message driver/i }).first(),
     ).toBeVisible({ timeout: 10_000 });
-    await expect(
-      rider.getByRole("link", { name: /Send a message/i }).first(),
-    ).toBeVisible();
 
     track("Rider sees driver + live Mapbox tracking", true);
   });

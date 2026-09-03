@@ -165,8 +165,9 @@ export function isRecognizableName(name: string): boolean {
 export function formatSuggestionDistance(km: number): string {
   if (!Number.isFinite(km) || km < 0) return "";
   if (km < 0.05) return "Nearby";
-  if (km < 1) return `${Math.max(50, Math.round(km * 1000))}m`;
-  return `${km.toFixed(1)}km`;
+  if (km < 1) return `${(Math.round(km * 10) / 10).toFixed(1)} km`;
+  if (km < 10) return `${km.toFixed(1)} km`;
+  return `${Math.round(km)} km`;
 }
 
 export function samePlace(

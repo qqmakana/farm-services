@@ -218,6 +218,73 @@ export type NearbyPoi = {
   category: string;
 };
 
+const reverseCache = new Map<string, { at: number; value: AddressSuggestion | null }>();
+const REVERSE_CACHE_MS = 5 * 60 * 1000;
+
+/** Reverse-geocode a pin to a short street / place label (GPS → "99 Perth Rd"). */
+export async function reverseGeocodePin(opts: {
+  lat: number;
+  lng: number;
+  countryCode?: string | null;
+}): Promise<AddressSuggestion | null> {
+  const token = mapboxServerToken();
+  if (!token) return null;
+  const lat = Number(opts.lat);
+  const lng = Number(opts.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+  const key = `${(opts.countryCode || "ZA").toUpperCase()}:${lat.toFixed(4)}:${lng.toFixed(4)}`;
+  const hit = reverseCache.get(key);
+  if (hit && Date.now() - hit.at < REVERSE_CACHE_MS) return hit.value;
+
+  const params = new URLSearchParams({
+    access_token: token,
+    types: "address,poi,place,locality,neighborhood",
+    limit: "1",
+    country: (opts.countryCode || "ZA").toLowerCase(),
+  });
+  const url =
+    `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?` +
+    params.toString();
+
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) {
+      reverseCache.set(key, { at: Date.now(), value: null });
+      return null;
+    }
+    const body = (await res.json()) as { features?: MapboxFeature[] };
+    const feature = body.features?.[0];
+    if (!feature) {
+      reverseCache.set(key, { at: Date.now(), value: null });
+      return null;
+    }
+    const mapped =
+      classifyMapboxFeature(
+        { ...feature, relevance: Math.max(feature.relevance ?? 0, 0.9) },
+        opts.countryCode,
+      ) ??
+      (feature.place_name || feature.text
+        ? {
+            id: String(feature.id || `${lat},${lng}`),
+            label: String(feature.place_name || feature.text).trim(),
+            lat,
+            lng,
+            relevance: 1,
+            accuracy: feature.properties?.accuracy ?? null,
+            needsConfirmation: false,
+            source: "mapbox" as const,
+            inServiceArea: true,
+          }
+        : null);
+    reverseCache.set(key, { at: Date.now(), value: mapped });
+    return mapped;
+  } catch {
+    reverseCache.set(key, { at: Date.now(), value: null });
+    return null;
+  }
+}
+
 const nearbyCache = new Map<string, { at: number; value: NearbyPoi[] }>();
 const NEARBY_CACHE_MS = 5 * 60 * 1000;
 

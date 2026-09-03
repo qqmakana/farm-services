@@ -9,6 +9,7 @@ import {
   detailsIsExpress,
   detailsIsInsured,
   detailsSeats,
+  detailsWaitSave,
   type FareBreakdown,
 } from "./fares";
 import { getDrivingRoute } from "./mapbox-server";
@@ -222,6 +223,8 @@ async function resolveFare(params: {
     (Boolean(params.apply_insurance) || detailsIsInsured(params.details));
   const applyExtraStop =
     params.service_type === "ride" && detailsHasExtraStop(params.details);
+  const applyWaitSave =
+    params.service_type === "ride" && detailsWaitSave(params.details);
   const seats =
     params.service_type === "ride" ? detailsSeats(params.details) : 1;
 
@@ -242,6 +245,7 @@ async function resolveFare(params: {
       isExpress,
       applyInsurance,
       applyExtraStop,
+      applyWaitSave,
       seats,
     });
   }
@@ -266,6 +270,7 @@ async function resolveFare(params: {
     isExpress,
     applyInsurance,
     applyExtraStop,
+    applyWaitSave,
     seats,
   });
 }

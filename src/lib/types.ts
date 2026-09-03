@@ -19,10 +19,19 @@ export type ApplicationStatus =
 /** Hiring into the platform (not a single trip offer). */
 export type DriverApprovalStatus = "pending" | "approved" | "rejected";
 
+/** Rider-facing product row on Choose a ride (same fare except wait_save). */
+export type RideProductTier =
+  | "singles"
+  | "married"
+  | "grannies"
+  | "wait_save";
+
 export type RideDetails = {
   seats: number;
   route_name: string;
   direction: "to_town" | "to_village";
+  /** Singles / Married / Grannies / Wait & Save — display + dispatch cue. */
+  product_tier?: RideProductTier;
   /** Optional outfit cue so the driver can spot the rider. */
   wearing?: string;
   /** Compressed rider face data URL (mock / offline spotting). */

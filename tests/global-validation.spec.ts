@@ -115,9 +115,11 @@ test.describe("Uber-style UI", () => {
     await expect(page.getByText(/Choose a ride/i)).toBeVisible({
       timeout: 15_000,
     });
-    const villageRide = page.getByRole("button", { name: /Village Ride/i }).first();
+    const villageRide = page.getByTestId("ride-tier-singles").or(
+      page.getByRole("button", { name: /Singles|Village Ride/i }),
+    ).first();
     await villageRide.click();
-    await expect(villageRide).toHaveClass(/ring-black|bg-gray-50/);
+    await expect(villageRide).toHaveAttribute("aria-pressed", "true");
   });
 });
 

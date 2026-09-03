@@ -1,12 +1,13 @@
 ﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CalendarClock, Search, User } from "lucide-react";
+import { CalendarClock, Search, User, Zap, Banknote } from "lucide-react";
 import {
   PaymentSelector,
   type CheckoutPaymentChoice,
 } from "@/components/checkout/payment-selector";
 import { useCountry } from "@/components/country/country-provider";
+import { PlanYourRideHeader } from "@/components/uber/plan-your-ride-header";
 import { SafeCardPay } from "@/components/uber/safe-card-pay";
 import { localInputToIso, toLocalInputValue } from "@/components/uber/schedule-when";
 import { WhereToBar } from "@/components/uber/where-to-bar";
@@ -17,7 +18,7 @@ import {
   createPayPalOrderAction,
   quoteFareAction,
 } from "@/lib/actions";
-import { searchAddressesAction } from "@/lib/actions-mapbox";
+import { reverseGeocodeAction, searchAddressesAction } from "@/lib/actions-mapbox";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
 import { formatMoney } from "@/lib/format";
 import { etaMinutes } from "@/lib/geo";
@@ -30,18 +31,66 @@ import type { PlaceSuggestion } from "@/lib/suggestions";
 import {
   normalizeTripSeats,
   tripStopFeeAmount,
+  waitSaveDiscountAmount,
   type TripSeats,
 } from "@/lib/pricing";
 import { TRIP_STOP_TYPES, type TripStopType } from "@/lib/fares";
 import { SERVICE_COPY } from "@/lib/service-guide";
-import type { NewJobInput } from "@/lib/types";
+import type { NewJobInput, RideProductTier } from "@/lib/types";
 
 type Pin = { lat: number; lng: number };
 type Draft = Omit<NewJobInput, "payment">;
 
+const RIDE_OPTIONS: {
+  id: RideProductTier;
+  name: string;
+  tag: string | null;
+  seats: TripSeats;
+  waitMins: number;
+  waitRange?: string;
+}[] = [
+  { id: "singles", name: "Singles", tag: "Faster", seats: 1, waitMins: 5 },
+  { id: "married", name: "Married", tag: "Comfort", seats: 2, waitMins: 7 },
+  {
+    id: "wait_save",
+    name: "Wait & Save",
+    tag: null,
+    seats: 1,
+    waitMins: 10,
+    waitRange: "6 - 15 min",
+  },
+  {
+    id: "grannies",
+    name: "Grannies",
+    tag: "Priority",
+    seats: 4,
+    waitMins: 8,
+    waitRange: "6 - 15 min",
+  },
+];
+
+function formatEtaLabel(waitMins: number, waitRange?: string): string {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() + waitMins);
+  try {
+    const time = d.toLocaleTimeString("en-ZA", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return `${time} · ${waitRange || `${waitMins} min`}`;
+  } catch {
+    return waitRange || `${waitMins} min`;
+  }
+}
+
+function shortStreet(full: string): string {
+  const first = full.split(",")[0]?.trim() || full;
+  return first.length > 36 ? `${first.slice(0, 34)}…` : first;
+}
+
 /**
  * Trip / Reserve form for older Android WebViews (Hisense).
- * Card (PayPal) loads only after Card is selected. No Mapbox search widget.
+ * Card (Yoco) loads only after Card is selected. No Mapbox search widget.
  */
 export function SimpleRideSheet({
   onPinChange,
@@ -83,19 +132,32 @@ export function SimpleRideSheet({
   const [quoteReady, setQuoteReady] = useState(false);
   const [dropHits, setDropHits] = useState<AddressSuggestion[]>([]);
   const [dropFocused, setDropFocused] = useState(false);
-  const [seats, setSeats] = useState<TripSeats>(1);
+  const [productTier, setProductTier] = useState<RideProductTier>("singles");
   const [extraStop, setExtraStop] = useState(false);
   const [stopType, setStopType] = useState<TripStopType>("spaza");
   const [stopFee, setStopFee] = useState(0);
-  const [peopleFee, setPeopleFee] = useState(0);
   const dropoffRef = useRef<HTMLInputElement>(null);
+
+  const selected = RIDE_OPTIONS.find((o) => o.id === productTier) ?? RIDE_OPTIONS[0];
+  const seats = selected.seats;
+  const waitDiscount = waitSaveDiscountAmount(countryCode);
+  const baseFare = fee;
+  const displayFare =
+    productTier === "wait_save"
+      ? Math.max(
+          country.pricing?.ride?.base ?? 15,
+          Math.round((baseFare - waitDiscount) * 100) / 100,
+        )
+      : baseFare;
 
   useEffect(() => {
     try {
       const q = new URLSearchParams(window.location.search);
       if (q.get("when") === "later") setWhenLater(true);
       if (q.get("stop") === "1") setExtraStop(true);
-      setSeats(normalizeTripSeats(q.get("seats")));
+      const seatHint = normalizeTripSeats(q.get("seats"));
+      if (seatHint === 2) setProductTier("married");
+      else if (seatHint === 4) setProductTier("grannies");
       const at = q.get("at");
       if (at) {
         setWhenLater(true);
@@ -131,6 +193,32 @@ export function SimpleRideSheet({
       window.setTimeout(() => dropoffRef.current?.focus(), 400);
     }
   }, []);
+
+  useEffect(() => {
+    if (!pickupPin) return;
+    let cancelled = false;
+    void reverseGeocodeAction(pickupPin.lat, pickupPin.lng, countryCode)
+      .then((hit) => {
+        if (cancelled || !hit?.label) return;
+        setPickup((p) => {
+          if (
+            !p.trim() ||
+            p === "Current location" ||
+            p === "Pickup" ||
+            p.toLowerCase() === "current location"
+          ) {
+            return shortStreet(hit.label);
+          }
+          return p;
+        });
+      })
+      .catch(() => {
+        /* keep existing label */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pickupPin, countryCode]);
 
   useEffect(() => {
     if (!mapTapPin || !mapTapToken) return;
@@ -171,11 +259,11 @@ export function SimpleRideSheet({
   useEffect(() => {
     const pickupWait = Math.max(2, Math.min(8, Math.round(etaMins / 4) || 3));
     onMapLabelsChange?.({
-      pickup: "Pickup",
+      pickup: pickup.trim() || "Pickup",
       dropoff: dropoff.trim() || "Drop-off",
       etaMins: pickupWait,
     });
-  }, [dropoff, etaMins, onMapLabelsChange]);
+  }, [pickup, dropoff, etaMins, onMapLabelsChange]);
 
   useEffect(() => {
     const q = dropoff.trim();
@@ -205,6 +293,7 @@ export function SimpleRideSheet({
       return;
     }
     let cancelled = false;
+    // Same fare for Singles / Married / Grannies — quote as Solo (no seat surcharge).
     void quoteFareAction({
       vehicle: "sedan",
       service_type: "ride",
@@ -216,7 +305,7 @@ export function SimpleRideSheet({
       at: whenLater ? localInputToIso(scheduledLocal) : null,
       customer_phone: phone || null,
       details: {
-        seats,
+        seats: 1,
         extra_stop_type: extraStop ? stopType : undefined,
       },
     })
@@ -224,7 +313,6 @@ export function SimpleRideSheet({
         if (cancelled) return;
         setFee(fare.fee_amount);
         setStopFee(fare.extra_stop_fee || 0);
-        setPeopleFee(fare.extra_passenger_fee || 0);
         setEtaMins(etaMinutes(fare.distance_km || 0));
         setQuoteReady(fare.quote_ready);
         onSnap?.("mid");
@@ -242,7 +330,6 @@ export function SimpleRideSheet({
     scheduledLocal,
     countryCode,
     phone,
-    seats,
     extraStop,
     stopType,
   ]);
@@ -261,6 +348,7 @@ export function SimpleRideSheet({
     }
     const ref = getCapturedReferrer();
     const tag = ref ? `Rider referral: ${ref}` : null;
+    const tierLabel = selected.name;
     return {
       service_type: "ride",
       required_vehicle: "sedan",
@@ -276,19 +364,22 @@ export function SimpleRideSheet({
       country_code: countryCode,
       dispatcher_notes: [
         tag,
-        extraStop ? `Stop: ${stopType} (+${formatMoney(tripStopFeeAmount(countryCode), country.currency, countryCode)})` : null,
-        seats > 1 ? `${seats} people` : null,
+        `Product: ${tierLabel}`,
+        extraStop
+          ? `Stop: ${stopType} (+${formatMoney(tripStopFeeAmount(countryCode), country.currency, countryCode)})`
+          : null,
       ]
         .filter(Boolean)
         .join(" · ") || null,
       details: {
-        seats,
+        seats: 1,
+        product_tier: productTier,
         route_name: `${pickup.trim()} → ${dropoff.trim()}`,
         direction: "to_village",
         extra_stop_type: extraStop ? stopType : undefined,
         extra_stop_fee: extraStop ? tripStopFeeAmount(countryCode) : undefined,
       },
-      fee_amount: fee,
+      fee_amount: displayFare,
     };
   }
 
@@ -326,21 +417,9 @@ export function SimpleRideSheet({
     })();
   }
 
-  const estimate = fee;
+  const estimate = displayFare;
   const searching = !dropoffPin;
-  const etaLabel = (() => {
-    const d = new Date();
-    d.setMinutes(d.getMinutes() + etaMins);
-    try {
-      const time = d.toLocaleTimeString("en-ZA", {
-        hour: "numeric",
-        minute: "2-digit",
-      });
-      return `${time} · ${etaMins} min`;
-    } catch {
-      return `${etaMins} min`;
-    }
-  })();
+  const chooseLabel = `Choose ${selected.name}`;
 
   function pickDestination(place: PlaceSuggestion) {
     setDropoff(place.name);
@@ -377,9 +456,9 @@ export function SimpleRideSheet({
   const cardPay = (
     <SafeCardPay
       amount={estimate}
-      description="Village Ride · Trip"
+      description={`Village Ride · ${selected.name}`}
       disabled={!ready}
-      submitLabel="Choose Village Ride"
+      submitLabel={chooseLabel}
       onCreateOrder={async () => {
         setMsg(null);
         if (!ready) throw new Error("Complete the form first.");
@@ -395,7 +474,7 @@ export function SimpleRideSheet({
           pickup_lng: d.pickup_lng,
           dropoff_lat: d.dropoff_lat,
           dropoff_lng: d.dropoff_lng,
-          description: "Village Ride trip · Go (car)",
+          description: `Village Ride trip · ${selected.name}`,
           at: d.scheduled_for ?? null,
           details: d.details,
         });
@@ -431,7 +510,7 @@ export function SimpleRideSheet({
       onClick={bookCash}
       className="uber-press min-w-0 w-full flex-1 rounded-full bg-black py-4 text-[17px] font-medium text-white disabled:opacity-50"
     >
-      Choose Village Ride · {formatMoney(estimate, country.currency, countryCode)}
+      Choose {selected.name}
     </button>
   );
 
@@ -448,6 +527,13 @@ export function SimpleRideSheet({
 
   return (
     <div className="space-y-3 text-black">
+      {searching ? (
+        <PlanYourRideHeader
+          whenMode={whenLater ? "later" : "now"}
+          onToggleWhen={() => setWhenLater((v) => !v)}
+        />
+      ) : null}
+
       <WhereToBar
         onSwap={() => {
           const p = pickup;
@@ -543,56 +629,89 @@ export function SimpleRideSheet({
         </div>
       ) : (
       <div className="animate-[uberFadeIn_280ms_ease-out] space-y-3">
-        <p className="mb-1 text-[22px] font-bold tracking-[-0.04em]">Choose a ride</p>
-        <button
-          type="button"
-          className="uber-press flex w-full items-center gap-3 rounded-[14px] px-2 py-3 text-left ring-2 ring-black ring-inset"
-        >
-          <span className="relative h-14 w-16 shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/home/icons/car.png"
-              alt=""
-              className="h-14 w-16 object-contain"
-            />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="flex items-center gap-2 text-[16px] font-bold">
-              Village Ride
-              <span className="inline-flex items-center gap-0.5 text-[12px] font-medium text-[#6B6B6B]">
-                <User className="h-3.5 w-3.5" aria-hidden />
-                4
-              </span>
-            </span>
-            <span className="mt-0.5 block text-[13px] font-medium text-[#6B6B6B]">
-              {quoteReady ? etaLabel : "Few min"}
-            </span>
-          </span>
-          <span data-testid="price-display" className="shrink-0 text-right text-[16px] font-bold">
-            {formatMoney(estimate, country.currency, countryCode)}
-          </span>
-        </button>
+        <p className="mb-1 text-center text-[22px] font-bold tracking-[-0.04em] text-[#111111]">
+          Choose a ride
+        </p>
 
-        <div data-testid="trip-people" className="space-y-2">
-          <p className="text-[13px] font-semibold text-[#6B6B6B]">People</p>
-          <div className="grid grid-cols-3 gap-2" role="group" aria-label="People">
-            {([1, 2, 4] as const).map((n) => (
+        <div data-testid="ride-product-list" className="divide-y divide-[#EEEEEE]">
+          {RIDE_OPTIONS.map((opt) => {
+            const active = productTier === opt.id;
+            const price =
+              opt.id === "wait_save"
+                ? Math.max(
+                    country.pricing?.ride?.base ?? 15,
+                    Math.round((baseFare - waitDiscount) * 100) / 100,
+                  )
+                : baseFare;
+            const eta = formatEtaLabel(opt.waitMins, opt.waitRange);
+            const isWait = opt.id === "wait_save";
+            return (
               <button
-                key={n}
+                key={opt.id}
                 type="button"
-                data-testid={`trip-seats-${n}`}
-                aria-pressed={seats === n}
-                onClick={() => setSeats(n)}
-                className={`uber-press min-h-11 rounded-full text-[15px] font-bold ${
-                  seats === n
-                    ? "bg-black text-white"
-                    : "bg-[#F3F3F3] text-black"
+                data-testid={`ride-tier-${opt.id}`}
+                aria-pressed={active}
+                onClick={() => setProductTier(opt.id)}
+                className={`uber-press flex w-full items-center gap-3 px-2 py-3.5 text-left ${
+                  active ? "rounded-[14px] ring-2 ring-black ring-inset" : ""
                 }`}
               >
-                {n === 1 ? "Solo" : n}
+                <span className="relative h-14 w-16 shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/home/icons/car.png"
+                    alt=""
+                    className="h-14 w-16 object-contain"
+                  />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2 text-[17px] font-bold text-[#111111]">
+                    {opt.name}
+                    <span className="inline-flex items-center gap-0.5 text-[12px] font-medium text-[#6B6B6B]">
+                      <User className="h-3.5 w-3.5" aria-hidden />
+                      {opt.seats}
+                    </span>
+                  </span>
+                  <span className="mt-0.5 block text-[15px] font-medium text-[#6B6B6B]">
+                    {quoteReady ? eta : "Few min"}
+                  </span>
+                  {opt.tag ? (
+                    <span className="mt-1 inline-flex items-center gap-0.5 text-[11px] font-semibold text-[#276EF1]">
+                      <Zap className="h-3 w-3" strokeWidth={2.5} aria-hidden />
+                      {opt.tag}
+                    </span>
+                  ) : isWait ? (
+                    <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[#05944F]">
+                      <Banknote className="h-3 w-3" strokeWidth={2.5} aria-hidden />
+                      Cash
+                    </span>
+                  ) : null}
+                </span>
+                <span
+                  data-testid={active ? "price-display" : undefined}
+                  className={`shrink-0 text-right font-bold ${
+                    isWait
+                      ? "text-[24px] text-[#05944F]"
+                      : "text-[17px] text-[#111111]"
+                  }`}
+                >
+                  {formatMoney(price, country.currency, countryCode)}
+                </span>
               </button>
-            ))}
-          </div>
+            );
+          })}
+        </div>
+
+        <div data-testid="trip-people" className="sr-only" aria-hidden>
+          <button type="button" data-testid="trip-seats-1" aria-pressed={seats === 1}>
+            Solo
+          </button>
+          <button type="button" data-testid="trip-seats-2" aria-pressed={seats === 2}>
+            2
+          </button>
+          <button type="button" data-testid="trip-seats-4" aria-pressed={seats === 4}>
+            4
+          </button>
         </div>
 
         <div data-testid="trip-stop" className="space-y-2">
@@ -630,15 +749,10 @@ export function SimpleRideSheet({
           ) : null}
         </div>
 
-        {stopFee > 0 || peopleFee > 0 ? (
+        {stopFee > 0 ? (
           <p data-testid="bundled-fare-note" className="text-[13px] text-[#6B6B6B]">
-            One price
-            {stopFee > 0
-              ? ` · stop ${formatMoney(stopFee, country.currency, countryCode)}`
-              : ""}
-            {peopleFee > 0
-              ? ` · extra people ${formatMoney(peopleFee, country.currency, countryCode)}`
-              : ""}
+            One price · stop{" "}
+            {formatMoney(stopFee, country.currency, countryCode)}
           </p>
         ) : null}
 

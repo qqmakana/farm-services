@@ -4,6 +4,7 @@ import type { AddressSuggestion, DrivingRoute } from "./mapbox-types";
 import {
   geocodeAddressQuery,
   getDrivingRoute,
+  reverseGeocodePin,
 } from "./mapbox-server";
 import { searchServiceAreaLandmarks } from "./service-area";
 
@@ -68,4 +69,13 @@ export async function getDrivingRouteAction(
   to: { lat: number; lng: number },
 ): Promise<DrivingRoute> {
   return getDrivingRoute(from, to);
+}
+
+/** GPS pin → short address label for Plan your ride pickup. */
+export async function reverseGeocodeAction(
+  lat: number,
+  lng: number,
+  countryCode = "ZA",
+): Promise<AddressSuggestion | null> {
+  return reverseGeocodePin({ lat, lng, countryCode });
 }

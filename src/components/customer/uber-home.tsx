@@ -50,28 +50,31 @@ const HOME_SERVICES = [
 const MORE_WAYS = [
   {
     href: "/courier",
-    title: "Try Send",
-    sub: "Documents or a small package",
+    title: "Send a package",
+    sub: "Documents or small items",
     src: "/home/icons/courier.png",
     testId: "service-circle-courier",
   },
   {
     href: "/farm",
     title: "Farm transport",
-    sub: "Produce, feed, or equipment",
+    sub: "Move produce or livestock",
     src: "/home/icons/farm.png",
     testId: "service-circle-farm",
   },
   {
     href: "/ride?stop=1",
-    title: "Trip + stop",
-    sub: "One stop with you in the car",
+    title: "Need a ride?",
+    sub: "Trip to campus or town — one stop with you in the car",
     src: "/home/icons/car.png",
     testId: "home-trip-stop",
   },
 ] as const;
 
-function placeQuery(place?: PlaceSuggestion): string {
+function placeQuery(
+  place?: PlaceSuggestion,
+  opts?: { whenLater?: boolean },
+): string {
   if (!place) return "";
   const q = new URLSearchParams();
   q.set("to", place.name);
@@ -81,6 +84,7 @@ function placeQuery(place?: PlaceSuggestion): string {
   if (place.lng != null && Number.isFinite(place.lng)) {
     q.set("toLng", String(place.lng));
   }
+  if (opts?.whenLater) q.set("when", "later");
   try {
     const raw = sessionStorage.getItem("vr_last_gps_v1");
     if (raw) {
@@ -91,7 +95,10 @@ function placeQuery(place?: PlaceSuggestion): string {
         gps.lat != null &&
         gps.lng != null
       ) {
-        q.set("from", "Current location");
+        const label =
+          sessionStorage.getItem("vr_last_pickup_label_v1") ||
+          "Current location";
+        q.set("from", label);
         q.set("fromLat", String(gps.lat));
         q.set("fromLng", String(gps.lng));
       }
@@ -103,8 +110,11 @@ function placeQuery(place?: PlaceSuggestion): string {
   return s ? `?${s}` : "";
 }
 
-function hrefForTrip(place?: PlaceSuggestion): string {
-  const extra = placeQuery(place);
+function hrefForTrip(
+  place?: PlaceSuggestion,
+  opts?: { whenLater?: boolean },
+): string {
+  const extra = placeQuery(place, opts);
   return extra ? `/ride${extra}` : "/ride";
 }
 
@@ -112,8 +122,11 @@ export function UberHome() {
   const [laterOpen, setLaterOpen] = useState(false);
   const [whereOpen, setWhereOpen] = useState(false);
 
-  function goToPlace(place: PlaceSuggestion) {
-    window.location.assign(hrefForTrip(place));
+  function goToPlace(
+    place: PlaceSuggestion,
+    opts?: { whenLater?: boolean },
+  ) {
+    window.location.assign(hrefForTrip(place, opts));
   }
 
   return (
@@ -126,6 +139,14 @@ export function UberHome() {
       </Suspense>
 
       <HomeInstallCard />
+
+      {/* Launching badge */}
+      <p
+        data-testid="home-launching-badge"
+        className="mb-3 inline-flex items-center rounded-full bg-[#ECFDF3] px-3 py-1 text-[12px] font-semibold text-[#05944F]"
+      >
+        Launching end of September
+      </p>
 
       {/* Uber-style Where to? + Later */}
       <div className="mt-1 flex h-14 items-center gap-2 rounded-full bg-[#EEEEEE] pl-5 pr-2">
@@ -140,7 +161,7 @@ export function UberHome() {
             strokeWidth={2.5}
             aria-hidden
           />
-          <span className="truncate text-[18px] font-bold tracking-[-0.02em] text-[#111111]">
+          <span className="truncate text-[22px] font-bold tracking-[-0.02em] text-[#111111]">
             Where to?
           </span>
         </button>
@@ -148,7 +169,7 @@ export function UberHome() {
           type="button"
           data-testid="home-later"
           onClick={() => setLaterOpen(true)}
-          className="uber-press flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-white px-3.5 text-[14px] font-semibold text-[#111111] shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+          className="uber-press flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-white px-3.5 text-[15px] font-semibold text-[#6B6B6B] shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
         >
           <CalendarClock className="h-4 w-4" strokeWidth={2} aria-hidden />
           Later
