@@ -201,13 +201,17 @@ export function HomeWhereSearch({
         </div>
       </div>
 
-      <div className="mx-4 mt-1">
+      <div className="mx-4 mt-2">
         <WhereToBar
           floating={false}
+          bordered={false}
+          onAddStop={() => {
+            /* multi-stop — wired later; control matches Uber layout */
+          }}
           pickupSlot={
             <p
               data-testid="plan-pickup-label"
-              className="truncate text-[16px] font-semibold text-black"
+              className="truncate text-[16px] font-medium tracking-[-0.2px] text-[#000000]"
             >
               {pickupLabel}
             </p>
@@ -217,7 +221,7 @@ export function HomeWhereSearch({
               <input
                 ref={inputRef}
                 data-testid="home-where-input"
-                className="w-full bg-transparent text-[17px] font-semibold text-black outline-none placeholder:font-normal placeholder:text-[#A6A6A6] focus:outline-none"
+                className="w-full bg-transparent text-[16px] font-medium tracking-[-0.2px] text-[#000000] outline-none ring-0 placeholder:font-normal placeholder:text-[#A6A6A6] focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                 placeholder="Where to?"
                 value={query}
                 autoComplete="off"
@@ -278,10 +282,10 @@ export function HomeWhereSearch({
                       ) : null}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-semibold text-[#111111]">
+                      <span className="block truncate text-[16px] font-medium tracking-[-0.2px] text-[#000000]">
                         {hit.label.split(",")[0]}
                       </span>
-                      <span className="mt-0.5 block truncate text-[13px] text-[#6B6B6B]">
+                      <span className="mt-0.5 block truncate text-[14px] font-normal tracking-[-0.1px] text-[#6B6B6B]">
                         {hit.label}
                       </span>
                     </span>

@@ -535,6 +535,7 @@ export function SimpleRideSheet({
       ) : null}
 
       <WhereToBar
+        bordered={false}
         onSwap={() => {
           const p = pickup;
           const pp = pickupPin;
@@ -546,7 +547,7 @@ export function SimpleRideSheet({
         pickupSlot={
           <input
             data-testid="pickup-input"
-            className="w-full bg-transparent text-[17px] font-bold text-black outline-none ring-0 placeholder:font-normal placeholder:text-[#A6A6A6] focus:outline-none focus:ring-0 focus-visible:outline-none"
+            className="w-full bg-transparent text-[16px] font-medium tracking-[-0.2px] text-[#000000] outline-none ring-0 placeholder:font-normal placeholder:text-[#A6A6A6] focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
             placeholder="Current location"
             value={pickup}
             onChange={(e) => setPickup(e.target.value)}
@@ -564,7 +565,7 @@ export function SimpleRideSheet({
             <input
               ref={dropoffRef}
               data-testid="dropoff-input"
-              className="w-full bg-transparent text-[17px] font-bold text-black outline-none ring-0 placeholder:font-normal placeholder:text-[#A6A6A6] focus:outline-none focus:ring-0 focus-visible:outline-none"
+              className="w-full bg-transparent text-[16px] font-medium tracking-[-0.2px] text-[#000000] outline-none ring-0 placeholder:font-normal placeholder:text-[#A6A6A6] focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
               placeholder="Where to?"
               value={dropoff}
               autoComplete="off"
@@ -676,8 +677,12 @@ export function SimpleRideSheet({
                     {quoteReady ? eta : "Few min"}
                   </span>
                   {opt.tag ? (
-                    <span className="mt-1 inline-flex items-center gap-0.5 text-[11px] font-semibold text-[#276EF1]">
-                      <Zap className="h-3 w-3" strokeWidth={2.5} aria-hidden />
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-black px-2 py-0.5 text-[11px] font-semibold leading-none text-white">
+                      <Zap
+                        className="h-3 w-3 fill-white text-white"
+                        strokeWidth={0}
+                        aria-hidden
+                      />
                       {opt.tag}
                     </span>
                   ) : isWait ? (

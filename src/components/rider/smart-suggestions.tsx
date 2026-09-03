@@ -144,10 +144,10 @@ function RowButton({
         ) : null}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] font-semibold text-[#111111]">
+        <span className="block truncate text-[16px] font-medium tracking-[-0.2px] text-[#000000]">
           {place.name}
         </span>
-        <span className="mt-0.5 block truncate text-[13px] font-normal text-[#6B6B6B]">
+        <span className="mt-0.5 block truncate text-[14px] font-normal tracking-[-0.1px] text-[#6B6B6B]">
           {place.address}
         </span>
       </span>

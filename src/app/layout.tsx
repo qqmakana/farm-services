@@ -1,4 +1,4 @@
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 import { ConditionalFooter } from "@/components/conditional-footer";
 import { CountryProvider } from "@/components/country/country-provider";
@@ -22,7 +22,8 @@ import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 import "./globals.css";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-const sans = Inter({
+/** Closest open face to Uber Move Text — geometric, tight, high x-height. */
+const sans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
   weight: ["400", "500", "600", "700", "800"],
