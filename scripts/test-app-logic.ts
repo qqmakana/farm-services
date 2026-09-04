@@ -707,7 +707,7 @@ test("referral: code formula is 4-letter prefix + 3 random", () => {
   assert(code.length === 7, `length ${code.length}`);
 });
 
-test("fares: ZA R15 under 2km; 90/10 split", () => {
+test("fares: ZA R10 under 3km; 90/10 split", () => {
   const za = getCountry("ZA");
   const open = dayQuote({
     vehicle: "sedan",
@@ -715,11 +715,11 @@ test("fares: ZA R15 under 2km; 90/10 split", () => {
     countryCode: "ZA",
     isSubscribed: false,
   });
-  // 0km quote: R15 flat (first 2 km included)
+  // 0km quote: R10 flat (first 3 km included)
   assert(open.base_fee_amount === za.pricing.ride.base, "base component");
-  assert(open.fee_amount === 15, "rider pays R15");
-  assert(open.platform_commission === 2, "10% of R15 rounded");
-  assert(open.driver_fare_amount === 13, "driver 90%");
+  assert(open.fee_amount === 10, "rider pays R10");
+  assert(open.platform_commission === 1, "10% of R10 rounded");
+  assert(open.driver_fare_amount === 9, "driver 90%");
   assert(open.booking_fee === 0, "no extra booking fee");
   assert(
     open.fee_amount === open.driver_fare_amount + open.platform_commission,
@@ -748,7 +748,7 @@ test("fares: NG / KE / IN / BR scale from ZA bands", () => {
       countryCode: code,
       isSubscribed: false,
     });
-    // Local ride.base scales ZA R15; rider pays base on a 0 km quote
+    // Local ride.base scales ZA R10; rider pays base on a 0 km quote
     assert(
       f.base_fee_amount === c.pricing.ride.base,
       `${code} base ${f.base_fee_amount} != ${c.pricing.ride.base}`,
@@ -770,11 +770,11 @@ test("fares: 10km ZA includes km + fee", () => {
     quoteReady: true,
     isSubscribed: false,
   });
-  // R15 + R5 × (10 − 2) = R55 rider → R50 driver / R5? 10% of 55 = R6
+  // R10 + R3 × (10 − 3) = R31 rider → 10% = R3, driver R28
   assert(f.distance_km === 10, `km ${f.distance_km}`);
-  assert(f.fee_amount === 55, `rider ${f.fee_amount}`);
-  assert(f.platform_commission === 6, `10% ${f.platform_commission}`);
-  assert(f.driver_fare_amount === 49, `driver ${f.driver_fare_amount}`);
+  assert(f.fee_amount === 31, `rider ${f.fee_amount}`);
+  assert(f.platform_commission === 3, `10% ${f.platform_commission}`);
+  assert(f.driver_fare_amount === 28, `driver ${f.driver_fare_amount}`);
   assert(f.quote_ready === true, "quote ready");
   assert(f.booking_fee === 0, "no extra booking fee");
 });
@@ -801,12 +801,12 @@ test("fares: Reserve adds R10 then 90/10 (PayPal charges the same quote)", () =>
     isSubscribed: false,
     applyReservationFee: true,
   });
-  assert(now.fee_amount === 55, `now ${now.fee_amount}`);
+  assert(now.fee_amount === 31, `now ${now.fee_amount}`);
   assert(now.reservation_fee === 0, "no reservation on Ride Now");
   assert(reserved.reservation_fee === 10, `fee ${reserved.reservation_fee}`);
-  assert(reserved.fee_amount === 65, `rider ${reserved.fee_amount}`);
-  assert(reserved.platform_commission === 7, "10% of 65");
-  assert(reserved.driver_fare_amount === 58, "90% of 65");
+  assert(reserved.fee_amount === 41, `rider ${reserved.fee_amount}`);
+  assert(reserved.platform_commission === 4, "10% of 41");
+  assert(reserved.driver_fare_amount === 37, "90% of 41");
 });
 
 test("fares: trip stop + extra people bundled before 90/10", () => {
@@ -821,9 +821,9 @@ test("fares: trip stop + extra people bundled before 90/10", () => {
   });
   assert(withStop.extra_stop_fee === 15, `stop ${withStop.extra_stop_fee}`);
   assert(withStop.extra_passenger_fee === 10, `people ${withStop.extra_passenger_fee}`);
-  assert(withStop.fee_amount === 80, `rider ${withStop.fee_amount}`);
-  assert(withStop.platform_commission === 8, "10% of 80");
-  assert(withStop.driver_fare_amount === 72, "90% of 80");
+  assert(withStop.fee_amount === 56, `rider ${withStop.fee_amount}`);
+  assert(withStop.platform_commission === 6, "10% of 56");
+  assert(withStop.driver_fare_amount === 50, "90% of 56");
 });
 
 test("fares: courier express is 1.5× before 90/10", () => {
@@ -842,11 +842,11 @@ test("fares: courier express is 1.5× before 90/10", () => {
     quoteReady: true,
     isExpress: true,
   });
-  assert(std.fee_amount === 55, `std ${std.fee_amount}`);
-  assert(exp.fee_amount === 83, `express ${exp.fee_amount}`);
-  assert(exp.express_extra === 28, `extra ${exp.express_extra}`);
-  assert(exp.platform_commission === 8, "10% of 83");
-  assert(exp.driver_fare_amount === 75, "90% of 83");
+  assert(std.fee_amount === 31, `std ${std.fee_amount}`);
+  assert(exp.fee_amount === 47, `express ${exp.fee_amount}`);
+  assert(exp.express_extra === 16, `extra ${exp.express_extra}`);
+  assert(exp.platform_commission === 5, "10% of 47");
+  assert(exp.driver_fare_amount === 42, "90% of 47");
   const rideExpressIgnored = dayQuote({
     vehicle: "sedan",
     serviceType: "ride",
@@ -855,7 +855,7 @@ test("fares: courier express is 1.5× before 90/10", () => {
     quoteReady: true,
     isExpress: true,
   });
-  assert(rideExpressIgnored.fee_amount === 55, "express does not apply to trips");
+  assert(rideExpressIgnored.fee_amount === 31, "express does not apply to trips");
 });
 
 test("fares: delivery insurance adds R15 then 90/10", () => {
@@ -1142,7 +1142,7 @@ test("fares: route km wins over straight-line pins", () => {
     isSubscribed: false,
   });
   assert(f.distance_km === 6, `used route km ${f.distance_km} not ${straight}`);
-  assert(f.fee_amount === 35, `R15 + R5×4 ${f.fee_amount}`);
+  assert(f.fee_amount === 19, `R10 + R3×3 ${f.fee_amount}`);
 });
 
 test("fares: same pickup and dropoff is minimum fare, not a crash", () => {
@@ -1159,8 +1159,8 @@ test("fares: same pickup and dropoff is minimum fare, not a crash", () => {
     isSubscribed: false,
   });
   assert(f.distance_km === 0, "0 km");
-  assert(f.fee_amount === 15, "R15 flat under 2 km");
-  assert(f.driver_fare_amount === 13, "90% of R15");
+  assert(f.fee_amount === 10, "R10 flat under 3 km");
+  assert(f.driver_fare_amount === 9, "90% of R10");
 });
 
 test("service area: country-wide booking (no Alice/Mthatha lock)", () => {
@@ -1210,7 +1210,7 @@ test("landmarks: national list can include Johannesburg", () => {
   assert(alice.length >= 1, "Alice landmark fallback still works");
 });
 
-test("fares: R50 trip is R45 driver / R5 platform", () => {
+test("fares: R28 trip is R25 driver / R3 platform", () => {
   const f = dayQuote({
     vehicle: "sedan",
     serviceType: "ride",
@@ -1218,9 +1218,9 @@ test("fares: R50 trip is R45 driver / R5 platform", () => {
     routeDistanceKm: 9,
     quoteReady: true,
   });
-  assert(f.fee_amount === 50, `rider ${f.fee_amount}`);
-  assert(f.driver_fare_amount === 45, `driver ${f.driver_fare_amount}`);
-  assert(f.platform_commission === 5, `platform ${f.platform_commission}`);
+  assert(f.fee_amount === 28, `rider ${f.fee_amount}`);
+  assert(f.driver_fare_amount === 25, `driver ${f.driver_fare_amount}`);
+  assert(f.platform_commission === 3, `platform ${f.platform_commission}`);
 });
 
 test("wallet: flat-fee cash remittance uses booking_fee not 10%", () => {

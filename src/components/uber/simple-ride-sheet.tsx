@@ -146,7 +146,7 @@ export function SimpleRideSheet({
   const [payMethod, setPayMethod] = useState<CheckoutPaymentChoice>("cash");
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [fee, setFee] = useState(country.pricing?.ride?.base ?? 15);
+  const [fee, setFee] = useState(country.pricing?.ride?.base ?? 10);
   const [etaMins, setEtaMins] = useState(7);
   const [quoteReady, setQuoteReady] = useState(false);
   const [dropHits, setDropHits] = useState<AddressSuggestion[]>([]);

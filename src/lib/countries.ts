@@ -271,9 +271,9 @@ const FEATURED: Record<string, FeaturedOverride> = {
     locale: "en-ZA",
     timezone: "Africa/Johannesburg",
     payments: ["cash", "paypal", "eft", "card"],
-    // Village Ride ZA: R15 under 2km, then R15 + R5/km. 90/10 split.
-    fareMin: 15,
-    farePerKm: 5,
+    // Village Ride ZA launch: R10 under 3km, then R3/km. 90/10 split.
+    fareMin: 10,
+    farePerKm: 3,
   },
   KE: {
     language: "sw",

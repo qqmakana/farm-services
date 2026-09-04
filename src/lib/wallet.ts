@@ -21,7 +21,7 @@ export function walletCreditLimitAmount(
 ): number {
   const c = getCountry(countryCode);
   if (c.currency === "ZAR") return WALLET_CREDIT_LIMIT_ZAR;
-  const ratio = c.pricing.ride.base / 15;
+  const ratio = c.pricing.ride.base / 10;
   return Math.max(1, Math.round(WALLET_CREDIT_LIMIT_ZAR * ratio));
 }
 

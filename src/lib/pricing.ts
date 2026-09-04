@@ -1,7 +1,7 @@
 /**
  * Unified Village Ride pricing — source of truth (ZA bands).
  *
- * Ride & Courier: R15 covers the first 2 km; then R5/km after that.
+ * Ride & Courier (launch undercut): R10 covers the first 3 km; then R3/km.
  * Delivery & Farm: weight category + distance (all km).
  *
  * Rider pays the quoted fare (cash or card). Split is always:
@@ -9,7 +9,7 @@
  * Founding drivers also share a 2% city-revenue pool at month-end (ops).
  *
  * A) CASH — rider pays total to driver; on complete deduct 10% from wallet.
- * B) CARD — rider pays total via PayPal; on complete credit driver 90%.
+ * B) CARD — rider pays total via Yoco; on complete credit driver 90%.
  */
 
 import type { ServiceType } from "./types";
@@ -51,7 +51,7 @@ export const WEIGHT_CATEGORIES: readonly {
 export const PLATFORM_SHARE_PCT = 10;
 export const DRIVER_SHARE_PCT = 90;
 /** First N km included in the ride/courier flag drop. */
-export const RIDE_INCLUDED_KM = 2;
+export const RIDE_INCLUDED_KM = 3;
 /** Scheduled Trip (Reserve) — ZA rands, scaled per market. Applied before 90/10. */
 export const ZA_RESERVATION_FEE = 10;
 /** One extra stop on a Trip — ZA rands, scaled. Bundled into the quoted total. */
@@ -78,12 +78,12 @@ export type ServiceRate = {
   included_km: number;
 };
 
-/** ZA tables from product spec */
+/** ZA tables — launch undercut vs Uber/Bolt (cheapest new-entrant band). */
 const ZA_RIDE_COURIER = {
-  base_fare: 15,
-  per_km_rate: 5,
+  base_fare: 10,
+  per_km_rate: 3,
   included_km: RIDE_INCLUDED_KM,
-  minimum_fare: 15,
+  minimum_fare: 10,
 };
 
 const ZA_DELIVERY: Record<

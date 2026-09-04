@@ -146,7 +146,7 @@ export function SimpleGoodsSheet({
 
   const estimate =
     service === "courier"
-      ? country.pricing?.ride?.base ?? 15
+      ? country.pricing?.ride?.base ?? 10
       : service === "farm"
         ? country.pricing?.farm?.base ?? 25
         : country.pricing?.delivery?.base ?? 20;

@@ -93,7 +93,7 @@ export function RideSheet({
     searchParams.get("when") === "later" ? "later" : "now",
   );
   const [scheduledLocal, setScheduledLocal] = useState(defaultLaterLocal);
-  const rideBase = country.pricing?.ride?.base ?? 15;
+  const rideBase = country.pricing?.ride?.base ?? 10;
   const deliveryBase = country.pricing?.delivery?.base ?? 25;
   const motoBase = country.pricing?.motorcycle?.base ?? 12;
   const localModes = country.localRideModes ?? [];
@@ -204,7 +204,7 @@ export function RideSheet({
             );
             setEtaLabel(mins <= 1 ? "1 min" : `${mins} min`);
           } else {
-            setFee(country.pricing?.ride?.base ?? 15);
+            setFee(country.pricing?.ride?.base ?? 10);
             setEtaLabel("Few min");
           }
         }
