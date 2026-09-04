@@ -391,7 +391,7 @@ export function SimpleRideSheet({
         .filter(Boolean)
         .join(" · ") || null,
       details: {
-        seats: 1,
+        seats: 4,
         product_tier: productTier,
         route_name: `${pickup.trim()} → ${dropoff.trim()}`,
         direction: "to_village",
