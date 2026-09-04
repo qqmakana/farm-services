@@ -20,13 +20,13 @@ export type ApplicationStatus =
 export type DriverApprovalStatus = "pending" | "approved" | "rejected";
 
 /** Rider-facing product row on Choose a ride (same fare for all tiers). */
-export type RideProductTier = "singles" | "married" | "grannies";
+export type RideProductTier = "singles" | "married" | "elders";
 
 export type RideDetails = {
   seats: number;
   route_name: string;
   direction: "to_town" | "to_village";
-  /** Singles / Married / Grannies — display + dispatch cue. */
+  /** Singles / Married / Elders — display + dispatch cue. */
   product_tier?: RideProductTier;
   /** Optional outfit cue so the driver can spot the rider. */
   wearing?: string;

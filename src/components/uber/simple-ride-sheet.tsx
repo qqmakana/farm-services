@@ -69,8 +69,8 @@ const RIDE_OPTIONS: {
     carScale: "lg",
   },
   {
-    id: "grannies",
-    name: "Grannies",
+    id: "elders",
+    name: "Elders",
     tag: "Priority",
     seats: 4,
     etaOffset: 4,
@@ -168,7 +168,7 @@ export function SimpleRideSheet({
       if (q.get("stop") === "1") setExtraStop(true);
       const seatHint = normalizeTripSeats(q.get("seats"));
       if (seatHint === 2) setProductTier("married");
-      else if (seatHint === 4) setProductTier("grannies");
+      else if (seatHint === 4) setProductTier("elders");
       const at = q.get("at");
       if (at) {
         setWhenLater(true);
@@ -304,7 +304,7 @@ export function SimpleRideSheet({
       return;
     }
     let cancelled = false;
-    // Same fare for Singles / Married / Grannies — quote as Solo (no seat surcharge).
+    // Same fare for Singles / Married / Elders — quote as Solo (no seat surcharge).
     void quoteFareAction({
       vehicle: "sedan",
       service_type: "ride",
