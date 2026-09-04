@@ -51,6 +51,8 @@ const RIDE_OPTIONS: {
   etaOffset: number;
   waitRange?: boolean;
   carScale: "sm" | "md" | "lg";
+  /** Distinct vehicle art per tier (Faster / Comfort / Priority). */
+  iconSrc: string;
 }[] = [
   {
     id: "singles",
@@ -59,6 +61,7 @@ const RIDE_OPTIONS: {
     seats: 1,
     etaOffset: 0,
     carScale: "md",
+    iconSrc: "/home/icons/car.png",
   },
   {
     id: "married",
@@ -67,6 +70,7 @@ const RIDE_OPTIONS: {
     seats: 2,
     etaOffset: 2,
     carScale: "lg",
+    iconSrc: "/home/icons/car-comfort.png",
   },
   {
     id: "elders",
@@ -76,6 +80,7 @@ const RIDE_OPTIONS: {
     etaOffset: 4,
     waitRange: true,
     carScale: "md",
+    iconSrc: "/home/icons/car-priority.png",
   },
 ];
 
@@ -680,7 +685,7 @@ export function SimpleRideSheet({
                 <span className="relative flex h-14 w-16 shrink-0 items-center justify-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/home/icons/car.png"
+                    src={opt.iconSrc}
                     alt=""
                     className={`${carCls} object-contain`}
                   />
