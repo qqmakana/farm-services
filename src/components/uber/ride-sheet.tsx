@@ -23,6 +23,7 @@ import { quoteFareAction } from "@/lib/actions";
 import { locsFromSearchParams } from "@/lib/booking-query";
 import { useCountry } from "@/components/country/country-provider";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
+import { PhoneDigitHint } from "@/components/ui/phone-digit-hint";
 import { formatMoney } from "@/lib/format";
 import type { VehicleType } from "@/lib/types";
 import { reservationFeeAmount } from "@/lib/pricing";
@@ -423,6 +424,7 @@ export function RideSheet({
               required
             />
           </div>
+          <PhoneDigitHint phone={phone} countryCode={countryCode} />
           {moreOpen ? (
             <>
               <div className="flex items-center justify-between">

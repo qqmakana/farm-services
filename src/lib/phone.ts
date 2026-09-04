@@ -106,6 +106,63 @@ export function isValidMobileForCountry(
   );
 }
 
+/**
+ * Live digit-count feedback while the rider types a mobile number.
+ * Uses each market's `phoneLocalDigits` — no hardcoded lengths.
+ */
+export function phoneDigitFeedback(
+  phone: string,
+  countryCode?: string | null,
+): {
+  entered: number;
+  expected: number;
+  status: "empty" | "short" | "ok" | "long";
+  message: string | null;
+} {
+  const c = getCountry(countryCode);
+  const digits = phone.replace(/\D/g, "");
+  const withTrunkZero = usesLeadingZero(c.code);
+
+  if (!digits) {
+    const expected = withTrunkZero
+      ? c.phoneLocalDigits + 1
+      : c.phoneLocalDigits;
+    return { entered: 0, expected, status: "empty", message: null };
+  }
+
+  let entered = digits.length;
+  let expected = withTrunkZero
+    ? c.phoneLocalDigits + 1
+    : c.phoneLocalDigits;
+
+  if (digits.startsWith(c.phonePrefix)) {
+    entered = digits.length - c.phonePrefix.length;
+    expected = c.phoneLocalDigits;
+  } else if (withTrunkZero && !digits.startsWith("0")) {
+    // National number without trunk 0 (e.g. 821234567)
+    expected = c.phoneLocalDigits;
+  }
+
+  if (entered < expected) {
+    const left = expected - entered;
+    return {
+      entered,
+      expected,
+      status: "short",
+      message: `Too few digits — need ${expected}, you entered ${entered} (${left} more)`,
+    };
+  }
+  if (entered > expected) {
+    return {
+      entered,
+      expected,
+      status: "long",
+      message: `Too many digits — need ${expected}, you entered ${entered}`,
+    };
+  }
+  return { entered, expected, status: "ok", message: null };
+}
+
 /** @deprecated use isValidMobileForCountry — kept for SA-only call sites. */
 export function isSouthAfricanMobileCompat(phone: string): boolean {
   return isValidMobileForCountry(phone, "ZA" satisfies CountryCode);

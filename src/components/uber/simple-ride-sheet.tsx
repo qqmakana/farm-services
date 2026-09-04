@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CalendarClock, Search, User, Zap, Banknote } from "lucide-react";
+import { Banknote, CalendarClock, Search, User, Zap } from "lucide-react";
 import {
   PaymentSelector,
   type CheckoutPaymentChoice,
@@ -11,6 +11,7 @@ import { PlanYourRideHeader } from "@/components/uber/plan-your-ride-header";
 import { SafeCardPay } from "@/components/uber/safe-card-pay";
 import { localInputToIso, toLocalInputValue } from "@/components/uber/schedule-when";
 import { WhereToBar } from "@/components/uber/where-to-bar";
+import { PhoneDigitHint } from "@/components/ui/phone-digit-hint";
 import {
   capturePayPalAndCreateJob,
   createCashJobResult,
@@ -24,6 +25,7 @@ import { formatMoney } from "@/lib/format";
 import { etaMinutes } from "@/lib/geo";
 import { getGuestProfile, setGuestProfile } from "@/lib/guest-profile";
 import type { AddressSuggestion } from "@/lib/mapbox-types";
+import { isValidMobileForCountry, phoneDigitFeedback } from "@/lib/phone";
 import { getCapturedReferrer } from "@/lib/rider-referral";
 import { stashPaypalApproveUrl, stashPaypalBooking } from "@/lib/paypal-draft";
 import { SmartSuggestions } from "@/components/rider/smart-suggestions";
@@ -46,40 +48,68 @@ const RIDE_OPTIONS: {
   name: string;
   tag: string | null;
   seats: TripSeats;
-  waitMins: number;
-  waitRange?: string;
+  /** Extra minutes vs base trip ETA (dynamic). */
+  etaOffset: number;
+  waitRange?: boolean;
+  /** Car art — Wait & Save uses a smaller cash cue beside the car. */
+  carScale: "sm" | "md" | "lg";
 }[] = [
-  { id: "singles", name: "Singles", tag: "Faster", seats: 1, waitMins: 5 },
-  { id: "married", name: "Married", tag: "Comfort", seats: 2, waitMins: 7 },
+  {
+    id: "singles",
+    name: "Singles",
+    tag: "Faster",
+    seats: 1,
+    etaOffset: 0,
+    carScale: "md",
+  },
+  {
+    id: "married",
+    name: "Married",
+    tag: "Comfort",
+    seats: 2,
+    etaOffset: 2,
+    carScale: "lg",
+  },
   {
     id: "wait_save",
     name: "Wait & Save",
     tag: null,
     seats: 1,
-    waitMins: 10,
-    waitRange: "6 - 15 min",
+    etaOffset: 8,
+    waitRange: true,
+    carScale: "sm",
   },
   {
     id: "grannies",
     name: "Grannies",
     tag: "Priority",
     seats: 4,
-    waitMins: 8,
-    waitRange: "6 - 15 min",
+    etaOffset: 4,
+    waitRange: true,
+    carScale: "md",
   },
 ];
 
-function formatEtaLabel(waitMins: number, waitRange?: string): string {
+/** Arrival clock + wait label from trip distance ETA + tier offset. */
+function formatEtaFromDistance(
+  tripEtaMins: number,
+  etaOffset: number,
+  waitRange?: boolean,
+): string {
+  const wait = Math.max(3, tripEtaMins + etaOffset);
   const d = new Date();
-  d.setMinutes(d.getMinutes() + waitMins);
+  d.setMinutes(d.getMinutes() + wait);
+  const rangeLabel = waitRange
+    ? `${Math.max(3, wait - 2)} - ${wait + 5} min`
+    : `${wait} min`;
   try {
     const time = d.toLocaleTimeString("en-ZA", {
       hour: "numeric",
       minute: "2-digit",
     });
-    return `${time} · ${waitRange || `${waitMins} min`}`;
+    return `${time} · ${rangeLabel}`;
   } catch {
-    return waitRange || `${waitMins} min`;
+    return rangeLabel;
   }
 }
 
@@ -334,9 +364,12 @@ export function SimpleRideSheet({
     stopType,
   ]);
 
+  const phoneOk =
+    phoneDigitFeedback(phone, countryCode).status === "ok" &&
+    isValidMobileForCountry(phone, countryCode);
   const ready =
     Boolean(name.trim()) &&
-    Boolean(phone.trim()) &&
+    phoneOk &&
     Boolean(pickup.trim()) &&
     Boolean(dropoff.trim()) &&
     pickupPin != null &&
@@ -395,6 +428,11 @@ export function SimpleRideSheet({
     setMsg(null);
     if (!ready) {
       setMsg("Fill name, phone, pickup and drop-off. Tap the map to set pins.");
+      return;
+    }
+    const phoneHint = phoneDigitFeedback(phone, countryCode);
+    if (phoneHint.status !== "ok" || !isValidMobileForCountry(phone, countryCode)) {
+      setMsg(phoneHint.message || "Enter a valid mobile number.");
       return;
     }
     void (async () => {
@@ -644,8 +682,18 @@ export function SimpleRideSheet({
                     Math.round((baseFare - waitDiscount) * 100) / 100,
                   )
                 : baseFare;
-            const eta = formatEtaLabel(opt.waitMins, opt.waitRange);
+            const eta = formatEtaFromDistance(
+              etaMins,
+              opt.etaOffset,
+              opt.waitRange,
+            );
             const isWait = opt.id === "wait_save";
+            const carCls =
+              opt.carScale === "lg"
+                ? "h-14 w-[4.25rem]"
+                : opt.carScale === "sm"
+                  ? "h-12 w-14"
+                  : "h-14 w-16";
             return (
               <button
                 key={opt.id}
@@ -653,16 +701,16 @@ export function SimpleRideSheet({
                 data-testid={`ride-tier-${opt.id}`}
                 aria-pressed={active}
                 onClick={() => setProductTier(opt.id)}
-                className={`uber-press flex w-full items-center gap-3 px-2 py-3.5 text-left ${
+                className={`uber-press flex w-full items-center gap-3 px-2 py-4 text-left ${
                   active ? "rounded-[14px] ring-2 ring-black ring-inset" : ""
                 }`}
               >
-                <span className="relative h-14 w-16 shrink-0">
+                <span className="relative flex h-14 w-16 shrink-0 items-center justify-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/home/icons/car.png"
                     alt=""
-                    className="h-14 w-16 object-contain"
+                    className={`${carCls} object-contain`}
                   />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -761,23 +809,27 @@ export function SimpleRideSheet({
           </p>
         ) : null}
 
-      {!name.trim() || !phone.trim() ? (
-        <div className="grid grid-cols-2 gap-2">
-          <input
-            aria-label="Your name"
-            className="rounded-[12px] bg-[#F3F3F3] p-4 text-[17px] outline-none"
-            placeholder="Your name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <input
-            aria-label="Phone"
-            className="rounded-[12px] bg-[#F3F3F3] p-4 text-[17px] outline-none"
-            placeholder={formatPhonePlaceholder(countryCode)}
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            inputMode="tel"
-          />
+      {!name.trim() || !phone.trim() || phoneDigitFeedback(phone, countryCode).status !== "ok" ? (
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              aria-label="Your name"
+              className="rounded-[12px] bg-[#F3F3F3] p-4 text-[17px] outline-none"
+              placeholder="Your name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <input
+              aria-label="Phone"
+              className="rounded-[12px] bg-[#F3F3F3] p-4 text-[17px] outline-none"
+              placeholder={formatPhonePlaceholder(countryCode)}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              inputMode="tel"
+              autoComplete="tel"
+            />
+          </div>
+          <PhoneDigitHint phone={phone} countryCode={countryCode} />
         </div>
       ) : null}
 

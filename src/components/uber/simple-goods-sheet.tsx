@@ -14,6 +14,7 @@ import {
   createPayPalOrderAction,
 } from "@/lib/actions";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
+import { PhoneDigitHint } from "@/components/ui/phone-digit-hint";
 import { getGuestProfile, setGuestProfile } from "@/lib/guest-profile";
 import {
   WEIGHT_CATEGORIES,
@@ -494,6 +495,7 @@ export function SimpleGoodsSheet({
           inputMode="tel"
         />
       </div>
+      <PhoneDigitHint phone={phone} countryCode={countryCode} />
 
       <PaymentSelector
         value={payMethod}

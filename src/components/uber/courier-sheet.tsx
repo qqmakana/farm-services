@@ -19,6 +19,7 @@ import { locsFromSearchParams } from "@/lib/booking-query";
 import { getGuestProfile } from "@/lib/guest-profile";
 import { useCountry } from "@/components/country/country-provider";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
+import { PhoneDigitHint } from "@/components/ui/phone-digit-hint";
 import type { CourierPackageType, VehicleType } from "@/lib/types";
 import { courierPackageSize, suggestVehicle } from "@/lib/vehicles";
 import { SERVICE_COPY } from "@/lib/service-guide";
@@ -228,6 +229,7 @@ export function CourierSheet({
             placeholder={formatPhonePlaceholder(countryCode)}
             inputMode="tel"
           />
+          <PhoneDigitHint phone={senderPhone} countryCode={countryCode} />
         </label>
       </div>
 
@@ -251,6 +253,7 @@ export function CourierSheet({
             inputMode="tel"
             required
           />
+          <PhoneDigitHint phone={recipientPhone} countryCode={countryCode} />
         </label>
       </div>
       <p className="text-xs text-gray-500">

@@ -24,6 +24,7 @@ import { locsFromSearchParams } from "@/lib/booking-query";
 import { getGuestProfile } from "@/lib/guest-profile";
 import { useCountry } from "@/components/country/country-provider";
 import { formatPhonePlaceholder } from "@/lib/country-preference";
+import { PhoneDigitHint } from "@/components/ui/phone-digit-hint";
 import type { VehicleType, WeightCategory } from "@/lib/types";
 import { SERVICE_COPY } from "@/lib/service-guide";
 import { vehicleForWeight } from "@/lib/pricing";
@@ -251,6 +252,7 @@ export function FarmSheet({
             placeholder={formatPhonePlaceholder(countryCode)}
             inputMode="tel"
           />
+          <PhoneDigitHint phone={phone} countryCode={countryCode} />
         </label>
       </div>
 
