@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Banknote, CalendarClock, Search, User, Zap } from "lucide-react";
+import { CalendarClock, Search, User, Zap } from "lucide-react";
 import {
   PaymentSelector,
   type CheckoutPaymentChoice,
@@ -33,7 +33,6 @@ import type { PlaceSuggestion } from "@/lib/suggestions";
 import {
   normalizeTripSeats,
   tripStopFeeAmount,
-  waitSaveDiscountAmount,
   type TripSeats,
 } from "@/lib/pricing";
 import { TRIP_STOP_TYPES, type TripStopType } from "@/lib/fares";
@@ -46,12 +45,11 @@ type Draft = Omit<NewJobInput, "payment">;
 const RIDE_OPTIONS: {
   id: RideProductTier;
   name: string;
-  tag: string | null;
+  tag: string;
   seats: TripSeats;
   /** Extra minutes vs base trip ETA (dynamic). */
   etaOffset: number;
   waitRange?: boolean;
-  /** Car art — Wait & Save uses a smaller cash cue beside the car. */
   carScale: "sm" | "md" | "lg";
 }[] = [
   {
@@ -69,15 +67,6 @@ const RIDE_OPTIONS: {
     seats: 2,
     etaOffset: 2,
     carScale: "lg",
-  },
-  {
-    id: "wait_save",
-    name: "Wait & Save",
-    tag: null,
-    seats: 1,
-    etaOffset: 8,
-    waitRange: true,
-    carScale: "sm",
   },
   {
     id: "grannies",
@@ -170,15 +159,7 @@ export function SimpleRideSheet({
 
   const selected = RIDE_OPTIONS.find((o) => o.id === productTier) ?? RIDE_OPTIONS[0];
   const seats = selected.seats;
-  const waitDiscount = waitSaveDiscountAmount(countryCode);
-  const baseFare = fee;
-  const displayFare =
-    productTier === "wait_save"
-      ? Math.max(
-          country.pricing?.ride?.base ?? 15,
-          Math.round((baseFare - waitDiscount) * 100) / 100,
-        )
-      : baseFare;
+  const estimate = fee;
 
   useEffect(() => {
     try {
@@ -412,7 +393,7 @@ export function SimpleRideSheet({
         extra_stop_type: extraStop ? stopType : undefined,
         extra_stop_fee: extraStop ? tripStopFeeAmount(countryCode) : undefined,
       },
-      fee_amount: displayFare,
+      fee_amount: estimate,
     };
   }
 
@@ -455,7 +436,6 @@ export function SimpleRideSheet({
     })();
   }
 
-  const estimate = displayFare;
   const searching = !dropoffPin;
   const chooseLabel = `Choose ${selected.name}`;
 
@@ -675,19 +655,11 @@ export function SimpleRideSheet({
         <div data-testid="ride-product-list" className="divide-y divide-[#EEEEEE]">
           {RIDE_OPTIONS.map((opt) => {
             const active = productTier === opt.id;
-            const price =
-              opt.id === "wait_save"
-                ? Math.max(
-                    country.pricing?.ride?.base ?? 15,
-                    Math.round((baseFare - waitDiscount) * 100) / 100,
-                  )
-                : baseFare;
             const eta = formatEtaFromDistance(
               etaMins,
               opt.etaOffset,
               opt.waitRange,
             );
-            const isWait = opt.id === "wait_save";
             const carCls =
               opt.carScale === "lg"
                 ? "h-14 w-[4.25rem]"
@@ -724,31 +696,20 @@ export function SimpleRideSheet({
                   <span className="mt-0.5 block text-[15px] font-medium text-[#6B6B6B]">
                     {quoteReady ? eta : "Few min"}
                   </span>
-                  {opt.tag ? (
-                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-black px-2 py-0.5 text-[11px] font-semibold leading-none text-white">
-                      <Zap
-                        className="h-3 w-3 fill-white text-white"
-                        strokeWidth={0}
-                        aria-hidden
-                      />
-                      {opt.tag}
-                    </span>
-                  ) : isWait ? (
-                    <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[#05944F]">
-                      <Banknote className="h-3 w-3" strokeWidth={2.5} aria-hidden />
-                      Cash
-                    </span>
-                  ) : null}
+                  <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-black px-2 py-0.5 text-[11px] font-semibold leading-none text-white">
+                    <Zap
+                      className="h-3 w-3 fill-white text-white"
+                      strokeWidth={0}
+                      aria-hidden
+                    />
+                    {opt.tag}
+                  </span>
                 </span>
                 <span
                   data-testid={active ? "price-display" : undefined}
-                  className={`shrink-0 text-right font-bold ${
-                    isWait
-                      ? "text-[24px] text-[#05944F]"
-                      : "text-[17px] text-[#111111]"
-                  }`}
+                  className="shrink-0 text-right text-[17px] font-bold text-[#111111]"
                 >
-                  {formatMoney(price, country.currency, countryCode)}
+                  {formatMoney(estimate, country.currency, countryCode)}
                 </span>
               </button>
             );

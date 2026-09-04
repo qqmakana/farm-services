@@ -44,11 +44,6 @@ export function detailsHasExtraStop(details: unknown): boolean {
   return d.extra_stop === true;
 }
 
-export function detailsWaitSave(details: unknown): boolean {
-  if (!details || typeof details !== "object") return false;
-  return (details as { product_tier?: unknown }).product_tier === "wait_save";
-}
-
 export type TripStopType = "spaza" | "grocery" | "hardware" | "clinic";
 
 export const TRIP_STOP_TYPES: readonly {
@@ -139,8 +134,6 @@ export function calculateFare(params: {
   isExpress?: boolean;
   applyInsurance?: boolean;
   applyExtraStop?: boolean;
-  /** Wait & Save — lower than the main Singles/Married/Grannies fare. */
-  applyWaitSave?: boolean;
   seats?: number | null;
   /** @deprecated Prefer unified pricing; ignored when serviceType set */
   rules?: {
@@ -197,7 +190,6 @@ export function calculateFare(params: {
     isExpress: Boolean(params.isExpress),
     applyInsurance: Boolean(params.applyInsurance),
     applyExtraStop: Boolean(params.applyExtraStop),
-    applyWaitSave: Boolean(params.applyWaitSave),
     seats: params.seats,
   });
 

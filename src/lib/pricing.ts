@@ -58,8 +58,6 @@ export const ZA_RESERVATION_FEE = 10;
 export const ZA_TRIP_STOP_FEE = 15;
 /** Each extra passenger after Solo — ZA rands, scaled. 2 people +R10, 4 people +R30. */
 export const ZA_EXTRA_PASSENGER_FEE = 10;
-/** Wait & Save discount off the quoted trip fare (ZA rands, scaled). */
-export const ZA_WAIT_SAVE_DISCOUNT = 15;
 /** Optional goods cover on Fetch (Delivery) — ZA rands, scaled per market. */
 export const ZA_DELIVERY_INSURANCE_FEE = 15;
 /** Shared Groups seat vs a private Trip. */
@@ -122,10 +120,6 @@ export function reservationFeeAmount(countryCode?: string | null): number {
 
 export function tripStopFeeAmount(countryCode?: string | null): number {
   return scaleAmount(ZA_TRIP_STOP_FEE, countryCode);
-}
-
-export function waitSaveDiscountAmount(countryCode?: string | null): number {
-  return scaleAmount(ZA_WAIT_SAVE_DISCOUNT, countryCode);
 }
 
 export type TripSeats = 1 | 2 | 4;
@@ -301,8 +295,6 @@ export function calculateUnifiedFare(params: {
   applyInsurance?: boolean;
   /** Trip + one stop — adds scaled R15 before 90/10. */
   applyExtraStop?: boolean;
-  /** Wait & Save — subtracts a small discount, floor at minimum fare. */
-  applyWaitSave?: boolean;
   /** Village Ride sedan occupants — Solo / 2 / 4. */
   seats?: number | null;
 }): UnifiedFareBreakdown {
@@ -339,14 +331,6 @@ export function calculateUnifiedFare(params: {
       ? extraPassengerFeeAmount(params.seats, params.countryCode)
       : 0;
   riderRaw += extraPassengerFee;
-
-  if (
-    params.applyWaitSave &&
-    params.serviceType === "ride"
-  ) {
-    const discount = waitSaveDiscountAmount(params.countryCode);
-    riderRaw = Math.max(rate.minimum_fare, riderRaw - discount);
-  }
 
   let expressExtra = 0;
   let expressMultiplier = 1;
